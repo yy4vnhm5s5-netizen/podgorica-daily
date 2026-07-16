@@ -1,3 +1,3 @@
 # Podgorica Daily
 
-Under development.
+Under development..
