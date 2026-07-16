@@ -1,1 +1,3 @@
-# Pg.daily
+# Podgorica Daily
+
+Under development.
