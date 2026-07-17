@@ -1,0 +1,10 @@
+services:
+  app:
+    build:
+      context: .
+    environment:
+      NEXT_PUBLIC_APP_ENV: production
+      NEXT_TELEMETRY_DISABLED: "1"
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
