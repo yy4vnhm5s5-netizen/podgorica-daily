@@ -7,7 +7,7 @@ const featureFlags = {
   maps: false,
   publicTransport: false,
   search: false,
-  weather: false,
+  weather: true,
 } as const;
 
 type Feature = keyof typeof featureFlags;

@@ -10,7 +10,7 @@ Bootstrapped the runtime, quality gates, UI system, environment validation, cont
 
 ## Trusted local data
 
-Deliver provider adapters and user experiences for weather, transport, and events in independently deployable increments. Each increment includes provenance, stale-data behaviour, monitoring, and accessible states.
+Current weather for Podgorica is delivered through an isolated Open-Meteo adapter with attribution, freshness, and safe loading, empty, and error states. Transport and events remain future independently deployable increments; each requires provenance, stale-data behaviour, monitoring, and accessible states.
 
 ## Discovery and operations
 

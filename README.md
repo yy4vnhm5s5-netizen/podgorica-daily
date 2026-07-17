@@ -1,6 +1,6 @@
 # Podgorica Daily
 
-Podgorica Daily is a production-oriented local information platform for Podgorica. This repository currently contains the application foundation only; it does not yet implement weather, transport, events, maps, search, AI, or editorial workflows.
+Podgorica Daily is a production-oriented local information platform for Podgorica. It currently provides server-rendered current weather for Podgorica; transport, events, maps, search, AI, and editorial workflows are not yet implemented.
 
 ## Architecture
 

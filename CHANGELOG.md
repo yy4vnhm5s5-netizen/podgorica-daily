@@ -4,6 +4,14 @@ All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Server-rendered current weather for Podgorica through a validated Open-Meteo adapter.
+- Current temperature, condition, wind speed, humidity, apparent temperature, attribution, and local freshness timestamp.
+- Weather loading, empty, and safe error states behind the Weather feature flag.
+
 ## [0.1.0-foundation] - 2026-07-17
 
 ### Added

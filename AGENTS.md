@@ -4,7 +4,7 @@
 
 Podgorica Daily is a trusted, fast, and accessible guide to daily life in Podgorica. It helps residents find local information quickly while making source, freshness, attribution, and limitations visible. Read `docs/VISION.md` before changing product-facing behaviour.
 
-The repository currently contains a production-oriented foundation, design system, and application shell. It does **not** contain business modules, live data, external API calls, provider adapters, persistence, authentication, scraping, maps, search, or AI features. Do not describe shell placeholders as implemented product capabilities.
+The repository currently contains a production-oriented foundation, design system, application shell, and a server-rendered Weather module for current Podgorica conditions. Transport, events, persistence, authentication, scraping, maps, search, and AI features are not implemented. Do not describe shell placeholders as implemented product capabilities.
 
 ## 2. Product Principles
 
@@ -42,7 +42,7 @@ docs/adr/              accepted architecture decision records
 .github/               CI and contribution templates
 ```
 
-The active application route is `src/app/page.tsx`. The root layout is `src/app/layout.tsx`. The current dashboard cards and search/command-palette messages are static shell placeholders, not feature implementations.
+The active application route is `src/app/page.tsx`. The root layout is `src/app/layout.tsx`. The dashboard combines the Weather module with static placeholders for unimplemented capabilities; search and command-palette messages are non-interactive placeholders.
 
 ## 5. Architecture
 
@@ -283,7 +283,7 @@ Use `feat`, `fix`, `docs`, `refactor`, `test`, `build`, `ci`, `chore`, or `perf`
 
 ## 30. ADR Policy
 
-The accepted ADRs are `docs/adr/0001-modular-monolith.md` and `docs/adr/0002-shared-ui-primitives.md`.
+The accepted ADRs are `docs/adr/0001-modular-monolith.md`, `docs/adr/0002-shared-ui-primitives.md`, and `docs/adr/0003-open-meteo-current-weather.md`.
 
 - Create a new numbered ADR for a material, lasting architectural decision: providers, maps, identity, persistence, hosting, AI models, observability, or an architectural boundary change.
 - Include status, date, context, decision, and consequences.
@@ -325,7 +325,7 @@ A change is done only when it:
 
 ## 34. Things AI Must Never Do
 
-- Never implement weather, transport, events, maps, search, identity, administration, scraping, persistence, or AI without explicit approved scope.
+- Never implement transport, events, maps, search, identity, administration, scraping, persistence, or AI without explicit approved scope. Extend Weather only through its module boundary and approved provider policy.
 - Never call an external API, add a provider SDK, create mock backend data, or fabricate live-data behaviour unless requested and documented.
 - Never put business logic, provider calls, or module state in `src/shared`.
 - Never bypass TypeScript, validation, authentication, authorization, feature flags, or source attribution requirements to make a demo work.
