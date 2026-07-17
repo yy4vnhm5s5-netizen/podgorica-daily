@@ -5,8 +5,8 @@ import { getEventsReadiness } from "./readiness.ts";
 
 test("reports readiness without cache paths, event contents, or diagnostics", () => {
   const result = getEventsReadiness([
-    { id: "kic", state: "fresh", status: { health: "healthy" } },
-    { id: "cnp", state: "unavailable", status: { health: "unavailable" } },
+    { id: "kic", state: "fresh", status: { qualityHealthState: "healthy" } },
+    { id: "cnp", state: "unavailable", status: { qualityHealthState: "unavailable" } },
   ] as never);
 
   assert.deepEqual(result, {
@@ -22,7 +22,7 @@ test("reports readiness without cache paths, event contents, or diagnostics", ()
 test("reports unavailable only when every configured event provider is unavailable", () => {
   assert.equal(
     getEventsReadiness([
-      { id: "kic", state: "unavailable", status: { health: "unavailable" } },
+      { id: "kic", state: "unavailable", status: { qualityHealthState: "unavailable" } },
     ] as never).status,
     "unavailable",
   );

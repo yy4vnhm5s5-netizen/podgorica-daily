@@ -7,6 +7,8 @@ const environmentSchema = z.object({
   AMSCG_PROVIDER_MODE: z.enum(["disabled", "live"]).default("live"),
   EVENT_PROVIDER_MODE: z.enum(["disabled", "live", "mock"]).default("disabled"),
   EVENT_CACHE_PATH: z.string().min(1).default(".runtime/cache/events.json"),
+  EVENT_CACHE_DIR: z.string().min(1).default(".runtime/cache"),
+  EVENT_REFRESH_SECRET: z.string().min(32).optional(),
   EVENT_CACHE_FRESHNESS_MINUTES: z.coerce.number().int().positive().default(120),
   EVENT_MAX_QUERY_RANGE_DAYS: z.coerce.number().int().positive().max(366).default(90),
   EVENT_MAX_RECURRENCE_OCCURRENCES: z.coerce.number().int().positive().max(100).default(30),
@@ -19,10 +21,10 @@ const environmentSchema = z.object({
   EVENT_QUALITY_WARN_MISSING_DESCRIPTION: z.enum(["false", "true"]).default("true"),
   EVENT_QUALITY_WARN_MISSING_START_TIME: z.enum(["false", "true"]).default("true"),
   EVENT_QUALITY_WARN_MISSING_VENUE: z.enum(["false", "true"]).default("true"),
-  KIC_EVENT_CACHE_PATH: z.string().min(1).default(".runtime/cache/kic-events.json"),
-  CNP_EVENT_CACHE_PATH: z.string().min(1).default(".runtime/cache/cnp-events.json"),
-  GLAVNI_GRAD_EVENT_CACHE_PATH: z.string().min(1).default(".runtime/cache/glavni-grad-events.json"),
-  TOURISM_EVENT_CACHE_PATH: z.string().min(1).default(".runtime/cache/tourism-events.json"),
+  KIC_EVENT_CACHE_PATH: z.string().min(1).optional(),
+  CNP_EVENT_CACHE_PATH: z.string().min(1).optional(),
+  GLAVNI_GRAD_EVENT_CACHE_PATH: z.string().min(1).optional(),
+  TOURISM_EVENT_CACHE_PATH: z.string().min(1).optional(),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   DEFAULT_CITY: z.string().default("podgorica"),
   ENABLE_AMSCG: z.enum(["false", "true"]).default("true"),
@@ -30,7 +32,7 @@ const environmentSchema = z.object({
   ENABLE_EVENTS: z.enum(["false", "true"]).default("false"),
   ENABLE_WEATHER: z.enum(["false", "true"]).default("true"),
   NEXT_PUBLIC_APP_ENV: z.string().min(1).default("development"),
-  NEXT_PUBLIC_SITE_URL: z.url().optional(),
+  NEXT_PUBLIC_SITE_URL: z.string().url().optional(),
 });
 
 function parseEnvironment(values: Record<string, string | undefined>) {
@@ -49,6 +51,8 @@ const parsedEnvironment = environmentSchema.safeParse({
   AMSCG_PROVIDER_MODE: process.env.AMSCG_PROVIDER_MODE,
   EVENT_PROVIDER_MODE: process.env.EVENT_PROVIDER_MODE,
   EVENT_CACHE_PATH: process.env.EVENT_CACHE_PATH,
+  EVENT_CACHE_DIR: process.env.EVENT_CACHE_DIR,
+  EVENT_REFRESH_SECRET: process.env.EVENT_REFRESH_SECRET,
   EVENT_CACHE_FRESHNESS_MINUTES: process.env.EVENT_CACHE_FRESHNESS_MINUTES,
   EVENT_MAX_QUERY_RANGE_DAYS: process.env.EVENT_MAX_QUERY_RANGE_DAYS,
   EVENT_MAX_RECURRENCE_OCCURRENCES: process.env.EVENT_MAX_RECURRENCE_OCCURRENCES,
@@ -92,23 +96,36 @@ if (
   throw new Error("EVENT_PROVIDER_MODE=mock is not allowed in production.");
 }
 
-if (!isCityId(parsedEnvironment.data.DEFAULT_CITY)) {
+const cacheDirectory = parsedEnvironment.data.EVENT_CACHE_DIR.replace(/\/+$/, "") || ".";
+const resolvedEnvironment = {
+  ...parsedEnvironment.data,
+  CNP_EVENT_CACHE_PATH:
+    parsedEnvironment.data.CNP_EVENT_CACHE_PATH ?? `${cacheDirectory}/cnp-events.json`,
+  GLAVNI_GRAD_EVENT_CACHE_PATH:
+    parsedEnvironment.data.GLAVNI_GRAD_EVENT_CACHE_PATH ??
+    `${cacheDirectory}/glavni-grad-events.json`,
+  KIC_EVENT_CACHE_PATH:
+    parsedEnvironment.data.KIC_EVENT_CACHE_PATH ?? `${cacheDirectory}/kic-events.json`,
+  TOURISM_EVENT_CACHE_PATH:
+    parsedEnvironment.data.TOURISM_EVENT_CACHE_PATH ?? `${cacheDirectory}/tourism-events.json`,
+};
+
+if (!isCityId(resolvedEnvironment.DEFAULT_CITY)) {
   throw new Error("DEFAULT_CITY must exist in the city registry.");
 }
 
 export const env = {
-  ...parsedEnvironment.data,
-  DEFAULT_CITY: parsedEnvironment.data.DEFAULT_CITY,
-  ENABLE_AMSCG: parsedEnvironment.data.ENABLE_AMSCG === "true",
-  ENABLE_CEDIS: parsedEnvironment.data.ENABLE_CEDIS === "true",
-  ENABLE_EVENTS: parsedEnvironment.data.ENABLE_EVENTS === "true",
-  ENABLE_WEATHER: parsedEnvironment.data.ENABLE_WEATHER === "true",
+  ...resolvedEnvironment,
+  DEFAULT_CITY: resolvedEnvironment.DEFAULT_CITY,
+  ENABLE_AMSCG: resolvedEnvironment.ENABLE_AMSCG === "true",
+  ENABLE_CEDIS: resolvedEnvironment.ENABLE_CEDIS === "true",
+  ENABLE_EVENTS: resolvedEnvironment.ENABLE_EVENTS === "true",
+  ENABLE_WEATHER: resolvedEnvironment.ENABLE_WEATHER === "true",
   EVENT_QUALITY_WARN_MISSING_DESCRIPTION:
-    parsedEnvironment.data.EVENT_QUALITY_WARN_MISSING_DESCRIPTION === "true",
+    resolvedEnvironment.EVENT_QUALITY_WARN_MISSING_DESCRIPTION === "true",
   EVENT_QUALITY_WARN_MISSING_START_TIME:
-    parsedEnvironment.data.EVENT_QUALITY_WARN_MISSING_START_TIME === "true",
-  EVENT_QUALITY_WARN_MISSING_VENUE:
-    parsedEnvironment.data.EVENT_QUALITY_WARN_MISSING_VENUE === "true",
+    resolvedEnvironment.EVENT_QUALITY_WARN_MISSING_START_TIME === "true",
+  EVENT_QUALITY_WARN_MISSING_VENUE: resolvedEnvironment.EVENT_QUALITY_WARN_MISSING_VENUE === "true",
 };
 
 export { parseEnvironment };

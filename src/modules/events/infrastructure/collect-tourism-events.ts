@@ -1,8 +1,9 @@
 import { getDefaultCityContext } from "../../../config/city-context.ts";
+import { env } from "../../../config/env.ts";
 import { createTourismHttpClient } from "./tourism-http-client.ts";
 import { refreshTourismEvents } from "./tourism-refresh.ts";
 void refreshTourismEvents({
-  cachePath: ".runtime/cache/tourism-events.json",
+  cachePath: env.TOURISM_EVENT_CACHE_PATH,
   context: getDefaultCityContext(),
   httpClient: createTourismHttpClient(),
 }).then((result) => {

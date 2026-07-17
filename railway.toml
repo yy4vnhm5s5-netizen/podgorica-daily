@@ -1,0 +1,9 @@
+[build]
+buildCommand = "pnpm run build"
+
+[deploy]
+startCommand = "pnpm run start -- --hostname 0.0.0.0 --port $PORT"
+healthcheckPath = "/api/health"
+healthcheckTimeout = 300
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3

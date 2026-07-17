@@ -18,7 +18,7 @@ function getEventsReadiness(providers: readonly EventProviderReadState[]) {
     eventProviders: providers.map(({ id, state, status: providerStatus }) => ({
       id,
       state,
-      status: providerStatus.health,
+      status: providerStatus.qualityHealthState,
     })),
     status,
   };
