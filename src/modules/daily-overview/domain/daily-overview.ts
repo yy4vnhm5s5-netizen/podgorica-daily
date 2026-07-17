@@ -9,6 +9,7 @@ type OverviewAlertSeverity = "critical" | "information" | "warning";
 
 interface OverviewAlert {
   isActive: boolean;
+  isUpcoming?: boolean;
   isMajor: boolean;
   severity: OverviewAlertSeverity;
   type: OverviewAlertType;

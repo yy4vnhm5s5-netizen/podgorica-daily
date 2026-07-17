@@ -11,7 +11,10 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 
-import { getActiveCityAlerts } from "@/modules/city-alerts/application/get-active-city-alerts";
+import {
+  getActiveCityAlerts,
+  type CityAlertsMetadata,
+} from "@/modules/city-alerts/application/get-active-city-alerts";
 import type { AlertSeverity, AlertType, CityAlert } from "@/modules/city-alerts/domain/city-alert";
 import {
   getCityAlertContent,
@@ -100,16 +103,50 @@ async function CityAlertsSection({ locale }: CityAlertsSectionProps) {
     );
   }
 
+  if (result.status === "unavailable") {
+    return (
+      <CityAlertsFrame locale={locale}>
+        <p
+          className="rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground"
+          role="status"
+        >
+          {translations.unavailable}
+        </p>
+      </CityAlertsFrame>
+    );
+  }
+
   return (
     <section aria-labelledby="city-alerts-heading" className="space-y-4">
       <div className="flex items-center justify-between gap-4">
         <SectionTitle id="city-alerts-heading" title={translations.title} />
-        <StatusBadge tone="info">{translations.demo}</StatusBadge>
+        {result.metadata.providerMode === "mock" ? (
+          <StatusBadge tone="info">{translations.demo}</StatusBadge>
+        ) : null}
       </div>
-      <p className="text-sm text-muted-foreground">{translations.demoNotice}</p>
+      {result.metadata.providerMode === "mock" ? (
+        <p className="text-sm text-muted-foreground">{translations.demoNotice}</p>
+      ) : null}
+      {result.metadata.freshnessStatus === "stale" ? (
+        <p
+          className="rounded-lg border border-amber-300/80 bg-amber-50/60 px-4 py-3 text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-100"
+          role="status"
+        >
+          {translations.staleData}{" "}
+          {result.metadata.lastSuccessfulUpdate ? (
+            <Timestamp locale={getLocaleTag(locale)} value={result.metadata.lastSuccessfulUpdate} />
+          ) : null}
+        </p>
+      ) : null}
       <div className="grid gap-4 lg:grid-cols-2">
         {result.data.map((alert) => (
-          <CityAlertCard alert={alert} key={alert.id} locale={locale} translations={translations} />
+          <CityAlertCard
+            alert={alert}
+            key={alert.id}
+            locale={locale}
+            metadata={result.metadata}
+            translations={translations}
+          />
         ))}
       </div>
     </section>
@@ -134,10 +171,11 @@ function CityAlertsFrame({ children, locale }: CityAlertsFrameProps) {
 interface CityAlertCardProps {
   alert: CityAlert;
   locale: Locale;
+  metadata: CityAlertsMetadata;
   translations: CityAlertsTranslations;
 }
 
-function CityAlertCard({ alert, locale, translations }: CityAlertCardProps) {
+function CityAlertCard({ alert, locale, metadata, translations }: CityAlertCardProps) {
   const Icon = alertIcons[alert.type];
   const severity = severityStyles[alert.severity];
   const localeTag = getLocaleTag(locale);
@@ -182,18 +220,49 @@ function CityAlertCard({ alert, locale, translations }: CityAlertCardProps) {
           <AlertDetail
             icon={AlertTriangle}
             label={translations.source}
-            value={getCityAlertContent(alert.source, translations)}
+            value={
+              alert.sourceUrl ? (
+                <>
+                  {getCityAlertContent(alert.source, translations)} ·{" "}
+                  <a
+                    aria-label={`${getCityAlertContent(alert.source, translations)}: ${translations.officialSource}`}
+                    className="focus-visible:ring-ring text-primary underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2"
+                    href={alert.sourceUrl}
+                  >
+                    {translations.officialSource}
+                  </a>
+                </>
+              ) : (
+                getCityAlertContent(alert.source, translations)
+              )
+            }
           />
-          <AlertDetail
-            icon={AlertTriangle}
-            label={translations.startsAt}
-            value={<Timestamp locale={localeTag} value={alert.startsAt} />}
-          />
+          {alert.startsAt ? (
+            <AlertDetail
+              icon={AlertTriangle}
+              label={translations.startsAt}
+              value={<Timestamp locale={localeTag} value={alert.startsAt} />}
+            />
+          ) : null}
           {alert.expectedEndAt ? (
             <AlertDetail
               icon={AlertTriangle}
               label={translations.expectedEnd}
               value={<Timestamp locale={localeTag} value={alert.expectedEndAt} />}
+            />
+          ) : null}
+          {alert.status === "active" || alert.status === "scheduled" ? (
+            <AlertDetail
+              icon={CircleAlert}
+              label={translations.status}
+              value={translations.statuses[alert.status]}
+            />
+          ) : null}
+          {metadata.lastSuccessfulUpdate ? (
+            <AlertDetail
+              icon={AlertTriangle}
+              label={translations.lastUpdated}
+              value={<Timestamp locale={localeTag} value={metadata.lastSuccessfulUpdate} />}
             />
           ) : null}
         </dl>

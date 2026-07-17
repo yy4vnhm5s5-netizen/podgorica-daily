@@ -101,3 +101,51 @@ test("produces localized Montenegrin and English summaries", () => {
   assert.ok(english.sentences.some((sentence) => sentence.includes("unusually")));
   assert.notDeepEqual(montenegrin.sentences, english.sentences);
 });
+
+test("mentions an active normalized power outage in Montenegrin", () => {
+  const overview = createDailyOverview(
+    createSnapshot({
+      alerts: {
+        data: [
+          {
+            isActive: true,
+            isMajor: false,
+            severity: "information",
+            type: "powerOutage",
+          },
+        ],
+        status: "available",
+      },
+    }),
+    "me",
+  );
+  assert.ok(
+    overview.sentences.includes("Aktivan je jedan prekid napajanja električnom energijom."),
+  );
+});
+
+test("mentions an upcoming normalized power outage in English", () => {
+  const overview = createDailyOverview(
+    createSnapshot({
+      alerts: {
+        data: [
+          {
+            isActive: false,
+            isMajor: false,
+            isUpcoming: true,
+            severity: "information",
+            type: "powerOutage",
+          },
+        ],
+        status: "available",
+      },
+    }),
+    "en",
+  );
+  assert.ok(overview.sentences.includes("One planned power outage is upcoming."));
+});
+
+test("does not invent outages when the alert source is unavailable", () => {
+  const overview = createDailyOverview(createSnapshot({ alerts: { status: "unavailable" } }), "en");
+  assert.ok(!overview.sentences.some((sentence) => sentence.includes("power outage")));
+});

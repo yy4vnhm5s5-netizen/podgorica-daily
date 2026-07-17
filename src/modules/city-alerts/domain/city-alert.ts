@@ -20,12 +20,17 @@ type CityAlertContent =
 
 interface CityAlert {
   affectedArea: CityAlertContent;
+  dataMode: "demo" | "live";
   description: CityAlertContent;
   expectedEndAt?: Date;
   id: string;
+  publishedAt?: Date;
+  rawSourceText?: string;
   severity: AlertSeverity;
   source: CityAlertContent;
-  startsAt: Date;
+  sourceUrl?: string;
+  startsAt?: Date;
+  status: "active" | "expired" | "scheduled";
   title: CityAlertContent;
   type: AlertType;
 }

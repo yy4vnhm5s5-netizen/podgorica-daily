@@ -11,10 +11,11 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "collect:cedis": "node --experimental-strip-types src/modules/city-alerts/infrastructure/collect-cedis.ts",
     "start": "next start",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "test": "node --test src/modules/daily-overview/domain/daily-overview-generator.test.ts",
+    "test": "node --test src/modules/daily-overview/domain/daily-overview-generator.test.ts src/modules/city-alerts/infrastructure/cedis-planned-outages.test.ts src/modules/city-alerts/infrastructure/cedis-cache.test.ts src/modules/city-alerts/infrastructure/cedis-city-alerts-provider.test.ts src/modules/city-alerts/infrastructure/cedis-refresh.test.ts src/modules/city-alerts/presentation/city-alerts-translations.test.ts",
     "typecheck": "tsc --noEmit",
     "format": "prettier . --write",
     "format:check": "prettier . --check",

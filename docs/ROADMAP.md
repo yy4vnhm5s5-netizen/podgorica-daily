@@ -12,7 +12,7 @@ Bootstrapped the runtime, quality gates, UI system, environment validation, cont
 
 Current weather for Podgorica is delivered through an isolated Open-Meteo adapter with attribution, freshness, and safe loading, empty, and error states. Transport and events remain future independently deployable increments; each requires provenance, stale-data behaviour, monitoring, and accessible states.
 
-An internal City Alerts demo validates active-alert presentation with mock content only. It does not represent live disruptions. Production alerts require approved provider contracts, attribution, freshness, outage handling, and monitoring for each source.
+City Alerts reads cached official CEDIS planned power outages when a collector snapshot is available. It exposes fresh, stale, and unavailable states with source attribution. Mock alerts remain an explicit development-only provider mode; further sources still require their own approved provider contracts, attribution, freshness, outage handling, and monitoring.
 
 ## Discovery and operations
 
@@ -20,4 +20,4 @@ Add maps, unified search, secure identity, and editorial administration. Introdu
 
 ## Deterministic daily overview and hardening
 
-Daily Overview is a zero-cost, deterministic summary generated from normalized cached city data. The current provider is explicitly mock data; production requires approved source contracts, scheduled cache refreshes, provenance, freshness, outage handling, and monitoring. Complete performance, security, accessibility, resilience, and operational-readiness reviews before broad production rollout.
+Daily Overview is a zero-cost, deterministic summary generated from normalized cached city data. It can consume generic normalized CEDIS power-outage read-model data without depending on CEDIS infrastructure. Add durable cache persistence, scheduled collection operations, provenance review, monitoring, and further approved source contracts before broad production rollout.

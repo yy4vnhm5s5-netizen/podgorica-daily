@@ -20,3 +20,7 @@ Future modules include weather, transport, events, maps, search, identity, edito
 ## Reliability and security
 
 External integrations require timeouts, bounded retries, structured errors, cache policy, rate limits, and health signals. Authentication and authorization are enforced on the server. Configuration is validated at process start. Logs use structured, privacy-safe fields and carry correlation identifiers.
+
+## CEDIS collection boundary
+
+The City Alerts CEDIS adapter is the first approved collector. Its dependency direction is `collector → CEDIS HTTP adapter → parser/normalizer → file cache → City Alerts application → presentation`. Page requests stop at the cache boundary; they never invoke collection. The Daily Overview receives a generic City Alerts read model rather than CEDIS infrastructure. The file-backed cache is suitable for local development and persistent servers, but a durable adapter is required for serverless deployments. See ADR 0007.

@@ -16,10 +16,16 @@ interface CityAlertsTranslations {
   errorTitle: string;
   expectedEnd: string;
   loading: string;
+  lastUpdated: string;
+  officialSource: string;
   severities: Record<AlertSeverity, string>;
   source: string;
   startsAt: string;
+  staleData: string;
+  status: string;
+  statuses: Record<"active" | "scheduled", string>;
   title: string;
+  unavailable: string;
   types: Record<AlertType, string>;
 }
 
@@ -49,6 +55,8 @@ const cityAlertsTranslations: Record<Locale, CityAlertsTranslations> = {
     errorTitle: "Alerts unavailable",
     expectedEnd: "Expected end",
     loading: "Loading city alerts",
+    lastUpdated: "Last successful update",
+    officialSource: "Official source",
     severities: {
       critical: "Critical",
       information: "Information",
@@ -57,7 +65,11 @@ const cityAlertsTranslations: Record<Locale, CityAlertsTranslations> = {
     },
     source: "Source",
     startsAt: "Starts",
+    staleData: "Data may be outdated. Last successful update:",
+    status: "Status",
+    statuses: { active: "Active", scheduled: "Scheduled" },
     title: "City alerts",
+    unavailable: "CEDIS data is currently unavailable.",
     types: {
       emergency: "Emergency",
       powerOutage: "Power outage",
@@ -92,6 +104,8 @@ const cityAlertsTranslations: Record<Locale, CityAlertsTranslations> = {
     errorTitle: "Obavještenja nijesu dostupna",
     expectedEnd: "Očekivani završetak",
     loading: "Učitavanje gradskih obavještenja",
+    lastUpdated: "Posljednje uspješno ažuriranje",
+    officialSource: "Zvanični izvor",
     severities: {
       critical: "Kritično",
       information: "Informacija",
@@ -100,7 +114,11 @@ const cityAlertsTranslations: Record<Locale, CityAlertsTranslations> = {
     },
     source: "Izvor",
     startsAt: "Početak",
+    staleData: "Podaci mogu biti zastarjeli. Posljednje uspješno ažuriranje:",
+    status: "Status",
+    statuses: { active: "Aktivno", scheduled: "Planirano" },
     title: "Gradska obavještenja",
+    unavailable: "CEDIS podaci trenutno nijesu dostupni.",
     types: {
       emergency: "Hitno stanje",
       powerOutage: "Prekid napajanja električnom energijom",

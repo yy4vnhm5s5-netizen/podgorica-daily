@@ -14,6 +14,7 @@ interface OverviewCopy {
   noActiveAlerts: string;
   noData: readonly string[];
   powerOutages: (count: number) => string;
+  upcomingPowerOutages: (count: number) => string;
   roadWorks: (count: number) => string;
   trafficDisruptions: (count: number) => string;
   unusualTemperature: (temperature: number) => string;
@@ -48,6 +49,10 @@ const overviewCopy: Record<OverviewLocale, OverviewCopy> = {
     ],
     powerOutages: (count) =>
       count === 1 ? "One power outage is active." : `${count} power outages are active.`,
+    upcomingPowerOutages: (count) =>
+      count === 1
+        ? "One planned power outage is upcoming."
+        : `${count} planned power outages are upcoming.`,
     roadWorks: (count) =>
       count === 1
         ? "Road works are affecting one area."
@@ -91,6 +96,10 @@ const overviewCopy: Record<OverviewLocale, OverviewCopy> = {
       count === 1
         ? "Aktivan je jedan prekid napajanja električnom energijom."
         : `Aktivna su ${count} prekida napajanja električnom energijom.`,
+    upcomingPowerOutages: (count) =>
+      count === 1
+        ? "Planiran je jedan prekid napajanja električnom energijom."
+        : `Planirana su ${count} prekida napajanja električnom energijom.`,
     roadWorks: (count) =>
       count === 1
         ? "Radovi na putu utiču na jedno područje."
@@ -127,7 +136,7 @@ function createDailyOverview(snapshot: CityDataSnapshot, locale: OverviewLocale)
   const sentences = [
     getCriticalAlertsSentence(activeAlerts, copy),
     getWeatherWarningsSentence(activeAlerts, copy),
-    getPowerOutagesSentence(activeAlerts, copy),
+    getPowerOutagesSentence(snapshot, activeAlerts, copy),
     getWaterOutagesSentence(activeAlerts, copy),
     getTrafficDisruptionsSentence(activeAlerts, copy),
     getRoadWorksSentence(activeAlerts, copy),
@@ -173,8 +182,25 @@ function getWeatherWarningsSentence(alerts: readonly OverviewAlert[], copy: Over
   return getAlertTypeSentence(alerts, "weatherWarning", copy.weatherWarnings);
 }
 
-function getPowerOutagesSentence(alerts: readonly OverviewAlert[], copy: OverviewCopy) {
-  return getAlertTypeSentence(alerts, "powerOutage", copy.powerOutages);
+function getPowerOutagesSentence(
+  snapshot: CityDataSnapshot,
+  alerts: readonly OverviewAlert[],
+  copy: OverviewCopy,
+) {
+  const activeCount = alerts.filter(
+    ({ isActive, type }) => type === "powerOutage" && isActive,
+  ).length;
+  const upcomingCount =
+    snapshot.alerts.status === "available"
+      ? snapshot.alerts.data.filter(({ isUpcoming, type }) => type === "powerOutage" && isUpcoming)
+          .length
+      : 0;
+
+  return activeCount > 0
+    ? copy.powerOutages(activeCount)
+    : upcomingCount > 0
+      ? copy.upcomingPowerOutages(upcomingCount)
+      : null;
 }
 
 function getWaterOutagesSentence(alerts: readonly OverviewAlert[], copy: OverviewCopy) {

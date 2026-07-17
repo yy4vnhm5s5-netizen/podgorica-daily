@@ -16,6 +16,12 @@ Scraping is a last resort. Prefer official APIs, open-data feeds, licensed datas
 
 Each collector has a named owner, monitoring for failure and staleness, alert thresholds, and a documented disable switch. Parsers must tolerate source changes, quarantine malformed records, and avoid replacing verified editorial content automatically.
 
+## CEDIS planned outages
+
+CEDIS is the currently approved HTML collection source for planned Podgorica power outages. The collector uses only `https://cedis.me/servisne-informacije/` and validated official article URLs, with a clear Podgorica Daily user agent, a 10-second timeout, one retry, and low request volume. It is manually invoked with `pnpm run collect:cedis`; pages only read its cache.
+
+The collector recommends a 60-minute cadence. It uses local fixtures for automated tests and preserves a valid cached snapshot when the source, network, or markup is suspicious. The local cache is appropriate for development and persistent servers, but not as durable shared storage in serverless deployments. See ADR 0007 for configuration, classification, and scheduling constraints.
+
 ## Privacy
 
 Collectors must not gather personal data unless a documented lawful purpose, retention policy, access control, and deletion process are approved. Credentials and raw restricted content never appear in logs or test fixtures.
