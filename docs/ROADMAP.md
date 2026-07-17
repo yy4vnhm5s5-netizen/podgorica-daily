@@ -18,4 +18,4 @@ Add maps, unified search, secure identity, and editorial administration. Introdu
 
 ## Assisted intelligence and hardening
 
-Introduce AI summaries only after source-backed content and editorial review exist. Complete performance, security, accessibility, resilience, and operational-readiness reviews before broad production rollout.
+An internal Daily Brief demo validates the intended presentation only. It uses mocked, clearly labelled content and does not use AI or city data. Introduce production AI summaries only after source-backed content and editorial review exist. Complete performance, security, accessibility, resilience, and operational-readiness reviews before broad production rollout.

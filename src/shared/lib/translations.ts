@@ -4,7 +4,6 @@ const translations = {
   en: {
     dashboard: {
       cards: {
-        aiDailySummary: "AI Daily Summary",
         airQuality: "Air Quality",
         cityAlerts: "City Alerts",
         events: "Events",
@@ -42,7 +41,6 @@ const translations = {
   me: {
     dashboard: {
       cards: {
-        aiDailySummary: "AI dnevni sažetak",
         airQuality: "Kvalitet vazduha",
         cityAlerts: "Gradska upozorenja",
         events: "Događaji",

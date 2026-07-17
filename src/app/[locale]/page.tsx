@@ -5,6 +5,10 @@ import {
   CurrentWeatherCard,
   CurrentWeatherCardLoading,
 } from "@/modules/weather/presentation/current-weather-card";
+import {
+  DailyBriefCard,
+  DailyBriefCardLoading,
+} from "@/modules/daily-brief/presentation/daily-brief-card";
 import { DashboardCard } from "@/shared/components/dashboard/dashboard-card";
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
 import { GlobalSearch } from "@/shared/components/layout/global-search";
@@ -36,6 +40,11 @@ function DashboardPage({ locale }: { locale: Locale }) {
       <section className="space-y-8" id="dashboard">
         <div className="space-y-6">
           <SectionTitle description={description} title={title} />
+          {isFeatureEnabled("dailyBrief") ? (
+            <Suspense fallback={<DailyBriefCardLoading locale={locale} />}>
+              <DailyBriefCard locale={locale} />
+            </Suspense>
+          ) : null}
           <GlobalSearch label={translations.shell.globalSearchComingSoon} />
         </div>
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -48,7 +57,6 @@ function DashboardPage({ locale }: { locale: Locale }) {
           <DashboardCard description={emptyCardDescription} title={cards.publicTransport} />
           <DashboardCard description={emptyCardDescription} title={cards.events} />
           <DashboardCard description={emptyCardDescription} title={cards.cityAlerts} />
-          <DashboardCard description={emptyCardDescription} title={cards.aiDailySummary} />
           <DashboardCard description={emptyCardDescription} title={cards.importantNumbers} />
           <DashboardCard description={emptyCardDescription} title={cards.explorePodgorica} />
         </div>

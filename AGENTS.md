@@ -4,7 +4,7 @@
 
 Podgorica Daily is a trusted, fast, and accessible guide to daily life in Podgorica. It helps residents find local information quickly while making source, freshness, attribution, and limitations visible. Read `docs/VISION.md` before changing product-facing behaviour.
 
-The repository currently contains a production-oriented foundation, design system, application shell, and a server-rendered Weather module for current Podgorica conditions. Transport, events, persistence, authentication, scraping, maps, search, and AI features are not implemented. Do not describe shell placeholders as implemented product capabilities.
+The repository currently contains a production-oriented foundation, design system, application shell, a server-rendered Weather module for current Podgorica conditions, and an explicitly labelled internal Daily Brief demo. The demo uses mocked content only; it is not AI-generated and must never be represented as a production summary. Transport, events, persistence, authentication, scraping, maps, search, and production AI features are not implemented. Do not describe shell placeholders or the Daily Brief demo as implemented product capabilities.
 
 ## 2. Product Principles
 
@@ -42,7 +42,7 @@ docs/adr/              accepted architecture decision records
 .github/               CI and contribution templates
 ```
 
-The active application route is `src/app/page.tsx`. The root layout is `src/app/layout.tsx`. The dashboard combines the Weather module with static placeholders for unimplemented capabilities; search and command-palette messages are non-interactive placeholders.
+The root route in `src/app/page.tsx` redirects to the default locale. The locale dashboard route is `src/app/[locale]/page.tsx`, and the root layout is `src/app/layout.tsx`. The dashboard combines the Weather module, the clearly labelled Daily Brief demo, and static placeholders for unimplemented capabilities; search and command-palette messages are non-interactive placeholders.
 
 ## 5. Architecture
 
@@ -179,10 +179,10 @@ When logging is introduced, use structured, privacy-safe events with correlation
 
 ## 19. Feature Flag Policy
 
-All future product modules are gated through `src/shared/config/features.ts`.
+All product modules are gated through `src/shared/config/features.ts`.
 
 - Add a typed, lowercase camelCase flag before exposing a new module or incomplete capability.
-- Flags default to `false` until the module is approved and ready to be exposed.
+- Flags default to `false` until the module is approved and ready to be exposed. The approved `dailyBrief` demo is the documented exception: it is enabled only because every surface labels it as a demo.
 - Use `isFeatureEnabled()` rather than scattered flag literals.
 - Keep flags at composition boundaries (routes/navigation/module entry points), not deeply throughout domain logic.
 - Remove a flag and its dead branch once rollout is complete; document any non-trivial rollout decision.
@@ -283,7 +283,7 @@ Use `feat`, `fix`, `docs`, `refactor`, `test`, `build`, `ci`, `chore`, or `perf`
 
 ## 30. ADR Policy
 
-The accepted ADRs are `docs/adr/0001-modular-monolith.md`, `docs/adr/0002-shared-ui-primitives.md`, and `docs/adr/0003-open-meteo-current-weather.md`.
+The accepted ADRs are `docs/adr/0001-modular-monolith.md`, `docs/adr/0002-shared-ui-primitives.md`, `docs/adr/0003-open-meteo-current-weather.md`, `docs/adr/0004-locale-prefixed-internationalization.md`, and `docs/adr/0005-daily-brief-demo-preview.md`.
 
 - Create a new numbered ADR for a material, lasting architectural decision: providers, maps, identity, persistence, hosting, AI models, observability, or an architectural boundary change.
 - Include status, date, context, decision, and consequences.

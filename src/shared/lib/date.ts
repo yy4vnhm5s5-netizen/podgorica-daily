@@ -23,4 +23,16 @@ function formatDateTime(value: Date, options: FormatDateTimeOptions = {}) {
   };
 }
 
-export { defaultTimeZone, formatDateTime, type FormatDateTimeOptions };
+function getHourInTimeZone(value: Date, timeZone = defaultTimeZone) {
+  const hour = new Intl.DateTimeFormat("en", {
+    hour: "numeric",
+    hour12: false,
+    timeZone,
+  })
+    .formatToParts(value)
+    .find(({ type }) => type === "hour")?.value;
+
+  return hour ? Number.parseInt(hour, 10) : 0;
+}
+
+export { defaultTimeZone, formatDateTime, getHourInTimeZone, type FormatDateTimeOptions };
