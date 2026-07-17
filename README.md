@@ -22,11 +22,11 @@ The default language is Montenegrin Latin, ijekavian (`/me`). English is availab
 
 Podgorica is the only enabled city and the public experience remains unchanged. Internally, providers receive a city context and normalized records carry `cityIds`, preparing future city-specific routes without exposing them today. `DEFAULT_CITY=podgorica` is validated against the central registry. See [ADR 0009](docs/adr/0009-multi-city-platform-foundation.md).
 
-## Event platform foundation
+## Event platform and official collectors
 
-The repository includes a disabled, city-aware Event Platform foundation: normalized event and venue contracts, cache and provider boundaries, deterministic IDs and deduplication, recurrence limits, timezone-aware query rules, and a provider-agnostic Daily Overview contract. It has no source adapter, collector, route, or visible UI. `ENABLE_EVENTS=false` and `EVENT_PROVIDER_MODE=disabled` preserve the current public behaviour. See [ADR 0010](docs/adr/0010-event-platform-foundation.md).
+The repository includes a disabled, city-aware Event Platform: normalized event and venue contracts, cache and provider boundaries, deterministic IDs and deduplication, recurrence limits, timezone-aware query rules, and a provider-agnostic Daily Overview contract. `ENABLE_EVENTS=false` and `EVENT_PROVIDER_MODE=disabled` preserve the current public behaviour. There is no public Events route or UI. See [ADR 0010](docs/adr/0010-event-platform-foundation.md).
 
-KIC Budo Tomović is the first approved official event source. Its collector reads the official KIC news feed and individual programme articles into a cache; visitor requests read only that cache. It remains inactive until `ENABLE_EVENTS=true` and `EVENT_PROVIDER_MODE=live` are explicitly configured.
+KIC Budo Tomović and Crnogorsko narodno pozorište (CNP) are approved official event sources. Their collectors read only their official listings and same-host programme pages into separate caches; application reads use those caches only. They remain inactive until `ENABLE_EVENTS=true` and `EVENT_PROVIDER_MODE=live` are explicitly configured. Mock mode never enables live providers and is rejected in production.
 
 Event collection applies deterministic quality validation before caching. It preserves valid date-only and incomplete events with warnings, rejects invalid core records, and records collector diagnostics without exposing rejected data. See [ADR 0012](docs/adr/0012-event-quality-layer.md).
 
@@ -34,7 +34,10 @@ Quality policy and provider-health thresholds are validated server configuration
 
 ```bash
 pnpm run collect:kic-events
+pnpm run collect:cnp-events
 ```
+
+CNP uses the official [CNP repertoire](https://cnp.me/repertoar/) and writes `.runtime/cache/cnp-events.json`. Its collector uses fixture-only automated tests; tests make no live network calls. See [ADR 0013](docs/adr/0013-cnp-event-provider.md).
 
 ## Architecture
 

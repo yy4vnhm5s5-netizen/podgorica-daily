@@ -20,6 +20,7 @@ interface EventCacheSnapshot {
     id: string;
     sourceUrl: string;
   };
+  rejectedEventIds?: string[];
   schemaVersion: 1 | 2;
   sourceUpdatedAt?: string;
   venues: Venue[];
@@ -30,8 +31,8 @@ async function readEventCache(
   freshnessThresholdMinutes: number,
   now = new Date(),
 ): Promise<EventProviderResult> {
-  const snapshot = await readJsonCache<EventCacheSnapshot>(cachePath);
-  if (!snapshot || (snapshot.schemaVersion !== 1 && snapshot.schemaVersion !== 2)) {
+  const snapshot = await readEventCacheSnapshot(cachePath);
+  if (!snapshot) {
     return { events: [], parserWarnings: [], state: "unavailable", venues: [] };
   }
 
@@ -41,7 +42,7 @@ async function readEventCache(
     freshnessThresholdMinutes,
   );
   return {
-    events: snapshot.events,
+    events: snapshot.events.filter((event) => !snapshot.rejectedEventIds?.includes(event.id)),
     fetchedAt: snapshot.fetchedAt,
     lastRefreshError: snapshot.lastRefreshError,
     parserWarnings: snapshot.parserWarnings,
@@ -52,8 +53,15 @@ async function readEventCache(
   };
 }
 
+async function readEventCacheSnapshot(cachePath: string) {
+  const snapshot = await readJsonCache<EventCacheSnapshot>(cachePath);
+  return snapshot && (snapshot.schemaVersion === 1 || snapshot.schemaVersion === 2)
+    ? snapshot
+    : null;
+}
+
 async function writeEventCache(snapshot: EventCacheSnapshot, cachePath: string) {
   await writeJsonCache(snapshot, cachePath);
 }
 
-export { readEventCache, writeEventCache, type EventCacheSnapshot };
+export { readEventCache, readEventCacheSnapshot, writeEventCache, type EventCacheSnapshot };

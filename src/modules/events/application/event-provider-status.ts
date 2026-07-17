@@ -55,6 +55,7 @@ function deriveEventProviderHealth(
   const warningRate = total ? (diagnostics?.acceptedWithWarningsCount ?? 0) / total : 0;
   if (
     input.lastRefreshError ||
+    input.result.lastRefreshError ||
     (diagnostics?.finalEventCount === 0 && diagnostics?.previousSuccessfulEventCount)
   )
     return "failing";

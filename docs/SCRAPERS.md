@@ -28,11 +28,13 @@ AMSCG is the approved official source for road-condition notices at `https://ams
 
 ## Events
 
-KIC Budo Tomović is the first approved event collector. It reads only the official `https://kic.podgorica.me/novosti` listing and validated same-host programme articles, using the established timeout, one-retry, user-agent, and cache-first policy. It is invoked by `pnpm run collect:kic-events`; pages read `.runtime/cache/kic-events.json` only. The initial cadence is 60 minutes. Parsing is fixture-tested and preserves missing fields rather than inferring them. See ADR 0011.
+KIC Budo Tomović is an approved event collector. It reads only the official `https://kic.podgorica.me/novosti` listing and validated same-host programme articles, using the established timeout, one-retry, user-agent, and cache-first policy. It is invoked by `pnpm run collect:kic-events`; pages read `.runtime/cache/kic-events.json` only. The initial cadence is 60 minutes. Parsing is fixture-tested and preserves missing fields rather than inferring them. See ADR 0011.
+
+Crnogorsko narodno pozorište (CNP) is an approved Event collector. It reads only `https://cnp.me/repertoar/` and validated `https://cnp.me` detail pages. `pnpm run collect:cnp-events` uses the established Podgorica Daily user agent, a 10-second timeout, one retry, typed HTTP failures, and a low request volume; application reads only `.runtime/cache/cnp-events.json`. The initial cadence is 60 minutes. Listing/detail parsing and refresh tests use deterministic local fixtures only and never call the live CNP site. Missing fields remain unavailable rather than inferred. See ADR 0013.
 
 Before cache writes, all normalized events pass deterministic quality validation. Invalid core records are rejected, optional omissions become typed warnings, and zero-result/count-drop protection is recorded in cache diagnostics. See ADR 0012.
 
-Quality policy is server configuration; availability and quality health are separate operational signals. Visitors never trigger KIC collection or quality evaluation.
+Quality policy is server configuration; availability and quality health are separate operational signals. Visitors never trigger KIC or CNP collection, quality evaluation, or provider HTTP requests.
 
 Future event sources require their own official-source, legal, attribution, cache, fixture, and disable-switch review before registration or activation.
 

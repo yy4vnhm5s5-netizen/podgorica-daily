@@ -2,6 +2,7 @@ import { deduplicateEvents } from "../domain/event-deduplication.ts";
 import type { CityEvent, EventProvider, EventProviderResult, Venue } from "../domain/event.ts";
 import { getEnabledEventProviders } from "../infrastructure/event-provider-registry.ts";
 import { toEventProviderStatusReadModel } from "./event-provider-status.ts";
+import { queryEvents } from "./query-events.ts";
 import { getEventQualityHealthThresholds } from "../../../config/event-quality.ts";
 import type { CityContext } from "@/shared/types/city";
 
@@ -38,7 +39,7 @@ async function getCityEvents(
     .filter((event) => event.cityIds.includes(context.city.id));
 
   return {
-    events: deduplicateEvents(events),
+    events: queryEvents(deduplicateEvents(events), context),
     providers: results.map(({ metadata, result }) => ({
       id: metadata.id,
       state: result.state,

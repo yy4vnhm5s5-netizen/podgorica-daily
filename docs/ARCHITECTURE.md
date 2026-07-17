@@ -27,11 +27,13 @@ Provider metadata is centrally registered for Weather, CEDIS, and AMSCG. It reco
 
 `src/modules/events` owns the normalized Event and Venue domains, provider contracts, candidate normalization, deterministic ID and deduplication logic, query semantics, and event cache schema. Collection and cache reading are intentionally separate: any future collector writes a module-owned snapshot using shared atomic JSON helpers, while application reads combine only enabled cached providers. No visitor request may invoke collection.
 
-Event records are city-aware (`cityIds`) and preserve all trusted source references after exact or strong deterministic matches merge. Date-only events remain date-only; timed events use timezone-aware `Europe/Podgorica` conversion. The query layer applies city-local boundaries for today, tomorrow, the current Monday–Sunday week, and the weekend (Friday 18:00 or later only when a time is explicit, Saturday, and Sunday). No public Events UI or source adapter exists in this milestone. See ADR 0010.
+Event records are city-aware (`cityIds`) and preserve all trusted source references after exact or strong deterministic matches merge. Date-only events remain date-only; timed events use timezone-aware `Europe/Podgorica` conversion. The query layer applies city-local boundaries for today, tomorrow, the current Monday–Sunday week, and the weekend (Friday 18:00 or later only when a time is explicit, Saturday, and Sunday). KIC Budo Tomović and CNP are registered cache-backed official providers; no public Events UI or route exists. See ADRs 0010, 0011, and 0013.
 
 Event collectors run normalized records through the module-owned quality pipeline before deduplication and cache writes. Typed reports and cache diagnostics make rejection, warning, score, and count-drop state available without leaking rejected records to public reads. See ADR 0012.
 
 The Event application service composes availability with a separate deterministic quality-health status and exposes a typed non-public provider status read model. Legacy cache snapshots without diagnostics receive safe zero-value defaults.
+
+The CNP provider reads only `.runtime/cache/cnp-events.json` when `ENABLE_EVENTS=true` and `EVENT_PROVIDER_MODE=live`. Collection is isolated behind `pnpm run collect:cnp-events`; it validates the `cnp.me` HTTPS host, parses listing/detail pages through an injected HTTP client, and writes atomically. CNP and KIC cache reads remain independent, while the application uses shared deterministic sorting, deduplication, provenance retention, rejected-event filtering, and provider-health mapping. No application read path invokes HTTP or a collector. See ADR 0013.
 
 ## Reliability and security
 
