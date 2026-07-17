@@ -4,9 +4,9 @@
 
 Create and review the project documentation and GitHub issues. No application code is introduced.
 
-## Foundation
+## Foundation — Complete (v0.1.0-foundation)
 
-Bootstrap the runtime, quality gates, UI system, environment validation, container build, and delivery pipeline. Establish architecture decision records for services that affect future modules.
+Bootstrapped the runtime, quality gates, UI system, environment validation, container build, delivery pipeline, architecture decision records, application shell, feature flags, and engineering handbook. Product modules remain intentionally unimplemented.
 
 ## Trusted local data
 
