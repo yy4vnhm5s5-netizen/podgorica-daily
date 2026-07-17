@@ -43,7 +43,7 @@ const weatherIcons: Record<WeatherConditionIcon, LucideIcon> = {
 
 function WeatherCardFrame({ children }: Readonly<PropsWithChildren>) {
   return (
-    <Card className="min-h-44 overflow-hidden border-emerald-200/80 bg-gradient-to-br from-emerald-50/80 via-background to-background transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-md dark:border-emerald-950">
+    <Card className="min-h-44 overflow-hidden border-sky-200/70 bg-sky-50/60 transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-sky-300/80 hover:shadow-[0_12px_24px_-20px_rgb(15_23_42_/_0.32)] dark:border-sky-950/80">
       {children}
     </Card>
   );
@@ -58,15 +58,15 @@ function CurrentWeatherCardLoading({ locale }: CurrentWeatherCardProps) {
 
   return (
     <WeatherCardFrame>
-      <CardHeader className="flex-row items-center gap-3 space-y-0 bg-emerald-100/40 dark:bg-emerald-950/20">
+      <CardHeader className="flex-row items-center gap-3 space-y-0 p-5 sm:p-6">
         <CloudSun
           aria-hidden="true"
-          className="size-[1.125rem] text-emerald-700 dark:text-emerald-300"
+          className="size-[1.125rem] text-sky-700 dark:text-sky-300"
           strokeWidth={1.8}
         />
         <h2 className="text-base font-semibold">{translations.title}</h2>
       </CardHeader>
-      <CardContent className="pt-6">
+      <CardContent className="p-5 pt-0 sm:p-6 sm:pt-0">
         <LoadingSkeleton label={translations.loading} lines={4} />
       </CardContent>
     </WeatherCardFrame>
@@ -80,15 +80,15 @@ async function CurrentWeatherCard({ locale }: CurrentWeatherCardProps) {
   if (result.status === "error") {
     return (
       <WeatherCardFrame>
-        <CardHeader className="flex-row items-center gap-3 space-y-0 bg-emerald-100/40 dark:bg-emerald-950/20">
+        <CardHeader className="flex-row items-center gap-3 space-y-0 p-5 sm:p-6">
           <CloudSun
             aria-hidden="true"
-            className="size-[1.125rem] text-emerald-700 dark:text-emerald-300"
+            className="size-[1.125rem] text-sky-700 dark:text-sky-300"
             strokeWidth={1.8}
           />
           <h2 className="text-base font-semibold">{translations.title}</h2>
         </CardHeader>
-        <CardContent className="pt-6">
+        <CardContent className="p-5 pt-0 sm:p-6 sm:pt-0">
           <ErrorState description={translations.errorDescription} title={translations.errorTitle} />
         </CardContent>
       </WeatherCardFrame>
@@ -98,15 +98,15 @@ async function CurrentWeatherCard({ locale }: CurrentWeatherCardProps) {
   if (result.status === "empty") {
     return (
       <WeatherCardFrame>
-        <CardHeader className="flex-row items-center gap-3 space-y-0 bg-emerald-100/40 dark:bg-emerald-950/20">
+        <CardHeader className="flex-row items-center gap-3 space-y-0 p-5 sm:p-6">
           <CloudSun
             aria-hidden="true"
-            className="size-[1.125rem] text-emerald-700 dark:text-emerald-300"
+            className="size-[1.125rem] text-sky-700 dark:text-sky-300"
             strokeWidth={1.8}
           />
           <h2 className="text-base font-semibold">{translations.title}</h2>
         </CardHeader>
-        <CardContent className="pt-6">
+        <CardContent className="p-5 pt-0 sm:p-6 sm:pt-0">
           <EmptyState description={translations.emptyDescription} title={translations.emptyTitle} />
         </CardContent>
       </WeatherCardFrame>
@@ -118,11 +118,11 @@ async function CurrentWeatherCard({ locale }: CurrentWeatherCardProps) {
 
   return (
     <WeatherCardFrame>
-      <CardHeader className="flex-row items-start justify-between gap-4 space-y-0 bg-emerald-100/40 dark:bg-emerald-950/20">
+      <CardHeader className="flex-row items-start justify-between gap-4 space-y-0 p-5 sm:p-6">
         <div className="flex items-start gap-3">
           <CloudSun
             aria-hidden="true"
-            className="mt-0.5 size-[1.125rem] shrink-0 text-emerald-700 dark:text-emerald-300"
+            className="mt-0.5 size-[1.125rem] shrink-0 text-sky-700 dark:text-sky-300"
             strokeWidth={1.8}
           />
           <div>
@@ -132,7 +132,7 @@ async function CurrentWeatherCard({ locale }: CurrentWeatherCardProps) {
         </div>
         <StatusBadge tone="info">{translations.status}</StatusBadge>
       </CardHeader>
-      <CardContent className="space-y-5 pt-6">
+      <CardContent className="space-y-5 p-5 pt-0 sm:p-6 sm:pt-0">
         <div className="flex items-end justify-between gap-4">
           <div className="min-w-0">
             <p className="text-5xl font-semibold tracking-tighter sm:text-6xl">
@@ -192,7 +192,7 @@ function WeatherGlyph({ condition }: WeatherGlyphProps) {
   const Icon = weatherIcons[getWeatherConditionIcon(condition)];
 
   return (
-    <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 sm:size-16">
+    <div className="flex size-14 shrink-0 items-center justify-center rounded-xl bg-sky-100/70 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300 sm:size-16">
       <Icon aria-hidden="true" className="size-7 sm:size-8" />
     </div>
   );

@@ -20,11 +20,11 @@ function DailyOverviewCardLoading({ locale }: DailyOverviewCardProps) {
   const translations = getDailyOverviewTranslations(locale);
 
   return (
-    <Card className="overflow-hidden border-primary/20 bg-gradient-to-br from-primary/10 via-background to-background shadow-sm">
-      <CardHeader className="space-y-3 p-6 sm:p-8">
+    <Card className="overflow-hidden border-blue-200/70 bg-blue-50/60">
+      <CardHeader className="space-y-3 p-5 sm:p-6">
         <LoadingSkeleton label={translations.loading} lines={2} />
       </CardHeader>
-      <CardContent className="px-6 pb-6 sm:px-8 sm:pb-8">
+      <CardContent className="p-5 pt-0 sm:p-6 sm:pt-0">
         <LoadingSkeleton label={translations.loading} lines={4} />
       </CardContent>
     </Card>
@@ -54,14 +54,14 @@ async function DailyOverviewCard({ locale }: DailyOverviewCardProps) {
   const { generatedAt, isDemoData, sentences } = result.data;
 
   return (
-    <Card className="overflow-hidden border-primary/20 bg-gradient-to-br from-primary/10 via-background to-background shadow-md">
-      <CardHeader className="p-6 sm:p-8">
+    <Card className="overflow-hidden border-blue-200/70 bg-blue-50/60 transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-blue-300/80 hover:shadow-[0_12px_24px_-20px_rgb(15_23_42_/_0.32)] dark:border-blue-950/80">
+      <CardHeader className="p-5 sm:p-6">
         <div className="flex items-start gap-3">
-          <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm">
-            <MapPinned aria-hidden="true" className="size-5" />
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-blue-100/70 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
+            <MapPinned aria-hidden="true" className="size-[1.125rem]" strokeWidth={1.8} />
           </div>
           <div>
-            <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+            <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">
               {translations.title}
             </h2>
             <p className="mt-2 text-sm text-muted-foreground">
@@ -71,14 +71,14 @@ async function DailyOverviewCard({ locale }: DailyOverviewCardProps) {
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-6 px-6 pb-6 sm:px-8 sm:pb-8">
+      <CardContent className="space-y-5 p-5 pt-0 sm:p-6 sm:pt-0">
         <div className="max-w-3xl space-y-3 text-sm leading-6 text-muted-foreground sm:text-base sm:leading-7">
           {sentences.map((sentence) => (
             <p key={sentence}>{sentence}</p>
           ))}
         </div>
         {isDemoData ? (
-          <p className="rounded-lg border border-primary/15 bg-background/70 px-4 py-3 text-sm leading-6 text-muted-foreground">
+          <p className="rounded-lg border border-blue-200/60 bg-background/60 px-4 py-3 text-sm leading-6 text-muted-foreground dark:border-blue-950/80">
             {translations.demoNotice}
           </p>
         ) : null}
@@ -95,11 +95,11 @@ function DailyOverviewFrame({ children, locale }: DailyOverviewFrameProps) {
   const translations = getDailyOverviewTranslations(locale);
 
   return (
-    <Card className="overflow-hidden border-primary/20 bg-gradient-to-br from-primary/10 via-background to-background shadow-sm">
-      <CardHeader className="p-6 sm:p-8">
-        <h2 className="text-2xl font-semibold tracking-tight">{translations.title}</h2>
+    <Card className="overflow-hidden border-blue-200/70 bg-blue-50/60 dark:border-blue-950/80">
+      <CardHeader className="p-5 sm:p-6">
+        <h2 className="text-xl font-semibold tracking-tight">{translations.title}</h2>
       </CardHeader>
-      <CardContent className="px-6 pb-6 sm:px-8 sm:pb-8">{children}</CardContent>
+      <CardContent className="p-5 pt-0 sm:p-6 sm:pt-0">{children}</CardContent>
     </Card>
   );
 }
