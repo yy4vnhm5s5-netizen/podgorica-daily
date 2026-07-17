@@ -58,7 +58,12 @@ function CurrentWeatherCardLoading({ locale }: CurrentWeatherCardProps) {
 
   return (
     <WeatherCardFrame>
-      <CardHeader className="bg-emerald-100/40 dark:bg-emerald-950/20">
+      <CardHeader className="flex-row items-center gap-3 space-y-0 bg-emerald-100/40 dark:bg-emerald-950/20">
+        <CloudSun
+          aria-hidden="true"
+          className="size-[1.125rem] text-emerald-700 dark:text-emerald-300"
+          strokeWidth={1.8}
+        />
         <h2 className="text-base font-semibold">{translations.title}</h2>
       </CardHeader>
       <CardContent className="pt-6">
@@ -75,7 +80,12 @@ async function CurrentWeatherCard({ locale }: CurrentWeatherCardProps) {
   if (result.status === "error") {
     return (
       <WeatherCardFrame>
-        <CardHeader className="bg-emerald-100/40 dark:bg-emerald-950/20">
+        <CardHeader className="flex-row items-center gap-3 space-y-0 bg-emerald-100/40 dark:bg-emerald-950/20">
+          <CloudSun
+            aria-hidden="true"
+            className="size-[1.125rem] text-emerald-700 dark:text-emerald-300"
+            strokeWidth={1.8}
+          />
           <h2 className="text-base font-semibold">{translations.title}</h2>
         </CardHeader>
         <CardContent className="pt-6">
@@ -88,7 +98,12 @@ async function CurrentWeatherCard({ locale }: CurrentWeatherCardProps) {
   if (result.status === "empty") {
     return (
       <WeatherCardFrame>
-        <CardHeader className="bg-emerald-100/40 dark:bg-emerald-950/20">
+        <CardHeader className="flex-row items-center gap-3 space-y-0 bg-emerald-100/40 dark:bg-emerald-950/20">
+          <CloudSun
+            aria-hidden="true"
+            className="size-[1.125rem] text-emerald-700 dark:text-emerald-300"
+            strokeWidth={1.8}
+          />
           <h2 className="text-base font-semibold">{translations.title}</h2>
         </CardHeader>
         <CardContent className="pt-6">
@@ -104,9 +119,16 @@ async function CurrentWeatherCard({ locale }: CurrentWeatherCardProps) {
   return (
     <WeatherCardFrame>
       <CardHeader className="flex-row items-start justify-between gap-4 space-y-0 bg-emerald-100/40 dark:bg-emerald-950/20">
-        <div>
-          <h2 className="text-base font-semibold">{translations.title}</h2>
-          <p className="mt-1 text-sm text-muted-foreground">{translations.location}</p>
+        <div className="flex items-start gap-3">
+          <CloudSun
+            aria-hidden="true"
+            className="mt-0.5 size-[1.125rem] shrink-0 text-emerald-700 dark:text-emerald-300"
+            strokeWidth={1.8}
+          />
+          <div>
+            <h2 className="text-base font-semibold">{translations.title}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">{translations.location}</p>
+          </div>
         </div>
         <StatusBadge tone="info">{translations.status}</StatusBadge>
       </CardHeader>

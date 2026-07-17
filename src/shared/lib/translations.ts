@@ -14,9 +14,7 @@ const translations = {
         subtitle: "Want to promote your local business? Contact us.",
         title: "Your advertisement",
       },
-      description: "A calm, accessible workspace for Podgorica's daily information.",
       emptyCardDescription: "No information is available yet.",
-      title: "Dashboard",
     },
     metadata: {
       description: "A trusted, accessible guide to daily life in Podgorica.",
@@ -55,9 +53,7 @@ const translations = {
         subtitle: "Želite da promovišete svoj lokalni biznis? Kontaktirajte nas.",
         title: "Vaša reklama",
       },
-      description: "Miran i pristupačan pregled svakodnevnih informacija za Podgoricu.",
       emptyCardDescription: "Informacije još nijesu dostupne.",
-      title: "Pregled",
     },
     metadata: {
       description: "Pouzdan i pristupačan vodič kroz svakodnevni život u Podgorici.",

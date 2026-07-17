@@ -5,13 +5,13 @@
 @layer base {
   :root {
     color-scheme: light;
-    --background: 0 0% 100%;
+    --background: 210 40% 99%;
     --foreground: 222.2 47.4% 11.2%;
-    --primary: 217.2 91.2% 59.8%;
+    --primary: 211 72% 45%;
     --primary-foreground: 210 40% 98%;
-    --muted: 210 40% 96.1%;
+    --muted: 210 32% 96%;
     --muted-foreground: 215.4 16.3% 46.9%;
-    --border: 214.3 31.8% 91.4%;
+    --border: 213 25% 90%;
     --radius: 0.75rem;
   }
 
@@ -19,7 +19,7 @@
     color-scheme: dark;
     --background: 222.2 47.4% 7%;
     --foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 67.8%;
+    --primary: 207 78% 67%;
     --primary-foreground: 222.2 47.4% 11.2%;
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;

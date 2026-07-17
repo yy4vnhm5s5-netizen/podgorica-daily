@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
+import { CalendarDays, Landmark, Phone, Wind } from "lucide-react";
 
 import {
   CurrentWeatherCard,
@@ -17,7 +18,6 @@ import { AdvertisingCard } from "@/shared/components/dashboard/advertising-card"
 import { DashboardCard } from "@/shared/components/dashboard/dashboard-card";
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
 import { GlobalSearch } from "@/shared/components/layout/global-search";
-import { SectionTitle } from "@/shared/components/section-title";
 import { isLocale, type Locale } from "@/shared/config/locale";
 import { isFeatureEnabled } from "@/shared/config/features";
 import { getTranslations } from "@/shared/lib/translations";
@@ -38,16 +38,12 @@ async function LocalePage({ params }: LocalePageProps) {
 
 function DashboardPage({ locale }: { locale: Locale }) {
   const translations = getTranslations(locale);
-  const { advertising, cards, description, emptyCardDescription, title } =
-    translations.dashboard;
+  const { advertising, cards, emptyCardDescription } = translations.dashboard;
 
   return (
     <DashboardLayout locale={locale} translations={translations}>
       <section className="space-y-10" id="dashboard">
         <div className="space-y-7">
-          <div className="rounded-2xl border border-primary/10 bg-gradient-to-r from-primary/[0.08] via-background to-sky-100/60 px-5 py-6 sm:px-7 sm:py-8 dark:to-sky-950/20">
-            <SectionTitle description={description} title={title} />
-          </div>
           {isFeatureEnabled("dailyOverview") ? (
             <Suspense fallback={<DailyOverviewCardLoading locale={locale} />}>
               <DailyOverviewCard locale={locale} />
@@ -58,39 +54,49 @@ function DashboardPage({ locale }: { locale: Locale }) {
               <CityAlertsSection locale={locale} />
             </Suspense>
           ) : null}
-          <GlobalSearch label={translations.shell.globalSearchComingSoon} />
+          <div className="rounded-2xl border border-primary/10 bg-primary/[0.025] p-4 sm:p-5">
+            <AdvertisingCard
+              label={advertising.label}
+              subtitle={advertising.subtitle}
+              title={advertising.title}
+            />
+          </div>
+          <div className="rounded-2xl bg-muted/40 p-4 sm:p-5">
+            <GlobalSearch label={translations.shell.globalSearchComingSoon} />
+          </div>
         </div>
-        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-          {isFeatureEnabled("weather") ? (
-            <Suspense fallback={<CurrentWeatherCardLoading locale={locale} />}>
-              <CurrentWeatherCard locale={locale} />
-            </Suspense>
-          ) : null}
-          <DashboardCard
-            accent="blue"
-            description={emptyCardDescription}
-            title={cards.airQuality}
-          />
-          <DashboardCard
-            accent="orange"
-            description={emptyCardDescription}
-            title={cards.events}
-          />
-          <DashboardCard
-            accent="red"
-            description={emptyCardDescription}
-            title={cards.importantNumbers}
-          />
-          <DashboardCard
-            accent="blue"
-            description={emptyCardDescription}
-            title={cards.explorePodgorica}
-          />
-          <AdvertisingCard
-            label={advertising.label}
-            subtitle={advertising.subtitle}
-            title={advertising.title}
-          />
+        <div className="rounded-2xl bg-slate-50/70 p-4 sm:p-5 lg:p-6 dark:bg-slate-950/20">
+          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            {isFeatureEnabled("weather") ? (
+              <Suspense fallback={<CurrentWeatherCardLoading locale={locale} />}>
+                <CurrentWeatherCard locale={locale} />
+              </Suspense>
+            ) : null}
+            <DashboardCard
+              accent="blue"
+              description={emptyCardDescription}
+              icon={Wind}
+              title={cards.airQuality}
+            />
+            <DashboardCard
+              accent="orange"
+              description={emptyCardDescription}
+              icon={CalendarDays}
+              title={cards.events}
+            />
+            <DashboardCard
+              accent="red"
+              description={emptyCardDescription}
+              icon={Phone}
+              title={cards.importantNumbers}
+            />
+            <DashboardCard
+              accent="blue"
+              description={emptyCardDescription}
+              icon={Landmark}
+              title={cards.explorePodgorica}
+            />
+          </div>
         </div>
       </section>
     </DashboardLayout>
