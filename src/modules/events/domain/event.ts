@@ -1,0 +1,171 @@
+import type { CityContext, CityId } from "@/shared/types/city";
+import type { ProviderMetadata } from "@/shared/types/provider";
+
+const eventCategories = [
+  "concert",
+  "festival",
+  "theatre",
+  "movie",
+  "sport",
+  "kids",
+  "education",
+  "conference",
+  "market",
+  "exhibition",
+  "community",
+  "government",
+  "nightlife",
+  "workshop",
+  "literature",
+  "other",
+] as const;
+
+const eventStatuses = ["scheduled", "active", "cancelled", "postponed", "completed"] as const;
+
+type EventCategory = (typeof eventCategories)[number];
+type EventStatus = (typeof eventStatuses)[number];
+type EventLanguage = "en" | "me" | "und";
+type EventProviderState = "disabled" | "fresh" | "mock" | "stale" | "unavailable";
+
+interface Venue {
+  address?: string;
+  cityId: CityId;
+  id: string;
+  latitude?: number;
+  longitude?: number;
+  name: string;
+  sourceUrl?: string;
+  website?: string;
+}
+
+interface EventSourceReference {
+  sourceId: string;
+  sourceName: string;
+  sourceUrl: string;
+}
+
+interface CityEvent {
+  address?: string;
+  category: EventCategory;
+  cityIds: CityId[];
+  description?: string;
+  endsAt?: string;
+  firstSeenAt?: string;
+  id: string;
+  imageUrl?: string;
+  isFree?: boolean;
+  language: EventLanguage;
+  organizer?: string;
+  priceAmount?: number;
+  recurrence?: EventRecurrence;
+  sourceId: string;
+  sourceName: string;
+  sourceReferences: EventSourceReference[];
+  sourceUpdatedAt?: string;
+  sourceUrl: string;
+  startDate?: string;
+  startsAt?: string;
+  status: EventStatus;
+  tags: string[];
+  timezone: string;
+  title: string;
+  updatedAt?: string;
+  venueId?: string;
+  venueName?: string;
+  currency?: string;
+}
+
+interface EventCandidate {
+  categoryHint?: string;
+  cityHints?: string[];
+  explicitStatus?: "cancelled" | "postponed" | "scheduled";
+  language?: EventLanguage;
+  parserWarnings: string[];
+  rawDateText?: string;
+  rawDescription?: string;
+  rawPriceText?: string;
+  rawTimeText?: string;
+  rawTitle: string;
+  rawVenue?: string;
+  source: EventSourceReference;
+  sourceUpdatedAt?: string;
+  startsAt?: string;
+  startDate?: string;
+  endsAt?: string;
+  timezone: string;
+}
+
+interface EventRecurrence {
+  customText?: string;
+  frequency: "custom" | "daily" | "oneTime" | "weekly";
+  until?: string;
+  weekdays?: number[];
+}
+
+interface EventProviderResult {
+  events: readonly CityEvent[];
+  fetchedAt?: string;
+  lastRefreshError?: string;
+  parserWarnings: readonly string[];
+  sourceUpdatedAt?: string;
+  state: EventProviderState;
+  venues: readonly Venue[];
+}
+
+interface EventProvider {
+  getCachedEvents(context: CityContext): Promise<EventProviderResult>;
+  metadata: ProviderMetadata;
+}
+
+function normalizeEventCategory(value: string | undefined): EventCategory {
+  const normalized = value?.trim().toLocaleLowerCase("en-US");
+  return eventCategories.includes(normalized as EventCategory)
+    ? (normalized as EventCategory)
+    : "other";
+}
+
+function isEventStatus(value: string): value is EventStatus {
+  return eventStatuses.includes(value as EventStatus);
+}
+
+function isValidCityEvent(event: CityEvent) {
+  return (
+    event.id.length > 0 &&
+    event.title.trim().length > 0 &&
+    event.cityIds.length > 0 &&
+    event.sourceUrl.length > 0 &&
+    (isIsoTimestamp(event.startsAt) || isIsoDate(event.startDate)) &&
+    isEventStatus(event.status)
+  );
+}
+
+function isIsoTimestamp(value: string | undefined) {
+  return (
+    typeof value === "string" && !Number.isNaN(new Date(value).getTime()) && value.includes("T")
+  );
+}
+
+function isIsoDate(value: string | undefined) {
+  return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value);
+}
+
+export {
+  eventCategories,
+  eventStatuses,
+  isEventStatus,
+  isIsoDate,
+  isIsoTimestamp,
+  isValidCityEvent,
+  normalizeEventCategory,
+  type CityEvent,
+  type EventCandidate,
+  type EventCategory,
+  type EventLanguage,
+  type EventProvider,
+  type EventProviderResult,
+  type EventProviderState,
+  type EventRecurrence,
+  type EventSourceReference,
+  type EventStatus,
+  type Venue,
+};

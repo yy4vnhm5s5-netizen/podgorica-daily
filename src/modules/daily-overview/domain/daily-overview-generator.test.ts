@@ -167,3 +167,23 @@ test("does not invent outages when the alert source is unavailable", () => {
   );
   assert.ok(!overview.sentences.some((sentence) => sentence.includes("power outage")));
 });
+
+test("summarizes supplied event data in Montenegrin and English", () => {
+  const snapshot = createSnapshot({
+    events: {
+      data: { concertsThisEvening: 2, count: 2, eventsThisWeekend: 7, eventsToday: 4 },
+      status: "available",
+    },
+  });
+
+  assert.ok(
+    createDailyOverview(snapshot, contexts.me).sentences.includes(
+      "Večeras su najavljena 2 koncerta.",
+    ),
+  );
+  assert.ok(
+    createDailyOverview(snapshot, contexts.en).sentences.includes(
+      "Two concerts are scheduled this evening.",
+    ),
+  );
+});

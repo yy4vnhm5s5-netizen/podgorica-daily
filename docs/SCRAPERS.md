@@ -26,6 +26,10 @@ The collector recommends a 60-minute cadence. It uses local fixtures for automat
 
 AMSCG is the approved official source for road-condition notices at `https://amscg.org/stanje-na-putevima/`. `pnpm run collect:amscg` fetches only the allowed AMSCG host through the same timeout, retry, cache-first, and fixture-test policy as CEDIS. It normalizes road works, closures, alternating traffic, restrictions, and important warnings. Visitor requests read only `.runtime/cache/amscg-road-conditions.json`. See ADR 0008.
 
+## Events
+
+No event source is approved or collected today. The Event Platform provides only contracts for future official and trusted sources; it does not fetch pages in reads or tests. A future source adapter must use fixture-backed parsing, an approved legal and attribution review, bounded collection, provenance, cache freshness, and a source-specific disable switch before being registered or enabled. See ADR 0010.
+
 ## Privacy
 
 Collectors must not gather personal data unless a documented lawful purpose, retention policy, access control, and deletion process are approved. Credentials and raw restricted content never appear in logs or test fixtures.

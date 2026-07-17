@@ -16,6 +16,10 @@ City Alerts reads cached official CEDIS planned power outages when a collector s
 
 Cached AMSCG road-condition publications provide the first traffic source for road works, closures, alternating traffic, restrictions, and important warnings. Real-time traffic, route planning, and transport remain separate future scopes.
 
+## Event platform foundation
+
+The disabled Event Platform foundation defines city-aware event and venue contracts, deterministic candidate normalization, cache-backed provider reads, IDs, deduplication, recurrence limits, query semantics, and Daily Overview event-summary input. No real event source, collector, route, or UI is implemented. Before enabling Events, approve each official source, collection/legal policy, cache operations, source priority, localized presentation, and stale/unavailable states.
+
 ## Platform expansion foundation
 
 The city registry, `CityContext`, provider registry, generic cache helpers, and future city-route helpers are in place. Podgorica remains the only enabled city and public experience. Before enabling another city, approve source coverage, cache durability, city-specific alert filtering, routing/selector UX, localized metadata, and operational ownership.

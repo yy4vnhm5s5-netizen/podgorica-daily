@@ -23,6 +23,9 @@ interface WeatherOverviewData {
 
 interface EventsOverviewData {
   count: number;
+  concertsThisEvening?: number;
+  eventsThisWeekend?: number;
+  eventsToday?: number;
 }
 
 type AirQualityCategory = "good" | "moderate" | "unhealthy";

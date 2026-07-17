@@ -1,4 +1,4 @@
-import { defaultLocale, type Locale } from "@/shared/config/locale";
+import { defaultLocale, type Locale } from "./locale.ts";
 import type { City, CityContext, CityId } from "@/shared/types/city";
 
 const cityRegistry: Record<CityId, City> = {

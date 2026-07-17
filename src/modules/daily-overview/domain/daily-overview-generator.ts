@@ -12,6 +12,8 @@ interface OverviewCopy {
   criticalAlerts: (count: number) => string;
   dataAvailable: string;
   events: (count: number) => string;
+  eventsThisWeekend: (count: number) => string;
+  concertsThisEvening: (count: number) => string;
   noActiveAlerts: string;
   noData: readonly string[];
   powerOutages: (count: number) => string;
@@ -43,6 +45,14 @@ const overviewCopy: Record<OverviewLocale, OverviewCopy> = {
         ? "There is one event listed for today."
         : `There are ${count} events listed for today.`;
     },
+    concertsThisEvening: (count) =>
+      count === 1
+        ? "One concert is scheduled this evening."
+        : `${toEnglishCountWord(count)} concerts are scheduled this evening.`,
+    eventsThisWeekend: (count) =>
+      count === 1
+        ? "One event is scheduled for the weekend."
+        : `${toEnglishCountWord(count)} events are scheduled for the weekend.`,
     noActiveAlerts: "There are no active city disruptions at the moment.",
     noData: [
       "There is not enough verified city data available for an overview right now.",
@@ -88,6 +98,14 @@ const overviewCopy: Record<OverviewLocale, OverviewCopy> = {
         ? "Za danas je najavljen jedan događaj."
         : `Za danas su najavljena ${count} događaja.`;
     },
+    concertsThisEvening: (count) =>
+      count === 1
+        ? "Večeras je najavljen jedan koncert."
+        : `Večeras su najavljena ${count} koncerta.`,
+    eventsThisWeekend: (count) =>
+      count === 1
+        ? "Za vikend je najavljen jedan događaj."
+        : `Za vikend je najavljeno ${count} događaja.`,
     noActiveAlerts: "Nema aktivnih gradskih smetnji.",
     noData: [
       "Trenutno nema dovoljno provjerenih gradskih podataka za dnevni pregled.",
@@ -251,7 +269,11 @@ function getEventsSentence(snapshot: CityDataSnapshot, copy: OverviewCopy) {
     return null;
   }
 
-  return copy.events(snapshot.events.data.count);
+  const { concertsThisEvening, eventsThisWeekend, eventsToday, count } = snapshot.events.data;
+  if (concertsThisEvening && concertsThisEvening > 0)
+    return copy.concertsThisEvening(concertsThisEvening);
+  if (eventsThisWeekend && eventsThisWeekend > 0) return copy.eventsThisWeekend(eventsThisWeekend);
+  return copy.events(eventsToday ?? count);
 }
 
 function getAirQualitySentence(snapshot: CityDataSnapshot, copy: OverviewCopy) {
@@ -262,6 +284,22 @@ function getAirQualitySentence(snapshot: CityDataSnapshot, copy: OverviewCopy) {
 
 function isUnusualTemperature(temperatureCelsius: number) {
   return temperatureCelsius <= 0 || temperatureCelsius >= 32;
+}
+
+function toEnglishCountWord(count: number) {
+  return (
+    {
+      2: "Two",
+      3: "Three",
+      4: "Four",
+      5: "Five",
+      6: "Six",
+      7: "Seven",
+      8: "Eight",
+      9: "Nine",
+      10: "Ten",
+    }[count] ?? String(count)
+  );
 }
 
 export { createDailyOverview, isUnusualTemperature };

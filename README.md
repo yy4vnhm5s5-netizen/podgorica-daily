@@ -1,6 +1,6 @@
 # Podgorica Daily
 
-Podgorica Daily is a production-oriented local information platform for Podgorica. It currently provides server-rendered current weather, a deterministic Daily Overview, and City Alerts backed by cached CEDIS planned power-outage data when a collector snapshot is available. Transport, events, maps, search, and editorial workflows are not yet implemented.
+Podgorica Daily is a production-oriented local information platform for Podgorica. It currently provides server-rendered current weather, a deterministic Daily Overview, and City Alerts backed by cached CEDIS planned power-outage data when a collector snapshot is available. Transport, event listings, maps, search, and editorial workflows are not yet implemented.
 
 Daily Overview is a zero-cost deterministic summary generated from normalized cached city data. It does not use generative services, language models, or visitor-triggered data collection.
 
@@ -21,6 +21,10 @@ The default language is Montenegrin Latin, ijekavian (`/me`). English is availab
 ## City-aware foundation
 
 Podgorica is the only enabled city and the public experience remains unchanged. Internally, providers receive a city context and normalized records carry `cityIds`, preparing future city-specific routes without exposing them today. `DEFAULT_CITY=podgorica` is validated against the central registry. See [ADR 0009](docs/adr/0009-multi-city-platform-foundation.md).
+
+## Event platform foundation
+
+The repository includes a disabled, city-aware Event Platform foundation: normalized event and venue contracts, cache and provider boundaries, deterministic IDs and deduplication, recurrence limits, timezone-aware query rules, and a provider-agnostic Daily Overview contract. It has no source adapter, collector, route, or visible UI. `ENABLE_EVENTS=false` and `EVENT_PROVIDER_MODE=disabled` preserve the current public behaviour. See [ADR 0010](docs/adr/0010-event-platform-foundation.md).
 
 ## Architecture
 

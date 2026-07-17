@@ -23,6 +23,12 @@ The central city registry supplies a `CityContext` with city, locale, and timezo
 
 Provider metadata is centrally registered for Weather, CEDIS, and AMSCG. It records ownership-facing source and cache details without moving module implementation into shared code. The shared cache abstraction owns atomic JSON persistence and freshness calculation; each module owns its snapshot schema and stale-data policy.
 
+## Event platform boundary
+
+`src/modules/events` owns the normalized Event and Venue domains, provider contracts, candidate normalization, deterministic ID and deduplication logic, query semantics, and event cache schema. Collection and cache reading are intentionally separate: any future collector writes a module-owned snapshot using shared atomic JSON helpers, while application reads combine only enabled cached providers. No visitor request may invoke collection.
+
+Event records are city-aware (`cityIds`) and preserve all trusted source references after exact or strong deterministic matches merge. Date-only events remain date-only; timed events use timezone-aware `Europe/Podgorica` conversion. The query layer applies city-local boundaries for today, tomorrow, the current Monday–Sunday week, and the weekend (Friday 18:00 or later only when a time is explicit, Saturday, and Sunday). No public Events UI or source adapter exists in this milestone. See ADR 0010.
+
 ## Reliability and security
 
 External integrations require timeouts, bounded retries, structured errors, cache policy, rate limits, and health signals. Authentication and authorization are enforced on the server. Configuration is validated at process start. Logs use structured, privacy-safe fields and carry correlation identifiers.

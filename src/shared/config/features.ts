@@ -7,7 +7,7 @@ const featureFlags = {
   cityAlerts: true,
   cedis: env.ENABLE_CEDIS,
   dailyOverview: true,
-  events: false,
+  events: env.ENABLE_EVENTS && env.EVENT_PROVIDER_MODE !== "disabled",
   maps: false,
   publicTransport: false,
   search: false,
