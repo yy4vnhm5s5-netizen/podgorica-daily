@@ -20,6 +20,8 @@ Cached AMSCG road-condition publications provide the first traffic source for ro
 
 The disabled Event Platform foundation defines city-aware event and venue contracts, deterministic candidate normalization, cache-backed provider reads, IDs, deduplication, recurrence limits, query semantics, and Daily Overview event-summary input. No real event source, collector, route, or UI is implemented. Before enabling Events, approve each official source, collection/legal policy, cache operations, source priority, localized presentation, and stale/unavailable states.
 
+KIC Budo Tomović is the first approved event source. Its cache-backed provider and collector are implemented but remain disabled by default; visible Events presentation and additional source rollout remain separate scope.
+
 ## Platform expansion foundation
 
 The city registry, `CityContext`, provider registry, generic cache helpers, and future city-route helpers are in place. Podgorica remains the only enabled city and public experience. Before enabling another city, approve source coverage, cache durability, city-specific alert filtering, routing/selector UX, localized metadata, and operational ownership.

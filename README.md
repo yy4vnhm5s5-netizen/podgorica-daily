@@ -26,6 +26,12 @@ Podgorica is the only enabled city and the public experience remains unchanged. 
 
 The repository includes a disabled, city-aware Event Platform foundation: normalized event and venue contracts, cache and provider boundaries, deterministic IDs and deduplication, recurrence limits, timezone-aware query rules, and a provider-agnostic Daily Overview contract. It has no source adapter, collector, route, or visible UI. `ENABLE_EVENTS=false` and `EVENT_PROVIDER_MODE=disabled` preserve the current public behaviour. See [ADR 0010](docs/adr/0010-event-platform-foundation.md).
 
+KIC Budo Tomović is the first approved official event source. Its collector reads the official KIC news feed and individual programme articles into a cache; visitor requests read only that cache. It remains inactive until `ENABLE_EVENTS=true` and `EVENT_PROVIDER_MODE=live` are explicitly configured.
+
+```bash
+pnpm run collect:kic-events
+```
+
 ## Architecture
 
 The project is a modular monolith. Presentation, application, domain, and infrastructure concerns remain separated, and future features own their code beneath `src/modules`. Shared components and utilities are deliberately restricted to cross-cutting concerns.

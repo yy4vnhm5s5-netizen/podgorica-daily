@@ -79,7 +79,10 @@ interface EventCandidate {
   categoryHint?: string;
   cityHints?: string[];
   explicitStatus?: "cancelled" | "postponed" | "scheduled";
+  imageUrl?: string;
+  isFree?: boolean;
   language?: EventLanguage;
+  organizer?: string;
   parserWarnings: string[];
   rawDateText?: string;
   rawDescription?: string;
@@ -87,6 +90,8 @@ interface EventCandidate {
   rawTimeText?: string;
   rawTitle: string;
   rawVenue?: string;
+  priceAmount?: number;
+  currency?: string;
   source: EventSourceReference;
   sourceUpdatedAt?: string;
   startsAt?: string;

@@ -28,7 +28,9 @@ AMSCG is the approved official source for road-condition notices at `https://ams
 
 ## Events
 
-No event source is approved or collected today. The Event Platform provides only contracts for future official and trusted sources; it does not fetch pages in reads or tests. A future source adapter must use fixture-backed parsing, an approved legal and attribution review, bounded collection, provenance, cache freshness, and a source-specific disable switch before being registered or enabled. See ADR 0010.
+KIC Budo Tomović is the first approved event collector. It reads only the official `https://kic.podgorica.me/novosti` listing and validated same-host programme articles, using the established timeout, one-retry, user-agent, and cache-first policy. It is invoked by `pnpm run collect:kic-events`; pages read `.runtime/cache/kic-events.json` only. The initial cadence is 60 minutes. Parsing is fixture-tested and preserves missing fields rather than inferring them. See ADR 0011.
+
+Future event sources require their own official-source, legal, attribution, cache, fixture, and disable-switch review before registration or activation.
 
 ## Privacy
 
