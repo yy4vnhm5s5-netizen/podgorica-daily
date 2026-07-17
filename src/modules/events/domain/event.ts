@@ -1,5 +1,6 @@
 import type { CityContext, CityId } from "@/shared/types/city";
 import type { ProviderMetadata } from "@/shared/types/provider";
+import type { EventQualityDiagnostics } from "./event-quality.ts";
 
 const eventCategories = [
   "concert",
@@ -112,6 +113,7 @@ interface EventProviderResult {
   fetchedAt?: string;
   lastRefreshError?: string;
   parserWarnings: readonly string[];
+  qualityDiagnostics?: Partial<EventQualityDiagnostics>;
   sourceUpdatedAt?: string;
   state: EventProviderState;
   venues: readonly Venue[];

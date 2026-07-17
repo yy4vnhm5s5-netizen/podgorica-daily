@@ -1,4 +1,6 @@
 import { normalizeEventCandidate } from "../domain/event-normalization.ts";
+import { runEventQualityPipeline } from "../domain/event-quality.ts";
+import { getEventQualityPolicy } from "../../../config/event-quality.ts";
 import type { EventCacheSnapshot } from "./events-cache.ts";
 import { writeEventCache } from "./events-cache.ts";
 import type { KicHttpClient } from "./kic-http-client.ts";
@@ -11,12 +13,14 @@ async function refreshKicEvents({
   context,
   httpClient,
   now = () => new Date(),
+  previousSnapshot,
   writeCache = writeEventCache,
 }: {
   cachePath: string;
   context: CityContext;
   httpClient: KicHttpClient;
   now?: () => Date;
+  previousSnapshot?: EventCacheSnapshot | null;
   writeCache?: (snapshot: EventCacheSnapshot, cachePath: string) => Promise<void>;
 }) {
   const listing = await httpClient.get(kicNewsUrl);
@@ -29,8 +33,22 @@ async function refreshKicEvents({
     normalizeEventCandidate(candidate, context, now()),
   );
   const timestamp = now().toISOString();
-  const snapshot: EventCacheSnapshot = {
+  const quality = runEventQualityPipeline({
+    candidatesDiscovered: urls.length,
     events: normalized.flatMap(({ event }) => (event ? [event] : [])),
+    now: now(),
+    policy: getEventQualityPolicy(),
+    previousSuccessfulEventCount: previousSnapshot?.events.length,
+    validCityIds: [context.city.id],
+  });
+  if (quality.diagnostics.finalEventCount === 0 && previousSnapshot?.events.length) {
+    return {
+      ...previousSnapshot,
+      qualityDiagnostics: { ...quality.diagnostics, countDropWarning: true },
+    };
+  }
+  const snapshot: EventCacheSnapshot = {
+    events: quality.finalEvents,
     fetchedAt: timestamp,
     freshnessStatus: "fresh",
     lastSuccessfulRefreshAt: timestamp,
@@ -43,7 +61,8 @@ async function refreshKicEvents({
       id: "kic-budo-tomovic",
       sourceUrl: kicNewsUrl,
     },
-    schemaVersion: 1,
+    qualityDiagnostics: quality.diagnostics,
+    schemaVersion: 2,
     venues: parsed.flatMap(({ venue }) => (venue ? [venue] : [])),
   };
   await writeCache(snapshot, cachePath);

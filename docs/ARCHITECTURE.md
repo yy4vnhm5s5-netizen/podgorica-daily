@@ -29,6 +29,10 @@ Provider metadata is centrally registered for Weather, CEDIS, and AMSCG. It reco
 
 Event records are city-aware (`cityIds`) and preserve all trusted source references after exact or strong deterministic matches merge. Date-only events remain date-only; timed events use timezone-aware `Europe/Podgorica` conversion. The query layer applies city-local boundaries for today, tomorrow, the current Monday–Sunday week, and the weekend (Friday 18:00 or later only when a time is explicit, Saturday, and Sunday). No public Events UI or source adapter exists in this milestone. See ADR 0010.
 
+Event collectors run normalized records through the module-owned quality pipeline before deduplication and cache writes. Typed reports and cache diagnostics make rejection, warning, score, and count-drop state available without leaking rejected records to public reads. See ADR 0012.
+
+The Event application service composes availability with a separate deterministic quality-health status and exposes a typed non-public provider status read model. Legacy cache snapshots without diagnostics receive safe zero-value defaults.
+
 ## Reliability and security
 
 External integrations require timeouts, bounded retries, structured errors, cache policy, rate limits, and health signals. Authentication and authorization are enforced on the server. Configuration is validated at process start. Logs use structured, privacy-safe fields and carry correlation identifiers.

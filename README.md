@@ -28,6 +28,10 @@ The repository includes a disabled, city-aware Event Platform foundation: normal
 
 KIC Budo Tomović is the first approved official event source. Its collector reads the official KIC news feed and individual programme articles into a cache; visitor requests read only that cache. It remains inactive until `ENABLE_EVENTS=true` and `EVENT_PROVIDER_MODE=live` are explicitly configured.
 
+Event collection applies deterministic quality validation before caching. It preserves valid date-only and incomplete events with warnings, rejects invalid core records, and records collector diagnostics without exposing rejected data. See [ADR 0012](docs/adr/0012-event-quality-layer.md).
+
+Quality policy and provider-health thresholds are validated server configuration; see `.env.example`. Event reads remain cache-only and provide non-public provider-status diagnostics for future operations tooling.
+
 ```bash
 pnpm run collect:kic-events
 ```

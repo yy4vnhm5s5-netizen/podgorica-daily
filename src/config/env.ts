@@ -10,6 +10,15 @@ const environmentSchema = z.object({
   EVENT_CACHE_FRESHNESS_MINUTES: z.coerce.number().int().positive().default(120),
   EVENT_MAX_QUERY_RANGE_DAYS: z.coerce.number().int().positive().max(366).default(90),
   EVENT_MAX_RECURRENCE_OCCURRENCES: z.coerce.number().int().positive().max(100).default(30),
+  EVENT_QUALITY_COUNT_DROP_RATIO: z.coerce.number().min(0).max(1).default(0.5),
+  EVENT_QUALITY_DEGRADED_WARNING_RATE: z.coerce.number().min(0).max(1).default(0.4),
+  EVENT_QUALITY_FAILING_REJECTION_RATE: z.coerce.number().min(0).max(1).default(0.5),
+  EVENT_QUALITY_MAX_FUTURE_DAYS: z.coerce.number().int().positive().max(3650).default(366),
+  EVENT_QUALITY_MAX_PAST_DAYS: z.coerce.number().int().positive().max(3650).default(30),
+  EVENT_QUALITY_MIN_SCORE: z.coerce.number().int().min(0).max(100).default(50),
+  EVENT_QUALITY_WARN_MISSING_DESCRIPTION: z.enum(["false", "true"]).default("true"),
+  EVENT_QUALITY_WARN_MISSING_START_TIME: z.enum(["false", "true"]).default("true"),
+  EVENT_QUALITY_WARN_MISSING_VENUE: z.enum(["false", "true"]).default("true"),
   KIC_EVENT_CACHE_PATH: z.string().min(1).default(".runtime/cache/kic-events.json"),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   DEFAULT_CITY: z.string().default("podgorica"),
@@ -20,6 +29,16 @@ const environmentSchema = z.object({
   NEXT_PUBLIC_APP_ENV: z.string().min(1).default("development"),
 });
 
+function parseEnvironment(values: Record<string, string | undefined>) {
+  const parsed = environmentSchema.safeParse({
+    ...values,
+    NODE_ENV: values.NODE_ENV,
+  });
+  if (!parsed.success)
+    throw new Error(`Invalid environment configuration: ${parsed.error.message}`);
+  return parsed.data;
+}
+
 const parsedEnvironment = environmentSchema.safeParse({
   NODE_ENV: process.env.NODE_ENV,
   CEDIS_PROVIDER_MODE: process.env.CEDIS_PROVIDER_MODE,
@@ -29,6 +48,15 @@ const parsedEnvironment = environmentSchema.safeParse({
   EVENT_CACHE_FRESHNESS_MINUTES: process.env.EVENT_CACHE_FRESHNESS_MINUTES,
   EVENT_MAX_QUERY_RANGE_DAYS: process.env.EVENT_MAX_QUERY_RANGE_DAYS,
   EVENT_MAX_RECURRENCE_OCCURRENCES: process.env.EVENT_MAX_RECURRENCE_OCCURRENCES,
+  EVENT_QUALITY_COUNT_DROP_RATIO: process.env.EVENT_QUALITY_COUNT_DROP_RATIO,
+  EVENT_QUALITY_DEGRADED_WARNING_RATE: process.env.EVENT_QUALITY_DEGRADED_WARNING_RATE,
+  EVENT_QUALITY_FAILING_REJECTION_RATE: process.env.EVENT_QUALITY_FAILING_REJECTION_RATE,
+  EVENT_QUALITY_MAX_FUTURE_DAYS: process.env.EVENT_QUALITY_MAX_FUTURE_DAYS,
+  EVENT_QUALITY_MAX_PAST_DAYS: process.env.EVENT_QUALITY_MAX_PAST_DAYS,
+  EVENT_QUALITY_MIN_SCORE: process.env.EVENT_QUALITY_MIN_SCORE,
+  EVENT_QUALITY_WARN_MISSING_DESCRIPTION: process.env.EVENT_QUALITY_WARN_MISSING_DESCRIPTION,
+  EVENT_QUALITY_WARN_MISSING_START_TIME: process.env.EVENT_QUALITY_WARN_MISSING_START_TIME,
+  EVENT_QUALITY_WARN_MISSING_VENUE: process.env.EVENT_QUALITY_WARN_MISSING_VENUE,
   KIC_EVENT_CACHE_PATH: process.env.KIC_EVENT_CACHE_PATH,
   DEFAULT_CITY: process.env.DEFAULT_CITY,
   ENABLE_AMSCG: process.env.ENABLE_AMSCG,
@@ -67,4 +95,12 @@ export const env = {
   ENABLE_CEDIS: parsedEnvironment.data.ENABLE_CEDIS === "true",
   ENABLE_EVENTS: parsedEnvironment.data.ENABLE_EVENTS === "true",
   ENABLE_WEATHER: parsedEnvironment.data.ENABLE_WEATHER === "true",
+  EVENT_QUALITY_WARN_MISSING_DESCRIPTION:
+    parsedEnvironment.data.EVENT_QUALITY_WARN_MISSING_DESCRIPTION === "true",
+  EVENT_QUALITY_WARN_MISSING_START_TIME:
+    parsedEnvironment.data.EVENT_QUALITY_WARN_MISSING_START_TIME === "true",
+  EVENT_QUALITY_WARN_MISSING_VENUE:
+    parsedEnvironment.data.EVENT_QUALITY_WARN_MISSING_VENUE === "true",
 };
+
+export { parseEnvironment };

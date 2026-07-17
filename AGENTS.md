@@ -283,7 +283,7 @@ Use `feat`, `fix`, `docs`, `refactor`, `test`, `build`, `ci`, `chore`, or `perf`
 
 ## 30. ADR Policy
 
-The accepted ADRs are `docs/adr/0001-modular-monolith.md` through `docs/adr/0011-kic-budo-tomovic-event-provider.md`.
+The accepted ADRs are `docs/adr/0001-modular-monolith.md` through `docs/adr/0012-event-quality-layer.md`.
 
 - Create a new numbered ADR for a material, lasting architectural decision: providers, maps, identity, persistence, hosting, observability, or an architectural boundary change.
 - Include status, date, context, decision, and consequences.
@@ -343,6 +343,7 @@ Introduce modules incrementally in the roadmap order and only after their contra
 - Daily Overview consumes cached normalized data only. CEDIS and AMSCG are approved source adapters: collection is invoked by `pnpm run collect:cedis` or `pnpm run collect:amscg`, never by a page request. Preserve allowed-host validation, fixture tests, stale/unavailable behaviour, provider-mode boundaries, and `CityContext` input. Podgorica is the only enabled city; do not expose city routes or selectors until separately approved. The file cache is not durable on serverless deployments; add a durable adapter only after its contract and operations are approved.
 - Events use normalized city-aware records and module-owned candidate, cache, provider, deterministic ID, deduplication, recurrence, and query boundaries. Event reads must stay cache-only; no provider may scrape during a visitor request. Preserve all source references, use exact/strong deterministic matching only, retain date-only events without an invented time, and keep `ENABLE_EVENTS=false` until a source-specific rollout is approved.
 - KIC Budo Tomović is the approved first Event source. Its collector runs only through `pnpm run collect:kic-events`, reads the official KIC news listing and same-host articles, and writes the event cache atomically. Keep KIC disabled unless `ENABLE_EVENTS=true` and `EVENT_PROVIDER_MODE=live`; no page request may trigger it.
+- Event collectors must run normalized records through the deterministic Event quality pipeline before deduplication and cache writes. Keep typed rejection/warning diagnostics, never expose rejected events in public reads, and retain a valid cache on a zero-valid refresh result.
 - Extract a service only when the modular-monolith boundary has a demonstrated operational need; do not preemptively distribute the system.
 
 For all future work, use the project documentation and this handbook together: product documents define intended outcomes, ADRs define accepted structural decisions, and this file defines the practical contribution rules.

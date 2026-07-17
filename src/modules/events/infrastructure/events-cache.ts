@@ -4,6 +4,7 @@ import {
   writeJsonCache,
 } from "../../../shared/lib/cache.ts";
 import type { CityEvent, EventProviderResult, Venue } from "../domain/event.ts";
+import type { EventQualityDiagnostics } from "../domain/event-quality.ts";
 import type { CacheFreshnessStatus } from "@/shared/lib/cache";
 
 interface EventCacheSnapshot {
@@ -12,13 +13,14 @@ interface EventCacheSnapshot {
   freshnessStatus: CacheFreshnessStatus;
   lastRefreshError?: string;
   lastSuccessfulRefreshAt: string;
+  qualityDiagnostics?: EventQualityDiagnostics;
   parserWarnings: string[];
   provider: {
     displayName: string;
     id: string;
     sourceUrl: string;
   };
-  schemaVersion: 1;
+  schemaVersion: 1 | 2;
   sourceUpdatedAt?: string;
   venues: Venue[];
 }
@@ -29,7 +31,7 @@ async function readEventCache(
   now = new Date(),
 ): Promise<EventProviderResult> {
   const snapshot = await readJsonCache<EventCacheSnapshot>(cachePath);
-  if (!snapshot || snapshot.schemaVersion !== 1) {
+  if (!snapshot || (snapshot.schemaVersion !== 1 && snapshot.schemaVersion !== 2)) {
     return { events: [], parserWarnings: [], state: "unavailable", venues: [] };
   }
 
@@ -43,6 +45,7 @@ async function readEventCache(
     fetchedAt: snapshot.fetchedAt,
     lastRefreshError: snapshot.lastRefreshError,
     parserWarnings: snapshot.parserWarnings,
+    qualityDiagnostics: snapshot.qualityDiagnostics,
     sourceUpdatedAt: snapshot.sourceUpdatedAt,
     state: freshness === "fresh" ? "fresh" : "stale",
     venues: snapshot.venues,

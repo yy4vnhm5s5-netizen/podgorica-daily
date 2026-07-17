@@ -242,8 +242,11 @@ test("isolates unavailable event providers without inventing events", async () =
   };
   const result = await getCityEvents(context, [availableProvider, failedProvider]);
   assert.equal(result.events.length, 1);
-  assert.deepEqual(result.providers, [
-    { id: "available", state: "fresh" },
-    { id: "failed", state: "unavailable" },
-  ]);
+  assert.deepEqual(
+    result.providers.map(({ id, state }) => ({ id, state })),
+    [
+      { id: "available", state: "fresh" },
+      { id: "failed", state: "unavailable" },
+    ],
+  );
 });

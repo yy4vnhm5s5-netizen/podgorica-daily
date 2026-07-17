@@ -22,6 +22,10 @@ The disabled Event Platform foundation defines city-aware event and venue contra
 
 KIC Budo Tomović is the first approved event source. Its cache-backed provider and collector are implemented but remain disabled by default; visible Events presentation and additional source rollout remain separate scope.
 
+Event quality validation now protects cache writes with deterministic acceptance, warning, rejection, score, and count-drop diagnostics. Future provider rollout must preserve this pipeline.
+
+The Event Quality Layer is complete: policy is validated from environment configuration, provider health is deterministic, and cache/application diagnostics are available for future operational UI.
+
 ## Platform expansion foundation
 
 The city registry, `CityContext`, provider registry, generic cache helpers, and future city-route helpers are in place. Podgorica remains the only enabled city and public experience. Before enabling another city, approve source coverage, cache durability, city-specific alert filtering, routing/selector UX, localized metadata, and operational ownership.

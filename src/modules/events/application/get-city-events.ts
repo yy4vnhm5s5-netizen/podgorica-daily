@@ -1,6 +1,8 @@
 import { deduplicateEvents } from "../domain/event-deduplication.ts";
 import type { CityEvent, EventProvider, EventProviderResult, Venue } from "../domain/event.ts";
 import { getEnabledEventProviders } from "../infrastructure/event-provider-registry.ts";
+import { toEventProviderStatusReadModel } from "./event-provider-status.ts";
+import { getEventQualityHealthThresholds } from "../../../config/event-quality.ts";
 import type { CityContext } from "@/shared/types/city";
 
 interface CityEventsReadModel {
@@ -12,6 +14,7 @@ interface CityEventsReadModel {
 interface EventProviderReadState {
   id: string;
   state: EventProviderResult["state"];
+  status: ReturnType<typeof toEventProviderStatusReadModel>;
 }
 
 async function getCityEvents(
@@ -36,7 +39,20 @@ async function getCityEvents(
 
   return {
     events: deduplicateEvents(events),
-    providers: results.map(({ metadata, result }) => ({ id: metadata.id, state: result.state })),
+    providers: results.map(({ metadata, result }) => ({
+      id: metadata.id,
+      state: result.state,
+      status: toEventProviderStatusReadModel(
+        {
+          diagnostics: result.qualityDiagnostics,
+          enabled: metadata.enabled,
+          providerId: metadata.id,
+          providerName: metadata.displayName,
+          result,
+        },
+        getEventQualityHealthThresholds(),
+      ),
+    })),
     venues: results.flatMap(({ result }) => result.venues),
   };
 }
