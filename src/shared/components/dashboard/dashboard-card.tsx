@@ -14,21 +14,21 @@ interface DashboardCardProps {
 
 const accentClasses: Record<DashboardCardAccent, { card: string; icon: string }> = {
   amber: {
-    card: "border-amber-200/70 bg-amber-50/60 hover:border-amber-300/80 dark:border-amber-950/80",
-    icon: "bg-amber-100/70 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300",
+    card: "border-amber-200/90 bg-amber-100/70 hover:border-amber-300 dark:border-amber-950/80",
+    icon: "bg-amber-200/70 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300",
   },
   emerald: {
     card:
-      "border-emerald-200/70 bg-emerald-50/60 hover:border-emerald-300/80 dark:border-emerald-950/80",
-    icon: "bg-emerald-100/70 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300",
+      "border-emerald-200/90 bg-emerald-100/70 hover:border-emerald-300 dark:border-emerald-950/80",
+    icon: "bg-emerald-200/70 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300",
   },
   red: {
-    card: "border-red-200/70 bg-red-50/60 hover:border-red-300/80 dark:border-red-950/80",
-    icon: "bg-red-100/70 text-red-700 dark:bg-red-950/50 dark:text-red-300",
+    card: "border-rose-200/90 bg-rose-100/70 hover:border-rose-300 dark:border-rose-950/80",
+    icon: "bg-rose-200/70 text-rose-800 dark:bg-rose-950/50 dark:text-rose-300",
   },
   slate: {
-    card: "border-slate-200/70 bg-slate-50/70 hover:border-slate-300/80 dark:border-slate-800",
-    icon: "bg-slate-100/80 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
+    card: "border-indigo-200/80 bg-indigo-100/55 hover:border-indigo-300 dark:border-slate-800",
+    icon: "bg-indigo-200/65 text-indigo-800 dark:bg-slate-800 dark:text-slate-300",
   },
 };
 

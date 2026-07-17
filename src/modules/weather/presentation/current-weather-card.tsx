@@ -43,7 +43,7 @@ const weatherIcons: Record<WeatherConditionIcon, LucideIcon> = {
 
 function WeatherCardFrame({ children }: Readonly<PropsWithChildren>) {
   return (
-    <Card className="min-h-44 overflow-hidden border-sky-200/70 bg-sky-50/60 transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-sky-300/80 hover:shadow-[0_12px_24px_-20px_rgb(15_23_42_/_0.32)] dark:border-sky-950/80">
+    <Card className="min-h-44 overflow-hidden border-sky-200/90 bg-sky-100/65 transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-[0_12px_24px_-20px_rgb(15_23_42_/_0.32)] dark:border-sky-950/80">
       {children}
     </Card>
   );

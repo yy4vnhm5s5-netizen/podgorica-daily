@@ -22,7 +22,7 @@ function DailyOverviewCardLoading({ locale }: DailyOverviewCardProps) {
   const translations = getDailyOverviewTranslations(locale);
 
   return (
-    <Card className="overflow-hidden border-blue-200/70 bg-blue-50/60">
+    <Card className="overflow-hidden border-blue-200/90 bg-blue-100/55">
       <CardHeader className="space-y-3 p-5 sm:p-6">
         <LoadingSkeleton label={translations.loading} lines={2} />
       </CardHeader>
@@ -56,7 +56,7 @@ async function DailyOverviewCard({ locale }: DailyOverviewCardProps) {
   const { airQualityCategory, generatedAt, isDemoData, sentences } = result.data;
 
   return (
-    <Card className="overflow-hidden border-blue-200/70 bg-blue-50/60 transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-blue-300/80 hover:shadow-[0_12px_24px_-20px_rgb(15_23_42_/_0.32)] dark:border-blue-950/80">
+    <Card className="overflow-hidden border-blue-200/90 bg-blue-100/55 transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-[0_12px_24px_-20px_rgb(15_23_42_/_0.32)] dark:border-blue-950/80">
       <CardHeader className="p-5 sm:p-6">
         <div className="flex items-start gap-3">
           <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-blue-100/70 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
@@ -105,7 +105,7 @@ function DailyOverviewFrame({ children, locale }: DailyOverviewFrameProps) {
   const translations = getDailyOverviewTranslations(locale);
 
   return (
-    <Card className="overflow-hidden border-blue-200/70 bg-blue-50/60 dark:border-blue-950/80">
+    <Card className="overflow-hidden border-blue-200/90 bg-blue-100/55 dark:border-blue-950/80">
       <CardHeader className="p-5 sm:p-6">
         <h2 className="text-xl font-semibold tracking-tight">{translations.title}</h2>
       </CardHeader>
