@@ -9,7 +9,7 @@ The Web service serves cached application data only. Visitor requests never scra
 ## Dashboard runbook
 
 1. Create or sign in to Railway, connect GitHub, and create a project from this repository. Select `main` as the initial production branch.
-2. Create one service named `web`. Railway uses the repository `Dockerfile` through `railway.toml`; the dependency layer copies `package.json`, `pnpm-lock.yaml`, and `pnpm-workspace.yaml` before `pnpm install --frozen-lockfile`. This makes the explicit pnpm 11 build allowlist for `sharp` and `unrs-resolver` available during installation without enabling all dependency scripts. Do not configure a Railway start-command override: the standalone runner image uses its Docker `CMD`, `node server.js`, with `HOSTNAME=0.0.0.0` and Railway's runtime `PORT`. Confirm health path `/api/health`.
+2. Create one service named `web`. Railway uses the repository `Dockerfile` through `railway.toml`; the dependency layer copies `package.json`, `pnpm-lock.yaml`, and `pnpm-workspace.yaml` before `pnpm install --frozen-lockfile`. This makes the explicit pnpm 11 build allowlist for `sharp` and `unrs-resolver` available during installation without enabling all dependency scripts. The final/default Docker target is `runner`, so Railway starts its standalone `CMD`, `node server.js`, with `HOSTNAME=0.0.0.0` and Railway's runtime `PORT`. Do not configure a Railway start-command override. Confirm health path `/api/health`.
 3. Attach a persistent volume to `web` at `/data/events`. Railway mounts volumes only at runtime, so do not try to create cache data during build.
 4. Set `NODE_ENV=production`, `NEXT_PUBLIC_APP_ENV=production`, `DEFAULT_CITY=podgorica`, `EVENT_CACHE_DIR=/data/events`, and all provider cache paths below `/data/events`. Set `ENABLE_EVENTS=true` and `EVENT_PROVIDER_MODE=live` only after the refresh mechanism is configured.
 5. Generate Railway's public `*.up.railway.app` domain in Networking. Set `NEXT_PUBLIC_SITE_URL` to that exact HTTPS origin and redeploy. Verify `/api/health`, `/events`, `/me/events`, `/en/events`, and an event detail URL.
@@ -18,6 +18,8 @@ The Web service serves cached application data only. Visitor requests never scra
 8. Later add `example.com` in Railway Networking, publish Railway's DNS records at the registrar, wait for verification and managed HTTPS, update `NEXT_PUBLIC_SITE_URL`, redeploy, and verify canonical/Open Graph URLs. If using Cloudflare, begin with DNS-only mode for verification.
 
 No SSH, host firewall, proxy, or certificate administration is required. Railway auto-deploys the selected GitHub branch; a failed release can be rolled back in its deployment dashboard. Check Railway Usage and configure alerts/limits if available. Railway pricing changes; migration remains portable through environment transfer, cache-volume transfer, scheduler replacement, and DNS change.
+
+The `scheduler` Docker stage remains available only as the named `scheduler` target for a future separate scheduler deployment. It is deliberately not the final stage, because an unnamed Docker build exports the final stage and the Web service needs the `runner` image to serve `/api/health`.
 
 ## Environment contract
 

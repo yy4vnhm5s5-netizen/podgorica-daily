@@ -14,6 +14,19 @@ FROM dependencies AS builder
 COPY . .
 RUN pnpm run build
 
+FROM dependencies AS scheduler
+
+RUN addgroup --system --gid 1001 nodejs \
+  && adduser --system --uid 1001 nextjs
+
+COPY src ./src
+COPY scripts/scheduler-entrypoint.sh /usr/local/bin/scheduler-entrypoint
+RUN chmod 755 /usr/local/bin/scheduler-entrypoint
+
+USER nextjs
+
+ENTRYPOINT ["scheduler-entrypoint"]
+
 FROM base AS runner
 
 ENV NODE_ENV=production
@@ -32,16 +45,3 @@ ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 
 CMD ["node", "server.js"]
-
-FROM dependencies AS scheduler
-
-RUN addgroup --system --gid 1001 nodejs \
-  && adduser --system --uid 1001 nextjs
-
-COPY src ./src
-COPY scripts/scheduler-entrypoint.sh /usr/local/bin/scheduler-entrypoint
-RUN chmod 755 /usr/local/bin/scheduler-entrypoint
-
-USER nextjs
-
-ENTRYPOINT ["scheduler-entrypoint"]
