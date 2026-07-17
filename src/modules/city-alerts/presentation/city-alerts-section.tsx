@@ -120,24 +120,27 @@ async function CityAlertsSection({ locale }: CityAlertsSectionProps) {
     <section aria-labelledby="city-alerts-heading" className="space-y-4">
       <div className="flex items-center justify-between gap-4">
         <SectionTitle id="city-alerts-heading" title={translations.title} />
-        {result.metadata.providerMode === "mock" ? (
+        {result.data.some((alert) => alert.dataMode === "demo") ? (
           <StatusBadge tone="info">{translations.demo}</StatusBadge>
         ) : null}
       </div>
-      {result.metadata.providerMode === "mock" ? (
+      {result.data.some((alert) => alert.dataMode === "demo") ? (
         <p className="text-sm text-muted-foreground">{translations.demoNotice}</p>
       ) : null}
-      {result.metadata.freshnessStatus === "stale" ? (
-        <p
-          className="rounded-lg border border-amber-300/80 bg-amber-50/60 px-4 py-3 text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-100"
-          role="status"
-        >
-          {translations.staleData}{" "}
-          {result.metadata.lastSuccessfulUpdate ? (
-            <Timestamp locale={getLocaleTag(locale)} value={result.metadata.lastSuccessfulUpdate} />
-          ) : null}
-        </p>
-      ) : null}
+      {result.metadata.sources
+        .filter((source) => source.freshnessStatus === "stale")
+        .map((source) => (
+          <p
+            className="rounded-lg border border-amber-300/80 bg-amber-50/60 px-4 py-3 text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-100"
+            key={source.id}
+            role="status"
+          >
+            {translations.staleData}{" "}
+            {source.lastSuccessfulUpdate ? (
+              <Timestamp locale={getLocaleTag(locale)} value={source.lastSuccessfulUpdate} />
+            ) : null}
+          </p>
+        ))}
       <div className="grid gap-4 lg:grid-cols-2">
         {result.data.map((alert) => (
           <CityAlertCard
@@ -179,6 +182,7 @@ function CityAlertCard({ alert, locale, metadata, translations }: CityAlertCardP
   const Icon = alertIcons[alert.type];
   const severity = severityStyles[alert.severity];
   const localeTag = getLocaleTag(locale);
+  const sourceMetadata = getSourceMetadata(alert, metadata);
 
   return (
     <Card className={cn("overflow-hidden", severity.card)}>
@@ -258,17 +262,23 @@ function CityAlertCard({ alert, locale, metadata, translations }: CityAlertCardP
               value={translations.statuses[alert.status]}
             />
           ) : null}
-          {metadata.lastSuccessfulUpdate ? (
+          {sourceMetadata?.lastSuccessfulUpdate ? (
             <AlertDetail
               icon={AlertTriangle}
               label={translations.lastUpdated}
-              value={<Timestamp locale={localeTag} value={metadata.lastSuccessfulUpdate} />}
+              value={<Timestamp locale={localeTag} value={sourceMetadata.lastSuccessfulUpdate} />}
             />
           ) : null}
         </dl>
       </CardContent>
     </Card>
   );
+}
+
+function getSourceMetadata(alert: CityAlert, metadata: CityAlertsMetadata) {
+  if (alert.source.kind !== "source") return undefined;
+  const id = alert.source.value.toLocaleLowerCase("en") as "amscg" | "cedis";
+  return metadata.sources.find((source) => source.id === id);
 }
 
 interface AlertDetailProps {

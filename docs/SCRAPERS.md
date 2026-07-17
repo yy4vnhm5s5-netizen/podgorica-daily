@@ -22,6 +22,10 @@ CEDIS is the currently approved HTML collection source for planned Podgorica pow
 
 The collector recommends a 60-minute cadence. It uses local fixtures for automated tests and preserves a valid cached snapshot when the source, network, or markup is suspicious. The local cache is appropriate for development and persistent servers, but not as durable shared storage in serverless deployments. See ADR 0007 for configuration, classification, and scheduling constraints.
 
+## AMSCG road conditions
+
+AMSCG is the approved official source for road-condition notices at `https://amscg.org/stanje-na-putevima/`. `pnpm run collect:amscg` fetches only the allowed AMSCG host through the same timeout, retry, cache-first, and fixture-test policy as CEDIS. It normalizes road works, closures, alternating traffic, restrictions, and important warnings. Visitor requests read only `.runtime/cache/amscg-road-conditions.json`. See ADR 0008.
+
 ## Privacy
 
 Collectors must not gather personal data unless a documented lawful purpose, retention policy, access control, and deletion process are approved. Credentials and raw restricted content never appear in logs or test fixtures.

@@ -17,16 +17,13 @@ async function getDailyOverview(locale: OverviewLocale): Promise<DailyOverviewRe
       return { status: "empty" };
     }
 
-    const overviewSnapshot =
-      cityAlerts.providerMode === "mock"
-        ? snapshot
-        : {
-            ...snapshot,
-            alerts:
-              cityAlerts.status === "available"
-                ? { data: cityAlerts.alerts, status: "available" as const }
-                : { status: "unavailable" as const },
-          };
+    const overviewSnapshot = {
+      ...snapshot,
+      alerts:
+        cityAlerts.status === "available"
+          ? { data: cityAlerts.alerts, status: "available" as const }
+          : { status: "unavailable" as const },
+    };
 
     return { data: createDailyOverview(overviewSnapshot, locale), status: "success" };
   } catch {

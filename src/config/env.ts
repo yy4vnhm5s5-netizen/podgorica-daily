@@ -2,6 +2,7 @@ import { z } from "zod";
 
 const environmentSchema = z.object({
   CEDIS_PROVIDER_MODE: z.enum(["disabled", "live", "mock"]).default("live"),
+  AMSCG_PROVIDER_MODE: z.enum(["disabled", "live"]).default("live"),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   NEXT_PUBLIC_APP_ENV: z.string().min(1).default("development"),
 });
@@ -9,6 +10,7 @@ const environmentSchema = z.object({
 const parsedEnvironment = environmentSchema.safeParse({
   NODE_ENV: process.env.NODE_ENV,
   CEDIS_PROVIDER_MODE: process.env.CEDIS_PROVIDER_MODE,
+  AMSCG_PROVIDER_MODE: process.env.AMSCG_PROVIDER_MODE,
   NEXT_PUBLIC_APP_ENV: process.env.NEXT_PUBLIC_APP_ENV,
 });
 
