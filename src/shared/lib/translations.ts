@@ -21,7 +21,6 @@ const translations = {
       title: "Podgorica Daily",
     },
     shell: {
-      commandPaletteComingSoon: "Command palette coming soon",
       globalSearchComingSoon: "Global search coming soon",
       languageNames: {
         en: "English",
@@ -37,7 +36,6 @@ const translations = {
       primaryNavigationLabel: "Primary navigation",
       skipToContent: "Skip to content",
       tagline: "local information, thoughtfully designed.",
-      themeSwitcherLabel: "Toggle color theme",
     },
   },
   me: {
@@ -60,7 +58,6 @@ const translations = {
       title: "Podgorica Daily",
     },
     shell: {
-      commandPaletteComingSoon: "Paleta komandi uskoro će biti dostupna",
       globalSearchComingSoon: "Globalna pretraga uskoro će biti dostupna",
       languageNames: {
         en: "Engleski",
@@ -76,7 +73,6 @@ const translations = {
       primaryNavigationLabel: "Glavna navigacija",
       skipToContent: "Preskoči na sadržaj",
       tagline: "lokalne informacije, pažljivo oblikovane.",
-      themeSwitcherLabel: "Promijeni temu boja",
     },
   },
 } as const;

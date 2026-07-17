@@ -37,6 +37,7 @@ test("states that there are no active alerts", () => {
   const overview = createDailyOverview(createSnapshot(), contexts.me);
 
   assert.ok(overview.sentences.includes("Nema aktivnih gradskih smetnji."));
+  assert.equal(overview.airQualityCategory, "good");
   assert.ok(overview.sentences.length >= 2);
   assert.ok(overview.sentences.length <= 5);
 });
@@ -83,6 +84,7 @@ test("summarizes multiple alert types without exceeding five sentences", () => {
     "A major traffic disruption is active.",
     "Road works are affecting one area.",
   ]);
+  assert.equal(overview.airQualityCategory, "good");
 });
 
 test("uses a safe summary when every category is unavailable", () => {
@@ -101,6 +103,7 @@ test("uses a safe summary when every category is unavailable", () => {
     "There is not enough verified city data available for an overview right now.",
     "The overview will be updated when current data becomes available.",
   ]);
+  assert.equal(overview.airQualityCategory, undefined);
 });
 
 test("produces localized Montenegrin and English summaries", () => {

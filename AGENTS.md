@@ -97,7 +97,7 @@ Target WCAG 2.2 AA as specified in `docs/UI.md`.
 - Keep headings ordered and meaningful. Do not use heading tags merely for styling.
 - Provide text alternatives for icons; decorative icons use `aria-hidden="true"`.
 - Respect touch target size, zoom, contrast, reduced motion, and safe-area insets on narrow devices.
-- Test keyboard navigation, light and dark themes, and narrow/mobile layouts whenever UI changes.
+- Test keyboard navigation and narrow/mobile layouts whenever UI changes.
 
 ## 10. Performance Standards
 
@@ -123,7 +123,7 @@ Target WCAG 2.2 AA as specified in `docs/UI.md`.
 - Do not fetch data inside generic shared components.
 - Avoid effects for derived state. Use effects only for synchronization with an external system.
 - Use stable keys derived from data, not array indexes, except for purely static structural rendering such as a fixed skeleton line count.
-- Preserve server/client boundaries. Browser globals (`window`, `document`, `localStorage`) are allowed only in client components or intentionally inlined browser initialization code such as the current theme script.
+- Preserve server/client boundaries. Browser globals (`window`, `document`, `localStorage`) are allowed only in client components or intentionally inlined browser initialization code with a concrete browser-only need.
 
 ## 13. Next.js Standards
 
@@ -132,14 +132,14 @@ Target WCAG 2.2 AA as specified in `docs/UI.md`.
 - Export route metadata deliberately. Update root metadata from `shared/config/site.ts` only for site-wide information.
 - Validate environment variables through `src/config/env.ts` at process start; never read unvalidated `process.env` throughout the application.
 - Preserve `output: "standalone"` unless its container deployment implications are reviewed.
-- The theme initialization script must stay in the document head so the theme is selected before first paint. Maintain `color-scheme` support and the hydration safeguard only while that script mutates the root element before hydration.
+- The public interface currently renders in the light theme only. Do not reintroduce a theme script, hydration workaround, or user-facing theme control without an approved full dark-theme design.
 
 ## 14. Styling Standards
 
 - Use Tailwind CSS and the configured semantic CSS variables in `src/app/globals.css`.
 - Use `cn` from `@/shared/lib/utils` for conditional class composition.
 - Follow the configured Prettier Tailwind ordering; do not hand-sort utilities against the formatter.
-- Support both light and dark themes for all new shared UI.
+- Support the current light-only public interface for all new shared UI. A future dark theme requires an approved complete design before it is exposed.
 - Use existing responsive breakpoints and mobile-first utilities. Preserve `env(safe-area-inset-bottom)` spacing where fixed mobile navigation is present.
 - Avoid inline style objects except where a runtime value cannot be expressed safely with the existing token system.
 

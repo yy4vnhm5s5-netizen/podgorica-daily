@@ -1,6 +1,8 @@
 import type { Locale } from "@/shared/config/locale";
 
 interface DailyOverviewTranslations {
+  airQualityCategories: Record<"good" | "moderate" | "unhealthy", string>;
+  airQualityLabel: string;
   demoNotice: string;
   emptyDescription: string;
   emptyTitle: string;
@@ -13,6 +15,8 @@ interface DailyOverviewTranslations {
 
 const dailyOverviewTranslations: Record<Locale, DailyOverviewTranslations> = {
   en: {
+    airQualityCategories: { good: "Good", moderate: "Moderate", unhealthy: "Poor" },
+    airQualityLabel: "Air quality is currently reported as:",
     demoNotice: "This overview currently uses demo data from mock cached providers.",
     emptyDescription: "No daily overview is available right now.",
     emptyTitle: "Daily overview unavailable",
@@ -23,6 +27,8 @@ const dailyOverviewTranslations: Record<Locale, DailyOverviewTranslations> = {
     title: "Today in Podgorica",
   },
   me: {
+    airQualityCategories: { good: "Dobar", moderate: "Umjeren", unhealthy: "Loš" },
+    airQualityLabel: "Kvalitet vazduha trenutno je označen kao:",
     demoNotice: "Ovaj pregled trenutno koristi demo podatke iz mock keširanih provajdera.",
     emptyDescription: "Dnevni pregled trenutno nije dostupan.",
     emptyTitle: "Dnevni pregled nije dostupan",

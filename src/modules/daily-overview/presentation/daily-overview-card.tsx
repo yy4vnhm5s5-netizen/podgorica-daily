@@ -3,10 +3,12 @@ import type { ReactNode } from "react";
 
 import { getDefaultCityContext } from "@/config/city-context";
 import { getDailyOverview } from "@/modules/daily-overview/application/get-daily-overview";
+import type { AirQualityCategory } from "@/modules/daily-overview/domain/daily-overview";
 import { getDailyOverviewTranslations } from "@/modules/daily-overview/presentation/daily-overview-translations";
 import { EmptyState } from "@/shared/components/empty-state";
 import { ErrorState } from "@/shared/components/error-state";
 import { LoadingSkeleton } from "@/shared/components/loading-skeleton";
+import { StatusBadge, type StatusTone } from "@/shared/components/status-badge";
 import { Timestamp } from "@/shared/components/timestamp";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import type { Locale } from "@/shared/config/locale";
@@ -51,7 +53,7 @@ async function DailyOverviewCard({ locale }: DailyOverviewCardProps) {
     );
   }
 
-  const { generatedAt, isDemoData, sentences } = result.data;
+  const { airQualityCategory, generatedAt, isDemoData, sentences } = result.data;
 
   return (
     <Card className="overflow-hidden border-blue-200/70 bg-blue-50/60 transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-blue-300/80 hover:shadow-[0_12px_24px_-20px_rgb(15_23_42_/_0.32)] dark:border-blue-950/80">
@@ -72,6 +74,14 @@ async function DailyOverviewCard({ locale }: DailyOverviewCardProps) {
         </div>
       </CardHeader>
       <CardContent className="space-y-5 p-5 pt-0 sm:p-6 sm:pt-0">
+        {airQualityCategory ? (
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm leading-6 text-muted-foreground">
+            <span>{translations.airQualityLabel}</span>
+            <StatusBadge tone={airQualityTones[airQualityCategory]}>
+              {translations.airQualityCategories[airQualityCategory]}
+            </StatusBadge>
+          </div>
+        ) : null}
         <div className="max-w-3xl space-y-3 text-sm leading-6 text-muted-foreground sm:text-base sm:leading-7">
           {sentences.map((sentence) => (
             <p key={sentence}>{sentence}</p>
@@ -105,3 +115,9 @@ function DailyOverviewFrame({ children, locale }: DailyOverviewFrameProps) {
 }
 
 export { DailyOverviewCard, DailyOverviewCardLoading };
+
+const airQualityTones: Record<AirQualityCategory, StatusTone> = {
+  good: "success",
+  moderate: "warning",
+  unhealthy: "error",
+};

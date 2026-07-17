@@ -45,6 +45,7 @@ interface CityDataSnapshot {
 }
 
 interface DailyOverview {
+  airQualityCategory?: AirQualityCategory;
   generatedAt: Date;
   isDemoData: boolean;
   sentences: readonly string[];

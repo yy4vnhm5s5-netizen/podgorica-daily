@@ -4,6 +4,10 @@
 
 The interface is mobile-first, semantic, keyboard-operable, and resilient to slow or unavailable data. The accessibility target is WCAG 2.2 AA.
 
+## Theme
+
+The public interface is currently light-only. Do not add a user-facing theme control or dark-theme-specific presentation until a complete dark theme is approved and designed.
+
 ## System boundaries
 
 Shared UI primitives provide tokens, layout, typography, forms, feedback, navigation, and overlays. Feature modules compose these primitives; they do not fork styling systems or embed domain logic in generic components.

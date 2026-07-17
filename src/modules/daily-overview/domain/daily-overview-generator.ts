@@ -8,7 +8,6 @@ import type {
 import type { CityContext } from "@/shared/types/city";
 
 interface OverviewCopy {
-  airQuality: (category: AirQualityCategory) => string;
   criticalAlerts: (count: number) => string;
   dataAvailable: string;
   events: (count: number) => string;
@@ -27,10 +26,6 @@ interface OverviewCopy {
 
 const overviewCopy: Record<OverviewLocale, OverviewCopy> = {
   en: {
-    airQuality: (category) =>
-      `Air quality is currently reported as ${
-        { good: "good", moderate: "moderate", unhealthy: "unhealthy" }[category]
-      }.`,
     criticalAlerts: (count) =>
       count === 1
         ? "There is one critical city alert."
@@ -80,10 +75,6 @@ const overviewCopy: Record<OverviewLocale, OverviewCopy> = {
       count === 1 ? "A weather warning is active." : `${count} weather warnings are active.`,
   },
   me: {
-    airQuality: (category) =>
-      `Kvalitet vazduha trenutno je označen kao: ${
-        { good: "dobar", moderate: "umjeren", unhealthy: "nezdrav" }[category]
-      }.`,
     criticalAlerts: (count) =>
       count === 1
         ? "Aktivno je jedno kritično gradsko obavještenje."
@@ -146,6 +137,7 @@ function createDailyOverview(snapshot: CityDataSnapshot, context: CityContext): 
 
   if (!hasAvailableData(snapshot)) {
     return {
+      airQualityCategory: undefined,
       generatedAt: snapshot.generatedAt,
       isDemoData: snapshot.isDemoData,
       sentences: copy.noData,
@@ -161,7 +153,6 @@ function createDailyOverview(snapshot: CityDataSnapshot, context: CityContext): 
     getRoadWorksSentence(activeAlerts, copy),
     getUnusualTemperatureSentence(snapshot, copy, context.city.displayName),
     getEventsSentence(snapshot, copy),
-    getAirQualitySentence(snapshot, copy),
   ].filter((sentence): sentence is string => sentence !== null);
 
   if (snapshot.alerts.status === "available" && activeAlerts.length === 0) {
@@ -173,6 +164,8 @@ function createDailyOverview(snapshot: CityDataSnapshot, context: CityContext): 
   }
 
   return {
+    airQualityCategory:
+      snapshot.airQuality.status === "available" ? snapshot.airQuality.data.category : undefined,
     generatedAt: snapshot.generatedAt,
     isDemoData: snapshot.isDemoData,
     sentences: sentences.slice(0, 5),
@@ -274,12 +267,6 @@ function getEventsSentence(snapshot: CityDataSnapshot, copy: OverviewCopy) {
     return copy.concertsThisEvening(concertsThisEvening);
   if (eventsThisWeekend && eventsThisWeekend > 0) return copy.eventsThisWeekend(eventsThisWeekend);
   return copy.events(eventsToday ?? count);
-}
-
-function getAirQualitySentence(snapshot: CityDataSnapshot, copy: OverviewCopy) {
-  return snapshot.airQuality.status === "available"
-    ? copy.airQuality(snapshot.airQuality.data.category)
-    : null;
 }
 
 function isUnusualTemperature(temperatureCelsius: number) {
