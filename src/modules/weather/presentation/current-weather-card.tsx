@@ -16,6 +16,7 @@ import { getCurrentWeather } from "@/modules/weather/application/get-current-wea
 import {
   getWeatherConditionIcon,
   type WeatherConditionIcon,
+  type WeatherConditionKey,
 } from "@/modules/weather/domain/current-weather";
 import { EmptyState } from "@/shared/components/empty-state";
 import { ErrorState } from "@/shared/components/error-state";
@@ -23,6 +24,9 @@ import { LoadingSkeleton } from "@/shared/components/loading-skeleton";
 import { StatusBadge } from "@/shared/components/status-badge";
 import { Timestamp } from "@/shared/components/timestamp";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
+import type { Locale } from "@/shared/config/locale";
+import { getLocaleTag } from "@/shared/config/locale";
+import { getWeatherTranslations } from "@/modules/weather/presentation/weather-translations";
 
 const weatherIcons: Record<WeatherConditionIcon, LucideIcon> = {
   clear: Sun,
@@ -40,33 +44,37 @@ function WeatherCardFrame({ children }: Readonly<PropsWithChildren>) {
   return <Card className="min-h-44 overflow-hidden">{children}</Card>;
 }
 
-function CurrentWeatherCardLoading() {
+interface CurrentWeatherCardProps {
+  locale: Locale;
+}
+
+function CurrentWeatherCardLoading({ locale }: CurrentWeatherCardProps) {
+  const translations = getWeatherTranslations(locale);
+
   return (
     <WeatherCardFrame>
       <CardHeader className="bg-muted/30">
-        <h2 className="text-base font-semibold">Weather</h2>
+        <h2 className="text-base font-semibold">{translations.title}</h2>
       </CardHeader>
       <CardContent className="pt-6">
-        <LoadingSkeleton lines={4} />
+        <LoadingSkeleton label={translations.loading} lines={4} />
       </CardContent>
     </WeatherCardFrame>
   );
 }
 
-async function CurrentWeatherCard() {
+async function CurrentWeatherCard({ locale }: CurrentWeatherCardProps) {
   const result = await getCurrentWeather();
+  const translations = getWeatherTranslations(locale);
 
   if (result.status === "error") {
     return (
       <WeatherCardFrame>
         <CardHeader className="bg-muted/30">
-          <h2 className="text-base font-semibold">Weather</h2>
+          <h2 className="text-base font-semibold">{translations.title}</h2>
         </CardHeader>
         <CardContent className="pt-6">
-          <ErrorState
-            description="Current conditions are temporarily unavailable. Please try again shortly."
-            title="Weather unavailable"
-          />
+          <ErrorState description={translations.errorDescription} title={translations.errorTitle} />
         </CardContent>
       </WeatherCardFrame>
     );
@@ -76,13 +84,10 @@ async function CurrentWeatherCard() {
     return (
       <WeatherCardFrame>
         <CardHeader className="bg-muted/30">
-          <h2 className="text-base font-semibold">Weather</h2>
+          <h2 className="text-base font-semibold">{translations.title}</h2>
         </CardHeader>
         <CardContent className="pt-6">
-          <EmptyState
-            description="No current weather observation is available right now."
-            title="No weather data"
-          />
+          <EmptyState description={translations.emptyDescription} title={translations.emptyTitle} />
         </CardContent>
       </WeatherCardFrame>
     );
@@ -95,10 +100,10 @@ async function CurrentWeatherCard() {
     <WeatherCardFrame>
       <CardHeader className="flex-row items-start justify-between gap-4 space-y-0 bg-muted/30">
         <div>
-          <h2 className="text-base font-semibold">Weather</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Podgorica</p>
+          <h2 className="text-base font-semibold">{translations.title}</h2>
+          <p className="mt-1 text-sm text-muted-foreground">{translations.location}</p>
         </div>
-        <StatusBadge tone="info">Current</StatusBadge>
+        <StatusBadge tone="info">{translations.status}</StatusBadge>
       </CardHeader>
       <CardContent className="space-y-5 pt-6">
         <div className="flex items-end justify-between gap-4">
@@ -106,30 +111,32 @@ async function CurrentWeatherCard() {
             <p className="text-5xl font-semibold tracking-tighter sm:text-6xl">
               {temperature.toFixed(1)}°C
             </p>
-            <p className="mt-2 text-sm font-medium text-muted-foreground">{condition}</p>
+            <p className="mt-2 text-sm font-medium text-muted-foreground">
+              {translations.conditions[condition]}
+            </p>
           </div>
           <WeatherGlyph condition={condition} />
         </div>
         {apparentTemperature === null ? null : (
           <p className="rounded-md bg-muted/60 px-3 py-2 text-sm text-muted-foreground">
-            Feels like{" "}
+            {translations.feelsLike}{" "}
             <span className="font-medium text-foreground">{apparentTemperature.toFixed(1)}°C</span>
           </p>
         )}
         <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border bg-border text-sm">
           <div className="bg-background p-3 sm:p-4">
-            <dt className="text-muted-foreground">Wind</dt>
+            <dt className="text-muted-foreground">{translations.wind}</dt>
             <dd className="mt-1 text-base font-semibold">{windSpeed.toFixed(1)} km/h</dd>
           </div>
           <div className="bg-background p-3 sm:p-4">
-            <dt className="text-muted-foreground">Humidity</dt>
+            <dt className="text-muted-foreground">{translations.humidity}</dt>
             <dd className="mt-1 text-base font-semibold">{humidity.toFixed(0)}%</dd>
           </div>
         </dl>
         <div className="border-t pt-4 text-xs text-muted-foreground">
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
             <p>
-              Source:{" "}
+              {translations.source}:{" "}
               <a
                 className="underline underline-offset-4 hover:text-foreground"
                 href="https://open-meteo.com/"
@@ -138,7 +145,8 @@ async function CurrentWeatherCard() {
               </a>
             </p>
             <p>
-              Last updated <Timestamp value={updatedAt} />
+              {translations.lastUpdated}{" "}
+              <Timestamp locale={getLocaleTag(locale)} value={updatedAt} />
             </p>
           </div>
         </div>
@@ -150,7 +158,7 @@ async function CurrentWeatherCard() {
 export { CurrentWeatherCard, CurrentWeatherCardLoading };
 
 interface WeatherGlyphProps {
-  condition: string;
+  condition: WeatherConditionKey;
 }
 
 function WeatherGlyph({ condition }: WeatherGlyphProps) {

@@ -4,14 +4,15 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
 import { cn } from "@/shared/lib/utils";
 
 interface LoadingSkeletonProps extends HTMLAttributes<HTMLDivElement> {
+  label: string;
   lines?: number;
 }
 
-function LoadingSkeleton({ className, lines = 3, ...props }: LoadingSkeletonProps) {
+function LoadingSkeleton({ className, label, lines = 3, ...props }: LoadingSkeletonProps) {
   return (
     <div
       aria-busy="true"
-      aria-label="Loading content"
+      aria-label={label}
       className={cn("space-y-3", className)}
       role="status"
       {...props}
@@ -19,7 +20,7 @@ function LoadingSkeleton({ className, lines = 3, ...props }: LoadingSkeletonProp
       {Array.from({ length: lines }, (_, index) => (
         <Skeleton className={cn("h-4", index === lines - 1 ? "w-2/3" : "w-full")} key={index} />
       ))}
-      <span className="sr-only">Loading content</span>
+      <span className="sr-only">{label}</span>
     </div>
   );
 }

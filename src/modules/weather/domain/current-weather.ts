@@ -1,6 +1,6 @@
 interface CurrentWeather {
   apparentTemperature: number | null;
-  condition: string;
+  condition: WeatherConditionKey;
   humidity: number;
   temperature: number;
   updatedAt: Date;
@@ -18,50 +18,79 @@ type WeatherConditionIcon =
   | "thunderstorm"
   | "unknown";
 
+type WeatherConditionKey =
+  | "clearSky"
+  | "denseDrizzle"
+  | "denseFreezingDrizzle"
+  | "fog"
+  | "heavyFreezingRain"
+  | "heavyRain"
+  | "heavySnowShowers"
+  | "heavySnowfall"
+  | "lightDrizzle"
+  | "lightFreezingDrizzle"
+  | "lightFreezingRain"
+  | "mainlyClear"
+  | "moderateDrizzle"
+  | "moderateRain"
+  | "moderateRainShowers"
+  | "moderateSnowfall"
+  | "overcast"
+  | "partlyCloudy"
+  | "rimeFog"
+  | "slightRain"
+  | "slightRainShowers"
+  | "slightSnowShowers"
+  | "slightSnowfall"
+  | "snowGrains"
+  | "thunderstorm"
+  | "thunderstormWithHeavyHail"
+  | "thunderstormWithSlightHail"
+  | "unknown"
+  | "violentRainShowers";
+
 interface WeatherConditionDefinition {
   icon: WeatherConditionIcon;
-  label: string;
+  key: WeatherConditionKey;
 }
 
 const weatherConditions: Record<number, WeatherConditionDefinition> = {
-  0: { icon: "clear", label: "Clear sky" },
-  1: { icon: "clear", label: "Mainly clear" },
-  2: { icon: "partly-cloudy", label: "Partly cloudy" },
-  3: { icon: "overcast", label: "Overcast" },
-  45: { icon: "fog", label: "Fog" },
-  48: { icon: "fog", label: "Rime fog" },
-  51: { icon: "drizzle", label: "Light drizzle" },
-  53: { icon: "drizzle", label: "Moderate drizzle" },
-  55: { icon: "drizzle", label: "Dense drizzle" },
-  56: { icon: "drizzle", label: "Light freezing drizzle" },
-  57: { icon: "drizzle", label: "Dense freezing drizzle" },
-  61: { icon: "rain", label: "Slight rain" },
-  63: { icon: "rain", label: "Moderate rain" },
-  65: { icon: "rain", label: "Heavy rain" },
-  66: { icon: "rain", label: "Light freezing rain" },
-  67: { icon: "rain", label: "Heavy freezing rain" },
-  71: { icon: "snow", label: "Slight snowfall" },
-  73: { icon: "snow", label: "Moderate snowfall" },
-  75: { icon: "snow", label: "Heavy snowfall" },
-  77: { icon: "snow", label: "Snow grains" },
-  80: { icon: "rain", label: "Slight rain showers" },
-  81: { icon: "rain", label: "Moderate rain showers" },
-  82: { icon: "rain", label: "Violent rain showers" },
-  85: { icon: "snow", label: "Slight snow showers" },
-  86: { icon: "snow", label: "Heavy snow showers" },
-  95: { icon: "thunderstorm", label: "Thunderstorm" },
-  96: { icon: "thunderstorm", label: "Thunderstorm with slight hail" },
-  99: { icon: "thunderstorm", label: "Thunderstorm with heavy hail" },
+  0: { icon: "clear", key: "clearSky" },
+  1: { icon: "clear", key: "mainlyClear" },
+  2: { icon: "partly-cloudy", key: "partlyCloudy" },
+  3: { icon: "overcast", key: "overcast" },
+  45: { icon: "fog", key: "fog" },
+  48: { icon: "fog", key: "rimeFog" },
+  51: { icon: "drizzle", key: "lightDrizzle" },
+  53: { icon: "drizzle", key: "moderateDrizzle" },
+  55: { icon: "drizzle", key: "denseDrizzle" },
+  56: { icon: "drizzle", key: "lightFreezingDrizzle" },
+  57: { icon: "drizzle", key: "denseFreezingDrizzle" },
+  61: { icon: "rain", key: "slightRain" },
+  63: { icon: "rain", key: "moderateRain" },
+  65: { icon: "rain", key: "heavyRain" },
+  66: { icon: "rain", key: "lightFreezingRain" },
+  67: { icon: "rain", key: "heavyFreezingRain" },
+  71: { icon: "snow", key: "slightSnowfall" },
+  73: { icon: "snow", key: "moderateSnowfall" },
+  75: { icon: "snow", key: "heavySnowfall" },
+  77: { icon: "snow", key: "snowGrains" },
+  80: { icon: "rain", key: "slightRainShowers" },
+  81: { icon: "rain", key: "moderateRainShowers" },
+  82: { icon: "rain", key: "violentRainShowers" },
+  85: { icon: "snow", key: "slightSnowShowers" },
+  86: { icon: "snow", key: "heavySnowShowers" },
+  95: { icon: "thunderstorm", key: "thunderstorm" },
+  96: { icon: "thunderstorm", key: "thunderstormWithSlightHail" },
+  99: { icon: "thunderstorm", key: "thunderstormWithHeavyHail" },
 };
 
-function getWeatherCondition(weatherCode: number) {
-  return weatherConditions[weatherCode]?.label ?? "Unknown conditions";
+function getWeatherCondition(weatherCode: number): WeatherConditionKey {
+  return weatherConditions[weatherCode]?.key ?? "unknown";
 }
 
-function getWeatherConditionIcon(condition: string): WeatherConditionIcon {
-  return (
-    Object.values(weatherConditions).find(({ label }) => label === condition)?.icon ?? "unknown"
-  );
+function getWeatherConditionIcon(condition: WeatherConditionKey): WeatherConditionIcon {
+  return Object.values(weatherConditions).find(({ key }) => key === condition)?.icon ?? "unknown";
 }
 
 export {
@@ -69,4 +98,5 @@ export {
   getWeatherConditionIcon,
   type CurrentWeather,
   type WeatherConditionIcon,
+  type WeatherConditionKey,
 };

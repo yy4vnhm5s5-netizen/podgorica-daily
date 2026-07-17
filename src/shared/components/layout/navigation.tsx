@@ -1,19 +1,33 @@
 import { LayoutDashboard, Search } from "lucide-react";
 
+import type { Locale } from "@/shared/config/locale";
+import type { Translations } from "@/shared/lib/translations";
 import { cn } from "@/shared/lib/utils";
 
-const navigationItems = [
-  { href: "#dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "#search", icon: Search, label: "Search" },
-] as const;
-
 interface NavigationProps {
+  locale: Locale;
   mobile?: boolean;
+  translations: Translations;
 }
 
-function Navigation({ mobile = false }: NavigationProps) {
+function Navigation({ locale, mobile = false, translations }: NavigationProps) {
+  const navigationItems = [
+    {
+      href: `/${locale}#dashboard`,
+      icon: LayoutDashboard,
+      label: translations.shell.navigation.dashboard,
+    },
+    { href: `/${locale}#search`, icon: Search, label: translations.shell.navigation.search },
+  ];
+
   return (
-    <nav aria-label={mobile ? "Mobile navigation" : "Primary navigation"}>
+    <nav
+      aria-label={
+        mobile
+          ? translations.shell.mobileNavigationLabel
+          : translations.shell.primaryNavigationLabel
+      }
+    >
       <ul className={cn(mobile ? "grid grid-cols-2 gap-2" : "flex items-center gap-1")}>
         {navigationItems.map(({ href, icon: Icon, label }) => (
           <li key={href}>
@@ -34,4 +48,4 @@ function Navigation({ mobile = false }: NavigationProps) {
   );
 }
 
-export { Navigation };
+export { Navigation, type NavigationProps };

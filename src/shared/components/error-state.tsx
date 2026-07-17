@@ -5,16 +5,10 @@ import { cn } from "@/shared/lib/utils";
 interface ErrorStateProps extends Omit<HTMLAttributes<HTMLDivElement>, "title"> {
   action?: ReactNode;
   description: ReactNode;
-  title?: ReactNode;
+  title: ReactNode;
 }
 
-function ErrorState({
-  action,
-  className,
-  description,
-  title = "Something went wrong",
-  ...props
-}: ErrorStateProps) {
+function ErrorState({ action, className, description, title, ...props }: ErrorStateProps) {
   return (
     <div
       className={cn(

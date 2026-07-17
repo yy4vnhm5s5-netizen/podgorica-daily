@@ -8,14 +8,14 @@ import { cn } from "@/shared/lib/utils";
 
 interface RefreshButtonProps extends Omit<ComponentProps<typeof Button>, "children" | "onClick"> {
   isRefreshing?: boolean;
-  label?: string;
+  label: string;
   onRefresh: () => void;
 }
 
 function RefreshButton({
   className,
   isRefreshing = false,
-  label = "Refresh",
+  label,
   onRefresh,
   ...props
 }: RefreshButtonProps) {

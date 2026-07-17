@@ -1,4 +1,6 @@
-const defaultLocale = "en";
+import { getLocaleTag } from "@/shared/config/locale";
+
+const defaultLocale = getLocaleTag("me");
 const defaultTimeZone = "Europe/Podgorica";
 
 interface FormatDateTimeOptions {
