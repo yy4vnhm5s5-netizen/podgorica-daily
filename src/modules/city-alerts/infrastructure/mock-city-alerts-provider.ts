@@ -7,6 +7,7 @@ function getMockCityAlerts(now: Date): CityAlert[] {
     {
       affectedArea: { key: "centar", kind: "demo" },
       dataMode: "demo",
+      cityIds: ["podgorica"],
       description: { key: "roadWorksDescription", kind: "demo" },
       expectedEndAt: new Date(now.getTime() + 6 * hour),
       id: "demo-road-works-centar",
@@ -20,6 +21,7 @@ function getMockCityAlerts(now: Date): CityAlert[] {
     {
       affectedArea: { key: "masline", kind: "demo" },
       dataMode: "demo",
+      cityIds: ["podgorica"],
       description: { key: "waterOutageDescription", kind: "demo" },
       expectedEndAt: new Date(now.getTime() + 4 * hour),
       id: "demo-water-outage-masline",
@@ -33,6 +35,7 @@ function getMockCityAlerts(now: Date): CityAlert[] {
     {
       affectedArea: { key: "citywide", kind: "demo" },
       dataMode: "demo",
+      cityIds: ["podgorica"],
       description: { key: "resolvedDescription", kind: "demo" },
       expectedEndAt: new Date(now.getTime() - hour),
       id: "demo-resolved-citywide",

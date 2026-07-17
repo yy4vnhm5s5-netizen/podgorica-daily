@@ -1,6 +1,9 @@
+import type { CityId } from "@/shared/types/city";
+
 interface CurrentWeather {
   apparentTemperature: number | null;
   condition: WeatherConditionKey;
+  cityIds: CityId[];
   humidity: number;
   temperature: number;
   updatedAt: Date;

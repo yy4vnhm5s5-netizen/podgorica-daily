@@ -5,8 +5,24 @@ import type { CityAlert } from "../domain/city-alert.ts";
 import type { CedisCacheSnapshot } from "./cedis-cache.ts";
 import { getCedisCityAlerts } from "./cedis-city-alerts-provider.ts";
 
+const context = {
+  city: {
+    country: "Montenegro",
+    displayName: "Podgorica",
+    enabled: true,
+    id: "podgorica" as const,
+    latitude: 42.441,
+    longitude: 19.263,
+    slug: "podgorica",
+    timezone: "Europe/Podgorica",
+  },
+  locale: "me" as const,
+  timezone: "Europe/Podgorica",
+};
+
 const liveAlert: CityAlert = {
   affectedArea: { kind: "source", value: "Konik" },
+  cityIds: ["podgorica"],
   dataMode: "live",
   description: { kind: "source", value: "Planned interruption." },
   id: "cedis-konik",
@@ -32,6 +48,7 @@ const cache = (freshnessStatus: CedisCacheSnapshot["freshnessStatus"]): CedisCac
 
 test("reads fresh official CEDIS alerts without changing their source URL", async () => {
   const result = await getCedisCityAlerts({
+    context,
     mode: "live",
     readCache: async () => cache("fresh"),
   });
@@ -42,14 +59,18 @@ test("reads fresh official CEDIS alerts without changing their source URL", asyn
 });
 
 test("keeps stale cached CEDIS alerts available with stale metadata", async () => {
-  const result = await getCedisCityAlerts({ mode: "live", readCache: async () => cache("stale") });
+  const result = await getCedisCityAlerts({
+    context,
+    mode: "live",
+    readCache: async () => cache("stale"),
+  });
   assert.equal(result.freshnessStatus, "stale");
   assert.equal(result.alerts.length, 1);
   assert.equal(result.lastSuccessfulUpdate?.toISOString(), "2026-07-17T08:00:00.000Z");
 });
 
 test("returns unavailable metadata when no live cache exists", async () => {
-  const result = await getCedisCityAlerts({ mode: "live", readCache: async () => null });
+  const result = await getCedisCityAlerts({ context, mode: "live", readCache: async () => null });
   assert.equal(result.freshnessStatus, "unavailable");
   assert.deepEqual(result.alerts, []);
 });
@@ -57,6 +78,7 @@ test("returns unavailable metadata when no live cache exists", async () => {
 test("uses mock data only when mock mode is explicitly selected", async () => {
   const mockAlert = { ...liveAlert, dataMode: "demo" as const, id: "mock-alert" };
   const result = await getCedisCityAlerts({
+    context,
     getMockAlerts: async () => [mockAlert],
     mode: "mock",
     readCache: async () => cache("fresh"),
@@ -72,11 +94,12 @@ test("does not silently fall back to mock data in live or disabled modes", async
     return [liveAlert];
   };
   const live = await getCedisCityAlerts({
+    context,
     mode: "live",
     readCache: async () => null,
     getMockAlerts,
   });
-  const disabled = await getCedisCityAlerts({ mode: "disabled", getMockAlerts });
+  const disabled = await getCedisCityAlerts({ context, mode: "disabled", getMockAlerts });
   assert.equal(live.freshnessStatus, "unavailable");
   assert.equal(disabled.freshnessStatus, "unavailable");
   assert.equal(mockReads, 0);

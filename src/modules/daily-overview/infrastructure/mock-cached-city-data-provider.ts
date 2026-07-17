@@ -2,8 +2,9 @@ import type {
   CachedCityDataProvider,
   CityDataSnapshot,
 } from "@/modules/daily-overview/domain/daily-overview";
+import type { CityContext } from "@/shared/types/city";
 
-function createMockCachedCityData(now: Date): CityDataSnapshot {
+function createMockCachedCityData(now: Date, context: CityContext): CityDataSnapshot {
   return {
     airQuality: { data: { category: "good" }, status: "available" },
     alerts: {
@@ -13,6 +14,7 @@ function createMockCachedCityData(now: Date): CityDataSnapshot {
       ],
       status: "available",
     },
+    cityIds: [context.city.id],
     events: { status: "unavailable" },
     generatedAt: now,
     isDemoData: true,
@@ -21,11 +23,9 @@ function createMockCachedCityData(now: Date): CityDataSnapshot {
 }
 
 const mockCachedCityDataProvider: CachedCityDataProvider = {
-  async getCachedCityData() {
-    return mockCachedCityData;
+  async getCachedCityData(context) {
+    return createMockCachedCityData(new Date(), context);
   },
 };
-
-const mockCachedCityData = createMockCachedCityData(new Date());
 
 export { mockCachedCityDataProvider };

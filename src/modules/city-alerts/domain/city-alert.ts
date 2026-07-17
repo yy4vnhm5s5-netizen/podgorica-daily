@@ -1,3 +1,5 @@
+import type { CityId } from "@/shared/types/city";
+
 type AlertSeverity = "critical" | "information" | "resolved" | "warning";
 
 type AlertType =
@@ -21,6 +23,7 @@ type CityAlertContent =
 interface CityAlert {
   affectedArea: CityAlertContent;
   dataMode: "demo" | "live";
+  cityIds: CityId[];
   description: CityAlertContent;
   expectedEndAt?: Date;
   id: string;

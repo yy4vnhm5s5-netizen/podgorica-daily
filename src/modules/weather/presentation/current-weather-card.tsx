@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import type { PropsWithChildren } from "react";
 
+import { getDefaultCityContext } from "@/config/city-context";
 import { getCurrentWeather } from "@/modules/weather/application/get-current-weather";
 import {
   getWeatherConditionIcon,
@@ -64,7 +65,7 @@ function CurrentWeatherCardLoading({ locale }: CurrentWeatherCardProps) {
 }
 
 async function CurrentWeatherCard({ locale }: CurrentWeatherCardProps) {
-  const result = await getCurrentWeather();
+  const result = await getCurrentWeather(getDefaultCityContext(locale));
   const translations = getWeatherTranslations(locale);
 
   if (result.status === "error") {

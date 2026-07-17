@@ -1,3 +1,5 @@
+import type { CityContext, CityId } from "@/shared/types/city";
+
 type OverviewLocale = "en" | "me";
 
 type DataAvailability<T> = { data: T; status: "available" } | { status: "unavailable" };
@@ -32,6 +34,7 @@ interface AirQualityOverviewData {
 interface CityDataSnapshot {
   airQuality: DataAvailability<AirQualityOverviewData>;
   alerts: DataAvailability<readonly OverviewAlert[]>;
+  cityIds: CityId[];
   events: DataAvailability<EventsOverviewData>;
   generatedAt: Date;
   isDemoData: boolean;
@@ -45,7 +48,7 @@ interface DailyOverview {
 }
 
 interface CachedCityDataProvider {
-  getCachedCityData(): Promise<CityDataSnapshot | null>;
+  getCachedCityData(context: CityContext): Promise<CityDataSnapshot | null>;
 }
 
 interface ScheduledDataProvider {

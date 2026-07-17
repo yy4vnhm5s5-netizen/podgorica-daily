@@ -18,6 +18,10 @@ AMSCG road conditions use the same cache-first boundary and can be collected man
 
 The default language is Montenegrin Latin, ijekavian (`/me`). English is available at `/en`; the root route redirects to `/me`.
 
+## City-aware foundation
+
+Podgorica is the only enabled city and the public experience remains unchanged. Internally, providers receive a city context and normalized records carry `cityIds`, preparing future city-specific routes without exposing them today. `DEFAULT_CITY=podgorica` is validated against the central registry. See [ADR 0009](docs/adr/0009-multi-city-platform-foundation.md).
+
 ## Architecture
 
 The project is a modular monolith. Presentation, application, domain, and infrastructure concerns remain separated, and future features own their code beneath `src/modules`. Shared components and utilities are deliberately restricted to cross-cutting concerns.

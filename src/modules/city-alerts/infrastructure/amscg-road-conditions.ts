@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 
 import type { RoadAlert, RoadAlertType } from "../domain/road-alert.ts";
 import { amscgRoadConditionsUrl } from "./amscg-http-client.ts";
+import type { CityId } from "@/shared/types/city";
 
 interface AmscgParseResult {
   alerts: RoadAlert[];
@@ -44,6 +45,7 @@ function normalizeRoadAlert(entry: string, sourceUrl: string): RoadAlert[] {
   return [
     {
       affectedRoad,
+      cityIds: getCityIds(entry),
       description: entry,
       id,
       municipality: extractMunicipality(entry),
@@ -77,6 +79,14 @@ function extractMunicipality(value: string) {
   return /\b(Podgorica|Nikšić|Danilovgrad|Cetinje|Kolašin|Herceg Novi|Bar|Budva|Kotor|Tivat|Ulcinj|Pljevlja|Bijelo Polje|Berane|Rožaje|Plav|Gusinje|Mojkovac|Šavnik|Žabljak|Tuzi|Zeta)\b/i.exec(
     value,
   )?.[1];
+}
+
+function getCityIds(value: string): CityId[] {
+  const cityIds: CityId[] = [];
+  if (value.includes("Podgorica")) cityIds.push("podgorica");
+  if (value.includes("Nikšić")) cityIds.push("niksic");
+  if (value.includes("Bar")) cityIds.push("bar");
+  return cityIds.length > 0 ? cityIds : ["podgorica"];
 }
 
 function parseValidity(value: string) {

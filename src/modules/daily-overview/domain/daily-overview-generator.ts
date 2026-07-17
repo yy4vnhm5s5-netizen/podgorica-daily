@@ -5,6 +5,7 @@ import type {
   OverviewAlert,
   OverviewLocale,
 } from "./daily-overview.ts";
+import type { CityContext } from "@/shared/types/city";
 
 interface OverviewCopy {
   airQuality: (category: AirQualityCategory) => string;
@@ -17,7 +18,7 @@ interface OverviewCopy {
   upcomingPowerOutages: (count: number) => string;
   roadWorks: (count: number) => string;
   trafficDisruptions: (count: number) => string;
-  unusualTemperature: (temperature: number) => string;
+  unusualTemperature: (temperature: number, cityName: string) => string;
   waterOutages: (count: number) => string;
   weatherWarnings: (count: number) => string;
 }
@@ -61,8 +62,8 @@ const overviewCopy: Record<OverviewLocale, OverviewCopy> = {
       count === 1
         ? "A major traffic disruption is active."
         : `${count} major traffic disruptions are active.`,
-    unusualTemperature: (temperature) =>
-      `The temperature is unusually ${temperature.toFixed(1)}°C for Podgorica.`,
+    unusualTemperature: (temperature, cityName) =>
+      `The temperature is unusually ${temperature.toFixed(1)}°C for ${cityName}.`,
     waterOutages: (count) =>
       count === 1 ? "One water outage is active." : `${count} water outages are active.`,
     weatherWarnings: (count) =>
@@ -108,8 +109,8 @@ const overviewCopy: Record<OverviewLocale, OverviewCopy> = {
       count === 1
         ? "Aktivna je velika saobraćajna smetnja."
         : `Aktivne su ${count} velike saobraćajne smetnje.`,
-    unusualTemperature: (temperature) =>
-      `Temperatura od ${temperature.toFixed(1)}°C neuobičajena je za Podgoricu.`,
+    unusualTemperature: (temperature, cityName) =>
+      `Temperatura od ${temperature.toFixed(1)}°C neuobičajena je za ${cityName}.`,
     waterOutages: (count) =>
       count === 1
         ? "Aktivan je jedan prekid vodosnabdijevanja."
@@ -121,8 +122,8 @@ const overviewCopy: Record<OverviewLocale, OverviewCopy> = {
   },
 };
 
-function createDailyOverview(snapshot: CityDataSnapshot, locale: OverviewLocale): DailyOverview {
-  const copy = overviewCopy[locale];
+function createDailyOverview(snapshot: CityDataSnapshot, context: CityContext): DailyOverview {
+  const copy = overviewCopy[context.locale];
   const activeAlerts = getActiveAlerts(snapshot);
 
   if (!hasAvailableData(snapshot)) {
@@ -140,7 +141,7 @@ function createDailyOverview(snapshot: CityDataSnapshot, locale: OverviewLocale)
     getWaterOutagesSentence(activeAlerts, copy),
     getTrafficDisruptionsSentence(activeAlerts, copy),
     getRoadWorksSentence(activeAlerts, copy),
-    getUnusualTemperatureSentence(snapshot, copy),
+    getUnusualTemperatureSentence(snapshot, copy, context.city.displayName),
     getEventsSentence(snapshot, copy),
     getAirQualitySentence(snapshot, copy),
   ].filter((sentence): sentence is string => sentence !== null);
@@ -229,7 +230,11 @@ function getAlertTypeSentence(
   return count > 0 ? sentence(count) : null;
 }
 
-function getUnusualTemperatureSentence(snapshot: CityDataSnapshot, copy: OverviewCopy) {
+function getUnusualTemperatureSentence(
+  snapshot: CityDataSnapshot,
+  copy: OverviewCopy,
+  cityName: string,
+) {
   if (snapshot.weather.status === "unavailable") {
     return null;
   }
@@ -237,7 +242,7 @@ function getUnusualTemperatureSentence(snapshot: CityDataSnapshot, copy: Overvie
   const { temperatureCelsius } = snapshot.weather.data;
 
   return isUnusualTemperature(temperatureCelsius)
-    ? copy.unusualTemperature(temperatureCelsius)
+    ? copy.unusualTemperature(temperatureCelsius, cityName)
     : null;
 }
 

@@ -1,6 +1,8 @@
 import type { CityAlert } from "../domain/city-alert.ts";
 import { readCedisCache, type CedisCacheSnapshot, type FreshnessStatus } from "./cedis-cache.ts";
 import { mockCityAlertsProvider } from "./mock-city-alerts-provider.ts";
+import type { CityContext } from "@/shared/types/city";
+import type { ProviderMetadata } from "@/shared/types/provider";
 
 type CityAlertsProviderMode = "disabled" | "live" | "mock";
 
@@ -12,16 +14,19 @@ interface CityAlertsSourceData {
 }
 
 interface CedisCityAlertsProviderDependencies {
+  context: CityContext;
   getMockAlerts?: () => Promise<CityAlert[] | null>;
   mode: CityAlertsProviderMode;
   readCache?: () => Promise<CedisCacheSnapshot | null>;
 }
 
 async function getCedisCityAlerts({
+  context,
   getMockAlerts = () => mockCityAlertsProvider.getCityAlerts(),
   mode,
   readCache = readCedisCache,
 }: CedisCityAlertsProviderDependencies): Promise<CityAlertsSourceData> {
+  void context;
   if (mode === "disabled") {
     return { alerts: [], freshnessStatus: "unavailable", mode };
   }
@@ -43,7 +48,18 @@ async function getCedisCityAlerts({
   };
 }
 
+const cedisProviderMetadata: ProviderMetadata = {
+  cachePath: ".runtime/cache/cedis-planned-outages.json",
+  displayName: "CEDIS planned outages",
+  enabled: true,
+  id: "cedis",
+  officialSource: "https://cedis.me/servisne-informacije/",
+  refreshIntervalMinutes: 60,
+  supportsMultipleCities: false,
+};
+
 export {
+  cedisProviderMetadata,
   getCedisCityAlerts,
   type CedisCityAlertsProviderDependencies,
   type CityAlertsProviderMode,

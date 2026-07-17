@@ -114,6 +114,7 @@ function parseOutageLine(line: string, date: Date, article: CedisArticleLink): C
   return [
     {
       affectedArea: { kind: "source", value: area },
+      cityIds: ["podgorica"],
       dataMode: "live",
       description: {
         kind: "source",

@@ -283,7 +283,7 @@ Use `feat`, `fix`, `docs`, `refactor`, `test`, `build`, `ci`, `chore`, or `perf`
 
 ## 30. ADR Policy
 
-The accepted ADRs are `docs/adr/0001-modular-monolith.md` through `docs/adr/0008-amscg-cached-road-conditions.md`.
+The accepted ADRs are `docs/adr/0001-modular-monolith.md` through `docs/adr/0009-multi-city-platform-foundation.md`.
 
 - Create a new numbered ADR for a material, lasting architectural decision: providers, maps, identity, persistence, hosting, observability, or an architectural boundary change.
 - Include status, date, context, decision, and consequences.
@@ -340,7 +340,7 @@ Introduce modules incrementally in the roadmap order and only after their contra
 - Trusted local data modules need documented providers, legal/attribution review, provenance, freshness, stale-data behaviour, monitoring, and a default-off feature flag.
 - Maps, search, identity, and administration need an ADR before selecting a vendor or data model.
 - Persistence starts only after module data ownership, migration strategy, retention, backup/restoration, and access controls are defined.
-- Daily Overview consumes cached normalized data only. CEDIS and AMSCG are approved source adapters: collection is invoked by `pnpm run collect:cedis` or `pnpm run collect:amscg`, never by a page request. Preserve allowed-host validation, fixture tests, stale/unavailable behaviour, and provider-mode boundaries. The file cache is not durable on serverless deployments; add a durable adapter only after its contract and operations are approved.
+- Daily Overview consumes cached normalized data only. CEDIS and AMSCG are approved source adapters: collection is invoked by `pnpm run collect:cedis` or `pnpm run collect:amscg`, never by a page request. Preserve allowed-host validation, fixture tests, stale/unavailable behaviour, provider-mode boundaries, and `CityContext` input. Podgorica is the only enabled city; do not expose city routes or selectors until separately approved. The file cache is not durable on serverless deployments; add a durable adapter only after its contract and operations are approved.
 - Extract a service only when the modular-monolith boundary has a demonstrated operational need; do not preemptively distribute the system.
 
 For all future work, use the project documentation and this handbook together: product documents define intended outcomes, ADRs define accepted structural decisions, and this file defines the practical contribution rules.

@@ -1,16 +1,10 @@
-import { env } from "@/config/env";
+import { getDefaultCityContext } from "@/config/city-context";
+import { getCityAlertProviderData } from "@/config/providers";
 import type { CityAlert } from "@/modules/city-alerts/domain/city-alert";
-import {
-  getAmscgCityAlerts,
-  type AmscgProviderMode,
-} from "@/modules/city-alerts/infrastructure/amscg-city-alerts-provider";
-import {
-  getCedisCityAlerts,
-  type CityAlertsProviderMode as CedisProviderMode,
-} from "@/modules/city-alerts/infrastructure/cedis-city-alerts-provider";
+import type { CityContext } from "@/shared/types/city";
 
 type CityAlertsSourceId = "amscg" | "cedis";
-type CityAlertsProviderMode = AmscgProviderMode | CedisProviderMode;
+type CityAlertsProviderMode = "disabled" | "live" | "mock";
 
 interface CityAlertsSourceMetadata {
   freshnessStatus: "fresh" | "stale" | "unavailable";
@@ -42,12 +36,11 @@ interface CityAlertsOverviewData {
   status: "available" | "unavailable";
 }
 
-async function getActiveCityAlerts(): Promise<CityAlertsResult> {
+async function getActiveCityAlerts(
+  context: CityContext = getDefaultCityContext(),
+): Promise<CityAlertsResult> {
   try {
-    const [cedis, amscg] = await Promise.all([
-      getCedisCityAlerts({ mode: env.CEDIS_PROVIDER_MODE }),
-      getAmscgCityAlerts({ mode: env.AMSCG_PROVIDER_MODE }),
-    ]);
+    const [cedis, amscg] = await getCityAlertProviderData(context);
     const sources: CityAlertsSourceMetadata[] = [
       {
         freshnessStatus: cedis.freshnessStatus,
@@ -79,8 +72,10 @@ async function getActiveCityAlerts(): Promise<CityAlertsResult> {
   }
 }
 
-async function getCityAlertsOverviewData(): Promise<CityAlertsOverviewData> {
-  const result = await getActiveCityAlerts();
+async function getCityAlertsOverviewData(
+  context: CityContext = getDefaultCityContext(),
+): Promise<CityAlertsOverviewData> {
+  const result = await getActiveCityAlerts(context);
   if (result.status === "error" || result.status === "unavailable") {
     return { alerts: [], status: "unavailable" };
   }

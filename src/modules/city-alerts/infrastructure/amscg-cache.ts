@@ -1,7 +1,9 @@
-import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
-import { dirname } from "node:path";
-
 import type { RoadAlert } from "../domain/road-alert.ts";
+import {
+  calculateCacheFreshness,
+  readJsonCache,
+  writeJsonCache,
+} from "../../../shared/lib/cache.ts";
 
 type AmscgFreshnessStatus = "fresh" | "stale" | "unavailable";
 
@@ -24,31 +26,18 @@ function calculateAmscgFreshness(
   now = new Date(),
   maxAgeMinutes = 90,
 ): AmscgFreshnessStatus {
-  if (!fetchedAt || Number.isNaN(fetchedAt.getTime())) return "unavailable";
-  return now.getTime() - fetchedAt.getTime() <= maxAgeMinutes * 60_000 ? "fresh" : "stale";
+  return calculateCacheFreshness(fetchedAt, now, maxAgeMinutes);
 }
 
 async function readAmscgCache(cachePath = process.env.AMSCG_CACHE_PATH ?? defaultAmscgCachePath) {
-  try {
-    return JSON.parse(await readFile(cachePath, "utf8")) as AmscgCacheSnapshot;
-  } catch {
-    return null;
-  }
+  return readJsonCache<AmscgCacheSnapshot>(cachePath);
 }
 
 async function writeAmscgCache(
   snapshot: AmscgCacheSnapshot,
   cachePath = process.env.AMSCG_CACHE_PATH ?? defaultAmscgCachePath,
 ) {
-  const temporaryPath = `${cachePath}.tmp`;
-  try {
-    await mkdir(dirname(cachePath), { recursive: true });
-    await writeFile(temporaryPath, JSON.stringify(snapshot), "utf8");
-    await rename(temporaryPath, cachePath);
-  } catch {
-    await rm(temporaryPath, { force: true }).catch(() => undefined);
-    throw new Error("AMSCG cache could not be updated.");
-  }
+  await writeJsonCache(snapshot, cachePath);
 }
 
 export {

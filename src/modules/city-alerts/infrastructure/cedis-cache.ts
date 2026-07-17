@@ -1,7 +1,10 @@
-import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
-import { dirname } from "node:path";
-
 import type { CityAlert } from "@/modules/city-alerts/domain/city-alert";
+import {
+  calculateCacheFreshness,
+  nodeFileSystem,
+  writeJsonCache,
+  type CacheFileSystem,
+} from "../../../shared/lib/cache.ts";
 
 type FreshnessStatus = "fresh" | "stale" | "unavailable";
 
@@ -16,14 +19,6 @@ interface CedisCacheSnapshot {
   source: "CEDIS";
   sourceUpdatedAt?: string;
   sourceUrl: string;
-}
-
-interface CacheFileSystem {
-  mkdir(path: string, options: { recursive: true }): Promise<void>;
-  readFile(path: string, encoding: "utf8"): Promise<string>;
-  rename(from: string, to: string): Promise<void>;
-  rm(path: string, options: { force: true }): Promise<void>;
-  writeFile(path: string, contents: string, encoding: "utf8"): Promise<void>;
 }
 
 class CedisCacheError extends Error {
@@ -45,23 +40,12 @@ interface CacheReadResult {
 }
 
 const defaultCachePath = ".runtime/cache/cedis-planned-outages.json";
-const nodeFileSystem: CacheFileSystem = {
-  mkdir: async (path, options) => {
-    await mkdir(path, options);
-  },
-  readFile,
-  rename,
-  rm,
-  writeFile,
-};
-
 function calculateFreshness(
   fetchedAt: Date | undefined,
   now = new Date(),
   maxAgeMinutes = 90,
 ): FreshnessStatus {
-  if (!fetchedAt || Number.isNaN(fetchedAt.getTime())) return "unavailable";
-  return now.getTime() - fetchedAt.getTime() <= maxAgeMinutes * 60_000 ? "fresh" : "stale";
+  return calculateCacheFreshness(fetchedAt, now, maxAgeMinutes);
 }
 
 async function readCedisCacheResult(
@@ -99,13 +83,9 @@ async function writeCedisCache(
   cachePath = process.env.CEDIS_CACHE_PATH ?? defaultCachePath,
   fileSystem: CacheFileSystem = nodeFileSystem,
 ) {
-  const temporaryPath = `${cachePath}.tmp`;
   try {
-    await fileSystem.mkdir(dirname(cachePath), { recursive: true });
-    await fileSystem.writeFile(temporaryPath, JSON.stringify(snapshot), "utf8");
-    await fileSystem.rename(temporaryPath, cachePath);
+    await writeJsonCache(snapshot, cachePath, fileSystem);
   } catch {
-    await fileSystem.rm(temporaryPath, { force: true }).catch(() => undefined);
     throw new CedisCacheError("cache-write-failed", "CEDIS cache could not be updated.");
   }
 }

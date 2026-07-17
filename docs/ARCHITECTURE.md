@@ -17,6 +17,12 @@ Dependencies point inward: presentation and infrastructure depend on application
 
 Future modules include weather, transport, events, maps, search, identity, editorial administration, and deterministic daily overviews. Modules communicate through typed contracts or events, never through direct access to another module's persistence implementation.
 
+## City-aware platform boundary
+
+The central city registry supplies a `CityContext` with city, locale, and timezone to providers and application use cases. Podgorica is the only enabled city; disabled city entries are planning data only and do not create routes or collection work. Normalized records carry `cityIds` arrays so one source record can be associated with multiple cities. The public application remains on its current Podgorica routes until an explicit routing rollout.
+
+Provider metadata is centrally registered for Weather, CEDIS, and AMSCG. It records ownership-facing source and cache details without moving module implementation into shared code. The shared cache abstraction owns atomic JSON persistence and freshness calculation; each module owns its snapshot schema and stale-data policy.
+
 ## Reliability and security
 
 External integrations require timeouts, bounded retries, structured errors, cache policy, rate limits, and health signals. Authentication and authorization are enforced on the server. Configuration is validated at process start. Logs use structured, privacy-safe fields and carry correlation identifiers.

@@ -5,11 +5,26 @@ import { createDailyOverview } from "./daily-overview-generator.ts";
 import type { CityDataSnapshot } from "./daily-overview.ts";
 
 const generatedAt = new Date("2026-07-17T08:00:00.000Z");
+const city = {
+  country: "Montenegro",
+  displayName: "Podgorica",
+  enabled: true,
+  id: "podgorica" as const,
+  latitude: 42.441,
+  longitude: 19.263,
+  slug: "podgorica",
+  timezone: "Europe/Podgorica",
+};
+const contexts = {
+  en: { city, locale: "en" as const, timezone: city.timezone },
+  me: { city, locale: "me" as const, timezone: city.timezone },
+};
 
 function createSnapshot(overrides: Partial<CityDataSnapshot> = {}): CityDataSnapshot {
   return {
     airQuality: { data: { category: "good" }, status: "available" },
     alerts: { data: [], status: "available" },
+    cityIds: ["podgorica"],
     events: { data: { count: 0 }, status: "available" },
     generatedAt,
     isDemoData: false,
@@ -19,7 +34,7 @@ function createSnapshot(overrides: Partial<CityDataSnapshot> = {}): CityDataSnap
 }
 
 test("states that there are no active alerts", () => {
-  const overview = createDailyOverview(createSnapshot(), "me");
+  const overview = createDailyOverview(createSnapshot(), contexts.me);
 
   assert.ok(overview.sentences.includes("Nema aktivnih gradskih smetnji."));
   assert.ok(overview.sentences.length >= 2);
@@ -37,7 +52,7 @@ test("prioritizes critical alerts", () => {
         status: "available",
       },
     }),
-    "en",
+    contexts.en,
   );
 
   assert.equal(overview.sentences[0], "There is one critical city alert.");
@@ -58,7 +73,7 @@ test("summarizes multiple alert types without exceeding five sentences", () => {
         status: "available",
       },
     }),
-    "en",
+    contexts.en,
   );
 
   assert.deepEqual(overview.sentences, [
@@ -79,7 +94,7 @@ test("uses a safe summary when every category is unavailable", () => {
       events: unavailable,
       weather: unavailable,
     }),
-    "en",
+    contexts.en,
   );
 
   assert.deepEqual(overview.sentences, [
@@ -94,8 +109,8 @@ test("produces localized Montenegrin and English summaries", () => {
     weather: { data: { temperatureCelsius: 34 }, status: "available" },
   });
 
-  const montenegrin = createDailyOverview(snapshot, "me");
-  const english = createDailyOverview(snapshot, "en");
+  const montenegrin = createDailyOverview(snapshot, contexts.me);
+  const english = createDailyOverview(snapshot, contexts.en);
 
   assert.ok(montenegrin.sentences.some((sentence) => sentence.includes("neuobičajena")));
   assert.ok(english.sentences.some((sentence) => sentence.includes("unusually")));
@@ -117,7 +132,7 @@ test("mentions an active normalized power outage in Montenegrin", () => {
         status: "available",
       },
     }),
-    "me",
+    contexts.me,
   );
   assert.ok(
     overview.sentences.includes("Aktivan je jedan prekid napajanja električnom energijom."),
@@ -140,12 +155,15 @@ test("mentions an upcoming normalized power outage in English", () => {
         status: "available",
       },
     }),
-    "en",
+    contexts.en,
   );
   assert.ok(overview.sentences.includes("One planned power outage is upcoming."));
 });
 
 test("does not invent outages when the alert source is unavailable", () => {
-  const overview = createDailyOverview(createSnapshot({ alerts: { status: "unavailable" } }), "en");
+  const overview = createDailyOverview(
+    createSnapshot({ alerts: { status: "unavailable" } }),
+    contexts.en,
+  );
   assert.ok(!overview.sentences.some((sentence) => sentence.includes("power outage")));
 });

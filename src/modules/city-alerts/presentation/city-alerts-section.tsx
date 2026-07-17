@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { getDefaultCityContext } from "@/config/city-context";
 import {
   getActiveCityAlerts,
   type CityAlertsMetadata,
@@ -84,7 +85,7 @@ function CityAlertsSectionLoading({ locale }: CityAlertsSectionProps) {
 }
 
 async function CityAlertsSection({ locale }: CityAlertsSectionProps) {
-  const result = await getActiveCityAlerts();
+  const result = await getActiveCityAlerts(getDefaultCityContext(locale));
   const translations = getCityAlertsTranslations(locale);
 
   if (result.status === "error") {

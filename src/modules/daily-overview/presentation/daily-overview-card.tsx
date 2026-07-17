@@ -1,6 +1,7 @@
 import { MapPinned } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { getDefaultCityContext } from "@/config/city-context";
 import { getDailyOverview } from "@/modules/daily-overview/application/get-daily-overview";
 import { getDailyOverviewTranslations } from "@/modules/daily-overview/presentation/daily-overview-translations";
 import { EmptyState } from "@/shared/components/empty-state";
@@ -31,7 +32,7 @@ function DailyOverviewCardLoading({ locale }: DailyOverviewCardProps) {
 }
 
 async function DailyOverviewCard({ locale }: DailyOverviewCardProps) {
-  const result = await getDailyOverview(locale);
+  const result = await getDailyOverview(getDefaultCityContext(locale));
   const translations = getDailyOverviewTranslations(locale);
 
   if (result.status === "error") {
