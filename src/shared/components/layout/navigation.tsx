@@ -1,4 +1,4 @@
-import { LayoutDashboard, Search } from "lucide-react";
+import { CalendarDays, LayoutDashboard, Search } from "lucide-react";
 
 import type { Locale } from "@/shared/config/locale";
 import type { Translations } from "@/shared/lib/translations";
@@ -17,6 +17,7 @@ function Navigation({ locale, mobile = false, translations }: NavigationProps) {
       icon: LayoutDashboard,
       label: translations.shell.navigation.dashboard,
     },
+    { href: `/${locale}/events`, icon: CalendarDays, label: translations.shell.navigation.events },
     { href: `/${locale}#search`, icon: Search, label: translations.shell.navigation.search },
   ];
 
@@ -28,7 +29,7 @@ function Navigation({ locale, mobile = false, translations }: NavigationProps) {
           : translations.shell.primaryNavigationLabel
       }
     >
-      <ul className={cn(mobile ? "grid grid-cols-2 gap-2" : "flex items-center gap-1")}>
+      <ul className={cn(mobile ? "grid grid-cols-3 gap-2" : "flex items-center gap-1")}>
         {navigationItems.map(({ href, icon: Icon, label }) => (
           <li key={href}>
             <a

@@ -24,7 +24,7 @@ Podgorica is the only enabled city and the public experience remains unchanged. 
 
 ## Event platform and official collectors
 
-The repository includes a disabled, city-aware Event Platform: normalized event and venue contracts, cache and provider boundaries, deterministic IDs and deduplication, recurrence limits, timezone-aware query rules, and a provider-agnostic Daily Overview contract. `ENABLE_EVENTS=false` and `EVENT_PROVIDER_MODE=disabled` preserve the current public behaviour. There is no public Events route or UI. See [ADR 0010](docs/adr/0010-event-platform-foundation.md).
+The repository includes a city-aware Event Platform: normalized event and venue contracts, cache and provider boundaries, deterministic IDs and deduplication, recurrence limits, timezone-aware query rules, and a provider-agnostic Daily Overview contract. The mobile-first public Events experience is available at `/me/events` and `/en/events` (with `/events` redirecting to the default locale); live provider content remains available only when `ENABLE_EVENTS=true` and `EVENT_PROVIDER_MODE=live`. See [ADR 0010](docs/adr/0010-event-platform-foundation.md).
 
 KIC Budo Tomović, Crnogorsko narodno pozorište (CNP), Glavni Grad Podgorica, and Turistička organizacija Podgorice are approved official event sources. Their collectors read only official listings and same-host programme pages into separate caches; application reads use those caches only. They remain inactive until `ENABLE_EVENTS=true` and `EVENT_PROVIDER_MODE=live` are explicitly configured. Mock mode never enables live providers and is rejected in production.
 
@@ -44,6 +44,8 @@ CNP uses the official [CNP repertoire](https://cnp.me/repertoar/) and writes `.r
 Glavni Grad uses the official [Aktuelni događaji](https://podgorica.me/category/aktuelni-dogadjaji/) listing and writes `.runtime/cache/glavni-grad-events.json`. See [ADR 0014](docs/adr/0014-glavni-grad-podgorica-event-provider.md).
 
 Turistička organizacija Podgorice uses the official [calendar](https://podgorica.travel/dogadjaji-kalendar/) and writes `.runtime/cache/tourism-events.json`. Its listing/detail parsing, HTTP behaviour, refresh flow, and cache-backed reads are fixture-tested with injected HTTP only; automated tests never call the live source. See [ADR 0015](docs/adr/0015-tourism-podgorica-event-provider.md).
+
+The Events UI groups accepted cached events by day and supports shareable URL filters for text, date, source, category, and sort order. Event detail pages preserve official attribution and link to the original source. Neither the listing nor detail route fetches provider websites; unavailable providers do not hide events from other usable caches.
 
 ## Architecture
 

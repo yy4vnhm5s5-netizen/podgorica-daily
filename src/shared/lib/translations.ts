@@ -29,6 +29,7 @@ const translations = {
       mobileNavigationLabel: "Mobile navigation",
       navigation: {
         dashboard: "Dashboard",
+        events: "Events",
         search: "Search",
       },
       primaryNavigationLabel: "Primary navigation",
@@ -65,6 +66,7 @@ const translations = {
       mobileNavigationLabel: "Mobilna navigacija",
       navigation: {
         dashboard: "Pregled",
+        events: "Događaji",
         search: "Pretraga",
       },
       primaryNavigationLabel: "Glavna navigacija",
