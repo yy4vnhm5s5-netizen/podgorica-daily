@@ -7,9 +7,9 @@ import type { Locale } from "@/shared/config/locale";
 
 interface CityAlertsTranslations {
   affectedArea: string;
+  area: string;
+  cityServices: string;
   content: Record<string, string>;
-  demo: string;
-  demoNotice: string;
   emptyDescription: string;
   emptyTitle: string;
   errorDescription: string;
@@ -18,6 +18,11 @@ interface CityAlertsTranslations {
   loading: string;
   lastUpdated: string;
   officialSource: string;
+  noPowerOutages: string;
+  noWaterInterruptions: string;
+  otherAlerts: string;
+  power: string;
+  scheduled: string;
   severities: Record<AlertSeverity, string>;
   source: string;
   startsAt: string;
@@ -25,30 +30,29 @@ interface CityAlertsTranslations {
   status: string;
   statuses: Record<"active" | "scheduled", string>;
   title: string;
+  time: string;
   unavailable: string;
+  water: string;
   types: Record<AlertType, string>;
 }
 
 const cityAlertsTranslations: Record<Locale, CityAlertsTranslations> = {
   en: {
     affectedArea: "Affected area",
+    area: "Area",
+    cityServices: "City services",
     content: {
       centar: "City centre",
       citywide: "Across Podgorica",
-      demoSource: "Demo source",
+      demoSource: "City services",
       masline: "Masline",
       resolvedDescription: "This resolved demo alert is intentionally hidden from the active list.",
       resolvedTitle: "Traffic disruption resolved",
-      roadWorksDescription:
-        "A temporary roadworks notice is shown here for interface preview only.",
+      roadWorksDescription: "Road works are affecting traffic in the city centre.",
       roadWorksTitle: "Road works in the city centre",
-      waterOutageDescription:
-        "A temporary water service interruption is shown here for interface preview only.",
+      waterOutageDescription: "Water service is temporarily interrupted.",
       waterOutageTitle: "Water service interruption",
     },
-    demo: "Demo",
-    demoNotice:
-      "These are demo alerts. Production alerts will come from configured verified sources.",
     emptyDescription: "There are currently no active alerts affecting everyday life in Podgorica.",
     emptyTitle: "No active alerts.",
     errorDescription: "Alerts could not be loaded. Please try again later.",
@@ -57,6 +61,11 @@ const cityAlertsTranslations: Record<Locale, CityAlertsTranslations> = {
     loading: "Loading city alerts",
     lastUpdated: "Last successful update",
     officialSource: "Official source",
+    noPowerOutages: "No planned power outages",
+    noWaterInterruptions: "No water service interruptions",
+    otherAlerts: "Important city alerts",
+    power: "Power",
+    scheduled: "Scheduled",
     severities: {
       critical: "Critical",
       information: "Information",
@@ -69,7 +78,9 @@ const cityAlertsTranslations: Record<Locale, CityAlertsTranslations> = {
     status: "Status",
     statuses: { active: "Active", scheduled: "Scheduled" },
     title: "City alerts",
-    unavailable: "CEDIS data is currently unavailable.",
+    time: "Time",
+    unavailable: "Data is currently unavailable.",
+    water: "Water",
     types: {
       emergency: "Emergency",
       powerOutage: "Power outage",
@@ -81,23 +92,20 @@ const cityAlertsTranslations: Record<Locale, CityAlertsTranslations> = {
   },
   me: {
     affectedArea: "Pogođeno područje",
+    area: "Područje",
+    cityServices: "Gradske usluge",
     content: {
       centar: "Centar grada",
       citywide: "Širom Podgorice",
-      demoSource: "Demo izvor",
+      demoSource: "Gradske usluge",
       masline: "Masline",
       resolvedDescription: "Ovo riješeno demo obavještenje namjerno je sakriveno iz aktivne liste.",
       resolvedTitle: "Saobraćajna smetnja je otklonjena",
-      roadWorksDescription:
-        "Privremeno obavještenje o radovima na putu prikazano je samo za pregled interfejsa.",
+      roadWorksDescription: "Radovi na putu utiču na saobraćaj u centru grada.",
       roadWorksTitle: "Radovi na putu u centru grada",
-      waterOutageDescription:
-        "Privremeni prekid vodosnabdijevanja prikazan je samo za pregled interfejsa.",
+      waterOutageDescription: "Vodosnabdijevanje je privremeno prekinuto.",
       waterOutageTitle: "Prekid vodosnabdijevanja",
     },
-    demo: "Demo",
-    demoNotice:
-      "Ovo su demo obavještenja. Produkcijska obavještenja dolaziće iz podešenih, provjerenih izvora.",
     emptyDescription: "Nema aktivnih obavještenja.",
     emptyTitle: "Nema aktivnih obavještenja.",
     errorDescription: "Obavještenja nije moguće učitati. Pokušajte ponovo kasnije.",
@@ -106,6 +114,11 @@ const cityAlertsTranslations: Record<Locale, CityAlertsTranslations> = {
     loading: "Učitavanje gradskih obavještenja",
     lastUpdated: "Posljednje uspješno ažuriranje",
     officialSource: "Zvanični izvor",
+    noPowerOutages: "Nema planiranih prekida struje",
+    noWaterInterruptions: "Nema prekida vodosnabdijevanja",
+    otherAlerts: "Važna gradska obavještenja",
+    power: "Struja",
+    scheduled: "Planirano",
     severities: {
       critical: "Kritično",
       information: "Informacija",
@@ -118,7 +131,9 @@ const cityAlertsTranslations: Record<Locale, CityAlertsTranslations> = {
     status: "Status",
     statuses: { active: "Aktivno", scheduled: "Planirano" },
     title: "Gradska obavještenja",
-    unavailable: "CEDIS podaci trenutno nijesu dostupni.",
+    time: "Vrijeme",
+    unavailable: "Podaci trenutno nijesu dostupni.",
+    water: "Voda",
     types: {
       emergency: "Hitno stanje",
       powerOutage: "Prekid napajanja električnom energijom",

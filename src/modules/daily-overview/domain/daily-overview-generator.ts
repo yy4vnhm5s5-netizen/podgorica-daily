@@ -138,9 +138,11 @@ function createDailyOverview(snapshot: CityDataSnapshot, context: CityContext): 
   if (!hasAvailableData(snapshot)) {
     return {
       airQualityCategory: undefined,
+      eventsToday: undefined,
       generatedAt: snapshot.generatedAt,
       isDemoData: snapshot.isDemoData,
       sentences: copy.noData,
+      temperatureCelsius: undefined,
     };
   }
 
@@ -166,9 +168,15 @@ function createDailyOverview(snapshot: CityDataSnapshot, context: CityContext): 
   return {
     airQualityCategory:
       snapshot.airQuality.status === "available" ? snapshot.airQuality.data.category : undefined,
+    eventsToday:
+      snapshot.events.status === "available"
+        ? (snapshot.events.data.eventsToday ?? snapshot.events.data.count)
+        : undefined,
     generatedAt: snapshot.generatedAt,
     isDemoData: snapshot.isDemoData,
     sentences: sentences.slice(0, 5),
+    temperatureCelsius:
+      snapshot.weather.status === "available" ? snapshot.weather.data.temperatureCelsius : undefined,
   };
 }
 

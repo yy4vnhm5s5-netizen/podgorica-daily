@@ -22,8 +22,10 @@ import {
   getCityAlertsTranslations,
   type CityAlertsTranslations,
 } from "@/modules/city-alerts/presentation/city-alerts-translations";
-import { EmptyState } from "@/shared/components/empty-state";
-import { ErrorState } from "@/shared/components/error-state";
+import {
+  CityServicesPanel,
+  type CityServiceInfo,
+} from "@/modules/city-alerts/presentation/city-services-panel";
 import { LoadingSkeleton } from "@/shared/components/loading-skeleton";
 import { SectionTitle } from "@/shared/components/section-title";
 import { StatusBadge, type StatusTone } from "@/shared/components/status-badge";
@@ -31,6 +33,7 @@ import { Timestamp } from "@/shared/components/timestamp";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import type { Locale } from "@/shared/config/locale";
 import { getLocaleTag } from "@/shared/config/locale";
+import { formatDateTime } from "@/shared/lib/date";
 import { cn } from "@/shared/lib/utils";
 
 const alertIcons: Record<AlertType, LucideIcon> = {
@@ -74,9 +77,9 @@ function CityAlertsSectionLoading({ locale }: CityAlertsSectionProps) {
 
   return (
     <section aria-labelledby="city-alerts-heading" className="space-y-4">
-      <SectionTitle id="city-alerts-heading" title={translations.title} />
-      <Card>
-        <CardContent className="pt-6">
+      <SectionTitle id="city-alerts-heading" title={translations.cityServices} />
+      <Card className="border-blue-200/80 bg-blue-50/60 shadow-none">
+        <CardContent className="p-4">
           <LoadingSkeleton label={translations.loading} lines={4} />
         </CardContent>
       </Card>
@@ -87,89 +90,84 @@ function CityAlertsSectionLoading({ locale }: CityAlertsSectionProps) {
 async function CityAlertsSection({ locale }: CityAlertsSectionProps) {
   const result = await getActiveCityAlerts(getDefaultCityContext(locale));
   const translations = getCityAlertsTranslations(locale);
-
-  if (result.status === "error") {
-    return (
-      <CityAlertsFrame locale={locale}>
-        <ErrorState description={translations.errorDescription} title={translations.errorTitle} />
-      </CityAlertsFrame>
-    );
-  }
-
-  if (result.status === "empty") {
-    return (
-      <CityAlertsFrame locale={locale}>
-        <EmptyState description={translations.emptyDescription} title={translations.emptyTitle} />
-      </CityAlertsFrame>
-    );
-  }
-
-  if (result.status === "unavailable") {
-    return (
-      <CityAlertsFrame locale={locale}>
-        <p
-          className="rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground"
-          role="status"
-        >
-          {translations.unavailable}
-        </p>
-      </CityAlertsFrame>
-    );
-  }
+  const services = getCityServices(result, locale, translations);
+  const metadata: CityAlertsMetadata = "metadata" in result ? result.metadata : { sources: [] };
+  const otherAlerts =
+    result.status === "success"
+      ? result.data.filter(({ type }) => type !== "powerOutage" && type !== "waterOutage")
+      : [];
 
   return (
     <section aria-labelledby="city-alerts-heading" className="space-y-4">
-      <div className="flex items-center justify-between gap-4">
-        <SectionTitle id="city-alerts-heading" title={translations.title} />
-        {result.data.some((alert) => alert.dataMode === "demo") ? (
-          <StatusBadge tone="info">{translations.demo}</StatusBadge>
-        ) : null}
-      </div>
-      {result.data.some((alert) => alert.dataMode === "demo") ? (
-        <p className="text-sm text-muted-foreground">{translations.demoNotice}</p>
+      <SectionTitle id="city-alerts-heading" title={translations.cityServices} />
+      <CityServicesPanel
+        services={services}
+        translations={{ ...translations, label: translations.cityServices }}
+      />
+      {otherAlerts.length > 0 ? (
+        <div className="space-y-4 pt-2">
+          <SectionTitle title={translations.otherAlerts} />
+          <div className="grid gap-4 lg:grid-cols-2">
+            {otherAlerts.map((alert) => (
+              <CityAlertCard
+                alert={alert}
+                key={alert.id}
+                locale={locale}
+                metadata={metadata}
+                translations={translations}
+              />
+            ))}
+          </div>
+        </div>
       ) : null}
-      {result.metadata.sources
-        .filter((source) => source.freshnessStatus === "stale")
-        .map((source) => (
-          <p
-            className="rounded-lg border border-amber-300/80 bg-amber-50/60 px-4 py-3 text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-100"
-            key={source.id}
-            role="status"
-          >
-            {translations.staleData}{" "}
-            {source.lastSuccessfulUpdate ? (
-              <Timestamp locale={getLocaleTag(locale)} value={source.lastSuccessfulUpdate} />
-            ) : null}
-          </p>
-        ))}
-      <div className="grid gap-4 lg:grid-cols-2">
-        {result.data.map((alert) => (
-          <CityAlertCard
-            alert={alert}
-            key={alert.id}
-            locale={locale}
-            metadata={result.metadata}
-            translations={translations}
-          />
-        ))}
-      </div>
     </section>
   );
 }
 
-interface CityAlertsFrameProps extends CityAlertsSectionProps {
-  children: ReactNode;
+function getCityServices(
+  result: Awaited<ReturnType<typeof getActiveCityAlerts>>,
+  locale: Locale,
+  translations: CityAlertsTranslations,
+): Record<"power" | "water", CityServiceInfo> {
+  const alerts = result.status === "success" ? result.data : [];
+  const powerAlert = alerts.find(({ type }) => type === "powerOutage");
+  const waterAlert = alerts.find(({ type }) => type === "waterOutage");
+  const cedisAvailable =
+    "metadata" in result &&
+    result.metadata.sources.some(
+      ({ freshnessStatus, id }) => id === "cedis" && freshnessStatus !== "unavailable",
+    );
+
+  return {
+    power: powerAlert
+      ? toCityServiceInfo(powerAlert, locale, translations)
+      : { state: cedisAvailable ? "none" : "unavailable" },
+    water: waterAlert
+      ? toCityServiceInfo(waterAlert, locale, translations)
+      : { state: "unavailable" },
+  };
 }
 
-function CityAlertsFrame({ children, locale }: CityAlertsFrameProps) {
-  const translations = getCityAlertsTranslations(locale);
+function toCityServiceInfo(
+  alert: CityAlert,
+  locale: Locale,
+  translations: CityAlertsTranslations,
+): CityServiceInfo {
+  const localeTag = getLocaleTag(locale);
+  const time = [alert.startsAt, alert.expectedEndAt]
+    .filter((value): value is Date => value !== undefined)
+    .map((value) => formatDateTime(value, { locale: localeTag }).label)
+    .join(" – ");
 
-  return (
-    <section aria-labelledby="city-alerts-heading" className="space-y-4">
-      <SectionTitle id="city-alerts-heading" title={translations.title} />
-      {children}
-    </section>
-  );
+  return {
+    area: getCityAlertContent(alert.affectedArea, translations),
+    description: getCityAlertContent(alert.description, translations),
+    state: "available",
+    statusLabel:
+      alert.status === "scheduled" ? translations.statuses.scheduled : translations.statuses.active,
+    time: time || undefined,
+    title: getCityAlertContent(alert.title, translations),
+  };
 }
 
 interface CityAlertCardProps {

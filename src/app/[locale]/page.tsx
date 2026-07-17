@@ -1,15 +1,14 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { CalendarDays, Landmark, Phone, Wind } from "lucide-react";
+import { CalendarDays, Landmark, Phone } from "lucide-react";
 
+import { getDefaultCityContext } from "@/config/city-context";
+import { getDailyOverview } from "@/modules/daily-overview/application/get-daily-overview";
+import { DailySummaryBar } from "@/modules/daily-overview/presentation/daily-summary-bar";
 import {
   CurrentWeatherCard,
   CurrentWeatherCardLoading,
 } from "@/modules/weather/presentation/current-weather-card";
-import {
-  DailyOverviewCard,
-  DailyOverviewCardLoading,
-} from "@/modules/daily-overview/presentation/daily-overview-card";
 import {
   CityAlertsSection,
   CityAlertsSectionLoading,
@@ -36,19 +35,20 @@ async function LocalePage({ params }: LocalePageProps) {
   return <DashboardPage locale={localeParam} />;
 }
 
-function DashboardPage({ locale }: { locale: Locale }) {
+async function DashboardPage({ locale }: { locale: Locale }) {
   const translations = getTranslations(locale);
   const { advertising, cards, emptyCardDescription } = translations.dashboard;
+  const dailyOverview = isFeatureEnabled("dailyOverview")
+    ? await getDailyOverview(getDefaultCityContext(locale))
+    : null;
+  const airQualityCategory =
+    dailyOverview?.status === "success" ? dailyOverview.data.airQualityCategory : undefined;
 
   return (
     <DashboardLayout locale={locale} translations={translations}>
       <section className="space-y-10" id="dashboard">
         <div className="space-y-7">
-          {isFeatureEnabled("dailyOverview") ? (
-            <Suspense fallback={<DailyOverviewCardLoading locale={locale} />}>
-              <DailyOverviewCard locale={locale} />
-            </Suspense>
-          ) : null}
+          {dailyOverview ? <DailySummaryBar locale={locale} result={dailyOverview} /> : null}
           {isFeatureEnabled("cityAlerts") ? (
             <Suspense fallback={<CityAlertsSectionLoading locale={locale} />}>
               <CityAlertsSection locale={locale} />
@@ -64,15 +64,9 @@ function DashboardPage({ locale }: { locale: Locale }) {
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {isFeatureEnabled("weather") ? (
             <Suspense fallback={<CurrentWeatherCardLoading locale={locale} />}>
-              <CurrentWeatherCard locale={locale} />
+              <CurrentWeatherCard airQualityCategory={airQualityCategory} locale={locale} />
             </Suspense>
           ) : null}
-          <DashboardCard
-            accent="emerald"
-            description={emptyCardDescription}
-            icon={Wind}
-            title={cards.airQuality}
-          />
           <DashboardCard
             accent="amber"
             description={emptyCardDescription}

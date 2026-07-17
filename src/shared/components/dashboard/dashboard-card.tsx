@@ -38,7 +38,7 @@ function DashboardCard({ accent = "slate", description, icon: Icon, title }: Das
   return (
     <Card
       className={cn(
-        "min-h-48 transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_24px_-20px_rgb(15_23_42_/_0.32)]",
+        "transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_24px_-20px_rgb(15_23_42_/_0.32)]",
         accentStyle.card,
       )}
     >
@@ -54,8 +54,8 @@ function DashboardCard({ accent = "slate", description, icon: Icon, title }: Das
         <h2 className="text-base font-semibold tracking-tight">{title}</h2>
       </CardHeader>
       <CardContent className="p-5 pt-0 sm:p-6 sm:pt-0">
-        <div className="h-16 rounded-lg border border-dashed bg-background/60" />
-        <p className="mt-5 text-sm leading-6 text-muted-foreground">{description}</p>
+        <div className="h-12 rounded-lg border border-dashed bg-background/60" />
+        <p className="mt-4 text-sm leading-6 text-muted-foreground">{description}</p>
       </CardContent>
     </Card>
   );

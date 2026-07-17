@@ -38,6 +38,8 @@ test("states that there are no active alerts", () => {
 
   assert.ok(overview.sentences.includes("Nema aktivnih gradskih smetnji."));
   assert.equal(overview.airQualityCategory, "good");
+  assert.equal(overview.eventsToday, 0);
+  assert.equal(overview.temperatureCelsius, 20);
   assert.ok(overview.sentences.length >= 2);
   assert.ok(overview.sentences.length <= 5);
 });
@@ -104,6 +106,8 @@ test("uses a safe summary when every category is unavailable", () => {
     "The overview will be updated when current data becomes available.",
   ]);
   assert.equal(overview.airQualityCategory, undefined);
+  assert.equal(overview.eventsToday, undefined);
+  assert.equal(overview.temperatureCelsius, undefined);
 });
 
 test("produces localized Montenegrin and English summaries", () => {

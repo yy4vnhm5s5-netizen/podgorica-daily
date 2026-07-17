@@ -3,6 +3,8 @@ import type { Locale } from "@/shared/config/locale";
 import type { WeatherConditionKey } from "@/modules/weather/domain/current-weather";
 
 interface WeatherTranslations {
+  airQuality: string;
+  airQualityCategories: Record<"good" | "moderate" | "unhealthy", string>;
   conditions: Record<WeatherConditionKey, string>;
   emptyDescription: string;
   emptyTitle: string;
@@ -21,6 +23,8 @@ interface WeatherTranslations {
 
 const weatherTranslations: Record<Locale, WeatherTranslations> = {
   en: {
+    airQuality: "Air quality",
+    airQualityCategories: { good: "Good", moderate: "Moderate", unhealthy: "Poor" },
     conditions: {
       clearSky: "Clear sky",
       denseDrizzle: "Dense drizzle",
@@ -67,6 +71,8 @@ const weatherTranslations: Record<Locale, WeatherTranslations> = {
     wind: "Wind",
   },
   me: {
+    airQuality: "Kvalitet vazduha",
+    airQualityCategories: { good: "Dobar", moderate: "Umjeren", unhealthy: "Loš" },
     conditions: {
       clearSky: "Vedro",
       denseDrizzle: "Jaka rosulja",

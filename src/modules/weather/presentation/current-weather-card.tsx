@@ -22,7 +22,7 @@ import {
 import { EmptyState } from "@/shared/components/empty-state";
 import { ErrorState } from "@/shared/components/error-state";
 import { LoadingSkeleton } from "@/shared/components/loading-skeleton";
-import { StatusBadge } from "@/shared/components/status-badge";
+import { StatusBadge, type StatusTone } from "@/shared/components/status-badge";
 import { Timestamp } from "@/shared/components/timestamp";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import type { Locale } from "@/shared/config/locale";
@@ -50,6 +50,7 @@ function WeatherCardFrame({ children }: Readonly<PropsWithChildren>) {
 }
 
 interface CurrentWeatherCardProps {
+  airQualityCategory?: "good" | "moderate" | "unhealthy";
   locale: Locale;
 }
 
@@ -73,7 +74,7 @@ function CurrentWeatherCardLoading({ locale }: CurrentWeatherCardProps) {
   );
 }
 
-async function CurrentWeatherCard({ locale }: CurrentWeatherCardProps) {
+async function CurrentWeatherCard({ airQualityCategory, locale }: CurrentWeatherCardProps) {
   const result = await getCurrentWeather(getDefaultCityContext(locale));
   const translations = getWeatherTranslations(locale);
 
@@ -150,6 +151,14 @@ async function CurrentWeatherCard({ locale }: CurrentWeatherCardProps) {
             <span className="font-medium text-foreground">{apparentTemperature.toFixed(1)}°C</span>
           </p>
         )}
+        {airQualityCategory ? (
+          <section className="flex items-center justify-between gap-4 rounded-lg border border-emerald-200/80 bg-emerald-50/70 px-3 py-2.5">
+            <h3 className="text-sm font-medium text-foreground">{translations.airQuality}</h3>
+            <StatusBadge tone={airQualityTones[airQualityCategory]}>
+              {translations.airQualityCategories[airQualityCategory]}
+            </StatusBadge>
+          </section>
+        ) : null}
         <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border bg-border text-sm">
           <div className="bg-background p-3 sm:p-4">
             <dt className="text-muted-foreground">{translations.wind}</dt>
@@ -183,6 +192,12 @@ async function CurrentWeatherCard({ locale }: CurrentWeatherCardProps) {
 }
 
 export { CurrentWeatherCard, CurrentWeatherCardLoading };
+
+const airQualityTones: Record<"good" | "moderate" | "unhealthy", StatusTone> = {
+  good: "success",
+  moderate: "warning",
+  unhealthy: "error",
+};
 
 interface WeatherGlyphProps {
   condition: WeatherConditionKey;

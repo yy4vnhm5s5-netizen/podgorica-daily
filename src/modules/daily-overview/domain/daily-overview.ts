@@ -46,9 +46,11 @@ interface CityDataSnapshot {
 
 interface DailyOverview {
   airQualityCategory?: AirQualityCategory;
+  eventsToday?: number;
   generatedAt: Date;
   isDemoData: boolean;
   sentences: readonly string[];
+  temperatureCelsius?: number;
 }
 
 interface CachedCityDataProvider {
