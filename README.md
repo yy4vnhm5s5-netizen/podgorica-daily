@@ -26,7 +26,7 @@ Podgorica is the only enabled city and the public experience remains unchanged. 
 
 The repository includes a disabled, city-aware Event Platform: normalized event and venue contracts, cache and provider boundaries, deterministic IDs and deduplication, recurrence limits, timezone-aware query rules, and a provider-agnostic Daily Overview contract. `ENABLE_EVENTS=false` and `EVENT_PROVIDER_MODE=disabled` preserve the current public behaviour. There is no public Events route or UI. See [ADR 0010](docs/adr/0010-event-platform-foundation.md).
 
-KIC Budo Tomović, Crnogorsko narodno pozorište (CNP), and Glavni Grad Podgorica are approved official event sources. Their collectors read only official listings and same-host programme pages into separate caches; application reads use those caches only. They remain inactive until `ENABLE_EVENTS=true` and `EVENT_PROVIDER_MODE=live` are explicitly configured. Mock mode never enables live providers and is rejected in production.
+KIC Budo Tomović, Crnogorsko narodno pozorište (CNP), Glavni Grad Podgorica, and Turistička organizacija Podgorice are approved official event sources. Their collectors read only official listings and same-host programme pages into separate caches; application reads use those caches only. They remain inactive until `ENABLE_EVENTS=true` and `EVENT_PROVIDER_MODE=live` are explicitly configured. Mock mode never enables live providers and is rejected in production.
 
 Event collection applies deterministic quality validation before caching. It preserves valid date-only and incomplete events with warnings, rejects invalid core records, and records collector diagnostics without exposing rejected data. See [ADR 0012](docs/adr/0012-event-quality-layer.md).
 
@@ -36,11 +36,14 @@ Quality policy and provider-health thresholds are validated server configuration
 pnpm run collect:kic-events
 pnpm run collect:cnp-events
 pnpm run collect:glavni-grad-events
+pnpm run collect:tourism-events
 ```
 
 CNP uses the official [CNP repertoire](https://cnp.me/repertoar/) and writes `.runtime/cache/cnp-events.json`. Its collector uses fixture-only automated tests; tests make no live network calls. See [ADR 0013](docs/adr/0013-cnp-event-provider.md).
 
 Glavni Grad uses the official [Aktuelni događaji](https://podgorica.me/category/aktuelni-dogadjaji/) listing and writes `.runtime/cache/glavni-grad-events.json`. See [ADR 0014](docs/adr/0014-glavni-grad-podgorica-event-provider.md).
+
+Turistička organizacija Podgorice uses the official [calendar](https://podgorica.travel/dogadjaji-kalendar/) and writes `.runtime/cache/tourism-events.json`. Its listing/detail parsing, HTTP behaviour, refresh flow, and cache-backed reads are fixture-tested with injected HTTP only; automated tests never call the live source. See [ADR 0015](docs/adr/0015-tourism-podgorica-event-provider.md).
 
 ## Architecture
 

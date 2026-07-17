@@ -27,13 +27,15 @@ Provider metadata is centrally registered for Weather, CEDIS, and AMSCG. It reco
 
 `src/modules/events` owns the normalized Event and Venue domains, provider contracts, candidate normalization, deterministic ID and deduplication logic, query semantics, and event cache schema. Collection and cache reading are intentionally separate: any future collector writes a module-owned snapshot using shared atomic JSON helpers, while application reads combine only enabled cached providers. No visitor request may invoke collection.
 
-Event records are city-aware (`cityIds`) and preserve all trusted source references after exact or strong deterministic matches merge. KIC, CNP, and `glavni-grad-podgorica` are registered cache-backed official providers; no public Events UI or route exists. Glavni Grad reads only `.runtime/cache/glavni-grad-events.json` when `ENABLE_EVENTS=true` and `EVENT_PROVIDER_MODE=live`; its `pnpm run collect:glavni-grad-events` collector parses official listing/detail pages with fixtures only, passes Event Quality/count-drop protections, and never runs for visitors. Provider failures remain isolated. See ADR 0014.
+Event records are city-aware (`cityIds`) and preserve all trusted source references after exact or strong deterministic matches merge. KIC, CNP, `glavni-grad-podgorica`, and `tourism-podgorica` are registered cache-backed official providers; no public Events UI or route exists. Each live provider requires `ENABLE_EVENTS=true` and `EVENT_PROVIDER_MODE=live`; mock and disabled modes do not expose a live provider. Provider failures remain isolated.
 
 Event collectors run normalized records through the module-owned quality pipeline before deduplication and cache writes. Typed reports and cache diagnostics make rejection, warning, score, and count-drop state available without leaking rejected records to public reads. See ADR 0012.
 
 The Event application service composes availability with a separate deterministic quality-health status and exposes a typed non-public provider status read model. Legacy cache snapshots without diagnostics receive safe zero-value defaults.
 
 The CNP provider reads only `.runtime/cache/cnp-events.json` when `ENABLE_EVENTS=true` and `EVENT_PROVIDER_MODE=live`. Collection is isolated behind `pnpm run collect:cnp-events`; it validates the `cnp.me` HTTPS host, parses listing/detail pages through an injected HTTP client, and writes atomically. CNP and KIC cache reads remain independent, while the application uses shared deterministic sorting, deduplication, provenance retention, rejected-event filtering, and provider-health mapping. No application read path invokes HTTP or a collector. See ADR 0013.
+
+The Tourism Organization Podgorica provider is Podgorica-only. `pnpm run collect:tourism-events` fetches the official `podgorica.travel` calendar and validated same-host event pages through the shared bounded HTTP conventions, runs normalized candidates through Event Quality, and atomically writes `.runtime/cache/tourism-events.json`. Application reads consume that cache only; fixture-based tests use injected HTTP and never access the live source. See ADR 0015.
 
 ## Reliability and security
 
