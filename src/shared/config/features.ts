@@ -1,8 +1,8 @@
 const featureFlags = {
   airQuality: false,
   authentication: false,
-  cityAlerts: false,
-  dailyBrief: true,
+  cityAlerts: true,
+  dailyOverview: true,
   events: false,
   maps: false,
   publicTransport: false,

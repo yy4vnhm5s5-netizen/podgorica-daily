@@ -1,5 +1,6 @@
 {
   "name": "podgorica-daily",
+  "type": "module",
   "version": "0.1.0",
   "private": true,
   "packageManager": "pnpm@11.9.0",
@@ -13,6 +14,7 @@
     "start": "next start",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
+    "test": "node --test src/modules/daily-overview/domain/daily-overview-generator.test.ts",
     "typecheck": "tsc --noEmit",
     "format": "prettier . --write",
     "format:check": "prettier . --check",

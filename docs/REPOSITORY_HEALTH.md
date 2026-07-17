@@ -11,7 +11,7 @@ Podgorica Daily is a well-structured foundation, not yet a production product. I
 | -------------------------- | ----: | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Project maturity           |   3/5 | Strong foundation and delivery standards; no product module has shipped.                                                                                         |
 | Architecture               |   4/5 | Clear modular-monolith direction and accepted ADRs; boundaries are unproven until a real module exists.                                                          |
-| Maintainability            |   4/5 | Strict typing, consistent tooling, clear shared-layer rules, and an AI handbook provide a good baseline.                                                         |
+| Maintainability            |   4/5 | Strict typing, consistent tooling, clear shared-layer rules, and an engineering handbook provide a good baseline.                                                |
 | Scalability                |   3/5 | Module isolation is planned, but persistence, caching, queues, and operational limits are intentionally undecided.                                               |
 | Documentation completeness |   4/5 | Product, API, data, UI, scraper, ADR, sprint, and handbook documentation are present; operational runbooks are deferred.                                         |
 | Testing readiness          |   2/5 | Quality checks are strong, but no test framework, fixtures, accessibility automation, or visual regression suite exists.                                         |

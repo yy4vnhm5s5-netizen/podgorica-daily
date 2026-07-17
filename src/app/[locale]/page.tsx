@@ -6,9 +6,13 @@ import {
   CurrentWeatherCardLoading,
 } from "@/modules/weather/presentation/current-weather-card";
 import {
-  DailyBriefCard,
-  DailyBriefCardLoading,
-} from "@/modules/daily-brief/presentation/daily-brief-card";
+  DailyOverviewCard,
+  DailyOverviewCardLoading,
+} from "@/modules/daily-overview/presentation/daily-overview-card";
+import {
+  CityAlertsSection,
+  CityAlertsSectionLoading,
+} from "@/modules/city-alerts/presentation/city-alerts-section";
 import { DashboardCard } from "@/shared/components/dashboard/dashboard-card";
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
 import { GlobalSearch } from "@/shared/components/layout/global-search";
@@ -40,9 +44,14 @@ function DashboardPage({ locale }: { locale: Locale }) {
       <section className="space-y-8" id="dashboard">
         <div className="space-y-6">
           <SectionTitle description={description} title={title} />
-          {isFeatureEnabled("dailyBrief") ? (
-            <Suspense fallback={<DailyBriefCardLoading locale={locale} />}>
-              <DailyBriefCard locale={locale} />
+          {isFeatureEnabled("dailyOverview") ? (
+            <Suspense fallback={<DailyOverviewCardLoading locale={locale} />}>
+              <DailyOverviewCard locale={locale} />
+            </Suspense>
+          ) : null}
+          {isFeatureEnabled("cityAlerts") ? (
+            <Suspense fallback={<CityAlertsSectionLoading locale={locale} />}>
+              <CityAlertsSection locale={locale} />
             </Suspense>
           ) : null}
           <GlobalSearch label={translations.shell.globalSearchComingSoon} />
@@ -56,7 +65,6 @@ function DashboardPage({ locale }: { locale: Locale }) {
           <DashboardCard description={emptyCardDescription} title={cards.airQuality} />
           <DashboardCard description={emptyCardDescription} title={cards.publicTransport} />
           <DashboardCard description={emptyCardDescription} title={cards.events} />
-          <DashboardCard description={emptyCardDescription} title={cards.cityAlerts} />
           <DashboardCard description={emptyCardDescription} title={cards.importantNumbers} />
           <DashboardCard description={emptyCardDescription} title={cards.explorePodgorica} />
         </div>

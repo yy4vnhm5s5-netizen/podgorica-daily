@@ -46,7 +46,7 @@ There is no automated test framework yet. That is intentional for the no-busines
 
 1. Deliver trusted local-data modules for weather, transport, and events, each with approved providers, provenance, freshness, stale-data behaviour, monitoring, tests, and feature flags.
 2. Add maps, unified search, identity, and editorial administration after their ADRs, data ownership, and operational requirements are approved.
-3. Introduce AI summaries only after source-backed content and editorial review workflows exist.
+3. Introduce deterministic daily overviews only after source-backed data, cache policy, and provider contracts are approved.
 4. Complete hardening for performance, security, accessibility, resilience, observability, and production operations before a broad product rollout.
 
 ## Technical debt

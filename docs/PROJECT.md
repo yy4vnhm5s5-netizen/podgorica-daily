@@ -13,8 +13,8 @@ Podgorica Daily is a public information product, not a social network or a gener
 
 ## Decision records
 
-Material choices—data providers, maps, identity, persistence, hosting, and AI models—require an architecture decision record covering cost, licensing, security, privacy, operational ownership, and exit strategy.
+Material choices—data providers, maps, identity, persistence, and hosting—require an architecture decision record covering cost, licensing, security, privacy, operational ownership, and exit strategy.
 
 ## Non-goals for Sprint 0
 
-Sprint 0 does not implement weather, transport, events, maps, search, identity, administration, scraping, database schemas, or AI generation. It produces the standards and plans that make later work coherent.
+Sprint 0 does not implement weather, transport, events, maps, search, identity, administration, scraping, or database schemas. It produces the standards and plans that make later work coherent.

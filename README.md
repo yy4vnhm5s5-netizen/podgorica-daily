@@ -1,6 +1,8 @@
 # Podgorica Daily
 
-Podgorica Daily is a production-oriented local information platform for Podgorica. It currently provides server-rendered current weather and an explicitly labelled internal Daily Brief demo; transport, events, maps, search, production AI, and editorial workflows are not yet implemented.
+Podgorica Daily is a production-oriented local information platform for Podgorica. It currently provides server-rendered current weather plus explicitly labelled internal Daily Overview and City Alerts demos; transport, events, maps, search, and editorial workflows are not yet implemented.
+
+Daily Overview is a zero-cost deterministic summary generated from normalized cached city data. It does not use generative services, language models, or visitor-triggered data collection.
 
 The default language is Montenegrin Latin, ijekavian (`/me`). English is available at `/en`; the root route redirects to `/me`.
 

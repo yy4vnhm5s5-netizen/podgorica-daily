@@ -15,7 +15,7 @@ Dependencies point inward: presentation and infrastructure depend on application
 
 ## Modules
 
-Future modules include weather, transport, events, maps, search, identity, editorial administration, and AI summaries. Modules communicate through typed contracts or events, never through direct access to another module's persistence implementation.
+Future modules include weather, transport, events, maps, search, identity, editorial administration, and deterministic daily overviews. Modules communicate through typed contracts or events, never through direct access to another module's persistence implementation.
 
 ## Reliability and security
 

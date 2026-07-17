@@ -5,7 +5,6 @@ const translations = {
     dashboard: {
       cards: {
         airQuality: "Air Quality",
-        cityAlerts: "City Alerts",
         events: "Events",
         explorePodgorica: "Explore Podgorica",
         importantNumbers: "Important Numbers",
@@ -42,7 +41,6 @@ const translations = {
     dashboard: {
       cards: {
         airQuality: "Kvalitet vazduha",
-        cityAlerts: "Gradska upozorenja",
         events: "Događaji",
         explorePodgorica: "Istražite Podgoricu",
         importantNumbers: "Važni brojevi",

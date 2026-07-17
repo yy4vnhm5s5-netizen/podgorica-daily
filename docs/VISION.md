@@ -14,7 +14,7 @@ Podgorica Daily is a trusted, fast, and accessible digital guide to daily life i
 
 ## Scope
 
-The platform will support local weather, mobility, events, search, maps, editorial operations, and carefully governed AI-assisted summaries. Sprint 0 defines the foundation and delivery standards; it does not introduce product features.
+The platform will support local weather, mobility, events, search, maps, editorial operations, and deterministic daily overviews based on verified city data. Sprint 0 defines the foundation and delivery standards; it does not introduce product features.
 
 ## Success
 
