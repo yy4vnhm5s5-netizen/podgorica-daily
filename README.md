@@ -49,6 +49,8 @@ The Events UI groups accepted cached events by day and supports shareable URL fi
 
 ## Architecture
 
+Deployment preparation is documented in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). The recommended first production target is a single VPS with Docker Compose and a persistent shared cache volume; deployment itself remains an operator task.
+
 The project is a modular monolith. Presentation, application, domain, and infrastructure concerns remain separated, and future features own their code beneath `src/modules`. Shared components and utilities are deliberately restricted to cross-cutting concerns.
 
 The project specifications in [`docs/`](docs/) are the source of truth for product scope, architecture, data, UI, API, and source-ingestion decisions.

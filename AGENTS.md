@@ -350,4 +350,6 @@ Introduce modules incrementally in the roadmap order and only after their contra
 - Event collectors must run normalized records through the deterministic Event quality pipeline before deduplication and cache writes. Keep typed rejection/warning diagnostics, never expose rejected events in public reads, and retain a valid cache on a zero-valid refresh result.
 - Extract a service only when the modular-monolith boundary has a demonstrated operational need; do not preemptively distribute the system.
 
+For deployment, use `docs/DEPLOYMENT.md` as the source of truth. The current production target is one VPS with Docker Compose and a persistent shared cache volume; do not claim serverless or multi-instance compatibility. Visitor routes remain cache-only, and collectors run independently from the scheduler container.
+
 For all future work, use the project documentation and this handbook together: product documents define intended outcomes, ADRs define accepted structural decisions, and this file defines the practical contribution rules.

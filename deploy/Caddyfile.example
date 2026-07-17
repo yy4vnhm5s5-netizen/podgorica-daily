@@ -1,0 +1,29 @@
+{
+  email admin@example.invalid
+}
+
+https://podgorica.example {
+  encode zstd gzip
+
+  @health path /api/health /api/readiness
+  reverse_proxy @health 127.0.0.1:3000
+  reverse_proxy 127.0.0.1:3000 {
+    header_up Host {host}
+    header_up X-Forwarded-For {remote_host}
+    header_up X-Forwarded-Proto {scheme}
+  }
+
+  header {
+    X-Content-Type-Options nosniff
+    X-Frame-Options DENY
+    Referrer-Policy strict-origin-when-cross-origin
+    Permissions-Policy "camera=(), microphone=(), geolocation=()"
+  }
+
+  @static path /_next/static/*
+  header @static Cache-Control "public, max-age=31536000, immutable"
+}
+
+http://podgorica.example {
+  redir https://podgorica.example{uri} permanent
+}

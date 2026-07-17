@@ -41,6 +41,8 @@ Events presentation is module-owned under `src/modules/events/presentation`. It 
 
 ## Reliability and security
 
+The first production deployment model is a single VPS with Docker Compose, where the application and staggered collector scheduler share a persistent file-cache volume. This preserves atomic local cache writes and cache-only reads. Serverless or multi-instance deployment is not currently supported because its filesystem is not a durable shared cache. See [DEPLOYMENT.md](DEPLOYMENT.md).
+
 External integrations require timeouts, bounded retries, structured errors, cache policy, rate limits, and health signals. Authentication and authorization are enforced on the server. Configuration is validated at process start. Logs use structured, privacy-safe fields and carry correlation identifiers.
 
 ## CEDIS collection boundary

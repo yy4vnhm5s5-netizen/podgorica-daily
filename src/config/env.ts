@@ -30,6 +30,7 @@ const environmentSchema = z.object({
   ENABLE_EVENTS: z.enum(["false", "true"]).default("false"),
   ENABLE_WEATHER: z.enum(["false", "true"]).default("true"),
   NEXT_PUBLIC_APP_ENV: z.string().min(1).default("development"),
+  NEXT_PUBLIC_SITE_URL: z.url().optional(),
 });
 
 function parseEnvironment(values: Record<string, string | undefined>) {
@@ -70,6 +71,7 @@ const parsedEnvironment = environmentSchema.safeParse({
   ENABLE_EVENTS: process.env.ENABLE_EVENTS,
   ENABLE_WEATHER: process.env.ENABLE_WEATHER,
   NEXT_PUBLIC_APP_ENV: process.env.NEXT_PUBLIC_APP_ENV,
+  NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
 });
 
 if (!parsedEnvironment.success) {

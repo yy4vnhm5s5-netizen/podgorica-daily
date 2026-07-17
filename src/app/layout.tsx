@@ -11,6 +11,7 @@ import { getTranslations } from "@/shared/lib/translations";
 
 export const metadata: Metadata = {
   description: getTranslations("me").metadata.description,
+  metadataBase: env.NEXT_PUBLIC_SITE_URL ? new URL(env.NEXT_PUBLIC_SITE_URL) : undefined,
   title: siteConfig.name,
 };
 

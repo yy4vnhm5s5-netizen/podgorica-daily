@@ -38,6 +38,8 @@ The city registry, `CityContext`, provider registry, generic cache helpers, and 
 
 ## Discovery and operations
 
+First-deployment preparation is complete in documentation and local configuration only. A VPS, domain, DNS, operator-owned environment file, backup job, and live source-operation approval remain required before deployment.
+
 Add maps, unified search, secure identity, and editorial administration. Introduce the smallest data model and operational workflow required by approved content sources.
 
 ## Deterministic daily overview and hardening

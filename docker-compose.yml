@@ -1,10 +1,52 @@
 services:
+  cache-init:
+    image: alpine:3.21
+    command: ["sh", "-c", "mkdir -p /cache && chown -R 1001:1001 /cache"]
+    volumes:
+      - event-cache:/cache
+
   app:
     build:
       context: .
+    env_file:
+      - .env.production
     environment:
-      NEXT_PUBLIC_APP_ENV: production
       NEXT_TELEMETRY_DISABLED: "1"
     ports:
       - "3000:3000"
     restart: unless-stopped
+    depends_on:
+      cache-init:
+        condition: service_completed_successfully
+    volumes:
+      - event-cache:/var/lib/podgorica-daily/cache
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/api/health').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  scheduler:
+    build:
+      context: .
+      target: scheduler
+    env_file:
+      - .env.production
+    environment:
+      NEXT_TELEMETRY_DISABLED: "1"
+    restart: unless-stopped
+    depends_on:
+      cache-init:
+        condition: service_completed_successfully
+    volumes:
+      - event-cache:/var/lib/podgorica-daily/cache
+
+volumes:
+  event-cache:
