@@ -1,22 +1,30 @@
-import { PageShell } from "@/shared/components/layout/page-shell";
-import { Button } from "@/shared/components/ui/button";
-import { siteConfig } from "@/shared/config/site";
+import { DashboardCard } from "@/shared/components/dashboard/dashboard-card";
+import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
+import { GlobalSearch } from "@/shared/components/layout/global-search";
+import { SectionTitle } from "@/shared/components/section-title";
 
 export default function HomePage() {
   return (
-    <PageShell>
-      <section className="mx-auto flex max-w-2xl flex-col gap-6 py-16 sm:py-24">
-        <p className="text-sm font-medium text-muted-foreground">Foundation</p>
-        <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">{siteConfig.name}</h1>
-        <p className="max-w-prose text-base leading-7 text-muted-foreground sm:text-lg">
-          {siteConfig.description}
-        </p>
-        <div>
-          <Button asChild variant="outline">
-            <a href="https://github.com/yy4vnhm5s5-netizen/podgorica-daily">Project source</a>
-          </Button>
+    <DashboardLayout>
+      <section className="space-y-8" id="dashboard">
+        <div className="space-y-6">
+          <SectionTitle
+            description="A calm, accessible workspace for Podgorica’s daily information."
+            title="Dashboard"
+          />
+          <GlobalSearch />
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <DashboardCard title="Weather" />
+          <DashboardCard title="Air Quality" />
+          <DashboardCard title="Public Transport" />
+          <DashboardCard title="Events" />
+          <DashboardCard title="City Alerts" />
+          <DashboardCard title="AI Daily Summary" />
+          <DashboardCard title="Important Numbers" />
+          <DashboardCard title="Explore Podgorica" />
         </div>
       </section>
-    </PageShell>
+    </DashboardLayout>
   );
 }
