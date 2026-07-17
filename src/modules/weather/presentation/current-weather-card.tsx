@@ -42,7 +42,11 @@ const weatherIcons: Record<WeatherConditionIcon, LucideIcon> = {
 };
 
 function WeatherCardFrame({ children }: Readonly<PropsWithChildren>) {
-  return <Card className="min-h-44 overflow-hidden">{children}</Card>;
+  return (
+    <Card className="min-h-44 overflow-hidden border-emerald-200/80 bg-gradient-to-br from-emerald-50/80 via-background to-background transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-md dark:border-emerald-950">
+      {children}
+    </Card>
+  );
 }
 
 interface CurrentWeatherCardProps {
@@ -54,7 +58,7 @@ function CurrentWeatherCardLoading({ locale }: CurrentWeatherCardProps) {
 
   return (
     <WeatherCardFrame>
-      <CardHeader className="bg-muted/30">
+      <CardHeader className="bg-emerald-100/40 dark:bg-emerald-950/20">
         <h2 className="text-base font-semibold">{translations.title}</h2>
       </CardHeader>
       <CardContent className="pt-6">
@@ -71,7 +75,7 @@ async function CurrentWeatherCard({ locale }: CurrentWeatherCardProps) {
   if (result.status === "error") {
     return (
       <WeatherCardFrame>
-        <CardHeader className="bg-muted/30">
+        <CardHeader className="bg-emerald-100/40 dark:bg-emerald-950/20">
           <h2 className="text-base font-semibold">{translations.title}</h2>
         </CardHeader>
         <CardContent className="pt-6">
@@ -84,7 +88,7 @@ async function CurrentWeatherCard({ locale }: CurrentWeatherCardProps) {
   if (result.status === "empty") {
     return (
       <WeatherCardFrame>
-        <CardHeader className="bg-muted/30">
+        <CardHeader className="bg-emerald-100/40 dark:bg-emerald-950/20">
           <h2 className="text-base font-semibold">{translations.title}</h2>
         </CardHeader>
         <CardContent className="pt-6">
@@ -99,7 +103,7 @@ async function CurrentWeatherCard({ locale }: CurrentWeatherCardProps) {
 
   return (
     <WeatherCardFrame>
-      <CardHeader className="flex-row items-start justify-between gap-4 space-y-0 bg-muted/30">
+      <CardHeader className="flex-row items-start justify-between gap-4 space-y-0 bg-emerald-100/40 dark:bg-emerald-950/20">
         <div>
           <h2 className="text-base font-semibold">{translations.title}</h2>
           <p className="mt-1 text-sm text-muted-foreground">{translations.location}</p>
@@ -166,7 +170,7 @@ function WeatherGlyph({ condition }: WeatherGlyphProps) {
   const Icon = weatherIcons[getWeatherConditionIcon(condition)];
 
   return (
-    <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary sm:size-16">
+    <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 sm:size-16">
       <Icon aria-hidden="true" className="size-7 sm:size-8" />
     </div>
   );

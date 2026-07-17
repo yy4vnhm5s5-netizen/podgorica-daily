@@ -9,7 +9,6 @@ const featureFlags = {
   dailyOverview: true,
   events: env.ENABLE_EVENTS && env.EVENT_PROVIDER_MODE !== "disabled",
   maps: false,
-  publicTransport: false,
   search: false,
   weather: env.ENABLE_WEATHER,
 } as const;

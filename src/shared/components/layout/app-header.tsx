@@ -14,9 +14,9 @@ interface AppHeaderProps {
 
 function AppHeader({ locale, translations }: AppHeaderProps) {
   return (
-    <header className="sticky top-0 z-40 border-b bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/75">
+    <header className="sticky top-0 z-40 border-b bg-gradient-to-r from-primary/[0.07] via-background/90 to-sky-400/[0.06] backdrop-blur supports-[backdrop-filter]:bg-background/75">
       <ResponsiveContainer className="flex h-16 items-center justify-between gap-4">
-        <a className="shrink-0 text-sm font-semibold tracking-tight" href={`/${locale}#dashboard`}>
+        <a className="shrink-0 text-sm font-semibold tracking-tight text-primary" href={`/${locale}#dashboard`}>
           {siteConfig.name}
         </a>
         <div className="hidden flex-1 justify-center md:flex">

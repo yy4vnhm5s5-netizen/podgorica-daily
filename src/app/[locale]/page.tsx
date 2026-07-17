@@ -13,6 +13,7 @@ import {
   CityAlertsSection,
   CityAlertsSectionLoading,
 } from "@/modules/city-alerts/presentation/city-alerts-section";
+import { AdvertisingCard } from "@/shared/components/dashboard/advertising-card";
 import { DashboardCard } from "@/shared/components/dashboard/dashboard-card";
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
 import { GlobalSearch } from "@/shared/components/layout/global-search";
@@ -37,13 +38,16 @@ async function LocalePage({ params }: LocalePageProps) {
 
 function DashboardPage({ locale }: { locale: Locale }) {
   const translations = getTranslations(locale);
-  const { cards, description, emptyCardDescription, title } = translations.dashboard;
+  const { advertising, cards, description, emptyCardDescription, title } =
+    translations.dashboard;
 
   return (
     <DashboardLayout locale={locale} translations={translations}>
-      <section className="space-y-8" id="dashboard">
-        <div className="space-y-6">
-          <SectionTitle description={description} title={title} />
+      <section className="space-y-10" id="dashboard">
+        <div className="space-y-7">
+          <div className="rounded-2xl border border-primary/10 bg-gradient-to-r from-primary/[0.08] via-background to-sky-100/60 px-5 py-6 sm:px-7 sm:py-8 dark:to-sky-950/20">
+            <SectionTitle description={description} title={title} />
+          </div>
           {isFeatureEnabled("dailyOverview") ? (
             <Suspense fallback={<DailyOverviewCardLoading locale={locale} />}>
               <DailyOverviewCard locale={locale} />
@@ -56,17 +60,37 @@ function DashboardPage({ locale }: { locale: Locale }) {
           ) : null}
           <GlobalSearch label={translations.shell.globalSearchComingSoon} />
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {isFeatureEnabled("weather") ? (
             <Suspense fallback={<CurrentWeatherCardLoading locale={locale} />}>
               <CurrentWeatherCard locale={locale} />
             </Suspense>
           ) : null}
-          <DashboardCard description={emptyCardDescription} title={cards.airQuality} />
-          <DashboardCard description={emptyCardDescription} title={cards.publicTransport} />
-          <DashboardCard description={emptyCardDescription} title={cards.events} />
-          <DashboardCard description={emptyCardDescription} title={cards.importantNumbers} />
-          <DashboardCard description={emptyCardDescription} title={cards.explorePodgorica} />
+          <DashboardCard
+            accent="blue"
+            description={emptyCardDescription}
+            title={cards.airQuality}
+          />
+          <DashboardCard
+            accent="orange"
+            description={emptyCardDescription}
+            title={cards.events}
+          />
+          <DashboardCard
+            accent="red"
+            description={emptyCardDescription}
+            title={cards.importantNumbers}
+          />
+          <DashboardCard
+            accent="blue"
+            description={emptyCardDescription}
+            title={cards.explorePodgorica}
+          />
+          <AdvertisingCard
+            label={advertising.label}
+            subtitle={advertising.subtitle}
+            title={advertising.title}
+          />
         </div>
       </section>
     </DashboardLayout>
