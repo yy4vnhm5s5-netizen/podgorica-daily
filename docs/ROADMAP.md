@@ -24,6 +24,8 @@ KIC Budo Tomović is the first approved event source. Its cache-backed provider 
 
 Crnogorsko narodno pozorište (CNP) is the second approved event source. Its cache-backed `cnp` provider reads the official repertoire through `pnpm run collect:cnp-events`, writes `.runtime/cache/cnp-events.json`, and remains disabled until `ENABLE_EVENTS=true` with `EVENT_PROVIDER_MODE=live`. CNP parsing, refresh diagnostics, and application integration are fixture-tested with no live test requests. See ADR 0013.
 
+Glavni Grad Podgorica is the third approved Event source. Its Podgorica-only provider reads the official `Aktuelni događaji` listing through `pnpm run collect:glavni-grad-events`, writes `.runtime/cache/glavni-grad-events.json`, and remains disabled until `ENABLE_EVENTS=true` with `EVENT_PROVIDER_MODE=live`. Parsing is deterministic and fixture-tested; absent schedule fields remain unavailable. No public Events UI exists. See ADR 0014.
+
 Event quality validation now protects cache writes with deterministic acceptance, warning, rejection, score, and count-drop diagnostics. Future provider rollout must preserve this pipeline.
 
 The Event Quality Layer is complete: policy is validated from environment configuration, provider health is deterministic, and cache/application diagnostics are available for future operational UI.

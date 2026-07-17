@@ -283,7 +283,7 @@ Use `feat`, `fix`, `docs`, `refactor`, `test`, `build`, `ci`, `chore`, or `perf`
 
 ## 30. ADR Policy
 
-The accepted ADRs are `docs/adr/0001-modular-monolith.md` through `docs/adr/0013-cnp-event-provider.md`.
+The accepted ADRs are `docs/adr/0001-modular-monolith.md` through `docs/adr/0014-glavni-grad-podgorica-event-provider.md`.
 
 - Create a new numbered ADR for a material, lasting architectural decision: providers, maps, identity, persistence, hosting, observability, or an architectural boundary change.
 - Include status, date, context, decision, and consequences.
@@ -344,6 +344,7 @@ Introduce modules incrementally in the roadmap order and only after their contra
 - Events use normalized city-aware records and module-owned candidate, cache, provider, deterministic ID, deduplication, recurrence, and query boundaries. Event reads must stay cache-only; no provider may scrape during a visitor request. Preserve all source references, use exact/strong deterministic matching only, retain date-only events without an invented time, and keep `ENABLE_EVENTS=false` until a source-specific rollout is approved.
 - KIC Budo Tomović is the approved first Event source. Its collector runs only through `pnpm run collect:kic-events`, reads the official KIC news listing and same-host articles, and writes the event cache atomically. Keep KIC disabled unless `ENABLE_EVENTS=true` and `EVENT_PROVIDER_MODE=live`; no page request may trigger it.
 - CNP is the approved second Event source. Its collector runs only through `pnpm run collect:cnp-events`, reads the official `https://cnp.me/repertoar/` listing and validated `cnp.me` detail pages, and writes `.runtime/cache/cnp-events.json` atomically. Keep CNP disabled unless `ENABLE_EVENTS=true` and `EVENT_PROVIDER_MODE=live`; fixture tests must never access the live source, and no page request may trigger it. See ADR 0013.
+- Glavni Grad Podgorica is the approved third Event source. Its Podgorica-only collector runs only through `pnpm run collect:glavni-grad-events`, reads the official `https://podgorica.me/category/aktuelni-dogadjaji/` listing and validated `podgorica.me` details, and writes `.runtime/cache/glavni-grad-events.json`. Keep it disabled unless `ENABLE_EVENTS=true` and `EVENT_PROVIDER_MODE=live`; parsing is fixture-only, incomplete fields remain warnings, and no visitor request may trigger collection. See ADR 0014.
 - Event collectors must run normalized records through the deterministic Event quality pipeline before deduplication and cache writes. Keep typed rejection/warning diagnostics, never expose rejected events in public reads, and retain a valid cache on a zero-valid refresh result.
 - Extract a service only when the modular-monolith boundary has a demonstrated operational need; do not preemptively distribute the system.
 

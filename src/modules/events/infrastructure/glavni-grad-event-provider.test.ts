@@ -1,0 +1,77 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+
+import { getCityEvents } from "../application/get-city-events.ts";
+import { glavniGradEventProvider } from "./glavni-grad-event-provider.ts";
+import {
+  discoverGlavniGradEventUrls,
+  parseGlavniGradEventArticle,
+} from "./glavni-grad-event-parser.ts";
+import { eventProviderRegistry } from "./event-provider-registry.ts";
+import { refreshGlavniGradEvents } from "./glavni-grad-refresh.ts";
+
+const context = {
+  city: {
+    country: "Montenegro",
+    displayName: "Podgorica",
+    enabled: true,
+    id: "podgorica" as const,
+    latitude: 42.441,
+    longitude: 19.263,
+    slug: "podgorica",
+    timezone: "Europe/Podgorica",
+  },
+  locale: "me" as const,
+  timezone: "Europe/Podgorica",
+};
+const listingUrl = "https://podgorica.me/category/aktuelni-dogadjaji/";
+const eventUrl = "https://podgorica.me/koncert-u-parku/";
+const listing =
+  '<a href="/koncert-u-parku/">Koncert</a><a href="https://evil.example/no">Ignore</a>';
+const detail =
+  '<meta property="og:image" content="https://podgorica.me/koncert.jpg"><h1>Koncert u parku</h1><article>Koncert će biti održan 20.07.2026. u 21 čas u parku Univerzitetskom. Ulaz je slobodan.</article>';
+
+test("parses official Glavni Grad listing and event details deterministically", () => {
+  assert.deepEqual(discoverGlavniGradEventUrls(listing), [eventUrl]);
+  const parsed = parseGlavniGradEventArticle(detail, eventUrl);
+  assert.equal(parsed.candidate.categoryHint, "concert");
+  assert.equal(parsed.candidate.startsAt, "2026-07-20T19:00:00.000Z");
+  assert.equal(parsed.candidate.imageUrl, "https://podgorica.me/koncert.jpg");
+  assert.equal(parsed.candidate.rawVenue, "u parku Univerzitetskom");
+  assert.deepEqual(
+    parseGlavniGradEventArticle("<h1>Nepotpuno</h1>", eventUrl).candidate.parserWarnings,
+    ["Glavni Grad article date was unavailable."],
+  );
+});
+
+test("registers, quality-normalizes, caches, and exposes Glavni Grad events through the generic application service", async () => {
+  let snapshot: Awaited<ReturnType<typeof refreshGlavniGradEvents>> | undefined;
+  await refreshGlavniGradEvents({
+    cachePath: "/tmp/glavni-grad-test.json",
+    context,
+    httpClient: { get: async (url) => (url === listingUrl ? listing : detail) },
+    now: () => new Date("2026-07-01T10:00:00.000Z"),
+    writeCache: async (next) => {
+      snapshot = next;
+    },
+  });
+  assert.equal(snapshot?.events.length, 1);
+  assert.equal(snapshot?.qualityDiagnostics?.finalEventCount, 1);
+  assert.ok(
+    eventProviderRegistry.some((provider) => provider.metadata.id === "glavni-grad-podgorica"),
+  );
+  assert.equal(glavniGradEventProvider.metadata.officialSource, listingUrl);
+  const result = await getCityEvents(context, [
+    {
+      ...glavniGradEventProvider,
+      getCachedEvents: async () => ({
+        events: snapshot?.events ?? [],
+        parserWarnings: [],
+        qualityDiagnostics: snapshot?.qualityDiagnostics,
+        state: "fresh",
+        venues: [],
+      }),
+    },
+  ]);
+  assert.equal(result.events.length, 1);
+});

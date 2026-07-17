@@ -32,6 +32,8 @@ KIC Budo Tomović is an approved event collector. It reads only the official `ht
 
 Crnogorsko narodno pozorište (CNP) is an approved Event collector. It reads only `https://cnp.me/repertoar/` and validated `https://cnp.me` detail pages. `pnpm run collect:cnp-events` uses the established Podgorica Daily user agent, a 10-second timeout, one retry, typed HTTP failures, and a low request volume; application reads only `.runtime/cache/cnp-events.json`. The initial cadence is 60 minutes. Listing/detail parsing and refresh tests use deterministic local fixtures only and never call the live CNP site. Missing fields remain unavailable rather than inferred. See ADR 0013.
 
+Glavni Grad Podgorica is an approved Event collector. It reads only `https://podgorica.me/category/aktuelni-dogadjaji/` and validated `podgorica.me` detail pages. `pnpm run collect:glavni-grad-events` uses the established timeout, one retry, cache-first, and local-fixture test policy; application reads only `.runtime/cache/glavni-grad-events.json`. See ADR 0014.
+
 Before cache writes, all normalized events pass deterministic quality validation. Invalid core records are rejected, optional omissions become typed warnings, and zero-result/count-drop protection is recorded in cache diagnostics. See ADR 0012.
 
 Quality policy is server configuration; availability and quality health are separate operational signals. Visitors never trigger KIC or CNP collection, quality evaluation, or provider HTTP requests.
