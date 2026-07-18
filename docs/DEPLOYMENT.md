@@ -29,9 +29,17 @@ The repository currently supports Railway only as a Docker-built web service: `r
 
 The named `scheduler` Docker target contains source files and `scripts/scheduler-entrypoint.sh`, but `railway.toml` does not configure a separate Railway scheduler service or select that target. The repository also contains no Railway Volume declaration, mount path, or Railway-specific cache-path environment values. Repository configuration alone therefore cannot confirm a persistent Railway volume, a scheduler deployment, or shared storage between a deployed scheduler and web process.
 
-On the current configuration, a Railway web container can read only cache files present in its own writable container filesystem. Those files disappear when the container is replaced or restarted, and a separately deployed scheduler would not share them unless both services mount the same persistent volume at the same path. This explains cache-backed sections remaining unavailable even when the web health check succeeds.
+On the current configuration, a Railway web container can read only cache files present in its own writable container filesystem. Those files disappear when the container is replaced or restarted. Railway Volumes are attached to individual services, so they must not be treated as a filesystem shared concurrently between independent web and scheduler services. This explains cache-backed sections remaining unavailable even when the web health check succeeds.
 
-Before enabling live cache-backed content on Railway, provision two services: the default `runner` web service and a service built from the named `scheduler` target. Mount one Railway Volume into both at a shared path such as `/var/lib/podgorica-daily/cache`, then set `EVENT_CACHE_DIR`, every provider-specific event cache path, `CEDIS_CACHE_PATH`, and `AMSCG_CACHE_PATH` to files beneath that mount in both services. Verify the mount and first successful collector snapshot from Railway service logs before treating the data as available. This is a deployment operation, not a repository-side storage change, and has not been applied by this project.
+### Short-term Railway option: one service with a local volume
+
+Run the web process and scheduled refresh logic in one Railway service, with one Railway Volume mounted at an absolute runtime path such as `/app/.runtime`. Set `EVENT_CACHE_DIR`, every provider-specific event cache path, `CEDIS_CACHE_PATH`, and `AMSCG_CACHE_PATH` beneath that mount. The web process and refresh logic then read and write the same service-local volume. Refresh locking must continue to prevent overlapping collector executions.
+
+This option couples scheduling, collection failures, resource use, and restarts to the web process. A long-running or failing collector can contend with serving requests, scheduler changes require web-service deployment changes, and the service cannot scale horizontally while relying on that local file cache. It is appropriate only as a short-term single-service deployment measure.
+
+### Long-term Railway option: separate services with shared durable storage
+
+Run separate web and scheduler services only after replacing the local file-cache boundary with shared persistent storage, such as Postgres or an appropriate object-storage solution. The web service must read the same durable records written by the scheduler service; it must not rely on a local cache path or an assumed shared Railway Volume. Selecting and implementing that storage adapter requires a separate approved architecture change.
 
 ## Docker and proxy
 
