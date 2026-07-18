@@ -3,7 +3,7 @@ import { getCityAlertProviderData } from "@/config/providers";
 import type { CityAlert } from "@/modules/city-alerts/domain/city-alert";
 import type { CityContext } from "@/shared/types/city";
 
-type CityAlertsSourceId = "amscg" | "cedis";
+type CityAlertsSourceId = "amscg" | "cedis" | "vikpg";
 type CityAlertsProviderMode = "disabled" | "live" | "mock";
 
 interface CityAlertsSourceMetadata {
@@ -40,7 +40,7 @@ async function getActiveCityAlerts(
   context: CityContext = getDefaultCityContext(),
 ): Promise<CityAlertsResult> {
   try {
-    const [cedis, amscg] = await getCityAlertProviderData(context);
+    const [cedis, amscg, vikpg] = await getCityAlertProviderData(context);
     const sources: CityAlertsSourceMetadata[] = [
       {
         freshnessStatus: cedis.freshnessStatus,
@@ -54,9 +54,15 @@ async function getActiveCityAlerts(
         lastSuccessfulUpdate: amscg.lastSuccessfulUpdate,
         providerMode: amscg.mode,
       },
+      {
+        freshnessStatus: vikpg.freshnessStatus,
+        id: "vikpg",
+        lastSuccessfulUpdate: vikpg.lastSuccessfulUpdate,
+        providerMode: vikpg.mode,
+      },
     ];
     const metadata = { sources };
-    const sourceAlerts = [...cedis.alerts, ...amscg.alerts];
+    const sourceAlerts = [...cedis.alerts, ...amscg.alerts, ...vikpg.alerts];
     const activeAlerts = sourceAlerts.filter(
       ({ status }) => status === "active" || status === "scheduled",
     );

@@ -90,8 +90,8 @@ function CityAlertsSectionLoading({ locale }: CityAlertsSectionProps) {
 async function CityAlertsSection({ locale }: CityAlertsSectionProps) {
   const result = await getActiveCityAlerts(getDefaultCityContext(locale));
   const translations = getCityAlertsTranslations(locale);
-  const services = getCityServices(result, locale, translations);
   const metadata: CityAlertsMetadata = "metadata" in result ? result.metadata : { sources: [] };
+  const services = getCityServices(result, locale, translations, metadata);
   const otherAlerts =
     result.status === "success"
       ? result.data.filter(({ type }) => type !== "powerOutage" && type !== "waterOutage")
@@ -128,6 +128,7 @@ function getCityServices(
   result: Awaited<ReturnType<typeof getActiveCityAlerts>>,
   locale: Locale,
   translations: CityAlertsTranslations,
+  metadata: CityAlertsMetadata,
 ): Record<"power" | "water", CityServiceInfo> {
   const alerts = result.status === "success" ? result.data : [];
   const powerAlert = alerts.find(({ type }) => type === "powerOutage");
@@ -136,7 +137,10 @@ function getCityServices(
     "metadata" in result &&
     result.metadata.sources.some(
       ({ freshnessStatus, id }) => id === "cedis" && freshnessStatus !== "unavailable",
-    );
+  );
+  const vikpgSource = metadata.sources.find(({ id }) => id === "vikpg");
+  const vikpgAvailable =
+    vikpgSource?.freshnessStatus !== undefined && vikpgSource.freshnessStatus !== "unavailable";
 
   return {
     power: powerAlert
@@ -144,7 +148,7 @@ function getCityServices(
       : { state: cedisAvailable ? "none" : "unavailable" },
     water: waterAlert
       ? toCityServiceInfo(waterAlert, locale, translations)
-      : { state: "unavailable" },
+      : { state: vikpgAvailable ? "none" : "unavailable" },
   };
 }
 
@@ -162,6 +166,10 @@ function toCityServiceInfo(
   return {
     area: getCityAlertContent(alert.affectedArea, translations),
     description: getCityAlertContent(alert.description, translations),
+    publicationContext: alert.publishedAt
+      ? `${translations.publishedAt}: ${formatDateTime(alert.publishedAt, { locale: localeTag }).label}`
+      : undefined,
+    sourceUrl: alert.sourceUrl,
     state: "available",
     statusLabel:
       alert.status === "scheduled" ? translations.statuses.scheduled : translations.statuses.active,

@@ -5,6 +5,7 @@ import { isCityId } from "../shared/config/cities.ts";
 const environmentSchema = z.object({
   CEDIS_PROVIDER_MODE: z.enum(["disabled", "live", "mock"]).default("live"),
   AMSCG_PROVIDER_MODE: z.enum(["disabled", "live"]).default("live"),
+  VIKPG_PROVIDER_MODE: z.enum(["disabled", "live"]).default("live"),
   EVENT_PROVIDER_MODE: z.enum(["disabled", "live", "mock"]).default("disabled"),
   EVENT_CACHE_PATH: z.string().min(1).default(".runtime/cache/events.json"),
   EVENT_CACHE_DIR: z.string().min(1).default(".runtime/cache"),
@@ -25,10 +26,12 @@ const environmentSchema = z.object({
   CNP_EVENT_CACHE_PATH: z.string().min(1).optional(),
   GLAVNI_GRAD_EVENT_CACHE_PATH: z.string().min(1).optional(),
   TOURISM_EVENT_CACHE_PATH: z.string().min(1).optional(),
+  VIKPG_CACHE_PATH: z.string().min(1).optional(),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   DEFAULT_CITY: z.string().default("podgorica"),
   ENABLE_AMSCG: z.enum(["false", "true"]).default("true"),
   ENABLE_CEDIS: z.enum(["false", "true"]).default("true"),
+  ENABLE_VIKPG: z.enum(["false", "true"]).default("true"),
   ENABLE_EVENTS: z.enum(["false", "true"]).default("false"),
   ENABLE_WEATHER: z.enum(["false", "true"]).default("true"),
   NEXT_PUBLIC_APP_ENV: z.string().min(1).default("development"),
@@ -49,6 +52,7 @@ const parsedEnvironment = environmentSchema.safeParse({
   NODE_ENV: process.env.NODE_ENV,
   CEDIS_PROVIDER_MODE: process.env.CEDIS_PROVIDER_MODE,
   AMSCG_PROVIDER_MODE: process.env.AMSCG_PROVIDER_MODE,
+  VIKPG_PROVIDER_MODE: process.env.VIKPG_PROVIDER_MODE,
   EVENT_PROVIDER_MODE: process.env.EVENT_PROVIDER_MODE,
   EVENT_CACHE_PATH: process.env.EVENT_CACHE_PATH,
   EVENT_CACHE_DIR: process.env.EVENT_CACHE_DIR,
@@ -69,9 +73,11 @@ const parsedEnvironment = environmentSchema.safeParse({
   CNP_EVENT_CACHE_PATH: process.env.CNP_EVENT_CACHE_PATH,
   GLAVNI_GRAD_EVENT_CACHE_PATH: process.env.GLAVNI_GRAD_EVENT_CACHE_PATH,
   TOURISM_EVENT_CACHE_PATH: process.env.TOURISM_EVENT_CACHE_PATH,
+  VIKPG_CACHE_PATH: process.env.VIKPG_CACHE_PATH,
   DEFAULT_CITY: process.env.DEFAULT_CITY,
   ENABLE_AMSCG: process.env.ENABLE_AMSCG,
   ENABLE_CEDIS: process.env.ENABLE_CEDIS,
+  ENABLE_VIKPG: process.env.ENABLE_VIKPG,
   ENABLE_EVENTS: process.env.ENABLE_EVENTS,
   ENABLE_WEATHER: process.env.ENABLE_WEATHER,
   NEXT_PUBLIC_APP_ENV: process.env.NEXT_PUBLIC_APP_ENV,
@@ -108,6 +114,7 @@ const resolvedEnvironment = {
     parsedEnvironment.data.KIC_EVENT_CACHE_PATH ?? `${cacheDirectory}/kic-events.json`,
   TOURISM_EVENT_CACHE_PATH:
     parsedEnvironment.data.TOURISM_EVENT_CACHE_PATH ?? `${cacheDirectory}/tourism-events.json`,
+  VIKPG_CACHE_PATH: parsedEnvironment.data.VIKPG_CACHE_PATH ?? ".runtime/cache/vikpg-water-alerts.json",
 };
 
 if (!isCityId(resolvedEnvironment.DEFAULT_CITY)) {
@@ -119,6 +126,7 @@ export const env = {
   DEFAULT_CITY: resolvedEnvironment.DEFAULT_CITY,
   ENABLE_AMSCG: resolvedEnvironment.ENABLE_AMSCG === "true",
   ENABLE_CEDIS: resolvedEnvironment.ENABLE_CEDIS === "true",
+  ENABLE_VIKPG: resolvedEnvironment.ENABLE_VIKPG === "true",
   ENABLE_EVENTS: resolvedEnvironment.ENABLE_EVENTS === "true",
   ENABLE_WEATHER: resolvedEnvironment.ENABLE_WEATHER === "true",
   EVENT_QUALITY_WARN_MISSING_DESCRIPTION:

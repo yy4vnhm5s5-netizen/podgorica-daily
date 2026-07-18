@@ -13,8 +13,10 @@ type CityServiceState = "available" | "none" | "unavailable";
 interface CityServiceInfo {
   area?: string;
   description?: string;
+  publicationContext?: string;
   state: CityServiceState;
   statusLabel?: string;
+  sourceUrl?: string;
   time?: string;
   title?: string;
 }
@@ -24,6 +26,7 @@ interface CityServicesTranslations {
   label: string;
   noPowerOutages: string;
   noWaterInterruptions: string;
+  officialSource: string;
   power: string;
   scheduled: string;
   time: string;
@@ -164,6 +167,19 @@ function CityServicesPanel({ services, translations }: CityServicesPanelProps) {
                     <ServiceDetail label={translations.time} value={service.time} />
                   ) : null}
                 </dl>
+                {service.sourceUrl || service.publicationContext ? (
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t pt-3 text-xs text-muted-foreground">
+                    {service.sourceUrl ? (
+                      <a
+                        className="font-medium text-primary underline-offset-4 hover:underline"
+                        href={service.sourceUrl}
+                      >
+                        {translations.officialSource}
+                      </a>
+                    ) : null}
+                    {service.publicationContext ? <p>{service.publicationContext}</p> : null}
+                  </div>
+                ) : null}
               </div>
             )}
           </div>

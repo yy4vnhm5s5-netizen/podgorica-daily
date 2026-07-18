@@ -21,7 +21,7 @@ Future modules include weather, transport, events, maps, search, identity, edito
 
 The central city registry supplies a `CityContext` with city, locale, and timezone to providers and application use cases. Podgorica is the only enabled city; disabled city entries are planning data only and do not create routes or collection work. Normalized records carry `cityIds` arrays so one source record can be associated with multiple cities. The public application remains on its current Podgorica routes until an explicit routing rollout.
 
-Provider metadata is centrally registered for Weather, CEDIS, and AMSCG. It records ownership-facing source and cache details without moving module implementation into shared code. The shared cache abstraction owns atomic JSON persistence and freshness calculation; each module owns its snapshot schema and stale-data policy.
+Provider metadata is centrally registered for Weather, CEDIS, AMSCG, and VIK Podgorica. It records ownership-facing source and cache details without moving module implementation into shared code. The shared cache abstraction owns atomic JSON persistence and freshness calculation; each module owns its snapshot schema and stale-data policy.
 
 ## Event platform boundary
 
@@ -48,3 +48,7 @@ External integrations require timeouts, bounded retries, structured errors, cach
 ## CEDIS collection boundary
 
 The City Alerts CEDIS adapter is the first approved collector. Its dependency direction is `collector → CEDIS HTTP adapter → parser/normalizer → file cache → City Alerts application → presentation`. Page requests stop at the cache boundary; they never invoke collection. The Daily Overview receives a generic City Alerts read model rather than CEDIS infrastructure. The file-backed cache is suitable for local development and persistent servers, but a durable adapter is required for serverless deployments. See ADR 0007.
+
+## VIK Podgorica collection boundary
+
+The VIK adapter follows the same City Alerts boundary: `collector → VIK HTTP adapter → parser/normalizer → file cache → City Alerts application → presentation`. It accepts only official VIK hosts, resolves current interruption, planned-work, pressure, and restoration notices into generic `waterOutage` records, and writes `.runtime/cache/vikpg-water-alerts.json` atomically. The Water tab and Daily Overview consume only the normalized cached read model. A file-based refresh lock prevents overlap in one persistent-cache deployment; visitor requests never collect. See ADR 0016.

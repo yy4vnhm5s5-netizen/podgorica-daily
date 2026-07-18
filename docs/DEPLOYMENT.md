@@ -10,7 +10,7 @@ The repository has a Railway web deployment configuration, but its cache-backed 
 - `NEXT_PUBLIC_SITE_URL` must be the public HTTPS origin in production. It enables absolute canonical and Open Graph URLs; do not include a path.
 - `NEXT_PUBLIC_APP_ENV=production`, `NODE_ENV=production`, and `DEFAULT_CITY=podgorica` are required operational values.
 - Events are public only from cache. Enable live event content with `ENABLE_EVENTS=true` and `EVENT_PROVIDER_MODE=live`; disabled mode safely shows no event data. Mock provider modes are rejected in production.
-- Set every event cache path to `/var/lib/podgorica-daily/cache/<provider>.json` in `.env.production`. Set `CEDIS_CACHE_PATH` and `AMSCG_CACHE_PATH` there as well so all collector and application cache files share the persistent volume.
+- Set every event cache path to `/var/lib/podgorica-daily/cache/<provider>.json` in `.env.production`. Set `CEDIS_CACHE_PATH`, `AMSCG_CACHE_PATH`, and `VIKPG_CACHE_PATH` there as well so all collector and application cache files share the persistent volume.
 - Weather may call Open-Meteo during server rendering and already has a safe failure state. It does not require an API key.
 
 No currently configured variable is a secret. Do not commit a real `.env.production`; future credentials must remain server-only and outside logs.
@@ -33,7 +33,7 @@ On the current configuration, a Railway web container can read only cache files 
 
 ### Short-term Railway option: one service with a local volume
 
-Run the web process and scheduled refresh logic in one Railway service, with one Railway Volume mounted at an absolute runtime path such as `/app/.runtime`. Set `EVENT_CACHE_DIR`, every provider-specific event cache path, `CEDIS_CACHE_PATH`, and `AMSCG_CACHE_PATH` beneath that mount. The web process and refresh logic then read and write the same service-local volume. Refresh locking must continue to prevent overlapping collector executions.
+Run the web process and scheduled refresh logic in one Railway service, with one Railway Volume mounted at an absolute runtime path such as `/app/.runtime`. Set `EVENT_CACHE_DIR`, every provider-specific event cache path, `CEDIS_CACHE_PATH`, `AMSCG_CACHE_PATH`, and `VIKPG_CACHE_PATH` beneath that mount. The web process and refresh logic then read and write the same service-local volume. Refresh locking must continue to prevent overlapping collector executions.
 
 This option couples scheduling, collection failures, resource use, and restarts to the web process. A long-running or failing collector can contend with serving requests, scheduler changes require web-service deployment changes, and the service cannot scale horizontally while relying on that local file cache. It is appropriate only as a short-term single-service deployment measure.
 

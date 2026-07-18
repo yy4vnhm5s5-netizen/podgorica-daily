@@ -18,3 +18,10 @@ test("provides localized source-unavailable copy", () => {
   assert.equal(getCityAlertsTranslations("me").unavailable, "Podaci trenutno nijesu dostupni.");
   assert.equal(getCityAlertsTranslations("en").unavailable, "Data is currently unavailable.");
 });
+
+test("uses the specific successful empty-state copy for water interruptions", () => {
+  assert.equal(
+    getCityAlertsTranslations("me").noWaterInterruptions,
+    "Nema aktivnih obavještenja o prekidima u vodosnabdijevanju.",
+  );
+});

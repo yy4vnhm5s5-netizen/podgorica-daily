@@ -26,6 +26,12 @@ The collector recommends a 60-minute cadence. It uses local fixtures for automat
 
 AMSCG is the approved official source for road-condition notices at `https://amscg.org/stanje-na-putevima/`. `pnpm run collect:amscg` fetches only the allowed AMSCG host through the same timeout, retry, cache-first, and fixture-test policy as CEDIS. It normalizes road works, closures, alternating traffic, restrictions, and important warnings. Visitor requests read only `.runtime/cache/amscg-road-conditions.json`. See ADR 0008.
 
+## VIK Podgorica water-service notices
+
+VIK Podgorica is the approved official water-service source at `https://vikpg.me/me/mediji/servisne-informacije/obavjestenja.html`. That legacy URL currently redirects to an official first-party page containing service entries and unrelated content. `pnpm run collect:vikpg` accepts only validated HTTPS VIK hosts, uses the established user agent, ten-second timeout, one transient retry, low request volume, and an on-disk refresh lock. It reads and atomically writes `.runtime/cache/vikpg-water-alerts.json`; visitor requests only read the cache.
+
+The parser uses local fixtures and injected HTTP in tests. It retains a valid snapshot on fetch failure, malformed content, or suspicious empty parses. Explicit end times determine expiry; restoration notices and notices older than one local day after publication are conservatively hidden. See ADR 0016.
+
 ## Events
 
 KIC Budo Tomović is an approved event collector. It reads only the official `https://kic.podgorica.me/novosti` listing and validated same-host programme articles, using the established timeout, one-retry, user-agent, and cache-first policy. It is invoked by `pnpm run collect:kic-events`; pages read `.runtime/cache/kic-events.json` only. The initial cadence is 60 minutes. Parsing is fixture-tested and preserves missing fields rather than inferring them. See ADR 0011.

@@ -7,6 +7,10 @@ import {
   cedisProviderMetadata,
   getCedisCityAlerts,
 } from "@/modules/city-alerts/infrastructure/cedis-city-alerts-provider";
+import {
+  getVikpgCityAlerts,
+  vikpgProviderMetadata,
+} from "@/modules/city-alerts/infrastructure/vikpg-city-alerts-provider";
 import { weatherProviderMetadata } from "@/modules/weather/infrastructure/open-meteo-weather-client";
 import type { CityContext } from "@/shared/types/city";
 import type { ProviderMetadata } from "@/shared/types/provider";
@@ -14,6 +18,7 @@ import type { ProviderMetadata } from "@/shared/types/provider";
 const providerRegistry: readonly ProviderMetadata[] = [
   { ...cedisProviderMetadata, enabled: env.ENABLE_CEDIS },
   { ...amscgProviderMetadata, enabled: env.ENABLE_AMSCG },
+  { ...vikpgProviderMetadata, enabled: env.ENABLE_VIKPG },
   { ...weatherProviderMetadata, enabled: env.ENABLE_WEATHER },
 ];
 
@@ -30,6 +35,10 @@ async function getCityAlertProviderData(context: CityContext) {
     getAmscgCityAlerts({
       context,
       mode: env.ENABLE_AMSCG ? env.AMSCG_PROVIDER_MODE : "disabled",
+    }),
+    getVikpgCityAlerts({
+      context,
+      mode: env.ENABLE_VIKPG ? env.VIKPG_PROVIDER_MODE : "disabled",
     }),
   ]);
 }

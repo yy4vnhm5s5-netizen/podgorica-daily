@@ -14,6 +14,8 @@ Current weather for Podgorica is delivered through an isolated Open-Meteo adapte
 
 City Alerts reads cached official CEDIS planned power outages when a collector snapshot is available. It exposes fresh, stale, and unavailable states with source attribution. Mock alerts remain an explicit development-only provider mode; further sources still require their own approved provider contracts, attribution, freshness, outage handling, and monitoring.
 
+Cached official VIK Podgorica water-service notices provide the first water interruption source. The Water tab reads VIK's cache only and exposes real notices, a verified empty state, or availability failure without mock fallback. Source markup remains a monitored parsing dependency; additional water sources require their own provider decision.
+
 Cached AMSCG road-condition publications provide the first traffic source for road works, closures, alternating traffic, restrictions, and important warnings. Real-time traffic, route planning, and transport remain separate future scopes.
 
 ## Event platform foundation
