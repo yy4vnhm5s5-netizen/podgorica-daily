@@ -2,7 +2,7 @@
 
 ## Status
 
-This document prepares a first deployment; no production deployment has been performed. The recommended first target is an Ubuntu VPS with Docker Compose, a persistent Docker volume, and Caddy on the host. This matches the current Node.js file-cache architecture without adding a database or hosted scheduler.
+The repository has a Railway web deployment configuration, but its cache-backed data services are not yet configured for durable shared storage there. The recommended production topology for the current Node.js file-cache architecture is an Ubuntu VPS with Docker Compose, a persistent Docker volume, and Caddy on the host. This avoids adding a database or hosted scheduler before their contracts are approved.
 
 ## Runtime contract
 
@@ -22,6 +22,16 @@ The shared JSON cache creates missing parent directories and writes by temporary
 The scheduler invokes collectors independently once per hour, staggered at minutes 07 (KIC), 17 (CNP), 27 (Glavni Grad), and 37 (Tourism). A per-collector atomic directory lock prevents overlap. Collector JSON is available through container logs; a retained previous cache exits successfully, while an unrecoverable refresh exits non-zero. Visitor requests never invoke collection.
 
 The file-cache architecture is suitable for one VPS or another single persistent host. It is not safe for serverless or horizontally scaled deployments: ephemeral instances do not share `.runtime/cache`, atomic writes are local only, and scheduled collectors have no durable shared target. A durable storage adapter is required before considering managed/serverless hosting.
+
+## Railway cache investigation
+
+The repository currently supports Railway only as a Docker-built web service: `railway.toml` selects the `Dockerfile` and defines a health check, while the final/default Docker stage is the Next.js `runner`. That image contains `public`, `.next/standalone`, and `.next/static`; it does not copy a pre-populated `.runtime/cache` directory. Cache files are instead created lazily by collectors at the configured paths, which default to `.runtime/cache/*.json` relative to `/app`.
+
+The named `scheduler` Docker target contains source files and `scripts/scheduler-entrypoint.sh`, but `railway.toml` does not configure a separate Railway scheduler service or select that target. The repository also contains no Railway Volume declaration, mount path, or Railway-specific cache-path environment values. Repository configuration alone therefore cannot confirm a persistent Railway volume, a scheduler deployment, or shared storage between a deployed scheduler and web process.
+
+On the current configuration, a Railway web container can read only cache files present in its own writable container filesystem. Those files disappear when the container is replaced or restarted, and a separately deployed scheduler would not share them unless both services mount the same persistent volume at the same path. This explains cache-backed sections remaining unavailable even when the web health check succeeds.
+
+Before enabling live cache-backed content on Railway, provision two services: the default `runner` web service and a service built from the named `scheduler` target. Mount one Railway Volume into both at a shared path such as `/var/lib/podgorica-daily/cache`, then set `EVENT_CACHE_DIR`, every provider-specific event cache path, `CEDIS_CACHE_PATH`, and `AMSCG_CACHE_PATH` to files beneath that mount in both services. Verify the mount and first successful collector snapshot from Railway service logs before treating the data as available. This is a deployment operation, not a repository-side storage change, and has not been applied by this project.
 
 ## Docker and proxy
 

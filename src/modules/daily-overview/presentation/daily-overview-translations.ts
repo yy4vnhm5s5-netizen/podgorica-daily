@@ -8,6 +8,7 @@ interface DailyOverviewTranslations {
   loading: string;
   summaryLabel: string;
   temperature: string;
+  noEvents: string;
   unavailable: string;
 }
 
@@ -20,6 +21,7 @@ const dailyOverviewTranslations: Record<Locale, DailyOverviewTranslations> = {
     loading: "Loading daily information",
     summaryLabel: "Daily summary",
     temperature: "Temperature",
+    noEvents: "No events",
     unavailable: "Data is currently unavailable.",
   },
   me: {
@@ -30,6 +32,7 @@ const dailyOverviewTranslations: Record<Locale, DailyOverviewTranslations> = {
     loading: "Učitavanje dnevnih informacija",
     summaryLabel: "Dnevni sažetak",
     temperature: "Temperatura",
+    noEvents: "Bez događaja",
     unavailable: "Podaci trenutno nijesu dostupni.",
   },
 };

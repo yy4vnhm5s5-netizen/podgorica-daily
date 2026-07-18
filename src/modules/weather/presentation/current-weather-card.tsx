@@ -19,8 +19,6 @@ import {
   type WeatherConditionIcon,
   type WeatherConditionKey,
 } from "@/modules/weather/domain/current-weather";
-import { EmptyState } from "@/shared/components/empty-state";
-import { ErrorState } from "@/shared/components/error-state";
 import { LoadingSkeleton } from "@/shared/components/loading-skeleton";
 import { StatusBadge, type StatusTone } from "@/shared/components/status-badge";
 import { Timestamp } from "@/shared/components/timestamp";
@@ -43,7 +41,7 @@ const weatherIcons: Record<WeatherConditionIcon, LucideIcon> = {
 
 function WeatherCardFrame({ children }: Readonly<PropsWithChildren>) {
   return (
-    <Card className="min-h-44 overflow-hidden border-sky-200/90 bg-sky-100/65 transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-[0_12px_24px_-20px_rgb(15_23_42_/_0.32)] dark:border-sky-950/80">
+    <Card className="overflow-hidden border-sky-200/80 bg-sky-50/80 transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-[0_12px_24px_-20px_rgb(15_23_42_/_0.32)]">
       {children}
     </Card>
   );
@@ -59,7 +57,7 @@ function CurrentWeatherCardLoading({ locale }: CurrentWeatherCardProps) {
 
   return (
     <WeatherCardFrame>
-      <CardHeader className="flex-row items-center gap-3 space-y-0 p-5 sm:p-6">
+      <CardHeader className="flex-row items-center gap-3 space-y-0 p-4 sm:p-5">
         <CloudSun
           aria-hidden="true"
           className="size-[1.125rem] text-sky-700 dark:text-sky-300"
@@ -67,8 +65,8 @@ function CurrentWeatherCardLoading({ locale }: CurrentWeatherCardProps) {
         />
         <h2 className="text-base font-semibold">{translations.title}</h2>
       </CardHeader>
-      <CardContent className="p-5 pt-0 sm:p-6 sm:pt-0">
-        <LoadingSkeleton label={translations.loading} lines={4} />
+      <CardContent className="p-4 pt-0 sm:p-5 sm:pt-0">
+        <LoadingSkeleton label={translations.loading} lines={2} />
       </CardContent>
     </WeatherCardFrame>
   );
@@ -81,7 +79,7 @@ async function CurrentWeatherCard({ airQualityCategory, locale }: CurrentWeather
   if (result.status === "error") {
     return (
       <WeatherCardFrame>
-        <CardHeader className="flex-row items-center gap-3 space-y-0 p-5 sm:p-6">
+        <CardHeader className="flex-row items-center gap-3 space-y-0 p-4 sm:p-5">
           <CloudSun
             aria-hidden="true"
             className="size-[1.125rem] text-sky-700 dark:text-sky-300"
@@ -89,8 +87,8 @@ async function CurrentWeatherCard({ airQualityCategory, locale }: CurrentWeather
           />
           <h2 className="text-base font-semibold">{translations.title}</h2>
         </CardHeader>
-        <CardContent className="p-5 pt-0 sm:p-6 sm:pt-0">
-          <ErrorState description={translations.errorDescription} title={translations.errorTitle} />
+        <CardContent className="p-4 pt-0 sm:p-5 sm:pt-0">
+          <WeatherUnavailable description={translations.errorDescription} />
         </CardContent>
       </WeatherCardFrame>
     );
@@ -99,7 +97,7 @@ async function CurrentWeatherCard({ airQualityCategory, locale }: CurrentWeather
   if (result.status === "empty") {
     return (
       <WeatherCardFrame>
-        <CardHeader className="flex-row items-center gap-3 space-y-0 p-5 sm:p-6">
+        <CardHeader className="flex-row items-center gap-3 space-y-0 p-4 sm:p-5">
           <CloudSun
             aria-hidden="true"
             className="size-[1.125rem] text-sky-700 dark:text-sky-300"
@@ -107,19 +105,18 @@ async function CurrentWeatherCard({ airQualityCategory, locale }: CurrentWeather
           />
           <h2 className="text-base font-semibold">{translations.title}</h2>
         </CardHeader>
-        <CardContent className="p-5 pt-0 sm:p-6 sm:pt-0">
-          <EmptyState description={translations.emptyDescription} title={translations.emptyTitle} />
+        <CardContent className="p-4 pt-0 sm:p-5 sm:pt-0">
+          <WeatherUnavailable description={translations.emptyDescription} />
         </CardContent>
       </WeatherCardFrame>
     );
   }
 
-  const { apparentTemperature, condition, humidity, temperature, updatedAt, windSpeed } =
-    result.data;
+  const { apparentTemperature, condition, temperature, updatedAt, windSpeed } = result.data;
 
   return (
     <WeatherCardFrame>
-      <CardHeader className="flex-row items-start justify-between gap-4 space-y-0 p-5 sm:p-6">
+      <CardHeader className="flex-row items-start justify-between gap-4 space-y-0 p-4 sm:p-5">
         <div className="flex items-start gap-3">
           <CloudSun
             aria-hidden="true"
@@ -133,24 +130,18 @@ async function CurrentWeatherCard({ airQualityCategory, locale }: CurrentWeather
         </div>
         <StatusBadge tone="info">{translations.status}</StatusBadge>
       </CardHeader>
-      <CardContent className="space-y-5 p-5 pt-0 sm:p-6 sm:pt-0">
-        <div className="flex items-end justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-5xl font-semibold tracking-tighter sm:text-6xl">
-              {temperature.toFixed(1)}°C
-            </p>
-            <p className="mt-2 text-sm font-medium text-muted-foreground">
+      <CardContent className="space-y-4 p-4 pt-0 sm:p-5 sm:pt-0">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-base font-semibold tracking-tight">
               {translations.conditions[condition]}
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {translations.feelsLike} {apparentTemperature?.toFixed(1) ?? temperature.toFixed(1)}°C
             </p>
           </div>
           <WeatherGlyph condition={condition} />
         </div>
-        {apparentTemperature === null ? null : (
-          <p className="rounded-md bg-muted/60 px-3 py-2 text-sm text-muted-foreground">
-            {translations.feelsLike}{" "}
-            <span className="font-medium text-foreground">{apparentTemperature.toFixed(1)}°C</span>
-          </p>
-        )}
         {airQualityCategory ? (
           <section className="flex items-center justify-between gap-4 rounded-lg border border-emerald-200/80 bg-emerald-50/70 px-3 py-2.5">
             <h3 className="text-sm font-medium text-foreground">{translations.airQuality}</h3>
@@ -159,17 +150,13 @@ async function CurrentWeatherCard({ airQualityCategory, locale }: CurrentWeather
             </StatusBadge>
           </section>
         ) : null}
-        <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border bg-border text-sm">
-          <div className="bg-background p-3 sm:p-4">
+        <dl className="rounded-lg border bg-background/70 text-sm">
+          <div className="p-3">
             <dt className="text-muted-foreground">{translations.wind}</dt>
             <dd className="mt-1 text-base font-semibold">{windSpeed.toFixed(1)} km/h</dd>
           </div>
-          <div className="bg-background p-3 sm:p-4">
-            <dt className="text-muted-foreground">{translations.humidity}</dt>
-            <dd className="mt-1 text-base font-semibold">{humidity.toFixed(0)}%</dd>
-          </div>
         </dl>
-        <div className="border-t pt-4 text-xs text-muted-foreground">
+        <div className="border-t pt-3 text-xs text-muted-foreground">
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
             <p>
               {translations.source}:{" "}
@@ -192,6 +179,15 @@ async function CurrentWeatherCard({ airQualityCategory, locale }: CurrentWeather
 }
 
 export { CurrentWeatherCard, CurrentWeatherCardLoading };
+
+function WeatherUnavailable({ description }: { description: string }) {
+  return (
+    <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-background/70 px-3 py-3 text-sm text-muted-foreground">
+      <CloudSun aria-hidden="true" className="size-4 shrink-0 text-sky-700" strokeWidth={1.8} />
+      <p>{description}</p>
+    </div>
+  );
+}
 
 const airQualityTones: Record<"good" | "moderate" | "unhealthy", StatusTone> = {
   good: "success",

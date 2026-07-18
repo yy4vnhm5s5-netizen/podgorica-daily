@@ -5,16 +5,18 @@ const translations = {
     dashboard: {
       cards: {
         airQuality: "Air Quality",
+        eventsDescription: "There are currently no scheduled events.",
         events: "Events",
         explorePodgorica: "Explore Podgorica",
+        explorePodgoricaDescription: "Places are currently unavailable.",
         importantNumbers: "Important Numbers",
+        importantNumbersDescription: "Data is currently unavailable.",
       },
       advertising: {
         label: "Advertising",
         subtitle: "Want to promote your local business? Contact us.",
         title: "Your advertisement",
       },
-      emptyCardDescription: "No information is available yet.",
     },
     metadata: {
       description: "A trusted, accessible guide to daily life in Podgorica.",
@@ -42,16 +44,18 @@ const translations = {
     dashboard: {
       cards: {
         airQuality: "Kvalitet vazduha",
+        eventsDescription: "Trenutno nema najavljenih događaja.",
         events: "Događaji",
         explorePodgorica: "Istražite Podgoricu",
+        explorePodgoricaDescription: "Mjesta trenutno nijesu dostupna.",
         importantNumbers: "Važni brojevi",
+        importantNumbersDescription: "Podaci trenutno nijesu dostupni.",
       },
       advertising: {
         label: "Oglašavanje",
         subtitle: "Želite da promovišete svoj lokalni biznis? Kontaktirajte nas.",
         title: "Vaša reklama",
       },
-      emptyCardDescription: "Informacije još nijesu dostupne.",
     },
     metadata: {
       description: "Pouzdan i pristupačan vodič kroz svakodnevni život u Podgorici.",

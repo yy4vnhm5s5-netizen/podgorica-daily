@@ -37,7 +37,7 @@ async function LocalePage({ params }: LocalePageProps) {
 
 async function DashboardPage({ locale }: { locale: Locale }) {
   const translations = getTranslations(locale);
-  const { advertising, cards, emptyCardDescription } = translations.dashboard;
+  const { advertising, cards } = translations.dashboard;
   const dailyOverview = isFeatureEnabled("dailyOverview")
     ? await getDailyOverview(getDefaultCityContext(locale))
     : null;
@@ -61,27 +61,25 @@ async function DashboardPage({ locale }: { locale: Locale }) {
           />
           <GlobalSearch label={translations.shell.globalSearchComingSoon} />
         </div>
-        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid items-start gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {isFeatureEnabled("weather") ? (
             <Suspense fallback={<CurrentWeatherCardLoading locale={locale} />}>
               <CurrentWeatherCard airQualityCategory={airQualityCategory} locale={locale} />
             </Suspense>
           ) : null}
           <DashboardCard
-            accent="amber"
-            description={emptyCardDescription}
+            accent="info"
+            description={cards.eventsDescription}
             icon={CalendarDays}
             title={cards.events}
           />
           <DashboardCard
-            accent="red"
-            description={emptyCardDescription}
+            description={cards.importantNumbersDescription}
             icon={Phone}
             title={cards.importantNumbers}
           />
           <DashboardCard
-            accent="slate"
-            description={emptyCardDescription}
+            description={cards.explorePodgoricaDescription}
             icon={Landmark}
             title={cards.explorePodgorica}
           />

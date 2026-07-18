@@ -45,7 +45,13 @@ function DailySummaryBar({ locale, result }: DailySummaryBarProps) {
             )}
           </SummaryItem>
           <SummaryItem icon={CalendarDays} label={translations.eventsLabel}>
-            <span className="font-semibold tabular-nums">{eventsToday ?? "—"}</span>
+            {eventsToday === 0 ? (
+              translations.noEvents
+            ) : eventsToday === undefined ? (
+              translations.unavailable
+            ) : (
+              <span className="tabular-nums">{eventsToday}</span>
+            )}
           </SummaryItem>
           <SummaryItem icon={Clock3} label={translations.lastUpdated}>
             <Timestamp locale={getLocaleTag(locale)} value={generatedAt} />

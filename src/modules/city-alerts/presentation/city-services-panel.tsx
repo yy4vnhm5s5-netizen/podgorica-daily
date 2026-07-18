@@ -1,7 +1,7 @@
 "use client";
 
 import { Droplets, Zap } from "lucide-react";
-import { useId, useState } from "react";
+import { useId, useState, type KeyboardEvent } from "react";
 
 import { StatusBadge } from "@/shared/components/status-badge";
 import { Card, CardContent } from "@/shared/components/ui/card";
@@ -37,6 +37,7 @@ interface CityServicesPanelProps {
 }
 
 const serviceIcons = { power: Zap, water: Droplets };
+const serviceIds: readonly CityServiceId[] = ["power", "water"];
 
 function CityServicesPanel({ services, translations }: CityServicesPanelProps) {
   const [selectedService, setSelectedService] = useState<CityServiceId>("power");
@@ -45,14 +46,45 @@ function CityServicesPanel({ services, translations }: CityServicesPanelProps) {
   const Icon = serviceIcons[selectedService];
   const labels = { power: translations.power, water: translations.water };
 
+  function selectService(serviceId: CityServiceId) {
+    setSelectedService(serviceId);
+    document.getElementById(`${panelId}-${serviceId}`)?.focus();
+  }
+
+  function handleTabKeyDown(event: KeyboardEvent<HTMLButtonElement>, serviceId: CityServiceId) {
+    const index = serviceIds.indexOf(serviceId);
+    const nextService = serviceIds[(index + 1) % serviceIds.length];
+    const previousService = serviceIds[(index - 1 + serviceIds.length) % serviceIds.length];
+
+    if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+      event.preventDefault();
+      selectService(nextService);
+    }
+
+    if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+      event.preventDefault();
+      selectService(previousService);
+    }
+
+    if (event.key === "Home") {
+      event.preventDefault();
+      selectService(serviceIds[0]);
+    }
+
+    if (event.key === "End") {
+      event.preventDefault();
+      selectService(serviceIds[serviceIds.length - 1]);
+    }
+  }
+
   return (
-    <Card className="border-blue-200/80 bg-blue-50/60 shadow-none">
+    <Card className="border-slate-200/80 bg-slate-50/70 shadow-none">
       <div
         aria-label={translations.label}
-        className="flex gap-1 border-b border-blue-200/70 p-2"
+        className="flex gap-1 border-b border-slate-200/80 p-2"
         role="tablist"
       >
-        {(Object.keys(labels) as CityServiceId[]).map((serviceId) => {
+        {serviceIds.map((serviceId) => {
           const TabIcon = serviceIcons[serviceId];
           const isSelected = selectedService === serviceId;
 
@@ -63,16 +95,21 @@ function CityServicesPanel({ services, translations }: CityServicesPanelProps) {
               className={cn(
                 "flex min-h-10 flex-1 items-center justify-center gap-2 rounded-lg px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                 isSelected
-                  ? "bg-background text-foreground shadow-sm"
+                  ? "border border-slate-200 bg-background text-foreground shadow-sm"
                   : "text-muted-foreground hover:bg-background/60 hover:text-foreground",
               )}
               id={`${panelId}-${serviceId}`}
               key={serviceId}
               onClick={() => setSelectedService(serviceId)}
+              onKeyDown={(event) => handleTabKeyDown(event, serviceId)}
               role="tab"
               type="button"
             >
-              <TabIcon aria-hidden="true" className="size-4" strokeWidth={1.8} />
+              <TabIcon
+                aria-hidden="true"
+                className={cn("size-4", serviceId === "power" ? "text-amber-600" : "text-blue-600")}
+                strokeWidth={1.8}
+              />
               {labels[serviceId]}
             </button>
           );
@@ -85,7 +122,12 @@ function CityServicesPanel({ services, translations }: CityServicesPanelProps) {
         role="tabpanel"
       >
         <div className="flex items-start gap-3">
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-800">
+          <div
+            className={cn(
+              "flex size-9 shrink-0 items-center justify-center rounded-xl",
+              selectedService === "power" ? "bg-amber-100 text-amber-800" : "bg-blue-100 text-blue-800",
+            )}
+          >
             <Icon aria-hidden="true" className="size-[1.125rem]" strokeWidth={1.8} />
           </div>
           <div className="min-w-0 flex-1">
