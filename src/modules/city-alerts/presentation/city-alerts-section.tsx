@@ -47,22 +47,22 @@ const alertIcons: Record<AlertType, LucideIcon> = {
 
 const severityStyles: Record<AlertSeverity, { card: string; icon: string; tone: StatusTone }> = {
   critical: {
-    card: "border-red-300/80 dark:border-red-900",
+    card: "border-red-300/80 bg-red-50/50 dark:border-red-900",
     icon: "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-100",
     tone: "error",
   },
   information: {
-    card: "border-blue-200/80 dark:border-blue-900",
+    card: "border-blue-200/80 bg-blue-50/50 dark:border-blue-900",
     icon: "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-100",
     tone: "info",
   },
   resolved: {
-    card: "border-border",
+    card: "border-border bg-slate-50/50",
     icon: "bg-muted text-muted-foreground",
     tone: "success",
   },
   warning: {
-    card: "border-amber-300/80 dark:border-amber-900",
+    card: "border-amber-300/80 bg-amber-50/50 dark:border-amber-900",
     icon: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-100",
     tone: "warning",
   },

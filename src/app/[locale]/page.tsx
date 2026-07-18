@@ -54,11 +54,7 @@ async function DashboardPage({ locale }: { locale: Locale }) {
               <CityAlertsSection locale={locale} />
             </Suspense>
           ) : null}
-          <AdvertisingCard
-            label={advertising.label}
-            subtitle={advertising.subtitle}
-            title={advertising.title}
-          />
+          <AdvertisingCard subtitle={advertising.subtitle} title={advertising.title} />
           <GlobalSearch label={translations.shell.globalSearchComingSoon} />
         </div>
         <div className="grid items-start gap-5 sm:grid-cols-2 xl:grid-cols-3">
@@ -68,7 +64,7 @@ async function DashboardPage({ locale }: { locale: Locale }) {
             </Suspense>
           ) : null}
           <DashboardCard
-            accent="info"
+            accent="warning"
             description={cards.eventsDescription}
             icon={CalendarDays}
             title={cards.events}
@@ -79,6 +75,7 @@ async function DashboardPage({ locale }: { locale: Locale }) {
             title={cards.importantNumbers}
           />
           <DashboardCard
+            accent="success"
             description={cards.explorePodgoricaDescription}
             icon={Landmark}
             title={cards.explorePodgorica}

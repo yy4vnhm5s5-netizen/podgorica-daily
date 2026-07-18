@@ -20,17 +20,32 @@ function DailySummaryBar({ locale, result }: DailySummaryBarProps) {
 
   if (result.status !== "success") {
     return (
-      <Card className="border-blue-200/80 bg-blue-50/70 px-4 py-3 text-sm text-muted-foreground">
-        {translations.unavailable}
-      </Card>
+      <section aria-labelledby="daily-summary-heading">
+        <h1
+          className="mb-2 text-sm font-semibold tracking-tight text-foreground sm:text-base"
+          id="daily-summary-heading"
+        >
+          {translations.summaryLabel}
+        </h1>
+        <Card className="border-blue-200/90 bg-blue-50/60 px-4 py-3 text-sm text-muted-foreground">
+          {translations.unavailable}
+        </Card>
+      </section>
     );
   }
 
   const { airQualityCategory, eventsToday, generatedAt, temperatureCelsius } = result.data;
 
   return (
-    <section aria-label={translations.summaryLabel}>
-      <Card className="border-blue-200/80 bg-blue-50/70 px-3 py-2 shadow-none sm:px-4">
+    <section aria-labelledby="daily-summary-heading">
+      <h1
+        className="mb-2 text-sm font-semibold tracking-tight text-foreground sm:text-base"
+        id="daily-summary-heading"
+      >
+        {translations.summaryLabel}
+      </h1>
+      <Card className="relative overflow-hidden border-blue-200/90 bg-blue-50/60 px-3 py-2 sm:px-4">
+        <span aria-hidden="true" className="absolute inset-x-0 top-0 h-px bg-blue-300/80" />
         <dl className="grid grid-cols-2 divide-x divide-y divide-blue-200/70 sm:grid-cols-4 sm:divide-y-0">
           <SummaryItem icon={CloudSun} label={translations.temperature}>
             {temperatureCelsius === undefined ? "—" : `${temperatureCelsius.toFixed(0)}°C`}

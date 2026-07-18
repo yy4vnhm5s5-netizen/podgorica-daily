@@ -3,7 +3,7 @@ import type { LucideIcon } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { cn } from "@/shared/lib/utils";
 
-type DashboardCardAccent = "info" | "neutral" | "warning";
+type DashboardCardAccent = "info" | "neutral" | "success" | "warning";
 
 interface DashboardCardProps {
   accent?: DashboardCardAccent;
@@ -14,16 +14,20 @@ interface DashboardCardProps {
 
 const accentClasses: Record<DashboardCardAccent, { card: string; icon: string }> = {
   info: {
-    card: "border-blue-200/80 bg-blue-50/70 hover:border-blue-300",
-    icon: "bg-blue-100 text-blue-800",
+    card: "border-blue-200/80 bg-blue-50/60 hover:border-blue-300",
+    icon: "bg-blue-100/80 text-blue-800",
   },
   neutral: {
-    card: "border-slate-200/80 bg-slate-50/80 hover:border-slate-300",
-    icon: "bg-slate-100 text-slate-700",
+    card: "border-slate-200/90 bg-slate-50/65 hover:border-slate-300",
+    icon: "bg-slate-100/80 text-slate-700",
+  },
+  success: {
+    card: "border-emerald-200/80 bg-emerald-50/60 hover:border-emerald-300",
+    icon: "bg-emerald-100/80 text-emerald-800",
   },
   warning: {
-    card: "border-amber-200/80 bg-amber-50/80 hover:border-amber-300",
-    icon: "bg-amber-100 text-amber-800",
+    card: "border-amber-200/80 bg-amber-50/60 hover:border-amber-300",
+    icon: "bg-amber-100/80 text-amber-800",
   },
 };
 

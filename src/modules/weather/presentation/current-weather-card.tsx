@@ -41,7 +41,7 @@ const weatherIcons: Record<WeatherConditionIcon, LucideIcon> = {
 
 function WeatherCardFrame({ children }: Readonly<PropsWithChildren>) {
   return (
-    <Card className="overflow-hidden border-sky-200/80 bg-sky-50/80 transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-[0_12px_24px_-20px_rgb(15_23_42_/_0.32)]">
+    <Card className="overflow-hidden border-sky-200/80 bg-sky-50/60 transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-[0_12px_24px_-20px_rgb(15_23_42_/_0.32)]">
       {children}
     </Card>
   );
@@ -143,7 +143,7 @@ async function CurrentWeatherCard({ airQualityCategory, locale }: CurrentWeather
           <WeatherGlyph condition={condition} />
         </div>
         {airQualityCategory ? (
-          <section className="flex items-center justify-between gap-4 rounded-lg border border-emerald-200/80 bg-emerald-50/70 px-3 py-2.5">
+          <section className="flex items-center justify-between gap-4 rounded-lg border border-emerald-200/80 bg-emerald-50/60 px-3 py-2.5">
             <h3 className="text-sm font-medium text-foreground">{translations.airQuality}</h3>
             <StatusBadge tone={airQualityTones[airQualityCategory]}>
               {translations.airQualityCategories[airQualityCategory]}
