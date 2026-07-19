@@ -62,7 +62,11 @@ function createEventRefreshObservability({
     ...quality.accepted,
     ...quality.acceptedWithWarnings,
   ]);
-  const rejected = [...normalizationRejections, ...qualityRejections, ...duplicateRejections];
+  const rejected: EventRefreshRejectedEvent[] = [
+    ...normalizationRejections,
+    ...qualityRejections,
+    ...duplicateRejections,
+  ];
 
   const metrics: EventRefreshPipelineMetrics = {
     acceptedCount: quality.finalEvents.length,
