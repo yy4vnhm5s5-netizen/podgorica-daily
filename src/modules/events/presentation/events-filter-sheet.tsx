@@ -61,6 +61,11 @@ function EventsFilterSheet({
             </Button>
           </div>
           <div className="flex-1 space-y-6 overflow-y-auto p-5">
+            <SearchField
+              label={translations.search}
+              placeholder={translations.searchPlaceholder}
+              value={filters.query}
+            />
             <FilterField label={translations.provider} name="source" value={filters.sourceId}>
               <option value="">{translations.all}</option>
               {sources.map((source) => (
@@ -77,6 +82,12 @@ function EventsFilterSheet({
                 </option>
               ))}
             </FilterField>
+            <FilterField label={translations.date} name="period" value={filters.datePreset}>
+              <option value="upcoming">{translations.quickFilters.upcoming}</option>
+              <option value="today">{translations.quickFilters.today}</option>
+              <option value="tomorrow">{translations.quickFilters.tomorrow}</option>
+              <option value="weekend">{translations.quickFilters.thisWeekend}</option>
+            </FilterField>
             <FilterField label={translations.sort} name="sort" value={filters.sort}>
               {Object.entries(translations.sortOptions).map(([value, label]) => (
                 <option key={value} value={value}>
@@ -84,10 +95,6 @@ function EventsFilterSheet({
                 </option>
               ))}
             </FilterField>
-            {filters.query ? <input name="query" type="hidden" value={filters.query} /> : null}
-            {filters.datePreset !== "upcoming" ? (
-              <input name="period" type="hidden" value={filters.datePreset} />
-            ) : null}
           </div>
           <div className="grid grid-cols-2 gap-3 border-t p-5">
             <a
@@ -101,6 +108,30 @@ function EventsFilterSheet({
         </form>
       </dialog>
     </>
+  );
+}
+
+function SearchField({
+  label,
+  placeholder,
+  value,
+}: {
+  label: string;
+  placeholder: string;
+  value?: string;
+}) {
+  return (
+    <label className="grid gap-2 text-sm font-medium" htmlFor="events-filter-query">
+      {label}
+      <input
+        className="border-input h-11 rounded-md border bg-background px-3 text-base outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary"
+        defaultValue={value ?? ""}
+        id="events-filter-query"
+        name="query"
+        placeholder={placeholder}
+        type="search"
+      />
+    </label>
   );
 }
 

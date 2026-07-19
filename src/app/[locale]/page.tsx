@@ -21,7 +21,6 @@ import { CinemaPlaceholderCard } from "@/shared/components/dashboard/cinema-plac
 import { getEmergencyNumbers } from "@/shared/components/dashboard/emergency-numbers";
 import { EmergencyNumbersStrip } from "@/shared/components/dashboard/emergency-numbers-strip";
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
-import { GlobalSearch } from "@/shared/components/layout/global-search";
 import { isLocale, type Locale } from "@/shared/config/locale";
 import { isFeatureEnabled } from "@/shared/config/features";
 import { getTranslations } from "@/shared/lib/translations";
@@ -65,7 +64,6 @@ async function DashboardPage({ locale }: { locale: Locale }) {
             </Suspense>
           ) : null}
           <AdvertisingCard subtitle={advertising.subtitle} title={advertising.title} />
-          <GlobalSearch label={translations.shell.globalSearchComingSoon} />
         </div>
         <div className="grid items-start gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {weather ? (

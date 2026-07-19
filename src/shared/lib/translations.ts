@@ -29,7 +29,6 @@ const translations = {
       title: "Podgorica Daily",
     },
     shell: {
-      globalSearchComingSoon: "Global search coming soon",
       languageNames: {
         en: "English",
         me: "Montenegrin",
@@ -39,7 +38,6 @@ const translations = {
       navigation: {
         dashboard: "Dashboard",
         events: "Events",
-        search: "Search",
       },
       primaryNavigationLabel: "Primary navigation",
       skipToContent: "Skip to content",
@@ -74,7 +72,6 @@ const translations = {
       title: "Podgorica Daily",
     },
     shell: {
-      globalSearchComingSoon: "Globalna pretraga uskoro će biti dostupna",
       languageNames: {
         en: "Engleski",
         me: "Crnogorski",
@@ -84,7 +81,6 @@ const translations = {
       navigation: {
         dashboard: "Pregled",
         events: "Događaji",
-        search: "Pretraga",
       },
       primaryNavigationLabel: "Glavna navigacija",
       skipToContent: "Preskoči na sadržaj",

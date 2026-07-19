@@ -1,5 +1,3 @@
-import { Search } from "lucide-react";
-
 import type { CityEvent } from "../domain/event.ts";
 import { EventCard } from "./event-card";
 import { EventsFilterSheet } from "./events-filter-sheet";
@@ -33,53 +31,17 @@ function EventsList({ allEvents, events, filters, locale, timezone }: EventsList
 
   return (
     <section aria-labelledby="events-list-title" className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground" id="events-list-title">
           {eventsCount(events.length)}
         </p>
-        <div className="flex items-center gap-2">
-          <form
-            action={`/${locale}/events`}
-            className="relative flex-1 sm:w-72"
-            method="get"
-            role="search"
-          >
-            <label className="sr-only" htmlFor="events-search">
-              {translations.search}
-            </label>
-            <Search
-              aria-hidden="true"
-              className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-            />
-            <input
-              className="border-input h-11 w-full rounded-md border bg-background py-2 pl-9 pr-3 text-base outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary"
-              defaultValue={filters.query}
-              id="events-search"
-              name="query"
-              placeholder={translations.searchPlaceholder}
-              type="search"
-            />
-            {filters.datePreset !== "upcoming" ? (
-              <input name="period" type="hidden" value={filters.datePreset} />
-            ) : null}
-            {filters.sourceId ? (
-              <input name="source" type="hidden" value={filters.sourceId} />
-            ) : null}
-            {filters.category ? (
-              <input name="category" type="hidden" value={filters.category} />
-            ) : null}
-            {filters.sort !== "soonest" ? (
-              <input name="sort" type="hidden" value={filters.sort} />
-            ) : null}
-          </form>
-          <EventsFilterSheet
-            categories={categories}
-            filters={filters}
-            locale={locale}
-            sources={sources}
-            translations={filterTranslations}
-          />
-        </div>
+        <EventsFilterSheet
+          categories={categories}
+          filters={filters}
+          locale={locale}
+          sources={sources}
+          translations={filterTranslations}
+        />
       </div>
       <QuickFilters filters={filters} locale={locale} />
       {groups.length > 0 ? (
