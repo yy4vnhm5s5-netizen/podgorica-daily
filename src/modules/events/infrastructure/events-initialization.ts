@@ -1,4 +1,5 @@
 import { ensureCacheDirectory } from "../../../shared/lib/cache.ts";
+import { emitInfoMessage } from "./event-refresh-logger.ts";
 import type { EventRefreshSummary } from "./events-refresh-runner.ts";
 
 type EventProviderId = "cnp" | "glavni-grad-podgorica" | "kic" | "tourism-podgorica";
@@ -29,7 +30,7 @@ interface InitializeEventCachesDependencies {
 
 async function initializeEventCaches({
   ensureDirectory = ensureCacheDirectory,
-  log = console.info,
+  log = emitInfoMessage,
   providers,
   refresh,
 }: InitializeEventCachesDependencies): Promise<EventInitializationSummary> {

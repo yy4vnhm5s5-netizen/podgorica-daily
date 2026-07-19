@@ -2,6 +2,7 @@ import { classifyEventMatch } from "../domain/event-deduplication.ts";
 import type { EventNormalizationResult } from "../domain/event-normalization.ts";
 import type { EventQualityPipelineResult } from "../domain/event-quality.ts";
 import type { CityEvent, EventCandidate } from "../domain/event.ts";
+import { emitInfo } from "./event-refresh-logger.ts";
 
 type EventRefreshRejectionReason =
   | "duplicate"
@@ -80,23 +81,19 @@ function createEventRefreshObservability({
 
 function logEventRefreshObservability(input: EventRefreshObservabilityInput) {
   const diagnostics = createEventRefreshObservability(input);
-  console.info(
-    JSON.stringify({
-      event: "events-refresh-pipeline",
-      provider: diagnostics.provider,
-      ...diagnostics.metrics,
-    }),
-  );
+  emitInfo({
+    event: "events-refresh-pipeline",
+    provider: diagnostics.provider,
+    ...diagnostics.metrics,
+  });
   for (const rejected of diagnostics.rejected) {
-    console.info(
-      JSON.stringify({
-        event: "events-refresh-rejected-event",
-        eventId: rejected.eventId,
-        provider: diagnostics.provider,
-        reasons: rejected.reasons,
-        sourceUrl: rejected.sourceUrl,
-      }),
-    );
+    emitInfo({
+      event: "events-refresh-rejected-event",
+      ...(rejected.eventId ? { eventId: rejected.eventId } : {}),
+      provider: diagnostics.provider,
+      reasons: rejected.reasons,
+      sourceUrl: rejected.sourceUrl,
+    });
   }
   return diagnostics;
 }

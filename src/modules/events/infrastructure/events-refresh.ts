@@ -1,6 +1,7 @@
 import { getDefaultCityContext } from "../../../config/city-context.ts";
 import { env } from "../../../config/env.ts";
 import { createCnpHttpClient } from "./cnp-http-client.ts";
+import { emitError, emitInfo } from "./event-refresh-logger.ts";
 import { refreshCnpEvents } from "./cnp-refresh.ts";
 import { readEventCacheSnapshot } from "./events-cache.ts";
 import {
@@ -74,12 +75,10 @@ async function refreshAllEvents(): Promise<EventRefreshSummary> {
       },
     },
   ];
-  console.info(
-    JSON.stringify({
-      event: "events-refresh-started",
-      providers: providers.map(({ id }) => id),
-    }),
-  );
+  emitInfo({
+    event: "events-refresh-started",
+    providers: providers.map(({ id }) => id),
+  });
   const summary = await runEventRefresh({ cacheDirectory: env.EVENT_CACHE_DIR, providers });
   logEventRefreshSummary(summary);
   return summary;
@@ -87,45 +86,39 @@ async function refreshAllEvents(): Promise<EventRefreshSummary> {
 
 function logEventRefreshSummary(summary: EventRefreshSummary) {
   for (const provider of summary.providers) {
-    console.info(
-      JSON.stringify({
-        acceptedCount: provider.acceptedCount,
-        cacheOutcome: provider.retainedPreviousSnapshot
-          ? "retained"
-          : provider.state === "success"
-            ? "written"
-            : "unavailable",
-        durationMs: provider.durationMs,
-        event: "events-refresh-provider-completed",
-        provider: provider.id,
-        state: provider.state,
-      }),
-    );
+    emitInfo({
+      acceptedCount: provider.acceptedCount,
+      cacheOutcome: provider.retainedPreviousSnapshot
+        ? "retained"
+        : provider.state === "success"
+          ? "written"
+          : "unavailable",
+      durationMs: provider.durationMs,
+      event: "events-refresh-provider-completed",
+      provider: provider.id,
+      state: provider.state,
+    });
   }
-  console.info(
-    JSON.stringify({
-      completedAt: summary.completedAt,
-      event: "events-refresh-completed",
-      providerCount: summary.providers.length,
-      startedAt: summary.startedAt,
-      state: summary.state,
-    }),
-  );
+  emitInfo({
+    completedAt: summary.completedAt,
+    event: "events-refresh-completed",
+    providerCount: summary.providers.length,
+    startedAt: summary.startedAt,
+    state: summary.state,
+  });
 }
 
 function logKicRefreshFailure(error: unknown) {
   const exception = error instanceof Error ? error : new Error(String(error));
-  console.error(
-    JSON.stringify({
-      error: {
-        message: exception.message,
-        name: exception.name,
-        stack: exception.stack ?? `${exception.name}: ${exception.message}`,
-      },
-      event: "events-refresh-provider-failed",
-      provider: "kic",
-    }),
-  );
+  emitError({
+    error: {
+      message: exception.message,
+      name: exception.name,
+      stack: exception.stack ?? `${exception.name}: ${exception.message}`,
+    },
+    event: "events-refresh-provider-failed",
+    provider: "kic",
+  });
 }
 
 export { refreshAllEvents, type EventRefreshSummary };

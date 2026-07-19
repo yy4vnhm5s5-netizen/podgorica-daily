@@ -3,7 +3,10 @@ import test from "node:test";
 
 import { runEventQualityPipeline } from "../domain/event-quality.ts";
 import { isIsoDate, type CityEvent, type EventCandidate } from "../domain/event.ts";
-import { createEventRefreshObservability } from "./event-refresh-observability.ts";
+import {
+  createEventRefreshObservability,
+  logEventRefreshObservability,
+} from "./event-refresh-observability.ts";
 
 const now = new Date("2026-07-19T12:00:00.000Z");
 const sourceUrl = "https://example.test/event";
@@ -82,4 +85,40 @@ test("reports pipeline counts and a deterministic reason for every rejected even
 test("recognizes invalid calendar dates before they enter the quality pipeline", () => {
   assert.equal(isIsoDate("2026-02-28"), true);
   assert.equal(isIsoDate("2026-02-30"), false);
+});
+
+test("logs pipeline diagnostics as one parseable JSON string per event", () => {
+  const calls: unknown[][] = [];
+  const originalInfo = console.info;
+  console.info = (...arguments_: unknown[]) => calls.push(arguments_);
+
+  try {
+    logEventRefreshObservability({
+      candidates: [candidate(sourceUrl)],
+      fetchedCount: 1,
+      normalized: [
+        { event: null, parserWarnings: ["Missing event title."], rejectionReasons: ["missing-title"] },
+      ],
+      parsedCount: 1,
+      provider: "test-provider",
+      quality: runEventQualityPipeline({
+        candidatesDiscovered: 1,
+        events: [],
+        now,
+        validCityIds: ["podgorica"],
+      }),
+    });
+  } finally {
+    console.info = originalInfo;
+  }
+
+  assert.equal(calls.length, 2);
+  for (const call of calls) {
+    assert.equal(call.length, 1);
+    assert.equal(typeof call[0], "string");
+    assert.ok((call[0] as string).trim());
+    assert.ok(JSON.parse(call[0] as string).event);
+  }
+  assert.equal(JSON.parse(calls[0][0] as string).event, "events-refresh-pipeline");
+  assert.equal(JSON.parse(calls[1][0] as string).event, "events-refresh-rejected-event");
 });

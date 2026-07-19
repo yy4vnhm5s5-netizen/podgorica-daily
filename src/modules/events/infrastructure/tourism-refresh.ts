@@ -2,6 +2,7 @@ import { getEventQualityPolicy } from "../../../config/event-quality.ts";
 import { normalizeEventCandidate } from "../domain/event-normalization.ts";
 import { runEventQualityPipeline } from "../domain/event-quality.ts";
 import { writeEventCache, type EventCacheSnapshot } from "./events-cache.ts";
+import { emitInfo } from "./event-refresh-logger.ts";
 import { logEventRefreshObservability } from "./event-refresh-observability.ts";
 import type { TourismHttpClient } from "./tourism-http-client.ts";
 import {
@@ -42,14 +43,12 @@ async function refreshTourismEvents({
           detailFetchCount++;
           return parseTourismEventArticle(await httpClient.get(url), url);
         } catch {
-          console.info(
-            JSON.stringify({
-              event: "events-refresh-rejected-event",
-              provider: "tourism-podgorica",
-              reasons: ["other"],
-              sourceUrl: url,
-            }),
-          );
+          emitInfo({
+            event: "events-refresh-rejected-event",
+            provider: "tourism-podgorica",
+            reasons: ["other"],
+            sourceUrl: url,
+          });
           return null;
         }
       }),
