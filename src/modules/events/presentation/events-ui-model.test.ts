@@ -13,6 +13,7 @@ import {
 import {
   filterEventsForUi,
   groupEventsByDay,
+  isHomepageEventsUnavailable,
   parseEventsUiFilters,
   selectHomepageEvents,
 } from "./events-ui-model.ts";
@@ -179,6 +180,15 @@ test("continues with tomorrow and later dates when no event remains today", () =
       (event) => event.id,
     ),
     ["tomorrow", "next-date"],
+  );
+});
+
+test("treats an empty event list as unavailable only when every provider is unavailable", () => {
+  assert.equal(isHomepageEventsUnavailable([]), false);
+  assert.equal(isHomepageEventsUnavailable([{ state: "fresh" }]), false);
+  assert.equal(
+    isHomepageEventsUnavailable([{ state: "unavailable" }, { state: "unavailable" }]),
+    true,
   );
 });
 

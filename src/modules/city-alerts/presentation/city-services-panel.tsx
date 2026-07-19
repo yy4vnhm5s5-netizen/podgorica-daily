@@ -177,7 +177,7 @@ function CityServicesPanel({ services, translations }: CityServicesPanelProps) {
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t pt-3 text-xs text-muted-foreground">
                     {service.sourceUrl ? (
                       <a
-                        className="font-medium text-primary underline-offset-4 hover:underline"
+                        className="font-medium text-primary underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                         href={service.sourceUrl}
                       >
                         {translations.officialSource}

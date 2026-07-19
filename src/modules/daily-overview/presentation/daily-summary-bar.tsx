@@ -3,6 +3,7 @@ import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
 import type { DailyOverviewResult } from "@/modules/daily-overview/application/get-daily-overview";
+import { getDailyEventsSummary } from "@/modules/daily-overview/presentation/daily-summary-events";
 import { getDailyOverviewTranslations } from "@/modules/daily-overview/presentation/daily-overview-translations";
 import type { CurrentWeatherResult } from "@/modules/weather/application/get-current-weather";
 import { getWeatherTemperature } from "@/modules/weather/presentation/weather-temperature";
@@ -39,6 +40,7 @@ function DailySummaryBar({ locale, result, weather }: DailySummaryBarProps) {
   }
 
   const { airQualityCategory, eventsToday, generatedAt } = result.data;
+  const eventsSummary = getDailyEventsSummary(eventsToday);
   const temperatureCelsius = getWeatherTemperature(weather);
 
   return (
@@ -73,12 +75,10 @@ function DailySummaryBar({ locale, result, weather }: DailySummaryBarProps) {
             )}
           </SummaryItem>
           <SummaryItem icon={CalendarDays} label={translations.eventsLabel}>
-            {eventsToday === 0 ? (
-              translations.noEvents
-            ) : eventsToday === undefined ? (
+            {eventsSummary.status === "unavailable" ? (
               translations.unavailable
             ) : (
-              <span className="tabular-nums">{eventsToday}</span>
+              <span className="tabular-nums">{eventsSummary.count}</span>
             )}
           </SummaryItem>
           <SummaryItem icon={Clock3} label={translations.lastUpdated}>

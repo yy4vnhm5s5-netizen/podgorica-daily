@@ -6,7 +6,10 @@ import { getDailyOverview } from "@/modules/daily-overview/application/get-daily
 import { DailySummaryBar } from "@/modules/daily-overview/presentation/daily-summary-bar";
 import { getCityEvents } from "@/modules/events/application/get-city-events";
 import { HomepageEventsCard } from "@/modules/events/presentation/homepage-events-card";
-import { selectHomepageEvents } from "@/modules/events/presentation/events-ui-model";
+import {
+  isHomepageEventsUnavailable,
+  selectHomepageEvents,
+} from "@/modules/events/presentation/events-ui-model";
 import { BusStationCard } from "@/modules/transport/presentation/bus-station-card";
 import { getCurrentWeather } from "@/modules/weather/application/get-current-weather";
 import {
@@ -66,6 +69,7 @@ async function DashboardPage({ locale }: { locale: Locale }) {
           {isFeatureEnabled("busStation") ? <BusStationCard city={context.city} locale={locale} /> : null}
           <HomepageEventsCard
             events={selectHomepageEvents(events.events, context)}
+            isUnavailable={isHomepageEventsUnavailable(events.providers)}
             locale={locale}
           />
           <CinemaPlaceholderCard

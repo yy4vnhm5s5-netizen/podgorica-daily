@@ -14,14 +14,15 @@ import { formatDateTime } from "@/shared/lib/date";
 
 interface HomepageEventsCardProps {
   events: readonly CityEvent[];
+  isUnavailable: boolean;
   locale: Locale;
 }
 
-function HomepageEventsCard({ events, locale }: HomepageEventsCardProps) {
+function HomepageEventsCard({ events, isUnavailable, locale }: HomepageEventsCardProps) {
   const translations = getEventsTranslations(locale);
 
   return (
-    <Card className="border-amber-200/80 bg-amber-50/60 shadow-sm shadow-slate-950/[0.03]">
+    <Card className="card-fog card-fog--warning border-amber-200/80 bg-amber-50/60 transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-[0_12px_24px_-20px_rgb(15_23_42_/_0.32)]">
       <CardHeader className="flex-row items-center gap-3 space-y-0 p-4 sm:p-5">
         <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-amber-100/80 text-amber-800">
           <CalendarDays aria-hidden="true" className="size-[1.125rem]" strokeWidth={1.8} />
@@ -64,6 +65,8 @@ function HomepageEventsCard({ events, locale }: HomepageEventsCardProps) {
               </li>
             ))}
           </ul>
+        ) : isUnavailable ? (
+          <p className="text-sm leading-6 text-muted-foreground">{translations.homepageUnavailable}</p>
         ) : (
           <p className="text-sm leading-6 text-muted-foreground">{translations.homepageEmpty}</p>
         )}

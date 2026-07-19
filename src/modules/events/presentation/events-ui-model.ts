@@ -1,3 +1,4 @@
+import type { EventProviderReadState } from "../application/get-city-events.ts";
 import type { CityEvent } from "../domain/event.ts";
 import { queryEvents, type EventSort } from "../application/query-events.ts";
 import {
@@ -104,6 +105,10 @@ function selectHomepageEvents(events: readonly CityEvent[], context: CityContext
     .slice(0, 3);
 }
 
+function isHomepageEventsUnavailable(providers: readonly Pick<EventProviderReadState, "state">[]) {
+  return providers.length > 0 && providers.every((provider) => provider.state === "unavailable");
+}
+
 function isCurrentOrFutureEvent(event: CityEvent, now: Date, timeZone: string) {
   if (event.startsAt) {
     const startsAt = new Date(event.startsAt);
@@ -146,6 +151,7 @@ function isEventSort(value: unknown): value is EventSort {
 export {
   filterEventsForUi,
   groupEventsByDay,
+  isHomepageEventsUnavailable,
   parseEventsUiFilters,
   selectHomepageEvents,
   type EventDatePreset,
