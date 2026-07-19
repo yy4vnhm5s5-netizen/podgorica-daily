@@ -1,6 +1,7 @@
 import { normalizeEventCandidate } from "../domain/event-normalization.ts";
 import { runEventQualityPipeline } from "../domain/event-quality.ts";
 import { getEventQualityPolicy } from "../../../config/event-quality.ts";
+import { logEventRefreshObservability } from "./event-refresh-observability.ts";
 import type { EventCacheSnapshot } from "./events-cache.ts";
 import { writeEventCache } from "./events-cache.ts";
 import type { KicHttpClient } from "./kic-http-client.ts";
@@ -29,6 +30,7 @@ async function refreshKicEvents({
     urls.map(async (url) => ({ url, html: await httpClient.get(url) })),
   );
   const parsed = articles.map(({ html, url }) => parseKicEventArticle(html, url));
+  const candidates = parsed.map(({ candidate }) => candidate);
   const normalized = parsed.map(({ candidate }) =>
     normalizeEventCandidate(candidate, context, now()),
   );
@@ -40,6 +42,14 @@ async function refreshKicEvents({
     policy: getEventQualityPolicy(),
     previousSuccessfulEventCount: previousSnapshot?.events.length,
     validCityIds: [context.city.id],
+  });
+  logEventRefreshObservability({
+    candidates,
+    fetchedCount: urls.length,
+    normalized,
+    parsedCount: parsed.length,
+    provider: "kic",
+    quality,
   });
   if (quality.diagnostics.finalEventCount === 0 && previousSnapshot?.events.length) {
     return {

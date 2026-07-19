@@ -10,16 +10,28 @@ import {
 } from "./event.ts";
 import type { CityContext } from "@/shared/types/city";
 
+type EventNormalizationRejectionReason = "invalid-date" | "missing-date" | "missing-title";
+
+interface EventNormalizationResult {
+  event: CityEvent | null;
+  parserWarnings: string[];
+  rejectionReasons: EventNormalizationRejectionReason[];
+}
+
 function normalizeEventCandidate(
   candidate: EventCandidate,
   context: CityContext,
   now = new Date(),
-) {
+): EventNormalizationResult {
   const warnings = [...candidate.parserWarnings];
   const title = normalizeText(candidate.rawTitle);
 
   if (!title) {
-    return { event: null, parserWarnings: [...warnings, "Missing event title."] };
+    return {
+      event: null,
+      parserWarnings: [...warnings, "Missing event title."],
+      rejectionReasons: ["missing-title"],
+    };
   }
 
   const startsAt = isIsoTimestamp(candidate.startsAt) ? candidate.startsAt : undefined;
@@ -34,6 +46,9 @@ function normalizeEventCandidate(
     return {
       event: null,
       parserWarnings: [...warnings, "Missing a confidently parsed event date."],
+      rejectionReasons: [
+        candidate.startsAt || candidate.startDate ? "invalid-date" : "missing-date",
+      ],
     };
   }
 
@@ -79,7 +94,7 @@ function normalizeEventCandidate(
     venueName: candidate.rawVenue?.trim() || undefined,
   };
 
-  return { event, parserWarnings: warnings };
+  return { event, parserWarnings: warnings, rejectionReasons: [] };
 }
 
 function createEventId(input: {
@@ -114,4 +129,11 @@ function normalizeText(value: string) {
     .replace(/\s+/g, " ");
 }
 
-export { createEventId, createEventSlug, normalizeEventCandidate, normalizeText };
+export {
+  createEventId,
+  createEventSlug,
+  normalizeEventCandidate,
+  normalizeText,
+  type EventNormalizationRejectionReason,
+  type EventNormalizationResult,
+};

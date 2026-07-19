@@ -1,0 +1,85 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+
+import { runEventQualityPipeline } from "../domain/event-quality.ts";
+import { isIsoDate, type CityEvent, type EventCandidate } from "../domain/event.ts";
+import { createEventRefreshObservability } from "./event-refresh-observability.ts";
+
+const now = new Date("2026-07-19T12:00:00.000Z");
+const sourceUrl = "https://example.test/event";
+
+function event(overrides: Partial<CityEvent> = {}): CityEvent {
+  return {
+    category: "concert",
+    cityIds: ["podgorica"],
+    id: "event-one",
+    language: "me",
+    sourceId: "test-provider",
+    sourceName: "Test provider",
+    sourceReferences: [
+      { sourceId: "test-provider", sourceName: "Test provider", sourceUrl },
+    ],
+    sourceUrl,
+    startDate: "2026-07-20",
+    status: "scheduled",
+    tags: [],
+    timezone: "Europe/Podgorica",
+    title: "Test event",
+    ...overrides,
+  };
+}
+
+function candidate(url: string): EventCandidate {
+  return {
+    parserWarnings: [],
+    rawTitle: "Test event",
+    source: { sourceId: "test-provider", sourceName: "Test provider", sourceUrl: url },
+    timezone: "Europe/Podgorica",
+  };
+}
+
+test("reports pipeline counts and a deterministic reason for every rejected event", () => {
+  const valid = event();
+  const invalid = event({ id: "event-invalid", sourceUrl: "", title: "" });
+  const duplicate = event({ id: "event-duplicate" });
+  const quality = runEventQualityPipeline({
+    candidatesDiscovered: 4,
+    events: [valid, invalid, duplicate],
+    now,
+    validCityIds: ["podgorica"],
+  });
+  const result = createEventRefreshObservability({
+    candidates: [candidate(sourceUrl), candidate("https://example.test/missing-date")],
+    fetchedCount: 4,
+    normalized: [
+      { event: valid, parserWarnings: [], rejectionReasons: [] },
+      { event: null, parserWarnings: ["Missing event date."], rejectionReasons: ["missing-date"] },
+      { event: invalid, parserWarnings: [], rejectionReasons: [] },
+      { event: duplicate, parserWarnings: [], rejectionReasons: [] },
+    ],
+    parsedCount: 4,
+    provider: "test-provider",
+    quality,
+  });
+
+  assert.deepEqual(result.metrics, {
+    acceptedCount: 1,
+    fetchedCount: 4,
+    normalizedCount: 3,
+    parsedCount: 4,
+    rejectedCount: 3,
+  });
+  assert.deepEqual(
+    result.rejected.map(({ eventId, reasons }) => ({ eventId, reasons })),
+    [
+      { eventId: undefined, reasons: ["missing-date"] },
+      { eventId: "event-invalid", reasons: ["missing-title", "failed-quality-validation"] },
+      { eventId: "event-duplicate", reasons: ["duplicate"] },
+    ],
+  );
+});
+
+test("recognizes invalid calendar dates before they enter the quality pipeline", () => {
+  assert.equal(isIsoDate("2026-02-28"), true);
+  assert.equal(isIsoDate("2026-02-30"), false);
+});

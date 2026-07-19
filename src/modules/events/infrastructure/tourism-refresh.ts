@@ -2,6 +2,7 @@ import { getEventQualityPolicy } from "../../../config/event-quality.ts";
 import { normalizeEventCandidate } from "../domain/event-normalization.ts";
 import { runEventQualityPipeline } from "../domain/event-quality.ts";
 import { writeEventCache, type EventCacheSnapshot } from "./events-cache.ts";
+import { logEventRefreshObservability } from "./event-refresh-observability.ts";
 import type { TourismHttpClient } from "./tourism-http-client.ts";
 import {
   discoverTourismEventUrls,
@@ -41,6 +42,14 @@ async function refreshTourismEvents({
           detailFetchCount++;
           return parseTourismEventArticle(await httpClient.get(url), url);
         } catch {
+          console.info(
+            JSON.stringify({
+              event: "events-refresh-rejected-event",
+              provider: "tourism-podgorica",
+              reasons: ["other"],
+              sourceUrl: url,
+            }),
+          );
           return null;
         }
       }),
@@ -48,6 +57,7 @@ async function refreshTourismEvents({
     const normalized = parsed.flatMap((item) =>
       item ? [normalizeEventCandidate(item.candidate, context, now())] : [],
     );
+    const candidates = parsed.flatMap((item) => (item ? [item.candidate] : []));
     const quality = runEventQualityPipeline({
       candidatesDiscovered: urls.length,
       events: normalized.flatMap(({ event }) => (event ? [event] : [])),
@@ -55,6 +65,14 @@ async function refreshTourismEvents({
       policy: getEventQualityPolicy(),
       previousSuccessfulEventCount: previousSnapshot?.events.length,
       validCityIds: [context.city.id],
+    });
+    logEventRefreshObservability({
+      candidates,
+      fetchedCount: urls.length,
+      normalized,
+      parsedCount: parsed.filter(Boolean).length,
+      provider: "tourism-podgorica",
+      quality,
     });
     if (!quality.finalEvents.length && previousSnapshot?.events.length)
       return {

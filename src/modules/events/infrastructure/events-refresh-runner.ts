@@ -16,6 +16,7 @@ interface EventRefreshSummary {
 }
 
 interface EventRefreshProviderResult {
+  acceptedCount?: number;
   events?: unknown[];
   retainedPreviousSnapshot?: boolean;
   success?: boolean;
@@ -51,7 +52,8 @@ async function runEventRefresh({
         const retainedPreviousSnapshot = result.retainedPreviousSnapshot === true;
         const success = result.success ?? true;
         summaries.push({
-          acceptedCount: Array.isArray(result.events) ? result.events.length : 0,
+          acceptedCount:
+            result.acceptedCount ?? (Array.isArray(result.events) ? result.events.length : 0),
           durationMs: Date.now() - started,
           id: provider.id,
           retainedPreviousSnapshot,

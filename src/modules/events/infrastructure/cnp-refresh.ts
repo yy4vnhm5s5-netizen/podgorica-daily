@@ -2,6 +2,7 @@ import { getEventQualityPolicy } from "../../../config/event-quality.ts";
 import { normalizeEventCandidate } from "../domain/event-normalization.ts";
 import { runEventQualityPipeline, type EventQualityDiagnostics } from "../domain/event-quality.ts";
 import { CnpFetchError, type CnpHttpClient } from "./cnp-http-client.ts";
+import { logEventRefreshObservability } from "./event-refresh-observability.ts";
 import { writeEventCache, type EventCacheSnapshot } from "./events-cache.ts";
 import {
   cnpRepertoireUrl,
@@ -51,6 +52,7 @@ async function refreshCnpEvents({
     const parsed = await Promise.all(
       urls.map(async (url) => parseCnpEventArticle(await httpClient.get(url), url)),
     );
+    const candidates = parsed.map(({ candidate }) => candidate);
     const normalized = parsed.map(({ candidate }) =>
       normalizeEventCandidate(candidate, context, now()),
     );
@@ -61,6 +63,14 @@ async function refreshCnpEvents({
       policy: getEventQualityPolicy(),
       previousSuccessfulEventCount: previousSnapshot?.events.length,
       validCityIds: [context.city.id],
+    });
+    logEventRefreshObservability({
+      candidates,
+      fetchedCount: urls.length,
+      normalized,
+      parsedCount: parsed.length,
+      provider: "cnp",
+      quality,
     });
 
     if (quality.diagnostics.finalEventCount === 0 && previousSnapshot?.events.length) {

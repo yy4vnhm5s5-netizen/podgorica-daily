@@ -20,22 +20,34 @@ async function refreshAllEvents(): Promise<EventRefreshSummary> {
   const providers: EventRefreshProvider[] = [
     {
       id: "kic",
-      refresh: () =>
-        refreshKicEvents({
-          cachePath: env.KIC_EVENT_CACHE_PATH,
-          context,
-          httpClient: createKicHttpClient(),
-        }),
+      refresh: async () => {
+        try {
+          return await refreshKicEvents({
+            cachePath: env.KIC_EVENT_CACHE_PATH,
+            context,
+            httpClient: createKicHttpClient(),
+          });
+        } catch (error) {
+          logKicRefreshFailure(error);
+          throw error;
+        }
+      },
     },
     {
       id: "cnp",
-      refresh: async () =>
-        refreshCnpEvents({
+      refresh: async () => {
+        const result = await refreshCnpEvents({
           cachePath: env.CNP_EVENT_CACHE_PATH,
           context,
           httpClient: createCnpHttpClient(),
           previousSnapshot: await readEventCacheSnapshot(env.CNP_EVENT_CACHE_PATH),
-        }),
+        });
+        return {
+          acceptedCount: result.snapshot?.events.length ?? 0,
+          retainedPreviousSnapshot: result.retainedPreviousSnapshot,
+          success: result.success,
+        };
+      },
     },
     {
       id: "glavni-grad-podgorica",
@@ -48,12 +60,18 @@ async function refreshAllEvents(): Promise<EventRefreshSummary> {
     },
     {
       id: "tourism-podgorica",
-      refresh: () =>
-        refreshTourismEvents({
+      refresh: async () => {
+        const result = await refreshTourismEvents({
           cachePath: env.TOURISM_EVENT_CACHE_PATH,
           context,
           httpClient: createTourismHttpClient(),
-        }),
+        });
+        return {
+          acceptedCount: result.snapshot?.events.length ?? 0,
+          retainedPreviousSnapshot: result.retainedPreviousSnapshot,
+          success: result.success,
+        };
+      },
     },
   ];
   console.info(
@@ -91,6 +109,21 @@ function logEventRefreshSummary(summary: EventRefreshSummary) {
       providerCount: summary.providers.length,
       startedAt: summary.startedAt,
       state: summary.state,
+    }),
+  );
+}
+
+function logKicRefreshFailure(error: unknown) {
+  const exception = error instanceof Error ? error : new Error(String(error));
+  console.error(
+    JSON.stringify({
+      error: {
+        message: exception.message,
+        name: exception.name,
+        stack: exception.stack ?? `${exception.name}: ${exception.message}`,
+      },
+      event: "events-refresh-provider-failed",
+      provider: "kic",
     }),
   );
 }

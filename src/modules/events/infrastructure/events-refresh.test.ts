@@ -60,6 +60,19 @@ test("runs every provider in order and preserves accepted counts and retained ca
   });
 });
 
+test("uses an explicit accepted count for providers that return a cache snapshot wrapper", async () => {
+  await withCacheDirectory(async (cacheDirectory) => {
+    const summary = await runEventRefresh({
+      cacheDirectory,
+      providers: [
+        provider("snapshot-provider", async () => ({ acceptedCount: 3, events: [], success: true })),
+      ],
+    });
+
+    assert.equal(summary.providers[0].acceptedCount, 3);
+  });
+});
+
 test("classifies all-success and all-failure runs without leaking provider errors", async () => {
   await withCacheDirectory(async (cacheDirectory) => {
     const success = await runEventRefresh({

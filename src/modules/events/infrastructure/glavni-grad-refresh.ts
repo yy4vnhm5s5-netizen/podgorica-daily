@@ -2,6 +2,7 @@ import { getEventQualityPolicy } from "../../../config/event-quality.ts";
 import { normalizeEventCandidate } from "../domain/event-normalization.ts";
 import { runEventQualityPipeline } from "../domain/event-quality.ts";
 import { writeEventCache, type EventCacheSnapshot } from "./events-cache.ts";
+import { logEventRefreshObservability } from "./event-refresh-observability.ts";
 import type { GlavniGradHttpClient } from "./glavni-grad-http-client.ts";
 import {
   discoverGlavniGradEventUrls,
@@ -27,6 +28,7 @@ async function refreshGlavniGradEvents({
   const parsed = await Promise.all(
     urls.map(async (url) => parseGlavniGradEventArticle(await httpClient.get(url), url)),
   );
+  const candidates = parsed.map(({ candidate }) => candidate);
   const normalized = parsed.map(({ candidate }) =>
     normalizeEventCandidate(candidate, context, now()),
   );
@@ -36,6 +38,14 @@ async function refreshGlavniGradEvents({
     now: now(),
     policy: getEventQualityPolicy(),
     validCityIds: [context.city.id],
+  });
+  logEventRefreshObservability({
+    candidates,
+    fetchedCount: urls.length,
+    normalized,
+    parsedCount: parsed.length,
+    provider: "glavni-grad-podgorica",
+    quality,
   });
   const timestamp = now().toISOString();
   const snapshot: EventCacheSnapshot = {
