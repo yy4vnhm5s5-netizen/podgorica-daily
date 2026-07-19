@@ -27,7 +27,7 @@ const context = {
 const listingUrl = "https://podgorica.me/category/aktuelni-dogadjaji/";
 const eventUrl = "https://podgorica.me/koncert-u-parku/";
 const listing =
-  '<a href="/koncert-u-parku/">Koncert</a><a href="https://evil.example/no">Ignore</a>';
+  '<article><a href="/koncert-u-parku/">Koncert</a></article><a href="https://evil.example/no">Ignore</a>';
 const detail =
   '<meta property="og:image" content="https://podgorica.me/koncert.jpg"><h1>Koncert u parku</h1><article>Koncert će biti održan 20.07.2026. u 21 čas u parku Univerzitetskom. Ulaz je slobodan.</article>';
 
@@ -42,6 +42,44 @@ test("parses official Glavni Grad listing and event details deterministically", 
     parseGlavniGradEventArticle("<h1>Nepotpuno</h1>", eventUrl).candidate.parserWarnings,
     ["Glavni Grad article date was unavailable."],
   );
+});
+
+test("keeps a named Montenegrin event date through discovery, normalization, and cache refresh", async () => {
+  const disclosureUrl = "https://podgorica.me/film-dan-razotkrivanja-disclosure-day-2026/";
+  const navigation = Array.from(
+    { length: 24 },
+    (_, index) => `<a href="/navigation-${index}/">Navigation</a>`,
+  ).join("");
+  const disclosureListing = `${navigation}<article><a href="/film-dan-razotkrivanja-disclosure-day-2026/">Film</a></article>`;
+  const disclosureDetail = `<article><time datetime="2026-07-06T12:00:00+02:00">6. jul 2026.</time><h1>Film „Dan razotkrivanja/Disclosure Day” (2026)</h1><p>Projekcija će biti organizovana u utorak, 21. jula, u digitalizovanoj bioskopskoj sali KIC-a, u 20 sati.</p></article>`;
+  const requestedUrls: string[] = [];
+
+  assert.deepEqual(discoverGlavniGradEventUrls(disclosureListing), [disclosureUrl]);
+  const parsed = parseGlavniGradEventArticle(disclosureDetail, disclosureUrl);
+  assert.equal(parsed.candidate.startsAt, "2026-07-21T18:00:00.000Z");
+  assert.equal(parsed.candidate.startDate, undefined);
+  assert.equal(parsed.candidate.rawVenue, "digitalizovanoj bioskopskoj sali KIC-a");
+
+  let snapshot: Awaited<ReturnType<typeof refreshGlavniGradEvents>> | undefined;
+  await refreshGlavniGradEvents({
+    cachePath: "/tmp/glavni-grad-disclosure-test.json",
+    context,
+    httpClient: {
+      get: async (url) => {
+        requestedUrls.push(url);
+        return url === listingUrl ? disclosureListing : disclosureDetail;
+      },
+    },
+    now: () => new Date("2026-07-06T10:00:00.000Z"),
+    writeCache: async (next) => {
+      snapshot = next;
+    },
+  });
+
+  assert.deepEqual(requestedUrls, [listingUrl, disclosureUrl]);
+  assert.equal(snapshot?.events.length, 1);
+  assert.equal(snapshot?.events[0]?.startsAt, "2026-07-21T18:00:00.000Z");
+  assert.equal(snapshot?.qualityDiagnostics?.rejectedCount, 0);
 });
 
 test("registers, quality-normalizes, caches, and exposes Glavni Grad events through the generic application service", async () => {
