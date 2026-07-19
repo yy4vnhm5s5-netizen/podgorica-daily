@@ -4,6 +4,7 @@ const featureFlags = {
   airQuality: false,
   amscg: env.ENABLE_AMSCG,
   authentication: false,
+  busStation: true,
   cityAlerts: true,
   cedis: env.ENABLE_CEDIS,
   dailyOverview: true,

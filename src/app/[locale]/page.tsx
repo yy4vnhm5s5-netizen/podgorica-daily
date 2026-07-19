@@ -7,11 +7,8 @@ import { DailySummaryBar } from "@/modules/daily-overview/presentation/daily-sum
 import { getCityEvents } from "@/modules/events/application/get-city-events";
 import { HomepageEventsCard } from "@/modules/events/presentation/homepage-events-card";
 import { selectHomepageEvents } from "@/modules/events/presentation/events-ui-model";
+import { BusStationCard } from "@/modules/transport/presentation/bus-station-card";
 import { getCurrentWeather } from "@/modules/weather/application/get-current-weather";
-import {
-  CurrentWeatherCard,
-  CurrentWeatherCardLoading,
-} from "@/modules/weather/presentation/current-weather-card";
 import {
   CityAlertsSection,
   CityAlertsSectionLoading,
@@ -66,11 +63,7 @@ async function DashboardPage({ locale }: { locale: Locale }) {
           <AdvertisingCard subtitle={advertising.subtitle} title={advertising.title} />
         </div>
         <div className="grid items-start gap-5 sm:grid-cols-2 xl:grid-cols-3">
-          {weather ? (
-            <Suspense fallback={<CurrentWeatherCardLoading locale={locale} />}>
-              <CurrentWeatherCard locale={locale} result={weather} />
-            </Suspense>
-          ) : null}
+          {isFeatureEnabled("busStation") ? <BusStationCard city={context.city} locale={locale} /> : null}
           <HomepageEventsCard
             events={selectHomepageEvents(events.events, context)}
             locale={locale}

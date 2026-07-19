@@ -10,7 +10,7 @@ Bootstrapped the runtime, quality gates, UI system, environment validation, cont
 
 ## Trusted local data
 
-Current weather for Podgorica is delivered through an isolated Open-Meteo adapter with attribution, freshness, and safe loading, empty, and error states. Transport and events remain future independently deployable increments; each requires provenance, stale-data behaviour, monitoring, and accessible states.
+Current weather for Podgorica is delivered through an isolated Open-Meteo adapter with attribution, freshness, and safe loading, empty, and error states. The homepage has a city-configured BusTicket4.me station link for Podgorica, but does not ingest or show departures: the source terms do not permit public/commercial reuse of its content. Transport data and events remain independently deployable increments; each requires provenance, stale-data behaviour, monitoring, and accessible states.
 
 City Alerts reads cached official CEDIS planned power outages when a collector snapshot is available. It exposes fresh, stale, and unavailable states with source attribution. Mock alerts remain an explicit development-only provider mode; further sources still require their own approved provider contracts, attribution, freshness, outage handling, and monitoring.
 
