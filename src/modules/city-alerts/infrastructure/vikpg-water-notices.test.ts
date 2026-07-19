@@ -25,6 +25,33 @@ test("discovers only unique official water-service links", async () => {
   assert.ok(notices.every((notice) => notice.url.startsWith("https://vikpg.me/")));
 });
 
+test("retains the publication date rendered separately from a service-notice title", async () => {
+  const notices = discoverVikpgNotices(
+    await fixture("vikpg-listing-separated-publication-date.html"),
+    new Date("2025-11-11T10:00:00.000Z"),
+  );
+
+  assert.equal(notices.length, 1);
+  assert.equal(notices[0]?.publishedAt?.toISOString(), "2025-11-11T12:00:00.000Z");
+});
+
+test("uses the listing publication date when the detail page title has no date", async () => {
+  const notice = discoverVikpgNotices(
+    await fixture("vikpg-listing-separated-publication-date.html"),
+    new Date("2025-11-11T10:00:00.000Z"),
+  )[0];
+  assert.ok(notice);
+
+  const result = parseVikpgNotice(
+    notice,
+    await fixture("vikpg-notice-separated-publication-date.html"),
+    new Date("2025-11-11T10:00:00.000Z"),
+  );
+
+  assert.equal(result.alert?.publishedAt.toISOString(), "2025-11-11T12:00:00.000Z");
+  assert.deepEqual(result.warnings, []);
+});
+
 test("resolves approved relative links and rejects off-domain links", () => {
   assert.equal(toVikpgUrl("/index.php?id=2001"), "https://vikpg.me/index.php?id=2001");
   assert.equal(toVikpgUrl("https://example.com/notice"), null);

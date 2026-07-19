@@ -53,14 +53,30 @@ interface VikpgParseResult {
  */
 function discoverVikpgNotices(html: string, now = new Date()): VikpgNoticeLink[] {
   const links = [...html.matchAll(/<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi)]
-    .map((match) => ({ title: normalize(stripHtml(match[2])), url: toVikpgUrl(match[1]) }))
-    .filter((link): link is { title: string; url: string } => Boolean(link.url && link.title))
+    .map((match) => ({
+      publishedAt: extractListingPublicationDate(html, match.index, now),
+      title: normalize(stripHtml(match[2])),
+      url: toVikpgUrl(match[1]),
+    }))
+    .filter((link): link is VikpgNoticeLink => Boolean(link.url && link.title))
     .filter(({ title }) => servicePattern.test(title));
 
-  return deduplicateLinks(links).filter(({ title }) => {
-    const publishedAt = parseDate(title, now.getFullYear());
-    return !publishedAt || publishedAt.getTime() >= startOfDay(addDays(now, -2)).getTime();
+  return deduplicateLinks(links).filter(({ publishedAt, title }) => {
+    const publicationDate = publishedAt ?? parseDate(title, now.getFullYear());
+    return (
+      !publicationDate || publicationDate.getTime() >= startOfDay(addDays(now, -2)).getTime()
+    );
   });
+}
+
+function extractListingPublicationDate(html: string, linkIndex: number, now: Date) {
+  const articleStart = html.lastIndexOf("<article", linkIndex);
+  const articleEnd = articleStart >= 0 ? html.indexOf("</article>", linkIndex) : -1;
+  const context =
+    articleStart >= 0 && articleEnd >= 0
+      ? html.slice(articleStart, articleEnd)
+      : html.slice(linkIndex, linkIndex + 600);
+  return parseDate(stripHtml(context), now.getFullYear());
 }
 
 function parseVikpgNotice(

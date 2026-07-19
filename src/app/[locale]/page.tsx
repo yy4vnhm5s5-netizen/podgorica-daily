@@ -5,6 +5,7 @@ import { CalendarDays, Landmark, Phone } from "lucide-react";
 import { getDefaultCityContext } from "@/config/city-context";
 import { getDailyOverview } from "@/modules/daily-overview/application/get-daily-overview";
 import { DailySummaryBar } from "@/modules/daily-overview/presentation/daily-summary-bar";
+import { getCurrentWeather } from "@/modules/weather/application/get-current-weather";
 import {
   CurrentWeatherCard,
   CurrentWeatherCardLoading,
@@ -38,15 +39,17 @@ async function LocalePage({ params }: LocalePageProps) {
 async function DashboardPage({ locale }: { locale: Locale }) {
   const translations = getTranslations(locale);
   const { advertising, cards } = translations.dashboard;
-  const dailyOverview = isFeatureEnabled("dailyOverview")
-    ? await getDailyOverview(getDefaultCityContext(locale))
-    : null;
+  const context = getDefaultCityContext(locale);
+  const [dailyOverview, weather] = await Promise.all([
+    isFeatureEnabled("dailyOverview") ? getDailyOverview(context) : null,
+    isFeatureEnabled("weather") ? getCurrentWeather(context) : null,
+  ]);
 
   return (
     <DashboardLayout locale={locale} translations={translations}>
       <section className="space-y-10" id="dashboard">
         <div className="space-y-7">
-          {dailyOverview ? <DailySummaryBar locale={locale} result={dailyOverview} /> : null}
+          {dailyOverview ? <DailySummaryBar locale={locale} result={dailyOverview} weather={weather} /> : null}
           {isFeatureEnabled("cityAlerts") ? (
             <Suspense fallback={<CityAlertsSectionLoading locale={locale} />}>
               <CityAlertsSection locale={locale} />
@@ -56,9 +59,9 @@ async function DashboardPage({ locale }: { locale: Locale }) {
           <GlobalSearch label={translations.shell.globalSearchComingSoon} />
         </div>
         <div className="grid items-start gap-5 sm:grid-cols-2 xl:grid-cols-3">
-          {isFeatureEnabled("weather") ? (
+          {weather ? (
             <Suspense fallback={<CurrentWeatherCardLoading locale={locale} />}>
-              <CurrentWeatherCard locale={locale} />
+              <CurrentWeatherCard locale={locale} result={weather} />
             </Suspense>
           ) : null}
           <DashboardCard

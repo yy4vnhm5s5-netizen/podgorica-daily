@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 
 import type { DailyOverviewResult } from "@/modules/daily-overview/application/get-daily-overview";
 import { getDailyOverviewTranslations } from "@/modules/daily-overview/presentation/daily-overview-translations";
+import type { CurrentWeatherResult } from "@/modules/weather/application/get-current-weather";
 import { StatusBadge, type StatusTone } from "@/shared/components/status-badge";
 import { Timestamp } from "@/shared/components/timestamp";
 import { Card } from "@/shared/components/ui/card";
@@ -13,9 +14,10 @@ import { getLocaleTag } from "@/shared/config/locale";
 interface DailySummaryBarProps {
   locale: Locale;
   result: DailyOverviewResult;
+  weather: CurrentWeatherResult | null;
 }
 
-function DailySummaryBar({ locale, result }: DailySummaryBarProps) {
+function DailySummaryBar({ locale, result, weather }: DailySummaryBarProps) {
   const translations = getDailyOverviewTranslations(locale);
 
   if (result.status !== "success") {
@@ -34,7 +36,8 @@ function DailySummaryBar({ locale, result }: DailySummaryBarProps) {
     );
   }
 
-  const { airQualityCategory, eventsToday, generatedAt, temperatureCelsius } = result.data;
+  const { airQualityCategory, eventsToday, generatedAt } = result.data;
+  const temperatureCelsius = weather?.status === "success" ? weather.data.temperature : undefined;
 
   return (
     <section aria-labelledby="daily-summary-heading">
@@ -46,7 +49,15 @@ function DailySummaryBar({ locale, result }: DailySummaryBarProps) {
       </h1>
       <Card className="card-fog card-fog--summary border-blue-200/90 bg-blue-50/60 px-3 py-2 sm:px-4">
         <span aria-hidden="true" className="absolute inset-x-0 top-0 h-px bg-blue-300/80" />
-        <dl className="grid grid-cols-2 divide-x divide-y divide-blue-200/70 sm:grid-cols-4 sm:divide-y-0">
+        <dl className="relative grid grid-cols-2">
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-0 left-1/2 w-px bg-blue-200/70"
+          />
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 top-1/2 h-px bg-blue-200/70"
+          />
           <SummaryItem icon={CloudSun} label={translations.temperature}>
             {temperatureCelsius === undefined ? "—" : `${temperatureCelsius.toFixed(0)}°C`}
           </SummaryItem>

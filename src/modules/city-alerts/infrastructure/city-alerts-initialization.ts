@@ -78,8 +78,16 @@ async function initializeProvider({
       log(`${provider.id}: refresh already running.`);
       return { id: provider.id, state: "already-running" } as const;
     }
-    if (summary.status === "success" || summary.status === "retained") {
-      log(`${provider.id}: refresh completed with ${summary.alertCount} alert(s).`);
+    if (summary.status === "success") {
+      log(
+        summary.alertCount === 0
+          ? `${provider.id}: refresh completed successfully with zero alerts.`
+          : `${provider.id}: refresh completed successfully with ${summary.alertCount} alert(s).`,
+      );
+      return { alertCount: summary.alertCount, id: provider.id, state: "refreshed" } as const;
+    }
+    if (summary.status === "retained") {
+      log(`${provider.id}: refresh retained the previous cache with ${summary.alertCount} alert(s).`);
       return { alertCount: summary.alertCount, id: provider.id, state: "refreshed" } as const;
     }
 

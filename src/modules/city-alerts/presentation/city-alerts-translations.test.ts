@@ -15,8 +15,12 @@ test("provides localized stale-data copy", () => {
 });
 
 test("provides localized source-unavailable copy", () => {
-  assert.equal(getCityAlertsTranslations("me").unavailable, "Podaci trenutno nijesu dostupni.");
-  assert.equal(getCityAlertsTranslations("en").unavailable, "Data is currently unavailable.");
+  assert.equal(getCityAlertsTranslations("me").unavailable, "Nema podataka.");
+  assert.equal(getCityAlertsTranslations("en").unavailable, "No data.");
+});
+
+test("uses the successful empty-state copy for planned power outages", () => {
+  assert.equal(getCityAlertsTranslations("me").noPowerOutages, "Nema planiranih isključenja.");
 });
 
 test("uses the specific successful empty-state copy for water interruptions", () => {

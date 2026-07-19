@@ -58,7 +58,31 @@ test("initializes a missing cache and logs the normalized result", async () => {
 
   assert.deepEqual(result.providers, [{ alertCount: 2, id: "VIK", state: "refreshed" }]);
   assert.ok(logs.includes("VIK: cache missing; refresh started."));
-  assert.ok(logs.includes("VIK: refresh completed with 2 alert(s)."));
+  assert.ok(logs.includes("VIK: refresh completed successfully with 2 alert(s)."));
+});
+
+test("logs a successful zero-alert refresh separately from a retained cache", async () => {
+  const logs: string[] = [];
+  await initializeCityAlertCaches({
+    ensureDirectory: async () => undefined,
+    log: (message) => logs.push(message),
+    providers: [
+      provider({
+        refresh: async () => ({
+          summary: { alertCount: 0, retainedPreviousSnapshot: false, status: "success" },
+        }),
+      }),
+      provider({
+        id: "VIK",
+        refresh: async () => ({
+          summary: { alertCount: 3, retainedPreviousSnapshot: true, status: "retained" },
+        }),
+      }),
+    ],
+  });
+
+  assert.ok(logs.includes("CEDIS: refresh completed successfully with zero alerts."));
+  assert.ok(logs.includes("VIK: refresh retained the previous cache with 3 alert(s)."));
 });
 
 test("reports cache and refresh failures without replacing an existing snapshot", async () => {
