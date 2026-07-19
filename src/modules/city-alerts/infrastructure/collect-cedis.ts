@@ -1,6 +1,7 @@
 import { dirname } from "node:path";
 
 import { acquireRefreshLock } from "../../../shared/lib/refresh-lock.ts";
+import type { CityAlertCollectorResult } from "./city-alerts-collector.ts";
 import { defaultCachePath, readCedisCache, writeCedisCache } from "./cedis-cache.ts";
 import { createCedisHttpClient } from "./cedis-http-client.ts";
 import { refreshCedis, type RefreshResult } from "./cedis-refresh.ts";
@@ -11,19 +12,7 @@ interface CollectorDependencies {
   writeOutput?: (line: string) => void;
 }
 
-interface CollectorResult {
-  exitCode: 0 | 1;
-  summary: {
-    alertCount: number;
-    cachePath: string;
-    cacheStatus: "fresh" | "stale" | "unavailable";
-    completedAt: string;
-    errorCode?: string;
-    retainedPreviousSnapshot: boolean;
-    status: "already-running" | "retained" | "success" | "unavailable";
-    warnings: string[];
-  };
-}
+type CollectorResult = CityAlertCollectorResult;
 
 async function runCedisCollector({
   cachePath = process.env.CEDIS_CACHE_PATH ?? defaultCachePath,

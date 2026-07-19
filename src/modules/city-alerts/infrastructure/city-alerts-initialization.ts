@@ -1,4 +1,5 @@
 import { ensureCacheDirectory } from "../../../shared/lib/cache.ts";
+import type { CityAlertCollectorSummary } from "./city-alerts-collector.ts";
 
 type ProviderInitializationState =
   | "already-running"
@@ -6,12 +7,6 @@ type ProviderInitializationState =
   | "failed"
   | "refreshed"
   | "skipped";
-
-interface CityAlertCollectorSummary {
-  alertCount: number;
-  errorCode?: string;
-  status: "already-running" | "retained" | "success" | "unavailable";
-}
 
 interface CityAlertCacheProvider {
   cachePath: string;
@@ -113,6 +108,7 @@ function getErrorMessage(error: unknown) {
 export {
   initializeCityAlertCaches,
   type CityAlertCacheProvider,
+  type CityAlertCollectorSummary,
   type CityAlertInitializationSummary,
   type InitializeCityAlertCachesDependencies,
 };

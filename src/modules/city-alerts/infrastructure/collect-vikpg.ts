@@ -1,34 +1,39 @@
 import { dirname } from "node:path";
 
 import { acquireRefreshLock } from "../../../shared/lib/refresh-lock.ts";
+import type { CityAlertCollectorResult } from "./city-alerts-collector.ts";
 import { defaultVikpgCachePath, readVikpgCache, writeVikpgCache } from "./vikpg-cache.ts";
 import { createVikpgHttpClient } from "./vikpg-http-client.ts";
 import { refreshVikpg, type VikpgRefreshResult } from "./vikpg-refresh.ts";
+
+interface VikpgCollectorDependencies {
+  cachePath?: string;
+  refresh?: () => Promise<VikpgRefreshResult>;
+  writeOutput?: (line: string) => void;
+}
+
+type VikpgCollectorResult = CityAlertCollectorResult;
 
 async function runVikpgCollector({
   cachePath = process.env.VIKPG_CACHE_PATH ?? defaultVikpgCachePath,
   refresh,
   writeOutput = console.log,
-}: {
-  cachePath?: string;
-  refresh?: () => Promise<VikpgRefreshResult>;
-  writeOutput?: (line: string) => void;
-} = {}) {
+}: VikpgCollectorDependencies = {}): Promise<VikpgCollectorResult> {
   const lock = await acquireRefreshLock(dirname(cachePath), {
     lockFileName: ".vikpg-refresh.lock",
   });
   if (!("release" in lock)) {
-    const summary = {
+    const summary: VikpgCollectorResult["summary"] = {
       alertCount: 0,
       cachePath,
-      cacheStatus: "unavailable" as const,
+      cacheStatus: "unavailable",
       completedAt: new Date().toISOString(),
       retainedPreviousSnapshot: false,
-      status: "already-running" as const,
+      status: "already-running",
       warnings: [],
     };
     writeOutput(JSON.stringify(summary));
-    return { exitCode: 0, summary } as const;
+    return { exitCode: 0, summary };
   }
 
   try {
@@ -43,7 +48,7 @@ async function runVikpgCollector({
           httpClient: createVikpgHttpClient(),
         }))
     )();
-    const summary = {
+    const summary: VikpgCollectorResult["summary"] = {
       alertCount: result.snapshot?.alerts.length ?? 0,
       cachePath,
       cacheStatus: result.snapshot?.freshnessStatus ?? "unavailable",
@@ -58,7 +63,7 @@ async function runVikpgCollector({
       warnings: result.warnings,
     };
     writeOutput(JSON.stringify(summary));
-    return { exitCode: result.success || result.retainedPreviousSnapshot ? 0 : 1, summary } as const;
+    return { exitCode: result.success || result.retainedPreviousSnapshot ? 0 : 1, summary };
   } finally {
     await lock.release();
   }
@@ -70,4 +75,4 @@ if (process.argv[1]?.endsWith("collect-vikpg.ts")) {
   });
 }
 
-export { runVikpgCollector };
+export { runVikpgCollector, type VikpgCollectorDependencies, type VikpgCollectorResult };
