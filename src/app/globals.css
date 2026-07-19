@@ -23,3 +23,85 @@
     @apply bg-background text-foreground antialiased;
   }
 }
+
+@layer components {
+  .card-fog {
+    isolation: isolate;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .card-fog::before {
+    background: radial-gradient(circle, rgb(var(--card-fog-color) / 0.1) 0%, transparent 70%);
+    content: "";
+    height: 12rem;
+    pointer-events: none;
+    position: absolute;
+    width: 12rem;
+    z-index: 0;
+  }
+
+  .card-fog > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .card-fog--summary,
+  .card-fog--weather,
+  .card-fog--info {
+    --card-fog-color: 56 189 248;
+  }
+
+  .card-fog--summary::before,
+  .card-fog--weather::before,
+  .card-fog--info::before,
+  .card-fog--neutral::before {
+    right: -5rem;
+    top: -6rem;
+  }
+
+  .card-fog--warning,
+  .card-fog--success {
+    --card-fog-color: 251 191 36;
+  }
+
+  .card-fog--warning::before,
+  .card-fog--success::before {
+    left: -5rem;
+    top: -6rem;
+  }
+
+  .card-fog--success {
+    --card-fog-color: 52 211 153;
+  }
+
+  .card-fog--neutral {
+    --card-fog-color: 148 163 184;
+  }
+
+  .card-fog--advertising {
+    --card-fog-color: 129 140 248;
+  }
+
+  .card-fog--advertising::before {
+    right: -5rem;
+    top: -6rem;
+  }
+
+  .city-service-tab-fog--power {
+    --card-fog-color: 251 191 36;
+  }
+
+  .city-service-tab-fog--water {
+    --card-fog-color: 56 189 248;
+  }
+
+  .city-service-tab-fog--power::before,
+  .city-service-tab-fog--water::before {
+    height: 7rem;
+    opacity: 0.9;
+    right: -2.5rem;
+    top: -3.5rem;
+    width: 7rem;
+  }
+}

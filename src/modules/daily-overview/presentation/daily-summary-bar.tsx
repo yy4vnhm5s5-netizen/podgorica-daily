@@ -27,7 +27,7 @@ function DailySummaryBar({ locale, result }: DailySummaryBarProps) {
         >
           {translations.summaryLabel}
         </h1>
-        <Card className="border-blue-200/90 bg-blue-50/60 px-4 py-3 text-sm text-muted-foreground">
+        <Card className="card-fog card-fog--summary border-blue-200/90 bg-blue-50/60 px-4 py-3 text-sm text-muted-foreground">
           {translations.unavailable}
         </Card>
       </section>
@@ -44,7 +44,7 @@ function DailySummaryBar({ locale, result }: DailySummaryBarProps) {
       >
         {translations.summaryLabel}
       </h1>
-      <Card className="relative overflow-hidden border-blue-200/90 bg-blue-50/60 px-3 py-2 sm:px-4">
+      <Card className="card-fog card-fog--summary border-blue-200/90 bg-blue-50/60 px-3 py-2 sm:px-4">
         <span aria-hidden="true" className="absolute inset-x-0 top-0 h-px bg-blue-300/80" />
         <dl className="grid grid-cols-2 divide-x divide-y divide-blue-200/70 sm:grid-cols-4 sm:divide-y-0">
           <SummaryItem icon={CloudSun} label={translations.temperature}>

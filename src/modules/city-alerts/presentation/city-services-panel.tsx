@@ -98,7 +98,12 @@ function CityServicesPanel({ services, translations }: CityServicesPanelProps) {
               className={cn(
                 "flex min-h-10 flex-1 items-center justify-center gap-2 rounded-lg px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                 isSelected
-                  ? "border border-slate-200 bg-background text-foreground shadow-[0_2px_5px_-4px_rgb(15_23_42_/_0.3)]"
+                  ? cn(
+                      "card-fog border border-slate-200 bg-background text-foreground shadow-[0_2px_5px_-4px_rgb(15_23_42_/_0.3)]",
+                      serviceId === "power"
+                        ? "city-service-tab-fog--power"
+                        : "city-service-tab-fog--water",
+                    )
                   : "text-muted-foreground hover:bg-background/60 hover:text-foreground",
               )}
               id={`${panelId}-${serviceId}`}

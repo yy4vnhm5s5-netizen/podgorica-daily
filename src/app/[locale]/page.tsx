@@ -41,8 +41,6 @@ async function DashboardPage({ locale }: { locale: Locale }) {
   const dailyOverview = isFeatureEnabled("dailyOverview")
     ? await getDailyOverview(getDefaultCityContext(locale))
     : null;
-  const airQualityCategory =
-    dailyOverview?.status === "success" ? dailyOverview.data.airQualityCategory : undefined;
 
   return (
     <DashboardLayout locale={locale} translations={translations}>
@@ -60,7 +58,7 @@ async function DashboardPage({ locale }: { locale: Locale }) {
         <div className="grid items-start gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {isFeatureEnabled("weather") ? (
             <Suspense fallback={<CurrentWeatherCardLoading locale={locale} />}>
-              <CurrentWeatherCard airQualityCategory={airQualityCategory} locale={locale} />
+              <CurrentWeatherCard locale={locale} />
             </Suspense>
           ) : null}
           <DashboardCard
