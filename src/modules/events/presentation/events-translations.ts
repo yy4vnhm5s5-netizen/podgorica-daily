@@ -1,4 +1,5 @@
 import type { EventCategory, EventStatus } from "../domain/event.ts";
+import type { EventPresentationCategory } from "./event-presentation-category.ts";
 import type { Locale } from "@/shared/config/locale";
 
 const eventTranslations = {
@@ -8,6 +9,7 @@ const eventTranslations = {
     allEventsUnavailableDescription:
       "Try again later. Available sources remain independent from one another.",
     applyFilters: "Apply filters",
+    address: "Address",
     backToEvents: "Back to events",
     categories: {
       community: "Community",
@@ -28,6 +30,17 @@ const eventTranslations = {
       workshop: "Workshop",
     },
     category: "Category",
+    presentationCategories: {
+      children: "Children",
+      community: "Community",
+      education: "Education",
+      exhibition: "Exhibition",
+      film: "Film",
+      music: "Music",
+      other: "Other",
+      sport: "Sport",
+      theatre: "Theatre",
+    },
     closeFilters: "Close filters",
     details: "Event details",
     dateAndTime: "Date and time",
@@ -35,21 +48,23 @@ const eventTranslations = {
     eventsCount: (count: number) => `${count} ${count === 1 ? "event" : "events"}`,
     filters: "Filters",
     heading: "Events in Podgorica",
+    homepageEmpty: "There are no upcoming events at the moment.",
+    homepageSupportingText: "What is coming up in the city.",
     loading: "Loading events",
     location: "Location",
     noEvents: "No events are available",
     noEventsDescription: "There are currently no cached events from the official sources.",
     noResults: "No events match these filters",
     noResultsDescription: "Try changing the search or filters.",
-    officialSource: "Open official source",
+    officialSource: "View original post",
     organizer: "Organiser",
     postponed: "Postponed",
     provider: "Source",
     quickFilters: {
-      all: "All",
-      nextSevenDays: "Next 7 days",
+      upcoming: "Upcoming",
       thisWeekend: "This weekend",
       today: "Today",
+      tomorrow: "Tomorrow",
     },
     resetFilters: "Reset",
     search: "Search events",
@@ -68,6 +83,7 @@ const eventTranslations = {
     supportingText: "Verified programme information from official Podgorica sources.",
     unavailableSources:
       "Some official sources are temporarily unavailable. Available events are still shown.",
+    viewAllEvents: "View all events",
   },
   me: {
     all: "Svi",
@@ -75,6 +91,7 @@ const eventTranslations = {
     allEventsUnavailableDescription:
       "Pokušajte ponovo kasnije. Dostupni izvori funkcionišu nezavisno jedan od drugog.",
     applyFilters: "Primijeni filtere",
+    address: "Adresa",
     backToEvents: "Nazad na događaje",
     categories: {
       community: "Zajednica",
@@ -95,6 +112,17 @@ const eventTranslations = {
       workshop: "Radionica",
     },
     category: "Kategorija",
+    presentationCategories: {
+      children: "Za djecu",
+      community: "Zajednica",
+      education: "Obrazovanje",
+      exhibition: "Izložba",
+      film: "Film",
+      music: "Muzika",
+      other: "Ostalo",
+      sport: "Sport",
+      theatre: "Pozorište",
+    },
     closeFilters: "Zatvori filtere",
     details: "Detalji događaja",
     dateAndTime: "Datum i vrijeme",
@@ -102,21 +130,23 @@ const eventTranslations = {
     eventsCount: (count: number) => `${count} ${count === 1 ? "događaj" : "događaja"}`,
     filters: "Filteri",
     heading: "Događaji u Podgorici",
+    homepageEmpty: "Trenutno nema predstojećih događaja.",
+    homepageSupportingText: "Šta se uskoro dešava u gradu.",
     loading: "Učitavanje događaja",
     location: "Mjesto",
     noEvents: "Nema dostupnih događaja",
     noEventsDescription: "Trenutno nema keširanih događaja iz zvaničnih izvora.",
     noResults: "Nijedan događaj ne odgovara filterima",
     noResultsDescription: "Pokušajte promijeniti pretragu ili filtere.",
-    officialSource: "Otvori zvanični izvor",
+    officialSource: "Pogledajte originalnu objavu",
     organizer: "Organizator",
     postponed: "Odgođeno",
     provider: "Izvor",
     quickFilters: {
-      all: "Svi",
-      nextSevenDays: "Sljedećih 7 dana",
+      upcoming: "Predstojeći",
       thisWeekend: "Ovaj vikend",
       today: "Danas",
+      tomorrow: "Sjutra",
     },
     resetFilters: "Poništi",
     search: "Pretraži događaje",
@@ -135,6 +165,7 @@ const eventTranslations = {
     supportingText: "Provjereni programi iz zvaničnih podgoričkih izvora.",
     unavailableSources:
       "Neki zvanični izvori trenutno nijesu dostupni. Dostupni događaji su i dalje prikazani.",
+    viewAllEvents: "Pogledajte sve događaje",
   },
 } as const;
 
@@ -148,6 +179,10 @@ function getEventCategoryLabel(locale: Locale, category: EventCategory) {
   return eventTranslations[locale].categories[category];
 }
 
+function getEventPresentationCategoryLabel(locale: Locale, category: EventPresentationCategory) {
+  return eventTranslations[locale].presentationCategories[category];
+}
+
 function getEventStatusLabel(locale: Locale, status: EventStatus) {
   if (status === "cancelled" || status === "postponed") {
     return eventTranslations[locale].status[status];
@@ -158,6 +193,7 @@ function getEventStatusLabel(locale: Locale, status: EventStatus) {
 
 export {
   getEventCategoryLabel,
+  getEventPresentationCategoryLabel,
   getEventsTranslations,
   getEventStatusLabel,
   type EventsTranslations,

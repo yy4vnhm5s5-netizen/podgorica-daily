@@ -64,6 +64,7 @@ interface CityEvent {
   sourceReferences: EventSourceReference[];
   sourceUpdatedAt?: string;
   sourceUrl: string;
+  slug?: string;
   startDate?: string;
   startsAt?: string;
   status: EventStatus;
@@ -86,6 +87,7 @@ interface EventCandidate {
   organizer?: string;
   parserWarnings: string[];
   rawDateText?: string;
+  rawAddress?: string;
   rawDescription?: string;
   rawPriceText?: string;
   rawTimeText?: string;

@@ -3,10 +3,11 @@ import Link from "next/link";
 
 import type { CityEvent } from "../domain/event.ts";
 import {
-  getEventCategoryLabel,
+  getEventPresentationCategoryLabel,
   getEventsTranslations,
   getEventStatusLabel,
 } from "./events-translations";
+import { getEventPresentationCategory } from "./event-presentation-category";
 import { Badge } from "@/shared/components/ui/badge";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { getLocaleTag, type Locale } from "@/shared/config/locale";
@@ -35,7 +36,12 @@ function EventCard({ event, locale }: EventCardProps) {
         <CardContent className="flex min-w-0 flex-1 flex-col gap-3 p-4">
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="outline">{event.sourceName}</Badge>
-            <Badge variant="outline">{getEventCategoryLabel(locale, event.category)}</Badge>
+            <Badge variant="outline">
+              {getEventPresentationCategoryLabel(
+                locale,
+                getEventPresentationCategory(event.category),
+              )}
+            </Badge>
             {statusLabel ? (
               <Badge
                 className={
@@ -85,7 +91,7 @@ function EventCard({ event, locale }: EventCardProps) {
 function EventTime({ event, locale }: { event: CityEvent; locale: Locale }) {
   if (event.startsAt) {
     return formatDateTime(new Date(event.startsAt), {
-      formatOptions: { hour: "2-digit", minute: "2-digit" },
+      formatOptions: { dateStyle: "medium", timeStyle: "short" },
       locale: getLocaleTag(locale),
     }).label;
   }

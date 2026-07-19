@@ -4,8 +4,19 @@ import test from "node:test";
 import { podgoricaEvent } from "../__fixtures__/events.ts";
 import { getCityEvents } from "../application/get-city-events.ts";
 import type { EventProvider } from "../domain/event.ts";
-import { getEventCategoryLabel, getEventStatusLabel } from "./events-translations.ts";
-import { filterEventsForUi, groupEventsByDay, parseEventsUiFilters } from "./events-ui-model.ts";
+import {
+  getEventCategoryLabel,
+  getEventPresentationCategoryLabel,
+  getEventsTranslations,
+  getEventStatusLabel,
+} from "./events-translations.ts";
+import {
+  filterEventsForUi,
+  groupEventsByDay,
+  parseEventsUiFilters,
+  selectHomepageEvents,
+} from "./events-ui-model.ts";
+import { getEventPresentationCategory } from "./event-presentation-category.ts";
 
 const context = {
   city: {
@@ -44,6 +55,7 @@ test("reads accepted cached events without invoking provider HTTP", async () => 
     readModel.events.map((event) => event.id),
     ["accepted-event"],
   );
+  assert.equal(readModel.events[0]?.slug, "ljetnji-koncert");
 });
 
 test("keeps rejected quality diagnostics out of public event results", async () => {
@@ -69,7 +81,7 @@ test("keeps rejected quality diagnostics out of public event results", async () 
   assert.equal(readModel.events.length, 1);
 });
 
-test("filters cached events by search, source, category, and URL date preset", () => {
+test("filters cached events by search, source, user-facing category, and URL date preset", () => {
   const concert = podgoricaEvent({
     id: "concert",
     sourceId: "kic",
@@ -86,7 +98,7 @@ test("filters cached events by search, source, category, and URL date preset", (
   });
   const filters = parseEventsUiFilters({
     category: "theatre",
-    period: "next-seven-days",
+    period: "upcoming",
     query: "pozorištu",
     source: "cnp",
   });
@@ -104,10 +116,10 @@ test("filters cached events by search, source, category, and URL date preset", (
   );
 });
 
-test("includes a full seven calendar days for the next-seven-days preset", () => {
+test("keeps all future events for the upcoming preset", () => {
   const seventhDay = podgoricaEvent({ id: "seventh-day", startsAt: "2026-07-23T18:00:00.000Z" });
   const eighthDay = podgoricaEvent({ id: "eighth-day", startsAt: "2026-07-24T18:00:00.000Z" });
-  const filters = parseEventsUiFilters({ period: "next-seven-days" });
+  const filters = parseEventsUiFilters({ period: "upcoming" });
 
   const events = filterEventsForUi(
     [seventhDay, eighthDay],
@@ -118,8 +130,41 @@ test("includes a full seven calendar days for the next-seven-days preset", () =>
 
   assert.deepEqual(
     events.map((event) => event.id),
-    ["seventh-day"],
+    ["seventh-day", "eighth-day"],
   );
+});
+
+test("supports tomorrow and aggregates provider categories for the public UI", () => {
+  const tomorrow = podgoricaEvent({ id: "tomorrow", startsAt: "2026-07-18T18:00:00.000Z" });
+  const nextWeek = podgoricaEvent({ id: "next-week", startsAt: "2026-07-24T18:00:00.000Z" });
+  const filters = parseEventsUiFilters({ period: "tomorrow" });
+
+  assert.deepEqual(
+    filterEventsForUi([tomorrow, nextWeek], context, filters, new Date("2026-07-17T10:00:00.000Z")).map(
+      (event) => event.id,
+    ),
+    ["tomorrow"],
+  );
+  assert.equal(getEventPresentationCategory("concert"), "music");
+  assert.equal(getEventPresentationCategory("workshop"), "education");
+});
+
+test("selects at most three upcoming events for the homepage cache read", () => {
+  const events = [
+    podgoricaEvent({ category: "movie", id: "movie", startsAt: "2026-07-17T12:00:00.000Z" }),
+    podgoricaEvent({ id: "one", startsAt: "2026-07-17T13:00:00.000Z" }),
+    podgoricaEvent({ id: "two", startsAt: "2026-07-18T13:00:00.000Z" }),
+    podgoricaEvent({ id: "three", startsAt: "2026-07-19T13:00:00.000Z" }),
+    podgoricaEvent({ id: "four", startsAt: "2026-07-20T13:00:00.000Z" }),
+  ];
+
+  assert.deepEqual(
+    selectHomepageEvents(events, context, new Date("2026-07-17T10:00:00.000Z")).map(
+      (event) => event.id,
+    ),
+    ["movie", "one", "two"],
+  );
+  assert.deepEqual(selectHomepageEvents([], context, new Date("2026-07-17T10:00:00.000Z")), []);
 });
 
 test("groups separate event days and preserves missing optional data", () => {
@@ -153,6 +198,9 @@ test("supports all official provider names and communicates cancellation or post
 
   assert.equal(new Set(providerNames).size, 4);
   assert.equal(getEventCategoryLabel("me", "concert"), "Koncert");
+  assert.equal(getEventPresentationCategoryLabel("me", "music"), "Muzika");
+  assert.equal(getEventsTranslations("me").quickFilters.tomorrow, "Sjutra");
+  assert.equal(getEventsTranslations("me").officialSource, "Pogledajte originalnu objavu");
   assert.equal(getEventStatusLabel("me", "cancelled"), "Otkazano");
   assert.equal(getEventStatusLabel("en", "postponed"), "Postponed");
 });

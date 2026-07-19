@@ -3,14 +3,14 @@
 import { SlidersHorizontal, X } from "lucide-react";
 import { useRef, type ReactNode } from "react";
 
-import type { EventCategory } from "../domain/event.ts";
 import type { EventsTranslations } from "./events-translations";
+import type { EventPresentationCategory } from "./event-presentation-category";
 import type { EventsUiFilters } from "./events-ui-model";
 import { Button } from "@/shared/components/ui/button";
 import type { Locale } from "@/shared/config/locale";
 
 interface EventsFilterSheetProps {
-  categories: readonly EventCategory[];
+  categories: readonly EventPresentationCategory[];
   filters: EventsUiFilters;
   locale: Locale;
   sources: readonly { id: string; name: string }[];
@@ -71,7 +71,7 @@ function EventsFilterSheet({
               <option value="">{translations.all}</option>
               {categories.map((category) => (
                 <option key={category} value={category}>
-                  {translations.categories[category]}
+                  {translations.presentationCategories[category]}
                 </option>
               ))}
             </FilterField>
@@ -83,7 +83,7 @@ function EventsFilterSheet({
               ))}
             </FilterField>
             {filters.query ? <input name="query" type="hidden" value={filters.query} /> : null}
-            {filters.datePreset !== "all" ? (
+            {filters.datePreset !== "upcoming" ? (
               <input name="period" type="hidden" value={filters.datePreset} />
             ) : null}
           </div>

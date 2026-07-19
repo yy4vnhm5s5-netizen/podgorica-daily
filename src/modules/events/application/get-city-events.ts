@@ -1,4 +1,5 @@
 import { deduplicateEvents } from "../domain/event-deduplication.ts";
+import { createEventSlug } from "../domain/event-normalization.ts";
 import type { CityEvent, EventProvider, EventProviderResult, Venue } from "../domain/event.ts";
 import { getEnabledEventProviders } from "../infrastructure/event-provider-registry.ts";
 import { toEventProviderStatusReadModel } from "./event-provider-status.ts";
@@ -36,7 +37,8 @@ async function getCityEvents(
   );
   const events = results
     .flatMap(({ result }) => result.events)
-    .filter((event) => event.cityIds.includes(context.city.id));
+    .filter((event) => event.cityIds.includes(context.city.id))
+    .map((event) => ({ ...event, slug: event.slug ?? createEventSlug(event.title) }));
 
   return {
     events: queryEvents(deduplicateEvents(events), context),

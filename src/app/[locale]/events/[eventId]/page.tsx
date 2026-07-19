@@ -4,6 +4,10 @@ import { notFound } from "next/navigation";
 import { getDefaultCityContext } from "@/config/city-context";
 import { getCityEvents } from "@/modules/events/application/get-city-events";
 import { EventDetail } from "@/modules/events/presentation/event-detail";
+import {
+  createEventStructuredData,
+  serializeStructuredData,
+} from "@/modules/events/presentation/event-structured-data";
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
 import { isLocale, type Locale } from "@/shared/config/locale";
 import { getTranslations } from "@/shared/lib/translations";
@@ -41,9 +45,16 @@ async function EventDetailPage({ params }: EventDetailPageProps) {
   const event = eventsReadModel.events.find((candidate) => candidate.id === eventId);
 
   if (!event) notFound();
+  const structuredData = createEventStructuredData(event);
 
   return (
     <DashboardLayout locale={locale} translations={getTranslations(locale)}>
+      {structuredData ? (
+        <script
+          dangerouslySetInnerHTML={{ __html: serializeStructuredData(structuredData) }}
+          type="application/ld+json"
+        />
+      ) : null}
       <EventDetail event={event} locale={locale} />
     </DashboardLayout>
   );

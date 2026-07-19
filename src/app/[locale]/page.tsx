@@ -1,10 +1,12 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { CalendarDays } from "lucide-react";
 
 import { getDefaultCityContext } from "@/config/city-context";
 import { getDailyOverview } from "@/modules/daily-overview/application/get-daily-overview";
 import { DailySummaryBar } from "@/modules/daily-overview/presentation/daily-summary-bar";
+import { getCityEvents } from "@/modules/events/application/get-city-events";
+import { HomepageEventsCard } from "@/modules/events/presentation/homepage-events-card";
+import { selectHomepageEvents } from "@/modules/events/presentation/events-ui-model";
 import { getCurrentWeather } from "@/modules/weather/application/get-current-weather";
 import {
   CurrentWeatherCard,
@@ -16,7 +18,6 @@ import {
 } from "@/modules/city-alerts/presentation/city-alerts-section";
 import { AdvertisingCard } from "@/shared/components/dashboard/advertising-card";
 import { CinemaPlaceholderCard } from "@/shared/components/dashboard/cinema-placeholder-card";
-import { DashboardCard } from "@/shared/components/dashboard/dashboard-card";
 import { getEmergencyNumbers } from "@/shared/components/dashboard/emergency-numbers";
 import { EmergencyNumbersStrip } from "@/shared/components/dashboard/emergency-numbers-strip";
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
@@ -47,8 +48,9 @@ async function DashboardPage({ locale }: { locale: Locale }) {
   const translations = getTranslations(locale);
   const { advertising, cards, emergencyNumbers } = translations.dashboard;
   const context = getDefaultCityContext(locale);
-  const [dailyOverview, weather] = await Promise.all([
+  const [dailyOverview, events, weather] = await Promise.all([
     isFeatureEnabled("dailyOverview") ? getDailyOverview(context) : null,
+    getCityEvents(context),
     isFeatureEnabled("weather") ? getCurrentWeather(context) : null,
   ]);
 
@@ -71,11 +73,9 @@ async function DashboardPage({ locale }: { locale: Locale }) {
               <CurrentWeatherCard locale={locale} result={weather} />
             </Suspense>
           ) : null}
-          <DashboardCard
-            accent="warning"
-            description={cards.eventsDescription}
-            icon={CalendarDays}
-            title={cards.events}
+          <HomepageEventsCard
+            events={selectHomepageEvents(events.events, context)}
+            locale={locale}
           />
           <CinemaPlaceholderCard
             actionLabel={cards.cinemaAction}

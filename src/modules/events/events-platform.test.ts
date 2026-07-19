@@ -9,7 +9,7 @@ import {
   deduplicateEvents,
   getEventSourcePriority,
 } from "./domain/event-deduplication.ts";
-import { createEventId, normalizeEventCandidate } from "./domain/event-normalization.ts";
+import { createEventId, createEventSlug, normalizeEventCandidate } from "./domain/event-normalization.ts";
 import { expandRecurrence, getEventStatus, toZonedIso } from "./domain/event-time.ts";
 import { isValidCityEvent, normalizeEventCategory, type EventProvider } from "./domain/event.ts";
 
@@ -42,6 +42,7 @@ test("creates stable deterministic IDs and preserves incomplete candidate source
     venue: "KIC",
   };
   assert.equal(createEventId(identity), createEventId({ ...identity, title: " koncert " }));
+  assert.equal(createEventSlug("Koncert u KIC-u"), "koncert-u-kic-u");
   const normalized = normalizeEventCandidate(
     {
       parserWarnings: ["Time was unavailable."],
@@ -72,6 +73,7 @@ test("uses Europe/Podgorica offsets and preserves date-only events", () => {
   const normalized = normalizeEventCandidate(
     {
       parserWarnings: [],
+      rawAddress: "Njegoševa 1",
       rawTitle: "Cjelodnevna izložba",
       source: {
         sourceId: "gallery",
@@ -85,6 +87,7 @@ test("uses Europe/Podgorica offsets and preserves date-only events", () => {
   );
   assert.equal(normalized.event?.startDate, "2026-07-17");
   assert.equal(normalized.event?.startsAt, undefined);
+  assert.equal(normalized.event?.address, "Njegoševa 1");
 });
 
 test("calculates explicit and time-derived statuses including midnight events", () => {

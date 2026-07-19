@@ -1,11 +1,16 @@
-import type { CityEvent, EventCategory } from "../domain/event.ts";
+import type { CityEvent } from "../domain/event.ts";
 import { queryEvents, type EventSort } from "../application/query-events.ts";
+import {
+  getDomainCategories,
+  isEventPresentationCategory,
+  type EventPresentationCategory,
+} from "./event-presentation-category.ts";
 import type { CityContext } from "@/shared/types/city";
 
-type EventDatePreset = "all" | "next-seven-days" | "today" | "weekend";
+type EventDatePreset = "today" | "tomorrow" | "upcoming" | "weekend";
 
 interface EventsUiFilters {
-  category?: EventCategory;
+  category?: EventPresentationCategory;
   datePreset: EventDatePreset;
   query?: string;
   sort: EventSort;
@@ -21,8 +26,10 @@ function parseEventsUiFilters(
   searchParams: Record<string, string | string[] | undefined>,
 ): EventsUiFilters {
   return {
-    category: isEventCategory(searchParams.category) ? searchParams.category : undefined,
-    datePreset: isEventDatePreset(searchParams.period) ? searchParams.period : "all",
+    category: isEventPresentationCategory(searchParams.category)
+      ? searchParams.category
+      : undefined,
+    datePreset: isEventDatePreset(searchParams.period) ? searchParams.period : "upcoming",
     query: getSearchParam(searchParams.query),
     sort: isEventSort(searchParams.sort) ? searchParams.sort : "soonest",
     sourceId: getSearchParam(searchParams.source),
@@ -36,16 +43,11 @@ function filterEventsForUi(
   now = new Date(),
 ) {
   const period = toEventQueryPeriod(filters.datePreset);
-  const dateRange =
-    filters.datePreset === "next-seven-days"
-      ? getNextSevenDaysRange(now, context.timezone)
-      : undefined;
   const matchingEvents = queryEvents(
     events,
     context,
     {
-      categories: filters.category ? [filters.category] : undefined,
-      dateRange,
+      categories: filters.category ? getDomainCategories(filters.category) : undefined,
       period,
       sourceId: filters.sourceId,
     },
@@ -86,16 +88,18 @@ function groupEventsByDay(
 
 function toEventQueryPeriod(datePreset: EventDatePreset) {
   if (datePreset === "today") return "today";
+  if (datePreset === "tomorrow") return "tomorrow";
   if (datePreset === "weekend") return "weekend";
-  return undefined;
+  return "upcoming";
 }
 
-function getNextSevenDaysRange(now: Date, timeZone: string) {
-  const start = getLocalDate(now, timeZone);
-  const endDate = new Date(`${start}T12:00:00.000Z`);
-  endDate.setUTCDate(endDate.getUTCDate() + 6);
-
-  return { end: endDate.toISOString().slice(0, 10), start };
+function selectHomepageEvents(events: readonly CityEvent[], context: CityContext, now = new Date()) {
+  return queryEvents(
+    events,
+    context,
+    { period: "upcoming", statuses: ["active", "scheduled"] },
+    now,
+  ).slice(0, 3);
 }
 
 function getSearchParam(value: string | string[] | undefined) {
@@ -113,31 +117,8 @@ function getLocalDate(value: Date, timeZone: string) {
   return `${values.year}-${values.month}-${values.day}`;
 }
 
-function isEventCategory(value: unknown): value is EventCategory {
-  return typeof value === "string" && eventCategories.includes(value as EventCategory);
-}
-
-const eventCategories = [
-  "concert",
-  "festival",
-  "theatre",
-  "movie",
-  "sport",
-  "kids",
-  "education",
-  "conference",
-  "market",
-  "exhibition",
-  "community",
-  "government",
-  "nightlife",
-  "workshop",
-  "literature",
-  "other",
-] as const;
-
 function isEventDatePreset(value: unknown): value is EventDatePreset {
-  return value === "all" || value === "today" || value === "weekend" || value === "next-seven-days";
+  return value === "today" || value === "tomorrow" || value === "weekend" || value === "upcoming";
 }
 
 function isEventSort(value: unknown): value is EventSort {
@@ -153,6 +134,7 @@ export {
   filterEventsForUi,
   groupEventsByDay,
   parseEventsUiFilters,
+  selectHomepageEvents,
   type EventDatePreset,
   type EventDayGroup,
   type EventsUiFilters,

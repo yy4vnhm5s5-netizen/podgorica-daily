@@ -3,10 +3,12 @@ import Link from "next/link";
 
 import type { CityEvent } from "../domain/event.ts";
 import {
-  getEventCategoryLabel,
+  getEventPresentationCategoryLabel,
   getEventsTranslations,
   getEventStatusLabel,
 } from "./events-translations";
+import { getEventPresentationCategory } from "./event-presentation-category";
+import { getEventSummary } from "./event-summary";
 import { Badge } from "@/shared/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { getLocaleTag, type Locale } from "@/shared/config/locale";
@@ -20,6 +22,7 @@ interface EventDetailProps {
 function EventDetail({ event, locale }: EventDetailProps) {
   const translations = getEventsTranslations(locale);
   const statusLabel = getEventStatusLabel(locale, event.status);
+  const summary = getEventSummary(event.description);
 
   return (
     <article className="mx-auto max-w-3xl space-y-6">
@@ -41,7 +44,12 @@ function EventDetail({ event, locale }: EventDetailProps) {
         <CardHeader className="gap-4 p-5 sm:p-8">
           <div className="flex flex-wrap gap-2">
             <Badge variant="outline">{event.sourceName}</Badge>
-            <Badge variant="outline">{getEventCategoryLabel(locale, event.category)}</Badge>
+            <Badge variant="outline">
+              {getEventPresentationCategoryLabel(
+                locale,
+                getEventPresentationCategory(event.category),
+              )}
+            </Badge>
             {statusLabel ? (
               <Badge
                 className={
@@ -67,12 +75,15 @@ function EventDetail({ event, locale }: EventDetailProps) {
               label={translations.dateAndTime}
               value={formatEventSchedule(event, locale)}
             />
-            {event.venueName || event.address ? (
+            {event.venueName ? (
               <EventDetailItem
                 icon={MapPin}
                 label={translations.location}
-                value={event.venueName ?? event.address}
+                value={event.venueName}
               />
+            ) : null}
+            {event.address ? (
+              <EventDetailItem icon={MapPin} label={translations.address} value={event.address} />
             ) : null}
             {event.organizer ? (
               <EventDetailItem
@@ -82,10 +93,8 @@ function EventDetail({ event, locale }: EventDetailProps) {
               />
             ) : null}
           </dl>
-          {event.description ? (
-            <p className="whitespace-pre-line leading-7 text-muted-foreground">
-              {event.description}
-            </p>
+          {summary ? (
+            <p className="leading-7 text-muted-foreground">{summary}</p>
           ) : null}
           <a
             className="inline-flex min-h-11 items-center gap-2 rounded-md border border-border px-4 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"

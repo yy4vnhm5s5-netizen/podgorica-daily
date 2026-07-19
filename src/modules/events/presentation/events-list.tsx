@@ -3,6 +3,7 @@ import { Search } from "lucide-react";
 import type { CityEvent } from "../domain/event.ts";
 import { EventCard } from "./event-card";
 import { EventsFilterSheet } from "./events-filter-sheet";
+import { getEventPresentationCategory } from "./event-presentation-category";
 import { getEventsTranslations } from "./events-translations";
 import { groupEventsByDay, type EventsUiFilters } from "./events-ui-model";
 import { EmptyState } from "@/shared/components/empty-state";
@@ -22,7 +23,7 @@ interface EventsListProps {
 function EventsList({ allEvents, events, filters, locale, timezone }: EventsListProps) {
   const translations = getEventsTranslations(locale);
   const groups = groupEventsByDay(events, timezone);
-  const categories = [...new Set(allEvents.map((event) => event.category))].sort();
+  const categories = [...new Set(allEvents.map((event) => getEventPresentationCategory(event.category)))].sort();
   const sources = [
     ...new Map(allEvents.map((event) => [event.sourceId, event.sourceName])).entries(),
   ]
@@ -57,7 +58,7 @@ function EventsList({ allEvents, events, filters, locale, timezone }: EventsList
               placeholder={translations.searchPlaceholder}
               type="search"
             />
-            {filters.datePreset !== "all" ? (
+            {filters.datePreset !== "upcoming" ? (
               <input name="period" type="hidden" value={filters.datePreset} />
             ) : null}
             {filters.sourceId ? (
@@ -118,7 +119,7 @@ function EventsList({ allEvents, events, filters, locale, timezone }: EventsList
 
 function QuickFilters({ filters, locale }: { filters: EventsUiFilters; locale: Locale }) {
   const translations = getEventsTranslations(locale);
-  const presets = ["all", "today", "weekend", "next-seven-days"] as const;
+  const presets = ["today", "tomorrow", "weekend", "upcoming"] as const;
 
   return (
     <nav aria-label={translations.filters} className="-mx-1 overflow-x-auto px-1 pb-1">
@@ -144,16 +145,16 @@ function QuickFilters({ filters, locale }: { filters: EventsUiFilters; locale: L
 
 function getQuickFilterLabel(
   translations: ReturnType<typeof getEventsTranslations>,
-  preset: "all" | "today" | "weekend" | "next-seven-days",
+  preset: "today" | "tomorrow" | "weekend" | "upcoming",
 ) {
   if (preset === "weekend") return translations.quickFilters.thisWeekend;
-  if (preset === "next-seven-days") return translations.quickFilters.nextSevenDays;
+  if (preset === "upcoming") return translations.quickFilters.upcoming;
   return translations.quickFilters[preset];
 }
 
 function createEventsHref(locale: Locale, filters: EventsUiFilters) {
   const params = new URLSearchParams();
-  if (filters.datePreset !== "all") params.set("period", filters.datePreset);
+  if (filters.datePreset !== "upcoming") params.set("period", filters.datePreset);
   if (filters.query) params.set("query", filters.query);
   if (filters.sourceId) params.set("source", filters.sourceId);
   if (filters.category) params.set("category", filters.category);

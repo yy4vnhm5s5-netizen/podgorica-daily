@@ -38,6 +38,7 @@ function normalizeEventCandidate(
   }
 
   const event: CityEvent = {
+    address: candidate.rawAddress?.trim() || undefined,
     category: normalizeEventCategory(candidate.categoryHint),
     cityIds: [context.city.id],
     description: candidate.rawDescription?.trim() || undefined,
@@ -60,6 +61,7 @@ function normalizeEventCandidate(
     sourceReferences: [candidate.source],
     sourceUpdatedAt: candidate.sourceUpdatedAt,
     sourceUrl: candidate.source.sourceUrl,
+    slug: createEventSlug(title),
     startDate,
     startsAt,
     status: getEventStatus(
@@ -97,6 +99,11 @@ function createEventId(input: {
   return `event_${createHash("sha256").update(identity).digest("hex").slice(0, 20)}`;
 }
 
+function createEventSlug(title: string) {
+  const slug = normalizeText(title).replace(/\s+/g, "-");
+  return slug || undefined;
+}
+
 function normalizeText(value: string) {
   return value
     .normalize("NFKD")
@@ -107,4 +114,4 @@ function normalizeText(value: string) {
     .replace(/\s+/g, " ");
 }
 
-export { createEventId, normalizeEventCandidate, normalizeText };
+export { createEventId, createEventSlug, normalizeEventCandidate, normalizeText };

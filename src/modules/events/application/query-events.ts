@@ -9,7 +9,7 @@ interface EventQuery {
   dateRange?: { end: string; start: string };
   free?: boolean;
   language?: CityEvent["language"];
-  period?: "currentWeek" | "today" | "tomorrow" | "weekend";
+  period?: "currentWeek" | "today" | "tomorrow" | "upcoming" | "weekend";
   sourceId?: string;
   statuses?: readonly EventStatus[];
   venueId?: string;
@@ -61,6 +61,8 @@ function getPeriodBoundaries(period: EventQuery["period"], timezone: string, now
   const dayOfWeek = today.getUTCDay() || 7;
   const monday = new Date(today);
   monday.setUTCDate(monday.getUTCDate() - dayOfWeek + 1);
+  if (period === "upcoming") return { start: local };
+
   const sunday = new Date(monday);
   sunday.setUTCDate(sunday.getUTCDate() + 6);
   return { end: toDateString(sunday), start: toDateString(monday) };
@@ -82,11 +84,11 @@ function isWeekendEvent(event: CityEvent, timezone: string) {
 
 function intersectsDateRange(
   event: CityEvent,
-  range: { end: string; start: string },
+  range: { end?: string; start: string },
   timezone: string,
 ) {
   const date = getEventLocalDate(event, timezone);
-  return date !== undefined && date >= range.start && date <= range.end;
+  return date !== undefined && date >= range.start && (!range.end || date <= range.end);
 }
 
 function getEventLocalDate(event: CityEvent, timezone: string) {
