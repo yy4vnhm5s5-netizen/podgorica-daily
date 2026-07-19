@@ -8,7 +8,7 @@ test("localizes the cinema placeholder without introducing mock screening data",
 
   assert.equal(translations.cinema, "U bioskopu");
   assert.equal(translations.cinemaDescription, "Program bioskopa trenutno nije dostupan.");
-  assert.equal(translations.cinemaAction, "Pogledajte projekcije →");
+  assert.equal(translations.cinemaAction, "Sve projekcije →");
 });
 
 test("localizes cinema and emergency-number labels in English", () => {
@@ -16,7 +16,7 @@ test("localizes cinema and emergency-number labels in English", () => {
 
   assert.equal(cards.cinema, "In cinemas");
   assert.equal(cards.cinemaDescription, "Cinema listings are currently unavailable.");
-  assert.equal(cards.cinemaAction, "View screenings →");
+  assert.equal(cards.cinemaAction, "All screenings →");
   assert.deepEqual(emergencyNumbers, {
     ambulance: "Ambulance",
     fireService: "Fire service",

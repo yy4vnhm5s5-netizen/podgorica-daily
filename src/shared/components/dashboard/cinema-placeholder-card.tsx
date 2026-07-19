@@ -11,7 +11,7 @@ interface CinemaPlaceholderCardProps {
 function CinemaPlaceholderCard({ actionLabel, description, title }: CinemaPlaceholderCardProps) {
   return (
     <DashboardCard
-      accent="warning"
+      accent="indigo"
       actionLabel={actionLabel}
       description={description}
       icon={Clapperboard}

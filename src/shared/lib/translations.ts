@@ -6,7 +6,7 @@ const translations = {
       cards: {
         airQuality: "Air Quality",
         cinema: "In cinemas",
-        cinemaAction: "View screenings →",
+        cinemaAction: "All screenings →",
         cinemaDescription: "Cinema listings are currently unavailable.",
         eventsDescription: "There are currently no scheduled events.",
         events: "Events",
@@ -53,7 +53,7 @@ const translations = {
       cards: {
         airQuality: "Kvalitet vazduha",
         cinema: "U bioskopu",
-        cinemaAction: "Pogledajte projekcije →",
+        cinemaAction: "Sve projekcije →",
         cinemaDescription: "Program bioskopa trenutno nije dostupan.",
         eventsDescription: "Trenutno nema najavljenih događaja.",
         events: "Događaji",

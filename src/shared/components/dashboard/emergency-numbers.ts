@@ -13,7 +13,7 @@ interface EmergencyNumber {
 
 const emergencyNumbersStripLayout = {
   item: "min-w-0",
-  link: "flex min-h-11 flex-col items-center justify-center gap-0.5 px-2 text-center focus-visible:relative focus-visible:z-10 focus-visible:rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+  link: "flex min-h-12 flex-col items-center justify-center gap-1 px-2 py-1 text-center focus-visible:relative focus-visible:z-10 focus-visible:rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
   list: "grid grid-cols-3 divide-x divide-blue-200/80",
 } as const;
 

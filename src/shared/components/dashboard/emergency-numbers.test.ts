@@ -24,5 +24,6 @@ test("uses a compact three-column layout without horizontal overflow utilities",
   assert.match(emergencyNumbersStripLayout.list, /grid-cols-3/);
   assert.match(emergencyNumbersStripLayout.list, /divide-x/);
   assert.match(emergencyNumbersStripLayout.item, /min-w-0/);
-  assert.match(emergencyNumbersStripLayout.link, /min-h-11/);
+  assert.match(emergencyNumbersStripLayout.link, /min-h-12/);
+  assert.match(emergencyNumbersStripLayout.link, /py-1/);
 });

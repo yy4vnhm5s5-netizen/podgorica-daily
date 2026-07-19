@@ -3,7 +3,7 @@ import type { LucideIcon } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { cn } from "@/shared/lib/utils";
 
-type DashboardCardAccent = "info" | "neutral" | "success" | "warning";
+type DashboardCardAccent = "indigo" | "info" | "neutral" | "success" | "warning";
 
 interface DashboardCardProps {
   accent?: DashboardCardAccent;
@@ -14,6 +14,11 @@ interface DashboardCardProps {
 }
 
 const accentClasses: Record<DashboardCardAccent, { card: string; fog: string; icon: string }> = {
+  indigo: {
+    card: "border-indigo-200/80 bg-indigo-50/60 hover:border-indigo-300",
+    fog: "card-fog--neutral",
+    icon: "bg-indigo-100/80 text-indigo-800",
+  },
   info: {
     card: "border-blue-200/80 bg-blue-50/60 hover:border-blue-300",
     fog: "card-fog--info",

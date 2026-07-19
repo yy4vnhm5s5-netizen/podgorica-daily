@@ -37,7 +37,7 @@ function EmergencyNumbersStrip({ items, label }: EmergencyNumbersStripProps) {
                     <Icon aria-hidden="true" className="size-3.5 shrink-0 text-blue-700" strokeWidth={1.8} />
                     {itemLabel}
                   </span>
-                  <span className="text-base font-semibold tracking-tight text-foreground tabular-nums">
+                  <span className="text-lg font-bold leading-none tracking-tight text-foreground tabular-nums">
                     {number}
                   </span>
                 </a>
