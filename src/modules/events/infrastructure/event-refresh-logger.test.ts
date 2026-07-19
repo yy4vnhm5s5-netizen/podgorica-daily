@@ -35,6 +35,20 @@ test("emits every structured Events diagnostic as one non-empty JSON string", ()
       rejectedCount: 2,
     });
     emitInfo({ event: "events-refresh-completed", providerCount: 4, state: "partial" });
+    emitInfo({
+      event: "events-refresh-parsed-sample",
+      parsedCount: 20,
+      provider: "cnp",
+      sample: {
+        parserWarnings: ["Missing start time", "Missing image"],
+        rawDateText: "24. jul 2026",
+        rawTimeText: "20:00",
+        rawTitle: "",
+        rawVenue: "CNP",
+        startDate: "",
+        startsAt: "",
+      },
+    });
     emitError({
       error: { message: "KIC request failed", name: "Error", stack: "Error: KIC request failed" },
       event: "events-refresh-provider-failed",
@@ -46,7 +60,7 @@ test("emits every structured Events diagnostic as one non-empty JSON string", ()
   }
 
   const emitted = [...infoCalls, ...errorCalls];
-  assert.equal(emitted.length, 6);
+  assert.equal(emitted.length, 7);
   for (const call of emitted) {
     assert.equal(call.length, 1);
     assert.equal(typeof call[0], "string");
@@ -72,12 +86,49 @@ test("emits every structured Events diagnostic as one non-empty JSON string", ()
       "events-refresh-rejected-event provider=cnp reasons=missing-date eventId=12345",
       "events-refresh-provider-completed provider=glavni-grad accepted=4 rejected=2",
       "events-refresh-completed state=partial providers=4",
+      'events-refresh-parsed-sample provider=cnp parsed=20 title="" dateText="24. jul 2026" timeText="20:00" startDate="" startsAt="" venue="CNP" warnings="Missing start time, Missing image"',
     ],
   );
   assert.equal(
     kicFailure.message,
     "events-refresh-provider-failed provider=kic error=Error",
   );
+});
+
+test("formats parsed samples with empty values, escaped quotes, and bounded warnings", () => {
+  const calls: unknown[][] = [];
+  const originalInfo = console.info;
+  console.info = (...arguments_: unknown[]) => calls.push(arguments_);
+
+  try {
+    emitInfo({
+      event: "events-refresh-parsed-sample",
+      parsedCount: 1,
+      provider: "tourism-podgorica",
+      sample: {
+        parserWarnings: [
+          'Warning with "quotes"',
+          "Second warning",
+          "Third warning",
+          "Fourth warning must not appear",
+        ],
+        rawDateText: "",
+        rawTimeText: " ",
+        rawTitle: `  ${"Long title ".repeat(10)}with "quotes"  `,
+      },
+    });
+  } finally {
+    console.info = originalInfo;
+  }
+
+  const payload = JSON.parse(calls[0][0] as string);
+  assert.equal(
+    payload.message,
+    'events-refresh-parsed-sample provider=tourism-podgorica parsed=1 title="Long title Long title Long title Long title Long title Long title Long title Lo…" dateText="" timeText="" startDate="" startsAt="" venue="" warnings="Warning with \\"quotes\\", Second warning, Third warning"',
+  );
+  assert.doesNotMatch(payload.message, /Fourth warning/);
+  assert.ok(payload.message.includes('title="Long title'));
+  assert.ok(payload.message.includes('\\"quotes\\"'));
 });
 
 test("emits startup messages as one non-empty string", () => {

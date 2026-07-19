@@ -38,11 +38,7 @@ function withRailwayMessage(
 }
 
 function createReadableMessage(event: string, payload: EventRefreshLogPayload): string {
-  if (event === "events-refresh-parsed-sample")
-    return appendDetails(event, payload, [
-      ["provider", "provider"],
-      ["parsed", "parsedCount"],
-    ]);
+  if (event === "events-refresh-parsed-sample") return createParsedSampleMessage(event, payload);
   if (event === "events-refresh-pipeline")
     return appendDetails(event, payload, [
       ["provider", "provider"],
@@ -91,6 +87,45 @@ function createReadableMessage(event: string, payload: EventRefreshLogPayload): 
     return appendDetails(event, { ...payload, providers }, [["providers", "providers"]]);
   }
   return event;
+}
+
+function createParsedSampleMessage(event: string, payload: EventRefreshLogPayload): string {
+  const sample = isRecord(payload.sample) ? payload.sample : {};
+  const provider = readMessageValue(payload.provider);
+  const parsedCount = readMessageValue(payload.parsedCount);
+  const warnings = Array.isArray(sample.parserWarnings)
+    ? sample.parserWarnings
+        .filter((warning): warning is string => typeof warning === "string")
+        .slice(0, 3)
+        .map((warning) => compactMessageValue(warning))
+        .join(", ")
+    : "";
+
+  return [
+    event,
+    `provider=${provider}`,
+    `parsed=${parsedCount}`,
+    `title=${quoteMessageValue(sample.rawTitle)}`,
+    `dateText=${quoteMessageValue(sample.rawDateText)}`,
+    `timeText=${quoteMessageValue(sample.rawTimeText)}`,
+    `startDate=${quoteMessageValue(sample.startDate)}`,
+    `startsAt=${quoteMessageValue(sample.startsAt)}`,
+    `venue=${quoteMessageValue(sample.rawVenue)}`,
+    `warnings=${quoteMessageValue(warnings)}`,
+  ].join(" ");
+}
+
+function readMessageValue(value: unknown): string {
+  return typeof value === "number" || typeof value === "string" ? compactMessageValue(String(value)) : "";
+}
+
+function quoteMessageValue(value: unknown): string {
+  return `"${compactMessageValue(typeof value === "string" ? value : "").replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+}
+
+function compactMessageValue(value: string): string {
+  const compact = value.replace(/\s+/g, " ").trim();
+  return compact.length > 80 ? `${compact.slice(0, 79)}…` : compact;
 }
 
 function appendDetails(

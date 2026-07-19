@@ -113,7 +113,10 @@ test("logs one concise representative parsed candidate before normalization", ()
   assert.equal(calls[0].length, 1);
   const payload = JSON.parse(calls[0][0] as string);
   assert.equal(payload.event, "events-refresh-parsed-sample");
-  assert.equal(payload.message, "events-refresh-parsed-sample provider=test-provider parsed=1");
+  assert.equal(
+    payload.message,
+    'events-refresh-parsed-sample provider=test-provider parsed=1 title="Example event title" dateText="" timeText="" startDate="" startsAt="" venue="" warnings="First warning, Second warning"',
+  );
   assert.equal(payload.sample.rawTitle, "Example event title");
   assert.deepEqual(payload.sample.parserWarnings, ["First warning", "Second warning"]);
   assert.ok(payload.sample.rawDescription.length <= 240);
