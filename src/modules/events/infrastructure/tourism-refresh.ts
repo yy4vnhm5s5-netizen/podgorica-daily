@@ -3,7 +3,10 @@ import { normalizeEventCandidate } from "../domain/event-normalization.ts";
 import { runEventQualityPipeline } from "../domain/event-quality.ts";
 import { writeEventCache, type EventCacheSnapshot } from "./events-cache.ts";
 import { emitInfo } from "./event-refresh-logger.ts";
-import { logEventRefreshObservability } from "./event-refresh-observability.ts";
+import {
+  logEventRefreshObservability,
+  logEventRefreshParsedSample,
+} from "./event-refresh-observability.ts";
 import type { TourismHttpClient } from "./tourism-http-client.ts";
 import {
   discoverTourismEventUrls,
@@ -53,10 +56,11 @@ async function refreshTourismEvents({
         }
       }),
     );
+    const candidates = parsed.flatMap((item) => (item ? [item.candidate] : []));
+    logEventRefreshParsedSample({ candidates, provider: "tourism-podgorica" });
     const normalized = parsed.flatMap((item) =>
       item ? [normalizeEventCandidate(item.candidate, context, now())] : [],
     );
-    const candidates = parsed.flatMap((item) => (item ? [item.candidate] : []));
     const quality = runEventQualityPipeline({
       candidatesDiscovered: urls.length,
       events: normalized.flatMap(({ event }) => (event ? [event] : [])),

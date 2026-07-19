@@ -2,7 +2,10 @@ import { getEventQualityPolicy } from "../../../config/event-quality.ts";
 import { normalizeEventCandidate } from "../domain/event-normalization.ts";
 import { runEventQualityPipeline } from "../domain/event-quality.ts";
 import { writeEventCache, type EventCacheSnapshot } from "./events-cache.ts";
-import { logEventRefreshObservability } from "./event-refresh-observability.ts";
+import {
+  logEventRefreshObservability,
+  logEventRefreshParsedSample,
+} from "./event-refresh-observability.ts";
 import type { GlavniGradHttpClient } from "./glavni-grad-http-client.ts";
 import {
   discoverGlavniGradEventUrls,
@@ -29,6 +32,7 @@ async function refreshGlavniGradEvents({
     urls.map(async (url) => parseGlavniGradEventArticle(await httpClient.get(url), url)),
   );
   const candidates = parsed.map(({ candidate }) => candidate);
+  logEventRefreshParsedSample({ candidates, provider: "glavni-grad-podgorica" });
   const normalized = parsed.map(({ candidate }) =>
     normalizeEventCandidate(candidate, context, now()),
   );

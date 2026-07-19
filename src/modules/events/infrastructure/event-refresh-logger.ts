@@ -38,6 +38,11 @@ function withRailwayMessage(
 }
 
 function createReadableMessage(event: string, payload: EventRefreshLogPayload): string {
+  if (event === "events-refresh-parsed-sample")
+    return appendDetails(event, payload, [
+      ["provider", "provider"],
+      ["parsed", "parsedCount"],
+    ]);
   if (event === "events-refresh-pipeline")
     return appendDetails(event, payload, [
       ["provider", "provider"],

@@ -5,6 +5,7 @@ import { runEventQualityPipeline } from "../domain/event-quality.ts";
 import { isIsoDate, type CityEvent, type EventCandidate } from "../domain/event.ts";
 import {
   createEventRefreshObservability,
+  logEventRefreshParsedSample,
   logEventRefreshObservability,
 } from "./event-refresh-observability.ts";
 
@@ -85,6 +86,38 @@ test("reports pipeline counts and a deterministic reason for every rejected even
 test("recognizes invalid calendar dates before they enter the quality pipeline", () => {
   assert.equal(isIsoDate("2026-02-28"), true);
   assert.equal(isIsoDate("2026-02-30"), false);
+});
+
+test("logs one concise representative parsed candidate before normalization", () => {
+  const calls: unknown[][] = [];
+  const originalInfo = console.info;
+  console.info = (...arguments_: unknown[]) => calls.push(arguments_);
+
+  try {
+    logEventRefreshParsedSample({
+      candidates: [
+        {
+          ...candidate(sourceUrl),
+          parserWarnings: ["First warning", "Second warning"],
+          rawDescription: `  ${"Long source text ".repeat(40)}  `,
+          rawTitle: "  Example event title  ",
+        },
+      ],
+      provider: "test-provider",
+    });
+  } finally {
+    console.info = originalInfo;
+  }
+
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].length, 1);
+  const payload = JSON.parse(calls[0][0] as string);
+  assert.equal(payload.event, "events-refresh-parsed-sample");
+  assert.equal(payload.message, "events-refresh-parsed-sample provider=test-provider parsed=1");
+  assert.equal(payload.sample.rawTitle, "Example event title");
+  assert.deepEqual(payload.sample.parserWarnings, ["First warning", "Second warning"]);
+  assert.ok(payload.sample.rawDescription.length <= 240);
+  assert.match(payload.sample.rawDescription, /…$/);
 });
 
 test("logs pipeline diagnostics as one parseable JSON string per event", () => {

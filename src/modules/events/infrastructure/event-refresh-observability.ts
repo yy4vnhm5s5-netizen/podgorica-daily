@@ -36,6 +36,36 @@ interface EventRefreshObservabilityInput {
   quality: EventQualityPipelineResult;
 }
 
+function logEventRefreshParsedSample({
+  candidates,
+  provider,
+}: {
+  candidates: readonly EventCandidate[];
+  provider: string;
+}) {
+  const candidate = candidates[0];
+  emitInfo({
+    event: "events-refresh-parsed-sample",
+    parsedCount: candidates.length,
+    provider,
+    sample: candidate
+      ? {
+          endsAt: candidate.endsAt,
+          parserWarnings: candidate.parserWarnings.slice(0, 3).map((warning) => compactText(warning)),
+          rawDateText: compactText(candidate.rawDateText),
+          rawDescription: compactText(candidate.rawDescription, 240),
+          rawTimeText: compactText(candidate.rawTimeText),
+          rawTitle: compactText(candidate.rawTitle),
+          rawVenue: compactText(candidate.rawVenue),
+          sourceUrl: candidate.source.sourceUrl,
+          startDate: candidate.startDate,
+          startsAt: candidate.startsAt,
+          timezone: candidate.timezone,
+        }
+      : null,
+  });
+}
+
 function createEventRefreshObservability({
   candidates,
   fetchedCount,
@@ -127,8 +157,15 @@ function isDuplicate(left: CityEvent, right: CityEvent) {
   return kind === "exact" || kind === "strong";
 }
 
+function compactText(value: string | undefined, maximumLength = 120) {
+  if (!value) return undefined;
+  const compact = value.replace(/\s+/g, " ").trim();
+  return compact.length > maximumLength ? `${compact.slice(0, maximumLength - 1)}…` : compact;
+}
+
 export {
   createEventRefreshObservability,
+  logEventRefreshParsedSample,
   logEventRefreshObservability,
   type EventRefreshPipelineMetrics,
   type EventRefreshRejectedEvent,

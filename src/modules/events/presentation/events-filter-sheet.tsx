@@ -14,8 +14,10 @@ interface EventsFilterSheetProps {
   filters: EventsUiFilters;
   locale: Locale;
   sources: readonly { id: string; name: string }[];
-  translations: EventsTranslations;
+  translations: EventsFilterTranslations;
 }
+
+type EventsFilterTranslations = Omit<EventsTranslations, "eventsCount">;
 
 function EventsFilterSheet({
   categories,
@@ -128,4 +130,4 @@ function FilterField({
   );
 }
 
-export { EventsFilterSheet, type EventsFilterSheetProps };
+export { EventsFilterSheet, type EventsFilterSheetProps, type EventsFilterTranslations };

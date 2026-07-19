@@ -22,6 +22,7 @@ interface EventsListProps {
 
 function EventsList({ allEvents, events, filters, locale, timezone }: EventsListProps) {
   const translations = getEventsTranslations(locale);
+  const { eventsCount, ...filterTranslations } = translations;
   const groups = groupEventsByDay(events, timezone);
   const categories = [...new Set(allEvents.map((event) => getEventPresentationCategory(event.category)))].sort();
   const sources = [
@@ -34,7 +35,7 @@ function EventsList({ allEvents, events, filters, locale, timezone }: EventsList
     <section aria-labelledby="events-list-title" className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground" id="events-list-title">
-          {translations.eventsCount(events.length)}
+          {eventsCount(events.length)}
         </p>
         <div className="flex items-center gap-2">
           <form
@@ -76,7 +77,7 @@ function EventsList({ allEvents, events, filters, locale, timezone }: EventsList
             filters={filters}
             locale={locale}
             sources={sources}
-            translations={translations}
+            translations={filterTranslations}
           />
         </div>
       </div>
