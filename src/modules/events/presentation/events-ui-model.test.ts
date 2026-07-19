@@ -167,6 +167,21 @@ test("selects at most three upcoming events for the homepage cache read", () => 
   assert.deepEqual(selectHomepageEvents([], context, new Date("2026-07-17T10:00:00.000Z")), []);
 });
 
+test("continues with tomorrow and later dates when no event remains today", () => {
+  const events = [
+    podgoricaEvent({ id: "earlier-today", startsAt: "2026-07-17T08:00:00.000Z" }),
+    podgoricaEvent({ id: "tomorrow", startsAt: "2026-07-18T13:00:00.000Z" }),
+    podgoricaEvent({ id: "next-date", startsAt: "2026-07-22T13:00:00.000Z" }),
+  ];
+
+  assert.deepEqual(
+    selectHomepageEvents(events, context, new Date("2026-07-17T10:00:00.000Z")).map(
+      (event) => event.id,
+    ),
+    ["tomorrow", "next-date"],
+  );
+});
+
 test("groups separate event days and preserves missing optional data", () => {
   const first = podgoricaEvent({
     id: "first",

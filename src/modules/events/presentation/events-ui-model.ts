@@ -99,7 +99,20 @@ function selectHomepageEvents(events: readonly CityEvent[], context: CityContext
     context,
     { period: "upcoming", statuses: ["active", "scheduled"] },
     now,
-  ).slice(0, 3);
+  )
+    .filter((event) => isCurrentOrFutureEvent(event, now, context.timezone))
+    .slice(0, 3);
+}
+
+function isCurrentOrFutureEvent(event: CityEvent, now: Date, timeZone: string) {
+  if (event.startsAt) {
+    const startsAt = new Date(event.startsAt);
+    if (startsAt >= now) return true;
+
+    return event.status === "active" && (!event.endsAt || new Date(event.endsAt) >= now);
+  }
+
+  return Boolean(event.startDate && event.startDate >= getLocalDate(now, timeZone));
 }
 
 function getSearchParam(value: string | string[] | undefined) {
