@@ -20,7 +20,7 @@ test("provides localized source-unavailable copy", () => {
 });
 
 test("uses the successful empty-state copy for planned power outages", () => {
-  assert.equal(getCityAlertsTranslations("me").noPowerOutages, "Nema planiranih isključenja.");
+  assert.equal(getCityAlertsTranslations("me").noPowerOutages, "Nema planiranih radova.");
 });
 
 test("uses the specific successful empty-state copy for water interruptions", () => {

@@ -65,12 +65,16 @@ async function initializeProvider({
   try {
     await ensureDirectory(provider.cachePath);
     const cache = await provider.readCache();
-    if (cache.snapshot) {
+    if (isUsableCacheSnapshot(cache.snapshot, provider.id)) {
       log(`${provider.id}: cache found at ${provider.cachePath}.`);
       return { id: provider.id, state: "cache-found" } as const;
     }
 
-    const reason = cache.error ? ` (${cache.error.code})` : "";
+    const reason = cache.error
+      ? ` (${cache.error.code})`
+      : cache.snapshot
+        ? " (cache-unusable)"
+        : "";
     log(`${provider.id}: cache missing${reason}; refresh started.`);
     const result = await withTimeout(provider.refresh(), refreshTimeoutMs, provider.id);
     const { summary } = result;
@@ -97,6 +101,28 @@ async function initializeProvider({
     log(`${provider.id}: initialization failed (${getErrorMessage(error)}).`);
     return { id: provider.id, state: "failed" } as const;
   }
+}
+
+function isUsableCacheSnapshot(snapshot: unknown, providerId: CityAlertCacheProvider["id"]) {
+  if (!isRecord(snapshot)) return false;
+
+  const cache = snapshot;
+  const freshnessStatus = cache.freshnessStatus;
+  const lastSuccessfulRefreshAt = cache.lastSuccessfulRefreshAt;
+  return (
+    (freshnessStatus === "fresh" || freshnessStatus === "stale") &&
+    Array.isArray(cache.alerts) &&
+    typeof lastSuccessfulRefreshAt === "string" &&
+    typeof cache.source === "string" &&
+    (providerId === "CEDIS"
+      ? cache.source === "CEDIS"
+      : cache.source === "Vodovod i kanalizacija Podgorica") &&
+    !Number.isNaN(Date.parse(lastSuccessfulRefreshAt))
+  );
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
 }
 
 function withTimeout<T>(operation: Promise<T>, timeoutMs: number, providerId: string): Promise<T> {

@@ -5,11 +5,13 @@ import type { ReactNode } from "react";
 import type { DailyOverviewResult } from "@/modules/daily-overview/application/get-daily-overview";
 import { getDailyOverviewTranslations } from "@/modules/daily-overview/presentation/daily-overview-translations";
 import type { CurrentWeatherResult } from "@/modules/weather/application/get-current-weather";
+import { getWeatherTemperature } from "@/modules/weather/presentation/weather-temperature";
 import { StatusBadge, type StatusTone } from "@/shared/components/status-badge";
 import { Timestamp } from "@/shared/components/timestamp";
 import { Card } from "@/shared/components/ui/card";
 import type { Locale } from "@/shared/config/locale";
 import { getLocaleTag } from "@/shared/config/locale";
+import { dailySummaryLayout } from "./daily-summary-layout";
 
 interface DailySummaryBarProps {
   locale: Locale;
@@ -37,7 +39,7 @@ function DailySummaryBar({ locale, result, weather }: DailySummaryBarProps) {
   }
 
   const { airQualityCategory, eventsToday, generatedAt } = result.data;
-  const temperatureCelsius = weather?.status === "success" ? weather.data.temperature : undefined;
+  const temperatureCelsius = getWeatherTemperature(weather);
 
   return (
     <section aria-labelledby="daily-summary-heading">
@@ -49,14 +51,14 @@ function DailySummaryBar({ locale, result, weather }: DailySummaryBarProps) {
       </h1>
       <Card className="card-fog card-fog--summary border-blue-200/90 bg-blue-50/60 px-3 py-2 sm:px-4">
         <span aria-hidden="true" className="absolute inset-x-0 top-0 h-px bg-blue-300/80" />
-        <dl className="relative grid grid-cols-2">
+        <dl className={dailySummaryLayout.gridClassName}>
           <span
             aria-hidden="true"
-            className="pointer-events-none absolute inset-y-0 left-1/2 w-px bg-blue-200/70"
+            className={dailySummaryLayout.verticalDividerClassName}
           />
           <span
             aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 top-1/2 h-px bg-blue-200/70"
+            className={dailySummaryLayout.horizontalDividerClassName}
           />
           <SummaryItem icon={CloudSun} label={translations.temperature}>
             {temperatureCelsius === undefined ? "—" : `${temperatureCelsius.toFixed(0)}°C`}
@@ -96,7 +98,7 @@ interface SummaryItemProps {
 
 function SummaryItem({ children, icon: Icon, label }: SummaryItemProps) {
   return (
-    <div className="flex min-h-12 items-center gap-2.5 px-2 py-2 sm:px-4">
+    <div className={dailySummaryLayout.itemClassName}>
       <Icon aria-hidden="true" className="size-4 shrink-0 text-blue-700" strokeWidth={1.8} />
       <div className="min-w-0">
         <dt className="text-xs text-muted-foreground">{label}</dt>

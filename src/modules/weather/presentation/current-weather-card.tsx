@@ -19,6 +19,7 @@ import {
   type WeatherConditionKey,
 } from "@/modules/weather/domain/current-weather";
 import { getWeatherTranslations } from "@/modules/weather/presentation/weather-translations";
+import { getWeatherTemperature } from "@/modules/weather/presentation/weather-temperature";
 import { LoadingSkeleton } from "@/shared/components/loading-skeleton";
 import { Timestamp } from "@/shared/components/timestamp";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
@@ -109,7 +110,12 @@ function CurrentWeatherCard({ locale, result }: CurrentWeatherCardProps) {
     );
   }
 
-  const { apparentTemperature, condition, humidity, temperature, updatedAt, windSpeed } = result.data;
+  const { apparentTemperature, condition, humidity, updatedAt, windSpeed } = result.data;
+  const temperature = getWeatherTemperature(result);
+
+  if (temperature === undefined) {
+    return null;
+  }
 
   return (
     <WeatherCardFrame>

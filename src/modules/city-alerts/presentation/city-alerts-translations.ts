@@ -116,7 +116,7 @@ const cityAlertsTranslations: Record<Locale, CityAlertsTranslations> = {
     loading: "Učitavanje gradskih obavještenja",
     lastUpdated: "Posljednje uspješno ažuriranje",
     officialSource: "Zvanični izvor",
-    noPowerOutages: "Nema planiranih isključenja.",
+    noPowerOutages: "Nema planiranih radova.",
     noWaterInterruptions: "Nema aktivnih obavještenja o prekidima u vodosnabdijevanju.",
     otherAlerts: "Važna gradska obavještenja",
     power: "Struja",

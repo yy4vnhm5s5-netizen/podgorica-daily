@@ -26,6 +26,10 @@ interface LocalePageProps {
   params: Promise<{ locale: string }>;
 }
 
+// Keep the route fresh enough to reflect newly collected cache snapshots without
+// opting every route in the application out of Next.js caching.
+export const revalidate = 60;
+
 async function LocalePage({ params }: LocalePageProps) {
   const { locale: localeParam } = await params;
 

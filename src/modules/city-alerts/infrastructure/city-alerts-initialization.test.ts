@@ -27,7 +27,14 @@ test("preserves an existing cache and does not start a refresh", async () => {
     log: (message) => logs.push(message),
     providers: [
       provider({
-        readCache: async () => ({ snapshot: { alerts: [] } }),
+        readCache: async () => ({
+          snapshot: {
+            alerts: [],
+            freshnessStatus: "fresh",
+            lastSuccessfulRefreshAt: "2026-07-19T08:00:00.000Z",
+            source: "CEDIS",
+          },
+        }),
         refresh: async () => {
           refreshes += 1;
           throw new Error("must not refresh");
@@ -39,6 +46,66 @@ test("preserves an existing cache and does not start a refresh", async () => {
   assert.equal(refreshes, 0);
   assert.deepEqual(result.providers, [{ id: "CEDIS", state: "cache-found" }]);
   assert.ok(logs.includes("CEDIS: cache found at /runtime/cache/provider.json."));
+});
+
+test("refreshes an invalid cache shape instead of treating it as a provider snapshot", async () => {
+  const logs: string[] = [];
+  let refreshes = 0;
+  await initializeCityAlertCaches({
+    ensureDirectory: async () => undefined,
+    log: (message) => logs.push(message),
+    providers: [
+      provider({
+        readCache: async () => ({
+          snapshot: {
+            freshnessStatus: "fresh",
+            lastSuccessfulRefreshAt: "2026-07-19T08:00:00.000Z",
+            source: "CEDIS",
+          },
+        }),
+        refresh: async () => {
+          refreshes += 1;
+          return {
+            summary: { alertCount: 0, retainedPreviousSnapshot: false, status: "success" },
+          };
+        },
+      }),
+    ],
+  });
+
+  assert.equal(refreshes, 1);
+  assert.ok(logs.includes("CEDIS: cache missing (cache-unusable); refresh started."));
+});
+
+test("refreshes an unavailable cache so a repaired provider can recreate it", async () => {
+  const logs: string[] = [];
+  let refreshes = 0;
+  const result = await initializeCityAlertCaches({
+    ensureDirectory: async () => undefined,
+    log: (message) => logs.push(message),
+    providers: [
+      provider({
+        id: "VIK",
+        readCache: async () => ({
+          snapshot: {
+            alerts: [],
+            freshnessStatus: "unavailable",
+            lastSuccessfulRefreshAt: "not-a-date",
+          },
+        }),
+        refresh: async () => {
+          refreshes += 1;
+          return {
+            summary: { alertCount: 0, retainedPreviousSnapshot: false, status: "success" },
+          };
+        },
+      }),
+    ],
+  });
+
+  assert.equal(refreshes, 1);
+  assert.deepEqual(result.providers, [{ alertCount: 0, id: "VIK", state: "refreshed" }]);
+  assert.ok(logs.includes("VIK: cache missing (cache-unusable); refresh started."));
 });
 
 test("initializes a missing cache and logs the normalized result", async () => {
