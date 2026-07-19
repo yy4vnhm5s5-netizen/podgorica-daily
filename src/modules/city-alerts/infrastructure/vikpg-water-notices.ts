@@ -58,7 +58,8 @@ function discoverVikpgNotices(html: string, now = new Date()): VikpgNoticeLink[]
       title: normalize(stripHtml(match[2])),
       url: toVikpgUrl(match[1]),
     }))
-    .filter((link): link is VikpgNoticeLink => Boolean(link.url && link.title))
+    .filter((link) => Boolean(link.url && link.title))
+    .map(toVikpgNoticeLink)
     .filter(({ title }) => servicePattern.test(title));
 
   return deduplicateLinks(links).filter(({ publishedAt, title }) => {
@@ -67,6 +68,26 @@ function discoverVikpgNotices(html: string, now = new Date()): VikpgNoticeLink[]
       !publicationDate || publicationDate.getTime() >= startOfDay(addDays(now, -2)).getTime()
     );
   });
+}
+
+function toVikpgNoticeLink({
+  publishedAt,
+  title,
+  url,
+}: {
+  publishedAt: Date | undefined;
+  title: string;
+  url: string | null;
+}): VikpgNoticeLink {
+  if (!url) {
+    throw new Error("A filtered VIK notice link must have an approved URL.");
+  }
+
+  return {
+    ...(publishedAt ? { publishedAt } : {}),
+    title,
+    url,
+  };
 }
 
 function extractListingPublicationDate(html: string, linkIndex: number, now: Date) {
