@@ -35,18 +35,19 @@ FROM base AS runner
 ENV NODE_ENV=production
 
 RUN addgroup --system --gid 1001 nodejs \
-  && adduser --system --uid 1001 nextjs
+  && adduser --system --uid 1001 nextjs \
+  && apk add --no-cache su-exec
 
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-RUN mkdir -p /app/.runtime/cache && chown -R nextjs:nodejs /app/.runtime
-
-USER nextjs
+COPY scripts/runtime-entrypoint.sh /usr/local/bin/runtime-entrypoint
+RUN chmod 755 /usr/local/bin/runtime-entrypoint
 
 EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 ENV RUNTIME_DATA_DIR=/app/.runtime
 
+ENTRYPOINT ["runtime-entrypoint"]
 CMD ["node", "server.js"]
