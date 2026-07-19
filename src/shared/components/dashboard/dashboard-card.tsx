@@ -7,6 +7,7 @@ type DashboardCardAccent = "info" | "neutral" | "success" | "warning";
 
 interface DashboardCardProps {
   accent?: DashboardCardAccent;
+  actionLabel?: string;
   description: string;
   icon: LucideIcon;
   title: string;
@@ -35,7 +36,13 @@ const accentClasses: Record<DashboardCardAccent, { card: string; fog: string; ic
   },
 };
 
-function DashboardCard({ accent = "neutral", description, icon: Icon, title }: DashboardCardProps) {
+function DashboardCard({
+  accent = "neutral",
+  actionLabel,
+  description,
+  icon: Icon,
+  title,
+}: DashboardCardProps) {
   const accentStyle = accentClasses[accent];
 
   return (
@@ -59,6 +66,7 @@ function DashboardCard({ accent = "neutral", description, icon: Icon, title }: D
       </CardHeader>
       <CardContent className="p-4 pt-0 sm:p-5 sm:pt-0">
         <p className="text-sm leading-6 text-muted-foreground">{description}</p>
+        {actionLabel ? <p className="mt-3 text-sm font-medium text-primary">{actionLabel}</p> : null}
       </CardContent>
     </Card>
   );

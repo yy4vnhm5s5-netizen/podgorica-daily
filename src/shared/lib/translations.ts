@@ -5,12 +5,21 @@ const translations = {
     dashboard: {
       cards: {
         airQuality: "Air Quality",
+        cinema: "In cinemas",
+        cinemaAction: "View screenings →",
+        cinemaDescription: "Cinema listings are currently unavailable.",
         eventsDescription: "There are currently no scheduled events.",
         events: "Events",
         explorePodgorica: "Explore Podgorica",
         explorePodgoricaDescription: "Places are currently unavailable.",
         importantNumbers: "Important Numbers",
         importantNumbersDescription: "Data is currently unavailable.",
+      },
+      emergencyNumbers: {
+        ambulance: "Ambulance",
+        fireService: "Fire service",
+        label: "Emergency numbers",
+        police: "Police",
       },
       advertising: {
         subtitle: "Contact us →",
@@ -43,12 +52,21 @@ const translations = {
     dashboard: {
       cards: {
         airQuality: "Kvalitet vazduha",
+        cinema: "U bioskopu",
+        cinemaAction: "Pogledajte projekcije →",
+        cinemaDescription: "Program bioskopa trenutno nije dostupan.",
         eventsDescription: "Trenutno nema najavljenih događaja.",
         events: "Događaji",
         explorePodgorica: "Istražite Podgoricu",
         explorePodgoricaDescription: "Mjesta trenutno nijesu dostupna.",
         importantNumbers: "Važni brojevi",
         importantNumbersDescription: "Podaci trenutno nijesu dostupni.",
+      },
+      emergencyNumbers: {
+        ambulance: "Hitna",
+        fireService: "Vatrogasci",
+        label: "Hitni brojevi",
+        police: "Policija",
       },
       advertising: {
         subtitle: "Kontaktirajte nas →",

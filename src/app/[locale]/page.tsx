@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { CalendarDays, Landmark, Phone } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 
 import { getDefaultCityContext } from "@/config/city-context";
 import { getDailyOverview } from "@/modules/daily-overview/application/get-daily-overview";
@@ -15,7 +15,10 @@ import {
   CityAlertsSectionLoading,
 } from "@/modules/city-alerts/presentation/city-alerts-section";
 import { AdvertisingCard } from "@/shared/components/dashboard/advertising-card";
+import { CinemaPlaceholderCard } from "@/shared/components/dashboard/cinema-placeholder-card";
 import { DashboardCard } from "@/shared/components/dashboard/dashboard-card";
+import { getEmergencyNumbers } from "@/shared/components/dashboard/emergency-numbers";
+import { EmergencyNumbersStrip } from "@/shared/components/dashboard/emergency-numbers-strip";
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
 import { GlobalSearch } from "@/shared/components/layout/global-search";
 import { isLocale, type Locale } from "@/shared/config/locale";
@@ -42,7 +45,7 @@ async function LocalePage({ params }: LocalePageProps) {
 
 async function DashboardPage({ locale }: { locale: Locale }) {
   const translations = getTranslations(locale);
-  const { advertising, cards } = translations.dashboard;
+  const { advertising, cards, emergencyNumbers } = translations.dashboard;
   const context = getDefaultCityContext(locale);
   const [dailyOverview, weather] = await Promise.all([
     isFeatureEnabled("dailyOverview") ? getDailyOverview(context) : null,
@@ -74,18 +77,13 @@ async function DashboardPage({ locale }: { locale: Locale }) {
             icon={CalendarDays}
             title={cards.events}
           />
-          <DashboardCard
-            description={cards.importantNumbersDescription}
-            icon={Phone}
-            title={cards.importantNumbers}
-          />
-          <DashboardCard
-            accent="success"
-            description={cards.explorePodgoricaDescription}
-            icon={Landmark}
-            title={cards.explorePodgorica}
+          <CinemaPlaceholderCard
+            actionLabel={cards.cinemaAction}
+            description={cards.cinemaDescription}
+            title={cards.cinema}
           />
         </div>
+        <EmergencyNumbersStrip items={getEmergencyNumbers(emergencyNumbers)} label={emergencyNumbers.label} />
       </section>
     </DashboardLayout>
   );
