@@ -21,8 +21,10 @@ while true; do
     17) run_collector "cnp-events" "pnpm run collect:cnp-events" ;;
     27) run_collector "glavni-grad-events" "pnpm run collect:glavni-grad-events" ;;
     37) run_collector "tourism-events" "pnpm run collect:tourism-events" ;;
-    47) run_collector "cedis" "pnpm run collect:cedis" ;;
-    57) run_collector "vikpg" "pnpm run collect:vikpg" ;;
+    00|30)
+      run_collector "cedis" "pnpm run collect:cedis"
+      run_collector "vikpg" "pnpm run collect:vikpg"
+      ;;
   esac
 
   sleep 60

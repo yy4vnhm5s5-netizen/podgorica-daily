@@ -1,7 +1,8 @@
 import { isRefreshAuthorized } from "../../../../../shared/lib/refresh-auth.ts";
+import type { CityAlertsRefreshSummary } from "@/modules/city-alerts/infrastructure/city-alerts-refresh-runner";
 
 interface RefreshPostHandlerDependencies {
-  refresh: () => Promise<{ state: "already-running" | "failure" | "partial" | "success" }>;
+  refresh: () => Promise<CityAlertsRefreshSummary>;
   secret?: string;
 }
 

@@ -26,6 +26,7 @@ import {
   CityServicesPanel,
   type CityServiceInfo,
 } from "@/modules/city-alerts/presentation/city-services-panel";
+import { getCityServiceFreshnessLabel } from "@/modules/city-alerts/presentation/city-service-freshness";
 import { LoadingSkeleton } from "@/shared/components/loading-skeleton";
 import { SectionTitle } from "@/shared/components/section-title";
 import { StatusBadge, type StatusTone } from "@/shared/components/status-badge";
@@ -133,27 +134,41 @@ function getCityServices(
   const alerts = result.status === "success" ? result.data : [];
   const powerAlert = alerts.find(({ type }) => type === "powerOutage");
   const waterAlert = alerts.find(({ type }) => type === "waterOutage");
-  const cedisAvailable =
-    "metadata" in result &&
-    result.metadata.sources.some(
-      ({ freshnessStatus, id }) => id === "cedis" && freshnessStatus !== "unavailable",
-  );
+  const cedisSource = metadata.sources.find(({ id }) => id === "cedis");
   const vikpgSource = metadata.sources.find(({ id }) => id === "vikpg");
-  const vikpgAvailable =
-    vikpgSource?.freshnessStatus !== undefined && vikpgSource.freshnessStatus !== "unavailable";
 
   return {
     power: powerAlert
-      ? toCityServiceInfo(powerAlert, locale, translations)
-      : { state: cedisAvailable ? "none" : "unavailable" },
+      ? toCityServiceInfo(powerAlert, cedisSource, locale, translations)
+      : toEmptyCityServiceInfo(cedisSource, locale, translations),
     water: waterAlert
-      ? toCityServiceInfo(waterAlert, locale, translations)
-      : { state: vikpgAvailable ? "none" : "unavailable" },
+      ? toCityServiceInfo(waterAlert, vikpgSource, locale, translations)
+      : toEmptyCityServiceInfo(vikpgSource, locale, translations),
+  };
+}
+
+function toEmptyCityServiceInfo(
+  source: CityAlertsMetadata["sources"][number] | undefined,
+  locale: Locale,
+  translations: CityAlertsTranslations,
+): CityServiceInfo {
+  if (!source || source.freshnessStatus === "unavailable") return { state: "unavailable" };
+
+  return {
+    freshnessLabel: getCityServiceFreshnessLabel({
+      freshnessStatus: source.freshnessStatus,
+      lastSuccessfulUpdate: source.lastSuccessfulUpdate,
+      locale,
+      now: new Date(),
+      translations,
+    }),
+    state: "none",
   };
 }
 
 function toCityServiceInfo(
   alert: CityAlert,
+  source: CityAlertsMetadata["sources"][number] | undefined,
   locale: Locale,
   translations: CityAlertsTranslations,
 ): CityServiceInfo {
@@ -166,6 +181,15 @@ function toCityServiceInfo(
   return {
     area: getCityAlertContent(alert.affectedArea, translations),
     description: getCityAlertContent(alert.description, translations),
+    freshnessLabel: source
+      ? getCityServiceFreshnessLabel({
+          freshnessStatus: source.freshnessStatus,
+          lastSuccessfulUpdate: source.lastSuccessfulUpdate,
+          locale,
+          now: new Date(),
+          translations,
+        })
+      : undefined,
     publicationContext: alert.publishedAt
       ? `${translations.publishedAt}: ${formatDateTime(alert.publishedAt, { locale: localeTag }).label}`
       : undefined,

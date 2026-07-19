@@ -50,6 +50,7 @@ test("reads cached VIK alerts only in live mode", async () => {
     readCache: async () => snapshot("fresh"),
   });
   assert.equal(result.freshnessStatus, "fresh");
+  assert.equal(result.lastSuccessfulUpdate?.toISOString(), "2026-07-20T10:00:00.000Z");
   assert.equal(result.alerts[0]?.dataMode, "live");
   assert.equal(result.alerts[0]?.type, "waterOutage");
 });
@@ -68,6 +69,8 @@ test("keeps a stale VIK cache readable and isolates corrupt cache reads", async 
     },
   });
   assert.equal(stale.freshnessStatus, "stale");
+  assert.equal(stale.lastSuccessfulUpdate?.toISOString(), "2026-07-20T10:00:00.000Z");
   assert.equal(unavailable.freshnessStatus, "unavailable");
+  assert.equal(unavailable.lastSuccessfulUpdate, undefined);
   assert.deepEqual(unavailable.alerts, []);
 });

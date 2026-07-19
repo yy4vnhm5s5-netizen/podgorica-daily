@@ -17,6 +17,7 @@ interface CityAlertsTranslations {
   expectedEnd: string;
   loading: string;
   lastUpdated: string;
+  lastAvailableUpdate: string;
   officialSource: string;
   noPowerOutages: string;
   noWaterInterruptions: string;
@@ -33,6 +34,7 @@ interface CityAlertsTranslations {
   title: string;
   time: string;
   unavailable: string;
+  updated: string;
   water: string;
   types: Record<AlertType, string>;
 }
@@ -61,6 +63,7 @@ const cityAlertsTranslations: Record<Locale, CityAlertsTranslations> = {
     expectedEnd: "Expected end",
     loading: "Loading city alerts",
     lastUpdated: "Last successful update",
+    lastAvailableUpdate: "Last available update:",
     officialSource: "Official source",
     noPowerOutages: "No planned outages.",
     noWaterInterruptions: "No water service interruptions",
@@ -82,6 +85,7 @@ const cityAlertsTranslations: Record<Locale, CityAlertsTranslations> = {
     title: "City alerts",
     time: "Time",
     unavailable: "No data.",
+    updated: "Updated",
     water: "Water",
     types: {
       emergency: "Emergency",
@@ -115,6 +119,7 @@ const cityAlertsTranslations: Record<Locale, CityAlertsTranslations> = {
     expectedEnd: "Očekivani završetak",
     loading: "Učitavanje gradskih obavještenja",
     lastUpdated: "Posljednje uspješno ažuriranje",
+    lastAvailableUpdate: "Posljednje dostupno ažuriranje:",
     officialSource: "Zvanični izvor",
     noPowerOutages: "Nema planiranih radova.",
     noWaterInterruptions: "Nema aktivnih obavještenja o prekidima u vodosnabdijevanju.",
@@ -136,6 +141,7 @@ const cityAlertsTranslations: Record<Locale, CityAlertsTranslations> = {
     title: "Gradska obavještenja",
     time: "Vrijeme",
     unavailable: "Nema podataka.",
+    updated: "Ažurirano",
     water: "Voda",
     types: {
       emergency: "Hitno stanje",

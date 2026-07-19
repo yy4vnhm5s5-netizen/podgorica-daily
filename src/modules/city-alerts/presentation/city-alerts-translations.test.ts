@@ -19,6 +19,16 @@ test("provides localized source-unavailable copy", () => {
   assert.equal(getCityAlertsTranslations("en").unavailable, "No data.");
 });
 
+test("provides localized provider freshness prefixes", () => {
+  assert.equal(getCityAlertsTranslations("me").updated, "Ažurirano");
+  assert.equal(
+    getCityAlertsTranslations("me").lastAvailableUpdate,
+    "Posljednje dostupno ažuriranje:",
+  );
+  assert.equal(getCityAlertsTranslations("en").updated, "Updated");
+  assert.equal(getCityAlertsTranslations("en").lastAvailableUpdate, "Last available update:");
+});
+
 test("uses the successful empty-state copy for planned power outages", () => {
   assert.equal(getCityAlertsTranslations("me").noPowerOutages, "Nema planiranih radova.");
 });

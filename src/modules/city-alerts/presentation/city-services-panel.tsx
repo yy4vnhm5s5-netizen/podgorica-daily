@@ -13,6 +13,7 @@ type CityServiceState = "available" | "none" | "unavailable";
 interface CityServiceInfo {
   area?: string;
   description?: string;
+  freshnessLabel?: string;
   publicationContext?: string;
   state: CityServiceState;
   statusLabel?: string;
@@ -187,6 +188,9 @@ function CityServicesPanel({ services, translations }: CityServicesPanelProps) {
                 ) : null}
               </div>
             )}
+            {service.freshnessLabel ? (
+              <p className="mt-3 text-xs text-muted-foreground">{service.freshnessLabel}</p>
+            ) : null}
           </div>
         </div>
       </CardContent>

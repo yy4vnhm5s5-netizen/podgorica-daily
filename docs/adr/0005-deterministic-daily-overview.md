@@ -19,7 +19,7 @@ Future background collection follows this direction:
 Scheduler → Scrapers → Normalization → Cached providers → Daily Overview generator → UI
 ```
 
-Scheduled provider contracts define the expected cache-refresh intervals: weather every 30 minutes; traffic, power outages, and water outages every 10 minutes; weather warnings every 15 minutes; events and air quality every hour. Future Open-Meteo, CEDIS, Vodovod, AMSCG, Glavni grad, meteorological-warning, and event-source adapters must write normalized data to the cache. The website reads cached provider data only.
+Scheduled provider contracts define the expected cache-refresh intervals: weather every 30 minutes; traffic and weather warnings every 15 minutes; events and air quality every hour. The deployed CEDIS and VIK Podgorica adapters refresh every 30 minutes through the protected City Alerts refresh route or the Compose scheduler; this is the current bounded cadence for those official sources. Future Open-Meteo, CEDIS, Vodovod, AMSCG, Glavni grad, meteorological-warning, and event-source adapters must write normalized data to the cache. The website reads cached provider data only.
 
 ## Consequences
 

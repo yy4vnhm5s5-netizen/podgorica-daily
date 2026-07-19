@@ -2,7 +2,7 @@
 
 ## Status
 
-The repository has a Railway Docker web deployment configuration. CEDIS and VIK Podgorica initialize their missing caches in the background after a production Node.js web process starts. Durable Railway operation still requires a Railway Volume and a protected scheduler invoking the internal refresh route. The recommended production topology for the current Node.js file-cache architecture remains an Ubuntu VPS with Docker Compose, a persistent Docker volume, and Caddy on the host.
+The repository has a Railway Docker web deployment configuration. CEDIS and VIK Podgorica initialize their missing caches in the background after a production Node.js web process starts. Durable Railway operation requires a Railway Volume and a protected Railway Cron trigger that invokes the internal refresh route every 30 minutes. The recommended production topology for the current Node.js file-cache architecture remains an Ubuntu VPS with Docker Compose, a persistent Docker volume, and Caddy on the host.
 
 ## Runtime contract
 
@@ -20,7 +20,7 @@ The repository has a Railway Docker web deployment configuration. CEDIS and VIK 
 
 The shared JSON cache creates missing parent directories and writes by temporary file plus atomic rename. The Compose `event-cache` volume is initialized for UID/GID 1001 and mounted at `/var/lib/podgorica-daily/cache` in both app and scheduler containers. Container recreation therefore does not erase cache snapshots.
 
-The scheduler invokes collectors independently once per hour, staggered at minutes 07 (KIC), 17 (CNP), 27 (Glavni Grad), 37 (Tourism), 47 (CEDIS), and 57 (VIK). A per-collector atomic directory lock prevents overlap. Collector JSON is available through container logs; a retained previous cache exits successfully, while an unrecoverable refresh exits non-zero. Visitor requests never invoke collection.
+The Compose scheduler invokes event collectors independently once per hour, staggered at minutes 07 (KIC), 17 (CNP), 27 (Glavni Grad), and 37 (Tourism). It invokes CEDIS and VIK together every 30 minutes at minutes 00 and 30. A per-collector atomic directory lock prevents overlap. Collector JSON is available through container logs; a retained previous cache exits successfully, while an unrecoverable refresh exits non-zero. Visitor requests never invoke collection.
 
 The file-cache architecture is suitable for one VPS or another single persistent host. It is not safe for serverless or horizontally scaled deployments: ephemeral instances do not share `.runtime/cache`, atomic writes are local only, and scheduled collectors have no durable shared target. A durable storage adapter is required before considering managed/serverless hosting.
 
@@ -40,9 +40,26 @@ The background initialization makes a first deployment useful, but it is not a d
 
 Run the web process and scheduled refresh logic in one Railway service, with one Railway Volume mounted at `/app/.runtime`. Set `RUNTIME_DATA_DIR=/app/.runtime`; do not set conflicting per-provider cache paths. CEDIS then writes `/app/.runtime/cache/cedis-planned-outages.json` and VIK writes `/app/.runtime/cache/vikpg-water-alerts.json`. The web process and refresh logic read and write that same service-local volume. Refresh locking prevents overlapping executions.
 
-For initial deployment, startup logs report `cache found` or `cache missing`, then the CEDIS/VIK refresh result and alert count. For subsequent hourly refreshes, use a trusted scheduler to send an authenticated `POST` request to `/api/internal/city-alerts/refresh` with `Authorization: Bearer $CITY_ALERTS_REFRESH_SECRET`. The endpoint is unavailable until the secret is configured, accepts no request-supplied URLs or configuration, and returns only safe refresh summaries. Do not call it from public client code.
+For initial deployment, startup logs report `cache found` or `cache missing`, then the CEDIS/VIK refresh result and alert count. For subsequent refreshes, use the protected `POST /api/internal/city-alerts/refresh` endpoint every 30 minutes. It invokes both CEDIS and VIK collectors in one run, and their existing per-provider atomic locks prevent overlapping refreshes. The endpoint accepts no request-supplied URLs or configuration, returns only safe summaries, and must never be called from public client code.
 
-This option couples scheduling, collection failures, resource use, and restarts to the web process. A long-running or failing collector can contend with serving requests, scheduler changes require web-service deployment changes, and the service cannot scale horizontally while relying on that local file cache. The Railway Volume is mandatory for cache persistence across restarts, but not for the one-time controlled initialization itself. This is appropriate only as a short-term single-service deployment measure.
+### Railway Cron trigger configuration
+
+Do not set `cronSchedule` on the web service: Railway Cron starts a service’s command and expects that command to exit, whereas the web service must continue serving requests. Instead, create one small Railway Cron trigger service that only invokes the web service’s protected endpoint; it must not mount the web service’s Volume and it never reads or writes provider cache files.
+
+1. Keep the web service on the repository `Dockerfile`, mount its Railway Volume at `/app/.runtime`, and set `RUNTIME_DATA_DIR=/app/.runtime` and the server-only `CITY_ALERTS_REFRESH_SECRET` (at least 32 characters).
+2. Create a separate trigger service from `curlimages/curl`. Set its **Cron Schedule** to `*/30 * * * *` (Railway schedules are UTC). Set its start command to:
+
+   ```sh
+   sh -c 'curl --fail-with-body --silent --show-error --request POST --header "Authorization: Bearer $CITY_ALERTS_REFRESH_SECRET" "$CITY_ALERTS_REFRESH_URL"'
+   ```
+
+3. In that trigger service, set `CITY_ALERTS_REFRESH_URL` to the web service’s internal or public HTTPS URL plus `/api/internal/city-alerts/refresh`, and configure the same secret through Railway’s secret-variable reference. Do not print either variable, put either in repository configuration, or mount a Volume on the trigger service.
+
+Expected endpoint responses are `200` when both latest refreshes succeed, `207` when any provider retained a previous valid snapshot, failed, or was locked while another provider completed, `409` when every provider is already running, and `500` when no provider completed or no secret is configured. Each response contains only `provider`, `attempted`, `success`, `alertCount`, `cacheStatus`, `retainedPreviousCache`, optional `errorCode`, and parser `warnings`; it excludes cache paths, alert payloads, HTML, and secrets. A retained cache is a partial refresh result, not a loss of the valid snapshot.
+
+The endpoint logs one structured `city-alerts-refresh-started` record and one `city-alerts-refresh-completed` record with trigger, provider summaries, state, and `durationMs`. Collector output remains concise JSON. In Railway logs, verify the completed record has `state: "success"` or inspect a `partial` record for a provider with `retainedPreviousCache: true`; investigate `failure` rather than deleting a valid cache.
+
+This option couples collection resource use and refresh failures to the web process, even though the short-lived Railway Cron trigger is a separate HTTP caller. A long-running or failing collector can contend with serving requests, and the web service cannot scale horizontally while relying on that local file cache. The Railway Volume is mandatory for cache persistence across restarts, but not for the one-time controlled initialization itself. This is appropriate only as a short-term single-service deployment measure.
 
 ### Long-term Railway option: separate services with shared durable storage
 

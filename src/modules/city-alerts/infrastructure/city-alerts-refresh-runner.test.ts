@@ -26,8 +26,18 @@ test("summarizes successful CEDIS and retained VIK refreshes", async () => {
     ],
   });
 
-  assert.equal(result.state, "success");
+  assert.equal(result.state, "partial");
   assert.deepEqual(result.providers.map(({ state }) => state), ["success", "retained"]);
+  assert.deepEqual(result.providers[1], {
+    alertCount: 2,
+    attempted: true,
+    cacheStatus: "stale",
+    provider: "vikpg",
+    retainedPreviousCache: true,
+    state: "retained",
+    success: false,
+    warnings: [],
+  });
 });
 
 test("keeps provider failures isolated and reports a partial refresh", async () => {
@@ -52,6 +62,7 @@ test("keeps provider failures isolated and reports a partial refresh", async () 
 
   assert.equal(result.state, "partial");
   assert.deepEqual(result.providers.map(({ state }) => state), ["failed", "success"]);
+  assert.equal(result.providers[0]?.cacheStatus, "unavailable");
 });
 
 test("reports a locked refresh without treating it as a failed provider", async () => {
@@ -69,5 +80,39 @@ test("reports a locked refresh without treating it as a failed provider", async 
   });
 
   assert.equal(result.state, "already-running");
-  assert.equal(result.providers[0]?.state, "already-running");
+  assert.deepEqual(result.providers[0], {
+    alertCount: 0,
+    attempted: true,
+    cacheStatus: "unavailable",
+    provider: "cedis",
+    retainedPreviousCache: false,
+    state: "already-running",
+    success: false,
+    warnings: [],
+  });
+});
+
+test("preserves successful empty refresh metadata without treating it as unavailable", async () => {
+  const result = await runCityAlertsRefresh({
+    now: fixedNow,
+    providers: [
+      {
+        id: "cedis",
+        refresh: async () => ({
+          exitCode: 0,
+          summary: {
+            alertCount: 0,
+            cacheStatus: "fresh",
+            retainedPreviousSnapshot: false,
+            status: "success",
+            warnings: [],
+          },
+        }),
+      },
+    ],
+  });
+
+  assert.equal(result.state, "success");
+  assert.equal(result.providers[0]?.success, true);
+  assert.equal(result.providers[0]?.cacheStatus, "fresh");
 });
