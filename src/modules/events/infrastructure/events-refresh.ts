@@ -56,7 +56,43 @@ async function refreshAllEvents(): Promise<EventRefreshSummary> {
         }),
     },
   ];
-  return runEventRefresh({ cacheDirectory: env.EVENT_CACHE_DIR, providers });
+  console.info(
+    JSON.stringify({
+      event: "events-refresh-started",
+      providers: providers.map(({ id }) => id),
+    }),
+  );
+  const summary = await runEventRefresh({ cacheDirectory: env.EVENT_CACHE_DIR, providers });
+  logEventRefreshSummary(summary);
+  return summary;
+}
+
+function logEventRefreshSummary(summary: EventRefreshSummary) {
+  for (const provider of summary.providers) {
+    console.info(
+      JSON.stringify({
+        acceptedCount: provider.acceptedCount,
+        cacheOutcome: provider.retainedPreviousSnapshot
+          ? "retained"
+          : provider.state === "success"
+            ? "written"
+            : "unavailable",
+        durationMs: provider.durationMs,
+        event: "events-refresh-provider-completed",
+        provider: provider.id,
+        state: provider.state,
+      }),
+    );
+  }
+  console.info(
+    JSON.stringify({
+      completedAt: summary.completedAt,
+      event: "events-refresh-completed",
+      providerCount: summary.providers.length,
+      startedAt: summary.startedAt,
+      state: summary.state,
+    }),
+  );
 }
 
 export { refreshAllEvents, type EventRefreshSummary };

@@ -4,6 +4,9 @@ import { readCedisCacheResult } from "@/modules/city-alerts/infrastructure/cedis
 import { runCedisCollector } from "@/modules/city-alerts/infrastructure/collect-cedis";
 import { runVikpgCollector } from "@/modules/city-alerts/infrastructure/collect-vikpg";
 import { readVikpgCacheResult } from "@/modules/city-alerts/infrastructure/vikpg-cache";
+import { readEventCacheSnapshot } from "@/modules/events/infrastructure/events-cache";
+import { initializeEventCaches } from "@/modules/events/infrastructure/events-initialization";
+import { refreshAllEvents } from "@/modules/events/infrastructure/events-refresh";
 
 export function register() {
   if (process.env.NEXT_RUNTIME !== "nodejs" || env.NODE_ENV !== "production") return;
@@ -26,4 +29,36 @@ export function register() {
       },
     ],
   });
+
+  if (env.ENABLE_EVENTS && env.EVENT_PROVIDER_MODE === "live") {
+    void initializeEventCaches({
+      providers: [
+        {
+          cachePath: env.KIC_EVENT_CACHE_PATH,
+          enabled: true,
+          id: "kic",
+          readCache: () => readEventCacheSnapshot(env.KIC_EVENT_CACHE_PATH),
+        },
+        {
+          cachePath: env.CNP_EVENT_CACHE_PATH,
+          enabled: true,
+          id: "cnp",
+          readCache: () => readEventCacheSnapshot(env.CNP_EVENT_CACHE_PATH),
+        },
+        {
+          cachePath: env.GLAVNI_GRAD_EVENT_CACHE_PATH,
+          enabled: true,
+          id: "glavni-grad-podgorica",
+          readCache: () => readEventCacheSnapshot(env.GLAVNI_GRAD_EVENT_CACHE_PATH),
+        },
+        {
+          cachePath: env.TOURISM_EVENT_CACHE_PATH,
+          enabled: true,
+          id: "tourism-podgorica",
+          readCache: () => readEventCacheSnapshot(env.TOURISM_EVENT_CACHE_PATH),
+        },
+      ],
+      refresh: refreshAllEvents,
+    });
+  }
 }

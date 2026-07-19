@@ -2,7 +2,7 @@
 
 ## Status
 
-The repository has a Railway Docker web deployment configuration. CEDIS and VIK Podgorica initialize their missing caches in the background after a production Node.js web process starts. Durable Railway operation requires a Railway Volume and a protected Railway Cron trigger that invokes the internal refresh route every 30 minutes. The recommended production topology for the current Node.js file-cache architecture remains an Ubuntu VPS with Docker Compose, a persistent Docker volume, and Caddy on the host.
+The repository has a Railway Docker web deployment configuration. CEDIS, VIK Podgorica, and enabled live Events providers initialize missing caches in the background after a production Node.js web process starts. Durable Railway operation requires a Railway Volume and protected scheduled refresh triggers. The recommended production topology for the current Node.js file-cache architecture remains an Ubuntu VPS with Docker Compose, a persistent Docker volume, and Caddy on the host.
 
 ## Runtime contract
 
@@ -30,7 +30,7 @@ The repository supports Railway as a Docker-built web service: `railway.toml` se
 
 The named `scheduler` Docker target contains source files and `scripts/scheduler-entrypoint.sh`, but `railway.toml` does not configure a separate Railway scheduler service or select that target. The repository also contains no Railway Volume declaration, mount path, or Railway-specific cache-path environment values. Repository configuration alone therefore cannot confirm a persistent Railway volume, a scheduler deployment, or shared storage between a deployed scheduler and web process.
 
-Previously, CEDIS and VIK stayed unavailable because the Railway `runner` starts only the Next.js web process: it did not run either collector, no Railway scheduler or volume is declared in repository configuration, and no cache snapshot is bundled into the image. A relative cache path also depends on `/app` being writable by the non-root runner. The image now starts through a root-only runtime entrypoint, which creates `<RUNTIME_DATA_DIR>/cache`, assigns it to `nextjs:nodejs`, and then `exec`s the Next.js server as `nextjs`. Production startup starts a bounded background initialization only when the CEDIS or VIK cache is missing. It reuses the locked collectors and preserves any valid snapshot on upstream, timeout, parsing, or suspicious-empty failures.
+Previously, CEDIS and VIK stayed unavailable because the Railway `runner` starts only the Next.js web process: it did not run either collector, no Railway scheduler or volume is declared in repository configuration, and no cache snapshot is bundled into the image. A relative cache path also depends on `/app` being writable by the non-root runner. The image now starts through a root-only runtime entrypoint, which creates `<RUNTIME_DATA_DIR>/cache` and the configured absolute `EVENT_CACHE_DIR`, assigns both to `nextjs:nodejs`, and then `exec`s the Next.js server as `nextjs`. Production startup starts a non-blocking initialization only when a CEDIS, VIK, or enabled live Events cache is missing. Events initialization uses the existing all-provider refresh runner and persistent lock; it never runs in a visitor request and does not replace recurring scheduling.
 
 Build-time ownership changes are insufficient for Railway: mounting a Volume at `/app/.runtime` replaces the image directory with the mounted filesystem, including its ownership metadata. The entrypoint therefore repairs ownership after the Volume mount is present. The application server never runs as root.
 
