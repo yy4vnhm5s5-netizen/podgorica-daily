@@ -27,6 +27,73 @@ function discoverCnpEventUrls(html: string) {
     .filter((url, index, all) => all.indexOf(url) === index);
 }
 
+function parseCnpRepertoire(html: string): EventCandidate[] {
+  const monthAndYear = parseRepertoireMonthAndYear(html);
+  const rows = [...html.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi)];
+
+  return rows.flatMap((row) => {
+    const cells = [...row[1].matchAll(/<td\b[^>]*>([\s\S]*?)<\/td>/gi)].map(
+      (cell) => cell[1],
+    );
+    const day = toPlainText(cells[0] ?? "").match(/\b(\d{1,2})\./)?.[1];
+    const title =
+      extractTagText(cells[1] ?? "", "strong") ?? extractTagText(cells[1] ?? "", "b");
+    const schedule = toPlainText(cells[2] ?? "");
+    const time = schedule.match(/\bu\s*(\d{1,2})(?::(\d{2}))?\s*h?\b/i);
+    const startDate =
+      day && monthAndYear
+        ? `${monthAndYear.year}-${String(monthAndYear.month).padStart(2, "0")}-${day.padStart(2, "0")}`
+        : undefined;
+    const startsAt =
+      startDate && time
+        ? toZonedIso(
+            {
+              date: startDate,
+              time: `${time[1].padStart(2, "0")}:${(time[2] ?? "00").padStart(2, "0")}`,
+            },
+            "Europe/Podgorica",
+          )
+        : undefined;
+
+    if (!title) return [];
+
+    return [
+      {
+        categoryHint: /opera|koncert/i.test(`${title} ${schedule}`)
+          ? "concert"
+          : /festival/i.test(`${title} ${schedule}`)
+            ? "festival"
+            : /dje(c|č)|djeca/i.test(`${title} ${schedule}`)
+              ? "kids"
+              : /predstava|drama|pozorišt/i.test(`${title} ${schedule}`)
+                ? "theatre"
+                : "other",
+        language: "me",
+        parserWarnings: [
+          ...(startDate ? [] : ["CNP repertoire date was unavailable."]),
+          ...(startDate && !time ? ["CNP repertoire start time was unavailable."] : []),
+        ],
+        rawDateText: startDate
+          ? `${day}. ${monthAndYear?.name} ${monthAndYear?.year}`
+          : undefined,
+        rawDescription: schedule || undefined,
+        rawTimeText: time?.[0],
+        rawTitle: title,
+        rawVenue:
+          schedule.replace(/\s+u\s*\d{1,2}(?::\d{2})?\s*h?\b/i, "").trim() || undefined,
+        source: {
+          sourceId: "cnp",
+          sourceName: "Crnogorsko narodno pozorište",
+          sourceUrl: cnpRepertoireUrl,
+        },
+        startDate: startsAt ? undefined : startDate,
+        startsAt,
+        timezone: "Europe/Podgorica",
+      } satisfies EventCandidate,
+    ];
+  });
+}
+
 function parseCnpEventArticle(html: string, sourceUrl: string) {
   const text = toPlainText(html);
   const title =
@@ -108,8 +175,41 @@ function extractVenue(text: string) {
 }
 
 function isCnpVenue(value: string | undefined) {
-  return value === cnpVenue.name;
+  return (
+    value === cnpVenue.name || /^(?:Velika scena|Mala scena|Scena Studio)$/i.test(value ?? "")
+  );
 }
+
+function extractTagText(html: string, tag: "b" | "strong") {
+  const match = html.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, "i"));
+  return match ? toPlainText(match[1]) : undefined;
+}
+
+function parseRepertoireMonthAndYear(html: string) {
+  const match = toPlainText(html).match(
+    /\b(januar|februar|mart|april|maj|jun|jul|avgust|septembar|oktobar|novembar|decembar)\s+(20\d{2})\b/i,
+  );
+  if (!match) return undefined;
+
+  const name = match[1].toLocaleLowerCase("me-ME");
+  const month = repertoireMonths[name];
+  return month ? { month, name, year: Number(match[2]) } : undefined;
+}
+
+const repertoireMonths: Record<string, number> = {
+  april: 4,
+  avgust: 8,
+  decembar: 12,
+  februar: 2,
+  januar: 1,
+  jul: 7,
+  jun: 6,
+  maj: 5,
+  mart: 3,
+  novembar: 11,
+  oktobar: 10,
+  septembar: 9,
+};
 
 function toPlainText(html: string) {
   return html
@@ -118,4 +218,10 @@ function toPlainText(html: string) {
     .trim();
 }
 
-export { cnpRepertoireUrl, cnpVenue, discoverCnpEventUrls, parseCnpEventArticle };
+export {
+  cnpRepertoireUrl,
+  cnpVenue,
+  discoverCnpEventUrls,
+  parseCnpEventArticle,
+  parseCnpRepertoire,
+};

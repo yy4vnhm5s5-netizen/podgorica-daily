@@ -34,13 +34,10 @@ function discoverGlavniGradEventUrls(html: string) {
 
 function parseGlavniGradEventArticle(html: string, sourceUrl: string) {
   const articleHtml = html.match(/<article\b[\s\S]*?<\/article>/i)?.[0] ?? html;
-  const text = articleHtml
-    .replace(/<[^>]+>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+  const text = toPlainText(articleHtml);
   const title =
     articleHtml
-      .match(/<h1[^>]*>([\s\S]*?)<\/h1>/i)?.[1]
+      .match(/<h[1-3][^>]*>([\s\S]*?)<\/h[1-3]>/i)?.[1]
       ?.replace(/<[^>]+>/g, " ")
       .trim() ?? "";
   const numericDate = text.match(/(\d{1,2})\.(\d{1,2})\.(\d{4})/)?.slice(1);
@@ -48,7 +45,7 @@ function parseGlavniGradEventArticle(html: string, sourceUrl: string) {
     /\b(\d{1,2})\.\s*(januara|februara|marta|aprila|maja|juna|jula|avgusta|septembra|oktobra|novembra|decembra)\b/i,
   );
   const publicationDate = parsePublicationDate(articleHtml) ?? parsePublicationDate(html);
-  const time = text.match(/(?:u|od)\s*(\d{1,2})(?::(\d{2}))?\s*(?:h|čas(?:ova)?|sati)?/i);
+  const time = text.match(/\b(?:u|od)\s+(\d{1,2})(?::(\d{2}))?\s*(?:h|čas(?:ova)?|sati)?\b/i);
   const startDate = numericDate
     ? `${numericDate[2]}-${numericDate[1].padStart(2, "0")}-${numericDate[0].padStart(2, "0")}`
     : namedDate && publicationDate
@@ -113,6 +110,15 @@ function parseGlavniGradEventArticle(html: string, sourceUrl: string) {
     timezone: "Europe/Podgorica",
   };
   return { candidate, venue: rawVenue ? undefined : glavniGradVenue };
+}
+
+function toPlainText(html: string) {
+  return html
+    .replace(/<head\b[\s\S]*?<\/head>/gi, " ")
+    .replace(/<(?:script|style|svg)\b[\s\S]*?<\/(?:script|style|svg)>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 const montenegrinMonths: Record<string, number> = {

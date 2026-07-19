@@ -82,6 +82,21 @@ test("keeps a named Montenegrin event date through discovery, normalization, and
   assert.equal(snapshot?.qualityDiagnostics?.rejectedCount, 0);
 });
 
+test("parses the current Elementor title and content structure", () => {
+  const currentStructure = `
+    <div class="elementor-widget-theme-post-title"><h3 class="elementor-heading-title">Film dana</h3></div>
+    <time>July 6, 2026</time>
+    <div class="elementor-widget-theme-post-content"><div class="elementor-widget-container">
+      <p>Projekcija će biti organizovana u utorak, 21. jula, u digitalizovanoj bioskopskoj sali KIC-a, u 20 sati.</p>
+    </div></div>`;
+
+  const parsed = parseGlavniGradEventArticle(currentStructure, eventUrl).candidate;
+  assert.equal(parsed.rawTitle, "Film dana");
+  assert.equal(parsed.rawTimeText, "u 20 sati");
+  assert.equal(parsed.startsAt, "2026-07-21T18:00:00.000Z");
+  assert.equal(parsed.rawVenue, "digitalizovanoj bioskopskoj sali KIC-a");
+});
+
 test("registers, quality-normalizes, caches, and exposes Glavni Grad events through the generic application service", async () => {
   let snapshot: Awaited<ReturnType<typeof refreshGlavniGradEvents>> | undefined;
   await refreshGlavniGradEvents({

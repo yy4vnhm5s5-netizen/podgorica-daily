@@ -80,6 +80,25 @@ test("refreshes CNP fixtures, writes an atomic cache, and returns Event Quality 
   });
 });
 
+test("refreshes the current CNP table repertoire without requesting unrelated detail pages", async () => {
+  await withTemporaryCache(async (cachePath) => {
+    const result = await refreshCnpEvents({
+      cachePath,
+      context,
+      httpClient: fixtureClient({
+        [cnpRepertoireUrl]: await fixture("cnp-repertoire-table.html"),
+      }),
+      now: fixedNow,
+    });
+
+    assert.equal(result.success, true);
+    assert.equal(result.detailPagesRequested, 0);
+    assert.equal(result.diagnostics?.candidatesDiscovered, 2);
+    assert.equal(result.snapshot?.events.length, 2);
+    assert.equal(result.snapshot?.events[0]?.title, "ROMEO I JULIJA");
+  });
+});
+
 test("keeps accepted CNP events when a detail record is malformed", async () => {
   await withTemporaryCache(async (cachePath) => {
     const result = await refreshCnpEvents({

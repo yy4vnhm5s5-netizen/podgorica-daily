@@ -11,6 +11,7 @@ import {
   cnpRepertoireUrl,
   discoverCnpEventUrls,
   parseCnpEventArticle,
+  parseCnpRepertoire,
 } from "./cnp-event-parser.ts";
 import type { CityContext } from "@/shared/types/city";
 
@@ -50,18 +51,24 @@ async function refreshCnpEvents({
   let detailPagesRequested = 0;
 
   try {
-    const urls = discoverCnpEventUrls(await httpClient.get(cnpRepertoireUrl)).slice(0, 20);
+    const repertoireHtml = await httpClient.get(cnpRepertoireUrl);
+    const repertoireCandidates = parseCnpRepertoire(repertoireHtml);
+    const urls = repertoireCandidates.length
+      ? []
+      : discoverCnpEventUrls(repertoireHtml).slice(0, 20);
     detailPagesRequested = urls.length;
-    const parsed = await Promise.all(
-      urls.map(async (url) => parseCnpEventArticle(await httpClient.get(url), url)),
-    );
+    const parsed = repertoireCandidates.length
+      ? repertoireCandidates.map((candidate) => ({ candidate, venue: undefined }))
+      : await Promise.all(
+          urls.map(async (url) => parseCnpEventArticle(await httpClient.get(url), url)),
+        );
     const candidates = parsed.map(({ candidate }) => candidate);
     logEventRefreshParsedSample({ candidates, provider: "cnp" });
     const normalized = parsed.map(({ candidate }) =>
       normalizeEventCandidate(candidate, context, now()),
     );
     const quality = runEventQualityPipeline({
-      candidatesDiscovered: urls.length,
+      candidatesDiscovered: candidates.length,
       events: normalized.flatMap(({ event }) => (event ? [event] : [])),
       now: now(),
       policy: getEventQualityPolicy(),

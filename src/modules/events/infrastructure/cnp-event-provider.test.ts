@@ -3,7 +3,11 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import { cnpEventProvider } from "./cnp-event-provider.ts";
-import { discoverCnpEventUrls, parseCnpEventArticle } from "./cnp-event-parser.ts";
+import {
+  discoverCnpEventUrls,
+  parseCnpEventArticle,
+  parseCnpRepertoire,
+} from "./cnp-event-parser.ts";
 import { normalizeEventCandidate } from "../domain/event-normalization.ts";
 
 const fixtures = new URL("./__fixtures__/", import.meta.url);
@@ -28,6 +32,21 @@ test("discovers same-host CNP URLs and parses theatre details", async () => {
   assert.equal(parsed.candidate.endsAt, undefined);
   assert.equal(parsed.venue?.id, "cnp");
   assert.equal(cnpEventProvider.metadata.id, "cnp");
+});
+
+test("parses the current CNP table repertoire without treating ticket links as event pages", async () => {
+  const candidates = parseCnpRepertoire(
+    await readFile(new URL("cnp-repertoire-table.html", fixtures), "utf8"),
+  );
+
+  assert.equal(candidates.length, 2);
+  assert.equal(candidates[0]?.rawTitle, "ROMEO I JULIJA");
+  assert.equal(candidates[0]?.rawDateText, "20. jul 2026");
+  assert.equal(candidates[0]?.rawTimeText, "u 20h");
+  assert.equal(candidates[0]?.startsAt, "2026-07-20T18:00:00.000Z");
+  assert.equal(candidates[0]?.rawVenue, "Velika scena");
+  assert.equal(candidates[1]?.startsAt, "2026-07-21T07:30:00.000Z");
+  assert.equal(candidates[1]?.source.sourceUrl, "https://cnp.me/repertoar/");
 });
 
 test("preserves date-only, free, and postponed CNP event details", async () => {

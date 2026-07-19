@@ -12,7 +12,12 @@ function discoverTourismEventUrls(html: string) {
         return [];
       }
     })
-    .filter((url) => url.protocol === "https:" && url.hostname === "podgorica.travel")
+    .filter(
+      (url) =>
+        url.protocol === "https:" &&
+        url.hostname === "podgorica.travel" &&
+        url.pathname.startsWith("/calendar-event/"),
+    )
     .map(String)
     .filter((url, index, all) => all.indexOf(url) === index);
 }
@@ -27,11 +32,18 @@ function parseTourismEventArticle(html: string, sourceUrl: string) {
       .match(/<h1[^>]*>([\s\S]*?)<\/h1>/i)?.[1]
       ?.replace(/<[^>]+>/g, " ")
       .trim() ?? "";
-  const date = text.match(/(\d{1,2})\.(\d{1,2})\.(\d{4})/)?.slice(1);
-  const time = text.match(/(\d{1,2}):(\d{2})\s*(?:–|-|do)\s*(\d{1,2}):(\d{2})/);
-  const startDate = date
-    ? `${date[2]}-${date[1].padStart(2, "0")}-${date[0].padStart(2, "0")}`
-    : undefined;
+  const numericDate = text.match(/(\d{1,2})\.(\d{1,2})\.(\d{4})/)?.slice(1);
+  const namedDate = text.match(
+    /\b(\d{1,2})\.\s*(januar(?:a)?|februar(?:a)?|mart(?:a)?|april(?:a)?|maj(?:a)?|jun(?:a)?|jul(?:a)?|avgust(?:a)?|septembar(?:a)?|oktobar(?:a)?|novembar(?:a)?|decembar(?:a)?)\s*(20\d{2})\b/i,
+  );
+  const time = text.match(
+    /(\d{1,2}):(\d{2})\s*(?:h|sati)?\s*(?:–|-|do)\s*(\d{1,2}):(\d{2})\s*(?:h|sati)?/i,
+  );
+  const startDate = numericDate
+    ? `${numericDate[2]}-${numericDate[1].padStart(2, "0")}-${numericDate[0].padStart(2, "0")}`
+    : namedDate
+      ? toIsoDate(namedDate[1], namedDate[2], namedDate[3])
+      : undefined;
   const startsAt =
     startDate && time
       ? toZonedIso({ date: startDate, time: `${time[1]}:${time[2]}` }, "Europe/Podgorica")
@@ -61,8 +73,10 @@ function parseTourismEventArticle(html: string, sourceUrl: string) {
       ...(startDate ? [] : ["Tourism event date was unavailable."]),
       ...(startDate && !time ? ["Tourism event time was unavailable."] : []),
     ],
+    rawDateText: numericDate?.join(".") ?? namedDate?.[0],
     rawDescription: text,
     rawTitle: title,
+    rawTimeText: time?.[0],
     rawVenue: text.match(/Lokacija:\s*([^.|]+)/i)?.[1]?.trim(),
     source: {
       sourceId: "tourism-podgorica",
@@ -74,6 +88,44 @@ function parseTourismEventArticle(html: string, sourceUrl: string) {
     timezone: "Europe/Podgorica",
   };
   return { candidate };
+}
+
+const tourismMonths: Record<string, number> = {
+  april: 4,
+  aprila: 4,
+  avgust: 8,
+  avgusta: 8,
+  decembar: 12,
+  decembra: 12,
+  februar: 2,
+  februara: 2,
+  januar: 1,
+  januara: 1,
+  jul: 7,
+  jula: 7,
+  jun: 6,
+  juna: 6,
+  maj: 5,
+  maja: 5,
+  mart: 3,
+  marta: 3,
+  novembar: 11,
+  novembra: 11,
+  oktobar: 10,
+  oktobra: 10,
+  septembar: 9,
+  septembra: 9,
+};
+
+function toIsoDate(day: string, monthName: string, year: string) {
+  const month = tourismMonths[monthName.toLocaleLowerCase("me-ME")];
+  const date = new Date(Date.UTC(Number(year), (month ?? 0) - 1, Number(day)));
+  return month &&
+    date.getUTCFullYear() === Number(year) &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === Number(day)
+    ? date.toISOString().slice(0, 10)
+    : undefined;
 }
 
 export { discoverTourismEventUrls, parseTourismEventArticle, tourismCalendarUrl };
