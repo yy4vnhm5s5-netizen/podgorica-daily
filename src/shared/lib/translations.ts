@@ -13,8 +13,8 @@ const translations = {
         importantNumbersDescription: "Data is currently unavailable.",
       },
       advertising: {
-        subtitle: "Want to promote your local business? Contact us.",
-        title: "Advertising",
+        subtitle: "Contact us →",
+        title: "Your ad could be here",
       },
     },
     metadata: {
@@ -51,8 +51,8 @@ const translations = {
         importantNumbersDescription: "Podaci trenutno nijesu dostupni.",
       },
       advertising: {
-        subtitle: "Želite da promovišete svoj lokalni biznis? Kontaktirajte nas.",
-        title: "Oglašavanje",
+        subtitle: "Kontaktirajte nas →",
+        title: "Vaša reklama može biti ovdje",
       },
     },
     metadata: {
