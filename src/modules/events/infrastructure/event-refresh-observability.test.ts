@@ -119,7 +119,7 @@ test("logs pipeline diagnostics as one parseable JSON string per event", () => {
     assert.ok((call[0] as string).trim());
     const payload = JSON.parse(call[0] as string);
     assert.ok(payload.event);
-    assert.equal(payload.message, payload.event);
+    assert.ok(payload.message.startsWith(payload.event));
     assert.equal(payload.level, "info");
   }
   assert.equal(JSON.parse(calls[0][0] as string).event, "events-refresh-pipeline");

@@ -12,14 +12,29 @@ test("emits every structured Events diagnostic as one non-empty JSON string", ()
   console.error = (...arguments_: unknown[]) => errorCalls.push(arguments_);
 
   try {
-    for (const event of [
-      "events-refresh-started",
-      "events-refresh-pipeline",
-      "events-refresh-rejected-event",
-      "events-refresh-provider-completed",
-      "events-refresh-completed",
-    ])
-      emitInfo({ event });
+    emitInfo({ event: "events-refresh-started", providers: ["kic", "cnp"] });
+    emitInfo({
+      acceptedCount: 4,
+      event: "events-refresh-pipeline",
+      fetchedCount: 8,
+      normalizedCount: 6,
+      parsedCount: 8,
+      provider: "cnp",
+      rejectedCount: 2,
+    });
+    emitInfo({
+      event: "events-refresh-rejected-event",
+      eventId: "12345",
+      provider: "cnp",
+      reasons: ["missing-date"],
+    });
+    emitInfo({
+      acceptedCount: 4,
+      event: "events-refresh-provider-completed",
+      provider: "glavni-grad",
+      rejectedCount: 2,
+    });
+    emitInfo({ event: "events-refresh-completed", providerCount: 4, state: "partial" });
     emitError({
       error: { message: "KIC request failed", name: "Error", stack: "Error: KIC request failed" },
       event: "events-refresh-provider-failed",
@@ -49,6 +64,20 @@ test("emits every structured Events diagnostic as one non-empty JSON string", ()
     name: "Error",
     stack: "Error: KIC request failed",
   });
+  assert.deepEqual(
+    infoCalls.map((call) => JSON.parse(call[0] as string).message),
+    [
+      "events-refresh-started providers=kic,cnp",
+      "events-refresh-pipeline provider=cnp fetched=8 parsed=8 normalized=6 accepted=4 rejected=2",
+      "events-refresh-rejected-event provider=cnp reasons=missing-date eventId=12345",
+      "events-refresh-provider-completed provider=glavni-grad accepted=4 rejected=2",
+      "events-refresh-completed state=partial providers=4",
+    ],
+  );
+  assert.equal(
+    kicFailure.message,
+    "events-refresh-provider-failed provider=kic error=Error",
+  );
 });
 
 test("emits startup messages as one non-empty string", () => {
