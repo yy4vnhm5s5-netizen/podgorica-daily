@@ -55,7 +55,7 @@ test("decodes entities and preserves readable title capitalization before valida
       parserWarnings: [],
       rawAddress: "  Njegoševa&nbsp;1  ",
       rawDescription: "Detalji&nbsp;programa &amp; ulaz &#39;slobodan&#39;.",
-      rawTitle: "  koncert&#8211; duo asja valčić i sebastiana šnajdera  ",
+      rawTitle: "  🎥 koncert&#8211; duo asja valčić i sebastiana šnajdera 🍿  ",
       rawVenue: "  KIC&nbsp;&quot;Budo Tomović&quot;  ",
       source: {
         sourceId: "official",
@@ -99,10 +99,33 @@ test("infers a category only when a provider has no specific category", () => {
     context,
   ).event;
   assert.equal(providerCategory?.category, "theatre");
+
+  const childrenCategory = normalizeEventCandidate(
+    {
+      categoryHint: "exhibition",
+      parserWarnings: [],
+      rawDescription: "Filmski program za najmlađe učesnike.",
+      rawTitle: "Dječji filmski kamp",
+      source: {
+        sourceId: "official",
+        sourceName: "Official",
+        sourceUrl: "https://official.example.test/kids",
+      },
+      startDate: "2026-07-20",
+      timezone: context.timezone,
+    },
+    context,
+  ).event;
+  assert.equal(childrenCategory?.category, "kids");
 });
 
-test("merges cross-provider duplicates within thirty minutes and retains provenance", () => {
-  const official = event({ description: "Kratak opis.", imageUrl: undefined, venueName: undefined });
+test("merges fuzzy cross-provider duplicates within thirty minutes and retains provenance", () => {
+  const official = event({
+    description: "Kratak opis.",
+    imageUrl: "https://organizer.example.test/concert.jpg",
+    title: "Koncert Asje Valčić i Sebastiana Šnajdera",
+    venueName: "Njegošev park",
+  });
   const government = event({
     description: "Detaljan opis koncerta sa kompletnim programom i informacijama za publiku.",
     id: "government-event",
@@ -118,8 +141,8 @@ test("merges cross-provider duplicates within thirty minutes and retains provena
     ],
     sourceUrl: "https://government.example.test/concert",
     startsAt: "2026-07-17T18:20:00.000Z",
-    title: "koncert duo asja valčić",
-    venueName: undefined,
+    title: "Koncert – Duo Asja Valčić i Sebastian Schneider, 20. jula u Njegoševom parku",
+    venueName: "Paviljon u Njegoševom parku",
   });
 
   assert.equal(classifyEventMatch(official, government), "strong");
@@ -131,4 +154,27 @@ test("merges cross-provider duplicates within thirty minutes and retains provena
     merged[0]?.sourceReferences.map(({ sourceUrl }) => sourceUrl),
     ["https://organizer.example.test/concert", "https://government.example.test/concert"],
   );
+});
+
+test("does not merge unrelated events that only share a generic category word", () => {
+  const first = event({ title: "Koncert Marka Nikolića", venueName: "KIC Budo Tomović" });
+  const second = event({
+    id: "other-event",
+    sourceId: "government",
+    sourceName: "Glavni grad",
+    sourceReferences: [
+      {
+        sourceId: "government",
+        sourceName: "Glavni grad",
+        sourceUrl: "https://government.example.test/other-concert",
+      },
+    ],
+    sourceUrl: "https://government.example.test/other-concert",
+    startsAt: "2026-07-17T18:20:00.000Z",
+    title: "Koncert Milice Jovanović",
+    venueName: "KIC Budo Tomović",
+  });
+
+  assert.equal(classifyEventMatch(first, second), "distinct");
+  assert.equal(deduplicateEvents([first, second]).length, 2);
 });

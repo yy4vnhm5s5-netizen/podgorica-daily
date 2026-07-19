@@ -137,6 +137,8 @@ function normalizeEventTitle(value: string) {
   if (!display) return "";
 
   const cleaned = display
+    .replace(emojiPattern, " ")
+    .replace(/[\u200d\ufe0e\ufe0f]/g, "")
     .replace(/(?:\s*[-–—]\s*){2,}/g, " – ")
     .replace(/\s*([–—])\s*/g, " $1 ")
     .replace(/\s+([,.;:!?])/g, "$1")
@@ -146,6 +148,9 @@ function normalizeEventTitle(value: string) {
 
   return cleaned === cleaned.toLocaleLowerCase("me-ME") ? toTitleCase(cleaned) : cleaned;
 }
+
+const emojiPattern =
+  /\p{Extended_Pictographic}(?:\p{Emoji_Modifier}|\uFE0E|\uFE0F|\u200D\p{Extended_Pictographic})*/gu;
 
 function toTitleCase(value: string) {
   const lowercaseWords = new Set([
@@ -179,7 +184,10 @@ function toTitleCase(value: string) {
 
 function resolveEventCategory(categoryHint: string | undefined, text: string): EventCategory {
   const providerCategory = normalizeEventCategory(categoryHint);
-  return providerCategory === "other" ? inferEventCategory(text) : providerCategory;
+  const inferredCategory = inferEventCategory(text);
+  return inferredCategory === "kids" || providerCategory === "other"
+    ? inferredCategory
+    : providerCategory;
 }
 
 function inferEventCategory(value: string): EventCategory {
