@@ -149,6 +149,8 @@ test("deduplicates exact and strong matches while retaining uncertain and separa
       },
     ],
     sourceUrl: "https://other.example.test/event",
+    startDate: "2026-07-17",
+    startsAt: undefined,
     venueName: undefined,
   });
   const separateDate = podgoricaEvent({

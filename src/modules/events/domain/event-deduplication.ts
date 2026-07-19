@@ -22,15 +22,16 @@ function getEventSourcePriority(trust: EventSourceTrust) {
 
 function classifyEventMatch(left: CityEvent, right: CityEvent): EventMatchKind {
   if (left.id === right.id || sameSourceReference(left, right)) return "exact";
-  if (!hasCityOverlap(left, right) || getEventStart(left) !== getEventStart(right))
+  if (!hasCityOverlap(left, right) || getEventCalendarDay(left) !== getEventCalendarDay(right))
     return "distinct";
   if (normalizeText(left.title) !== normalizeText(right.title)) return "distinct";
 
   const leftVenue = normalizeText(left.venueName ?? left.venueId ?? "");
   const rightVenue = normalizeText(right.venueName ?? right.venueId ?? "");
-  if (!leftVenue || !rightVenue) return "uncertain";
+  if (leftVenue && rightVenue && venuesAreHighlySimilar(leftVenue, rightVenue)) return "strong";
+  if (left.sourceId !== right.sourceId && startTimesAreClose(left, right)) return "strong";
 
-  return leftVenue === rightVenue ? "strong" : "uncertain";
+  return "uncertain";
 }
 
 function deduplicateEvents(
@@ -107,6 +108,35 @@ function hasCityOverlap(left: CityEvent, right: CityEvent) {
 
 function getEventStart(event: CityEvent) {
   return event.startsAt ?? event.startDate ?? "";
+}
+
+function getEventCalendarDay(event: CityEvent) {
+  if (event.startDate) return event.startDate;
+  if (!event.startsAt) return "";
+
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone: event.timezone,
+    year: "numeric",
+  }).formatToParts(new Date(event.startsAt));
+  const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
+  return `${values.year}-${values.month}-${values.day}`;
+}
+
+function startTimesAreClose(left: CityEvent, right: CityEvent) {
+  if (!left.startsAt || !right.startsAt) return false;
+  const difference = Math.abs(new Date(left.startsAt).getTime() - new Date(right.startsAt).getTime());
+  return difference <= 30 * 60 * 1000;
+}
+
+function venuesAreHighlySimilar(left: string, right: string) {
+  if (left === right) return true;
+  const leftTokens = new Set(left.split(" ").filter(Boolean));
+  const rightTokens = new Set(right.split(" ").filter(Boolean));
+  const shared = [...leftTokens].filter((token) => rightTokens.has(token)).length;
+  const total = new Set([...leftTokens, ...rightTokens]).size;
+  return total > 0 && shared / total >= 0.8;
 }
 
 function mergeSourceReferences(

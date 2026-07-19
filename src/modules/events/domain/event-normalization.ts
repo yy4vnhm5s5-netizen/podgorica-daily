@@ -7,6 +7,7 @@ import {
   normalizeEventCategory,
   type CityEvent,
   type EventCandidate,
+  type EventCategory,
 } from "./event.ts";
 import type { CityContext } from "@/shared/types/city";
 
@@ -24,7 +25,11 @@ function normalizeEventCandidate(
   now = new Date(),
 ): EventNormalizationResult {
   const warnings = [...candidate.parserWarnings];
-  const title = normalizeText(candidate.rawTitle);
+  const title = normalizeEventTitle(candidate.rawTitle);
+  const description = normalizeEventDisplayText(candidate.rawDescription);
+  const venueName = normalizeEventDisplayText(candidate.rawVenue);
+  const address = normalizeEventDisplayText(candidate.rawAddress);
+  const organizer = normalizeEventDisplayText(candidate.organizer);
 
   if (!title) {
     return {
@@ -53,10 +58,10 @@ function normalizeEventCandidate(
   }
 
   const event: CityEvent = {
-    address: candidate.rawAddress?.trim() || undefined,
-    category: normalizeEventCategory(candidate.categoryHint),
+    address,
+    category: resolveEventCategory(candidate.categoryHint, `${title} ${description ?? ""}`),
     cityIds: [context.city.id],
-    description: candidate.rawDescription?.trim() || undefined,
+    description,
     currency: candidate.currency,
     endsAt,
     id: createEventId({
@@ -64,12 +69,12 @@ function normalizeEventCandidate(
       sourceId: candidate.source.sourceId,
       startsAt: startsAt ?? startDate,
       title,
-      venue: candidate.rawVenue,
+      venue: venueName,
     }),
     imageUrl: candidate.imageUrl,
     isFree: candidate.isFree,
     language: candidate.language ?? "und",
-    organizer: candidate.organizer,
+    organizer,
     priceAmount: candidate.priceAmount,
     sourceId: candidate.source.sourceId,
     sourceName: candidate.source.sourceName,
@@ -91,10 +96,107 @@ function normalizeEventCandidate(
     tags: [],
     timezone: candidate.timezone,
     title,
-    venueName: candidate.rawVenue?.trim() || undefined,
+    venueName,
   };
 
   return { event, parserWarnings: warnings, rejectionReasons: [] };
+}
+
+function decodeHtmlEntities(value: string) {
+  const namedEntities: Record<string, string> = {
+    amp: "&",
+    apos: "'",
+    hellip: "…",
+    mdash: "—",
+    nbsp: " ",
+    ndash: "–",
+    quot: '"',
+  };
+
+  return value.replace(/&(?:#(\d+)|#x([\da-f]+)|([a-z]+));/gi, (entity, decimal, hexadecimal, named) => {
+    if (named) return namedEntities[named.toLocaleLowerCase("en-US")] ?? entity;
+    const codePoint = Number.parseInt(decimal ?? hexadecimal, hexadecimal ? 16 : 10);
+    return Number.isInteger(codePoint) && codePoint >= 0 && codePoint <= 0x10ffff
+      ? String.fromCodePoint(codePoint)
+      : entity;
+  });
+}
+
+function normalizeEventDisplayText(value: string | undefined) {
+  if (!value) return undefined;
+  const normalized = decodeHtmlEntities(value)
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\b8211\b/g, "–")
+    .replace(/\s+/g, " ")
+    .trim();
+  return normalized || undefined;
+}
+
+function normalizeEventTitle(value: string) {
+  const display = normalizeEventDisplayText(value);
+  if (!display) return "";
+
+  const cleaned = display
+    .replace(/(?:\s*[-–—]\s*){2,}/g, " – ")
+    .replace(/\s*([–—])\s*/g, " $1 ")
+    .replace(/\s+([,.;:!?])/g, "$1")
+    .replace(/^[\s,;:!?.–—-]+|[\s,;:!?.–—-]+$/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return cleaned === cleaned.toLocaleLowerCase("me-ME") ? toTitleCase(cleaned) : cleaned;
+}
+
+function toTitleCase(value: string) {
+  const lowercaseWords = new Set([
+    "duo",
+    "i",
+    "ili",
+    "iz",
+    "ka",
+    "kao",
+    "na",
+    "nad",
+    "od",
+    "po",
+    "pri",
+    "sa",
+    "te",
+    "u",
+    "za",
+  ]);
+  let hasWord = false;
+
+  return value.replace(/\p{L}[\p{L}\p{M}'’-]*/gu, (word) => {
+    const normalized = word.toLocaleLowerCase("me-ME");
+    const shouldPreserveLowercase = hasWord && lowercaseWords.has(normalized);
+    hasWord = true;
+    return shouldPreserveLowercase
+      ? normalized
+      : `${normalized.slice(0, 1).toLocaleUpperCase("me-ME")}${normalized.slice(1)}`;
+  });
+}
+
+function resolveEventCategory(categoryHint: string | undefined, text: string): EventCategory {
+  const providerCategory = normalizeEventCategory(categoryHint);
+  return providerCategory === "other" ? inferEventCategory(text) : providerCategory;
+}
+
+function inferEventCategory(value: string): EventCategory {
+  const normalized = normalizeText(value);
+  if (/djeca|djecji|djecja|omladin/.test(normalized)) return "kids";
+  if (/izlozb|galerij/.test(normalized)) return "exhibition";
+  if (/koncert|muzik|dzez|jazz|bend|orkestar|hor|opera/.test(normalized)) return "concert";
+  if (/festival/.test(normalized)) return "festival";
+  if (/predstav|pozorist|teatar|drama|balet/.test(normalized)) return "theatre";
+  if (/film|projekcij|kino|bioskop/.test(normalized)) return "movie";
+  if (/radionic|kurs|obuka/.test(normalized)) return "workshop";
+  if (/predavanje|tribina|panel|diskusij/.test(normalized)) return "education";
+  if (/konferenc|simpozij|kongres/.test(normalized)) return "conference";
+  if (/sport|utakmic|turnir|maraton|trka/.test(normalized)) return "sport";
+  if (/bazar|pijac|sajam/.test(normalized)) return "market";
+  if (/zajednic|humanitar|druzenj|susret/.test(normalized)) return "community";
+  return "other";
 }
 
 function createEventId(input: {
@@ -132,7 +234,11 @@ function normalizeText(value: string) {
 export {
   createEventId,
   createEventSlug,
+  decodeHtmlEntities,
+  inferEventCategory,
   normalizeEventCandidate,
+  normalizeEventDisplayText,
+  normalizeEventTitle,
   normalizeText,
   type EventNormalizationRejectionReason,
   type EventNormalizationResult,
