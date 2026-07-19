@@ -1,5 +1,10 @@
 import type { CityAlert } from "../domain/city-alert.ts";
-import { readCedisCache, type CedisCacheSnapshot, type FreshnessStatus } from "./cedis-cache.ts";
+import {
+  defaultCachePath,
+  readCedisCache,
+  type CedisCacheSnapshot,
+  type FreshnessStatus,
+} from "./cedis-cache.ts";
 import { mockCityAlertsProvider } from "./mock-city-alerts-provider.ts";
 import type { CityContext } from "@/shared/types/city";
 import type { ProviderMetadata } from "@/shared/types/provider";
@@ -49,7 +54,7 @@ async function getCedisCityAlerts({
 }
 
 const cedisProviderMetadata: ProviderMetadata = {
-  cachePath: ".runtime/cache/cedis-planned-outages.json",
+  cachePath: defaultCachePath,
   displayName: "CEDIS planned outages",
   enabled: true,
   id: "cedis",

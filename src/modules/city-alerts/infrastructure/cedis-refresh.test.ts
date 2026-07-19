@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import test from "node:test";
 
 import type { CedisCacheSnapshot } from "./cedis-cache.ts";
@@ -48,6 +50,7 @@ const createFixtureClient = (pages: Record<string, string>): CedisHttpClient => 
 const fixedNow = () => new Date("2026-03-29T12:00:00.000Z");
 const listingUrl = "https://cedis.me/servisne-informacije/";
 const articleUrl = "https://cedis.me/planirani-radovi-za-30-mart/";
+const collectorCachePath = join(tmpdir(), "podgorica-daily-cedis-collector-test.json");
 
 test("refreshes listing, article, parser, and cache through injected HTTP", async () => {
   const memory = createMemoryCache();
@@ -169,6 +172,7 @@ const refreshResult = (overrides: Partial<RefreshResult>): RefreshResult => ({
 test("collector exits zero after a successful refresh", async () => {
   const output: string[] = [];
   const result = await runCedisCollector({
+    cachePath: collectorCachePath,
     refresh: async () => refreshResult({}),
     writeOutput: (line) => output.push(line),
   });
@@ -187,6 +191,7 @@ test("collector exits zero after a successful refresh", async () => {
 
 test("collector exits zero when it retains stale data", async () => {
   const result = await runCedisCollector({
+    cachePath: collectorCachePath,
     refresh: async () =>
       refreshResult({
         classification: "failed",
@@ -202,6 +207,7 @@ test("collector exits zero when it retains stale data", async () => {
 
 test("collector exits non-zero when no cache is usable", async () => {
   const result = await runCedisCollector({
+    cachePath: collectorCachePath,
     refresh: async () =>
       refreshResult({
         classification: "failed",
@@ -213,4 +219,35 @@ test("collector exits non-zero when no cache is usable", async () => {
   });
   assert.equal(result.exitCode, 1);
   assert.equal(result.summary.status, "unavailable");
+});
+
+test("collector prevents overlapping refreshes for one cache path", async () => {
+  let releaseRefresh: (() => void) | undefined;
+  let refreshStarted: (() => void) | undefined;
+  const started = new Promise<void>((resolve) => {
+    refreshStarted = resolve;
+  });
+  const first = runCedisCollector({
+    cachePath: collectorCachePath,
+    refresh: async () => {
+      refreshStarted?.();
+      await new Promise<void>((resolve) => {
+        releaseRefresh = resolve;
+      });
+      return refreshResult({});
+    },
+    writeOutput: () => undefined,
+  });
+  await started;
+
+  const overlapping = await runCedisCollector({
+    cachePath: collectorCachePath,
+    refresh: async () => refreshResult({}),
+    writeOutput: () => undefined,
+  });
+  releaseRefresh?.();
+  await first;
+
+  assert.equal(overlapping.exitCode, 0);
+  assert.equal(overlapping.summary.status, "already-running");
 });

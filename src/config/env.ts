@@ -1,14 +1,15 @@
 import { z } from "zod";
 
 import { isCityId } from "../shared/config/cities.ts";
+import { normalizeRuntimeDataDirectory, resolveRuntimeCachePath } from "./runtime-data.ts";
 
 const environmentSchema = z.object({
   CEDIS_PROVIDER_MODE: z.enum(["disabled", "live", "mock"]).default("live"),
   AMSCG_PROVIDER_MODE: z.enum(["disabled", "live"]).default("live"),
   VIKPG_PROVIDER_MODE: z.enum(["disabled", "live"]).default("live"),
   EVENT_PROVIDER_MODE: z.enum(["disabled", "live", "mock"]).default("disabled"),
-  EVENT_CACHE_PATH: z.string().min(1).default(".runtime/cache/events.json"),
-  EVENT_CACHE_DIR: z.string().min(1).default(".runtime/cache"),
+  EVENT_CACHE_PATH: z.string().min(1).optional(),
+  EVENT_CACHE_DIR: z.string().min(1).optional(),
   EVENT_REFRESH_SECRET: z.string().min(32).optional(),
   EVENT_CACHE_FRESHNESS_MINUTES: z.coerce.number().int().positive().default(120),
   EVENT_MAX_QUERY_RANGE_DAYS: z.coerce.number().int().positive().max(366).default(90),
@@ -26,7 +27,11 @@ const environmentSchema = z.object({
   CNP_EVENT_CACHE_PATH: z.string().min(1).optional(),
   GLAVNI_GRAD_EVENT_CACHE_PATH: z.string().min(1).optional(),
   TOURISM_EVENT_CACHE_PATH: z.string().min(1).optional(),
+  CEDIS_CACHE_PATH: z.string().min(1).optional(),
+  AMSCG_CACHE_PATH: z.string().min(1).optional(),
   VIKPG_CACHE_PATH: z.string().min(1).optional(),
+  CITY_ALERTS_REFRESH_SECRET: z.string().min(32).optional(),
+  RUNTIME_DATA_DIR: z.string().min(1).default(".runtime"),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   DEFAULT_CITY: z.string().default("podgorica"),
   ENABLE_AMSCG: z.enum(["false", "true"]).default("true"),
@@ -73,7 +78,11 @@ const parsedEnvironment = environmentSchema.safeParse({
   CNP_EVENT_CACHE_PATH: process.env.CNP_EVENT_CACHE_PATH,
   GLAVNI_GRAD_EVENT_CACHE_PATH: process.env.GLAVNI_GRAD_EVENT_CACHE_PATH,
   TOURISM_EVENT_CACHE_PATH: process.env.TOURISM_EVENT_CACHE_PATH,
+  CEDIS_CACHE_PATH: process.env.CEDIS_CACHE_PATH,
+  AMSCG_CACHE_PATH: process.env.AMSCG_CACHE_PATH,
   VIKPG_CACHE_PATH: process.env.VIKPG_CACHE_PATH,
+  CITY_ALERTS_REFRESH_SECRET: process.env.CITY_ALERTS_REFRESH_SECRET,
+  RUNTIME_DATA_DIR: process.env.RUNTIME_DATA_DIR,
   DEFAULT_CITY: process.env.DEFAULT_CITY,
   ENABLE_AMSCG: process.env.ENABLE_AMSCG,
   ENABLE_CEDIS: process.env.ENABLE_CEDIS,
@@ -102,9 +111,18 @@ if (
   throw new Error("EVENT_PROVIDER_MODE=mock is not allowed in production.");
 }
 
-const cacheDirectory = parsedEnvironment.data.EVENT_CACHE_DIR.replace(/\/+$/, "") || ".";
+const runtimeDataDirectory = normalizeRuntimeDataDirectory(parsedEnvironment.data.RUNTIME_DATA_DIR);
+const cacheDirectory =
+  parsedEnvironment.data.EVENT_CACHE_DIR?.replace(/\/+$/, "") ||
+  `${runtimeDataDirectory}/cache`;
 const resolvedEnvironment = {
   ...parsedEnvironment.data,
+  AMSCG_CACHE_PATH:
+    parsedEnvironment.data.AMSCG_CACHE_PATH ??
+    resolveRuntimeCachePath("amscg-road-conditions.json", runtimeDataDirectory),
+  CEDIS_CACHE_PATH:
+    parsedEnvironment.data.CEDIS_CACHE_PATH ??
+    resolveRuntimeCachePath("cedis-planned-outages.json", runtimeDataDirectory),
   CNP_EVENT_CACHE_PATH:
     parsedEnvironment.data.CNP_EVENT_CACHE_PATH ?? `${cacheDirectory}/cnp-events.json`,
   GLAVNI_GRAD_EVENT_CACHE_PATH:
@@ -112,9 +130,14 @@ const resolvedEnvironment = {
     `${cacheDirectory}/glavni-grad-events.json`,
   KIC_EVENT_CACHE_PATH:
     parsedEnvironment.data.KIC_EVENT_CACHE_PATH ?? `${cacheDirectory}/kic-events.json`,
+  EVENT_CACHE_DIR: cacheDirectory,
+  EVENT_CACHE_PATH: parsedEnvironment.data.EVENT_CACHE_PATH ?? `${cacheDirectory}/events.json`,
   TOURISM_EVENT_CACHE_PATH:
     parsedEnvironment.data.TOURISM_EVENT_CACHE_PATH ?? `${cacheDirectory}/tourism-events.json`,
-  VIKPG_CACHE_PATH: parsedEnvironment.data.VIKPG_CACHE_PATH ?? ".runtime/cache/vikpg-water-alerts.json",
+  VIKPG_CACHE_PATH:
+    parsedEnvironment.data.VIKPG_CACHE_PATH ??
+    resolveRuntimeCachePath("vikpg-water-alerts.json", runtimeDataDirectory),
+  RUNTIME_DATA_DIR: runtimeDataDirectory,
 };
 
 if (!isCityId(resolvedEnvironment.DEFAULT_CITY)) {

@@ -1,6 +1,6 @@
 import type { CityAlert } from "../domain/city-alert.ts";
 import type { RoadAlert } from "../domain/road-alert.ts";
-import { readAmscgCache, type AmscgCacheSnapshot } from "./amscg-cache.ts";
+import { defaultAmscgCachePath, readAmscgCache, type AmscgCacheSnapshot } from "./amscg-cache.ts";
 import type { CityContext } from "@/shared/types/city";
 import type { ProviderMetadata } from "@/shared/types/provider";
 
@@ -53,7 +53,7 @@ function toCityAlert(alert: RoadAlert): CityAlert {
 }
 
 const amscgProviderMetadata: ProviderMetadata = {
-  cachePath: ".runtime/cache/amscg-road-conditions.json",
+  cachePath: defaultAmscgCachePath,
   displayName: "AMSCG road conditions",
   enabled: true,
   id: "amscg",

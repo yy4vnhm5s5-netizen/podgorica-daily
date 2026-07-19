@@ -2,7 +2,7 @@
 
 ## Status
 
-The repository has a Railway web deployment configuration, but its cache-backed data services are not yet configured for durable shared storage there. The recommended production topology for the current Node.js file-cache architecture is an Ubuntu VPS with Docker Compose, a persistent Docker volume, and Caddy on the host. This avoids adding a database or hosted scheduler before their contracts are approved.
+The repository has a Railway Docker web deployment configuration. CEDIS and VIK Podgorica initialize their missing caches in the background after a production Node.js web process starts. Durable Railway operation still requires a Railway Volume and a protected scheduler invoking the internal refresh route. The recommended production topology for the current Node.js file-cache architecture remains an Ubuntu VPS with Docker Compose, a persistent Docker volume, and Caddy on the host.
 
 ## Runtime contract
 
@@ -10,32 +10,37 @@ The repository has a Railway web deployment configuration, but its cache-backed 
 - `NEXT_PUBLIC_SITE_URL` must be the public HTTPS origin in production. It enables absolute canonical and Open Graph URLs; do not include a path.
 - `NEXT_PUBLIC_APP_ENV=production`, `NODE_ENV=production`, and `DEFAULT_CITY=podgorica` are required operational values.
 - Events are public only from cache. Enable live event content with `ENABLE_EVENTS=true` and `EVENT_PROVIDER_MODE=live`; disabled mode safely shows no event data. Mock provider modes are rejected in production.
-- Set every event cache path to `/var/lib/podgorica-daily/cache/<provider>.json` in `.env.production`. Set `CEDIS_CACHE_PATH`, `AMSCG_CACHE_PATH`, and `VIKPG_CACHE_PATH` there as well so all collector and application cache files share the persistent volume.
+- `RUNTIME_DATA_DIR` is the shared root for file-backed provider caches. It defaults to `.runtime` locally. Without an explicit per-provider override, CEDIS resolves to `<RUNTIME_DATA_DIR>/cache/cedis-planned-outages.json`, VIK to `<RUNTIME_DATA_DIR>/cache/vikpg-water-alerts.json`, and AMSCG to `<RUNTIME_DATA_DIR>/cache/amscg-road-conditions.json`.
+- `CITY_ALERTS_REFRESH_SECRET` must be a server-only value of at least 32 characters before enabling scheduled City Alerts refreshes. It is intentionally separate from `EVENT_REFRESH_SECRET`.
 - Weather may call Open-Meteo during server rendering and already has a safe failure state. It does not require an API key.
 
-No currently configured variable is a secret. Do not commit a real `.env.production`; future credentials must remain server-only and outside logs.
+`CITY_ALERTS_REFRESH_SECRET` and `EVENT_REFRESH_SECRET` are server-only secrets when configured. Do not commit a real `.env.production`, expose either value to the browser, or include it in logs.
 
 ## Cache and scheduling
 
 The shared JSON cache creates missing parent directories and writes by temporary file plus atomic rename. The Compose `event-cache` volume is initialized for UID/GID 1001 and mounted at `/var/lib/podgorica-daily/cache` in both app and scheduler containers. Container recreation therefore does not erase cache snapshots.
 
-The scheduler invokes collectors independently once per hour, staggered at minutes 07 (KIC), 17 (CNP), 27 (Glavni Grad), and 37 (Tourism). A per-collector atomic directory lock prevents overlap. Collector JSON is available through container logs; a retained previous cache exits successfully, while an unrecoverable refresh exits non-zero. Visitor requests never invoke collection.
+The scheduler invokes collectors independently once per hour, staggered at minutes 07 (KIC), 17 (CNP), 27 (Glavni Grad), 37 (Tourism), 47 (CEDIS), and 57 (VIK). A per-collector atomic directory lock prevents overlap. Collector JSON is available through container logs; a retained previous cache exits successfully, while an unrecoverable refresh exits non-zero. Visitor requests never invoke collection.
 
 The file-cache architecture is suitable for one VPS or another single persistent host. It is not safe for serverless or horizontally scaled deployments: ephemeral instances do not share `.runtime/cache`, atomic writes are local only, and scheduled collectors have no durable shared target. A durable storage adapter is required before considering managed/serverless hosting.
 
 ## Railway cache investigation
 
-The repository currently supports Railway only as a Docker-built web service: `railway.toml` selects the `Dockerfile` and defines a health check, while the final/default Docker stage is the Next.js `runner`. That image contains `public`, `.next/standalone`, and `.next/static`; it does not copy a pre-populated `.runtime/cache` directory. Cache files are instead created lazily by collectors at the configured paths, which default to `.runtime/cache/*.json` relative to `/app`.
+The repository supports Railway as a Docker-built web service: `railway.toml` selects the `Dockerfile` and defines a health check, while the final/default Docker stage is the Next.js `runner`. The image contains `public`, `.next/standalone`, `.next/static`, and an empty `/app/.runtime/cache` directory owned by the non-root application user. It does not copy pre-populated provider snapshots.
 
 The named `scheduler` Docker target contains source files and `scripts/scheduler-entrypoint.sh`, but `railway.toml` does not configure a separate Railway scheduler service or select that target. The repository also contains no Railway Volume declaration, mount path, or Railway-specific cache-path environment values. Repository configuration alone therefore cannot confirm a persistent Railway volume, a scheduler deployment, or shared storage between a deployed scheduler and web process.
 
-On the current configuration, a Railway web container can read only cache files present in its own writable container filesystem. Those files disappear when the container is replaced or restarted. Railway Volumes are attached to individual services, so they must not be treated as a filesystem shared concurrently between independent web and scheduler services. This explains cache-backed sections remaining unavailable even when the web health check succeeds.
+Previously, CEDIS and VIK stayed unavailable because the Railway `runner` starts only the Next.js web process: it did not run either collector, no Railway scheduler or volume is declared in repository configuration, and no cache snapshot is bundled into the image. A relative cache path also depends on `/app` being writable by the non-root runner. The image now prepares its local default runtime directory, and production startup starts a bounded background initialization only when the CEDIS or VIK cache is missing. It reuses the locked collectors and preserves any valid snapshot on upstream, timeout, parsing, or suspicious-empty failures.
+
+The background initialization makes a first deployment useful, but it is not a durable scheduler. Without a mounted Volume, a replacement or restart loses snapshots and triggers another controlled initialization. Railway Volumes are attached to individual services, so they must not be treated as a filesystem shared concurrently between independent web and scheduler services.
 
 ### Short-term Railway option: one service with a local volume
 
-Run the web process and scheduled refresh logic in one Railway service, with one Railway Volume mounted at an absolute runtime path such as `/app/.runtime`. Set `EVENT_CACHE_DIR`, every provider-specific event cache path, `CEDIS_CACHE_PATH`, `AMSCG_CACHE_PATH`, and `VIKPG_CACHE_PATH` beneath that mount. The web process and refresh logic then read and write the same service-local volume. Refresh locking must continue to prevent overlapping collector executions.
+Run the web process and scheduled refresh logic in one Railway service, with one Railway Volume mounted at `/app/.runtime`. Set `RUNTIME_DATA_DIR=/app/.runtime`; do not set conflicting per-provider cache paths. CEDIS then writes `/app/.runtime/cache/cedis-planned-outages.json` and VIK writes `/app/.runtime/cache/vikpg-water-alerts.json`. The web process and refresh logic read and write that same service-local volume. Refresh locking prevents overlapping executions.
 
-This option couples scheduling, collection failures, resource use, and restarts to the web process. A long-running or failing collector can contend with serving requests, scheduler changes require web-service deployment changes, and the service cannot scale horizontally while relying on that local file cache. It is appropriate only as a short-term single-service deployment measure.
+For initial deployment, startup logs report `cache found` or `cache missing`, then the CEDIS/VIK refresh result and alert count. For subsequent hourly refreshes, use a trusted scheduler to send an authenticated `POST` request to `/api/internal/city-alerts/refresh` with `Authorization: Bearer $CITY_ALERTS_REFRESH_SECRET`. The endpoint is unavailable until the secret is configured, accepts no request-supplied URLs or configuration, and returns only safe refresh summaries. Do not call it from public client code.
+
+This option couples scheduling, collection failures, resource use, and restarts to the web process. A long-running or failing collector can contend with serving requests, scheduler changes require web-service deployment changes, and the service cannot scale horizontally while relying on that local file cache. The Railway Volume is mandatory for cache persistence across restarts, but not for the one-time controlled initialization itself. This is appropriate only as a short-term single-service deployment measure.
 
 ### Long-term Railway option: separate services with shared durable storage
 
@@ -53,7 +58,7 @@ Use [Caddyfile.example](../deploy/Caddyfile.example) as a host-level reverse-pro
 
 1. Install Docker Engine, Docker Compose plugin, Git, and Caddy. Permit only SSH, HTTP, and HTTPS in the firewall; keep port 3000 private.
 2. Create a non-root deploy user, clone the repository into `/srv/podgorica-daily`, and restrict `.env.production` to that user (`chmod 600`).
-3. Copy `.env.example` to `.env.production`. Set `NODE_ENV=production`, `NEXT_PUBLIC_APP_ENV=production`, `NEXT_PUBLIC_SITE_URL=https://<domain>`, and the desired live flags. Configure all six cache paths below `/var/lib/podgorica-daily/cache`.
+3. Copy `.env.example` to `.env.production`. Set `NODE_ENV=production`, `NEXT_PUBLIC_APP_ENV=production`, `NEXT_PUBLIC_SITE_URL=https://<domain>`, `RUNTIME_DATA_DIR=/var/lib/podgorica-daily`, and the desired live flags. The default cache paths then resolve below the mounted `/var/lib/podgorica-daily/cache` directory.
 4. From the repository, run `docker compose build` then `docker compose up -d`. Verify `docker compose ps` and `curl -fsS http://127.0.0.1:3000/api/health`.
 5. Run each first collection manually only after confirming source permission and environment: `docker compose run --rm scheduler sh -c 'pnpm run collect:kic-events'` (repeat for the other three). Inspect `docker compose logs scheduler` and the cache volume contents.
 6. Install the Caddy template as the active site configuration, replace placeholders, validate it with `caddy validate`, then reload Caddy. Verify HTTPS, `/events` redirect, `/me/events`, `/en/events`, and an event detail URL on a narrow phone viewport.

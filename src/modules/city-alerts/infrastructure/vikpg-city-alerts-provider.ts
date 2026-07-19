@@ -1,5 +1,10 @@
 import type { CityAlert } from "../domain/city-alert.ts";
-import { readVikpgCache, type VikpgCacheSnapshot, type VikpgFreshnessStatus } from "./vikpg-cache.ts";
+import {
+  defaultVikpgCachePath,
+  readVikpgCache,
+  type VikpgCacheSnapshot,
+  type VikpgFreshnessStatus,
+} from "./vikpg-cache.ts";
 import type { CityContext } from "@/shared/types/city";
 import type { ProviderMetadata } from "@/shared/types/provider";
 
@@ -39,7 +44,7 @@ async function getVikpgCityAlerts({
 }
 
 const vikpgProviderMetadata: ProviderMetadata = {
-  cachePath: ".runtime/cache/vikpg-water-alerts.json",
+  cachePath: defaultVikpgCachePath,
   displayName: "Vodovod i kanalizacija Podgorica water notices",
   enabled: true,
   id: "vikpg",

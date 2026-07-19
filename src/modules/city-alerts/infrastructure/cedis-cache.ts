@@ -1,4 +1,5 @@
 import type { CityAlert } from "@/modules/city-alerts/domain/city-alert";
+import { resolveRuntimeCachePath } from "../../../config/runtime-data.ts";
 import {
   calculateCacheFreshness,
   nodeFileSystem,
@@ -39,7 +40,7 @@ interface CacheReadResult {
   snapshot: CedisCacheSnapshot | null;
 }
 
-const defaultCachePath = ".runtime/cache/cedis-planned-outages.json";
+const defaultCachePath = resolveRuntimeCachePath("cedis-planned-outages.json");
 function calculateFreshness(
   fetchedAt: Date | undefined,
   now = new Date(),
@@ -49,7 +50,7 @@ function calculateFreshness(
 }
 
 async function readCedisCacheResult(
-  cachePath = process.env.CEDIS_CACHE_PATH ?? defaultCachePath,
+  cachePath = process.env.CEDIS_CACHE_PATH ?? resolveRuntimeCachePath("cedis-planned-outages.json"),
   fileSystem: CacheFileSystem = nodeFileSystem,
 ): Promise<CacheReadResult> {
   try {
@@ -72,7 +73,7 @@ async function readCedisCacheResult(
 }
 
 async function readCedisCache(
-  cachePath = process.env.CEDIS_CACHE_PATH ?? defaultCachePath,
+  cachePath = process.env.CEDIS_CACHE_PATH ?? resolveRuntimeCachePath("cedis-planned-outages.json"),
   fileSystem: CacheFileSystem = nodeFileSystem,
 ) {
   return (await readCedisCacheResult(cachePath, fileSystem)).snapshot;
@@ -80,7 +81,7 @@ async function readCedisCache(
 
 async function writeCedisCache(
   snapshot: CedisCacheSnapshot,
-  cachePath = process.env.CEDIS_CACHE_PATH ?? defaultCachePath,
+  cachePath = process.env.CEDIS_CACHE_PATH ?? resolveRuntimeCachePath("cedis-planned-outages.json"),
   fileSystem: CacheFileSystem = nodeFileSystem,
 ) {
   try {

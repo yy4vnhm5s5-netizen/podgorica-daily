@@ -5,6 +5,8 @@ import { parseEnvironment } from "./env.ts";
 
 test("parses Event Quality defaults, boundaries, and valid overrides", () => {
   const defaults = parseEnvironment({});
+  assert.equal(defaults.RUNTIME_DATA_DIR, ".runtime");
+  assert.equal(defaults.CEDIS_CACHE_PATH, undefined);
   assert.equal(defaults.EVENT_QUALITY_MAX_PAST_DAYS, 30);
   assert.equal(defaults.EVENT_QUALITY_COUNT_DROP_RATIO, 0.5);
   const values = parseEnvironment({

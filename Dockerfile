@@ -21,9 +21,12 @@ RUN addgroup --system --gid 1001 nodejs \
 
 COPY src ./src
 COPY scripts/scheduler-entrypoint.sh /usr/local/bin/scheduler-entrypoint
-RUN chmod 755 /usr/local/bin/scheduler-entrypoint
+RUN mkdir -p /app/.runtime/cache \
+  && chown -R nextjs:nodejs /app/.runtime \
+  && chmod 755 /usr/local/bin/scheduler-entrypoint
 
 USER nextjs
+ENV RUNTIME_DATA_DIR=/app/.runtime
 
 ENTRYPOINT ["scheduler-entrypoint"]
 
@@ -37,11 +40,13 @@ RUN addgroup --system --gid 1001 nodejs \
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+RUN mkdir -p /app/.runtime/cache && chown -R nextjs:nodejs /app/.runtime
 
 USER nextjs
 
 EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
+ENV RUNTIME_DATA_DIR=/app/.runtime
 
 CMD ["node", "server.js"]

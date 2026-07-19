@@ -1,4 +1,5 @@
 import type { CityAlert } from "@/modules/city-alerts/domain/city-alert";
+import { resolveRuntimeCachePath } from "../../../config/runtime-data.ts";
 import {
   calculateCacheFreshness,
   nodeFileSystem,
@@ -38,7 +39,7 @@ interface VikpgCacheReadResult {
   snapshot: VikpgCacheSnapshot | null;
 }
 
-const defaultVikpgCachePath = ".runtime/cache/vikpg-water-alerts.json";
+const defaultVikpgCachePath = resolveRuntimeCachePath("vikpg-water-alerts.json");
 
 function calculateVikpgFreshness(
   fetchedAt: Date | undefined,
@@ -49,7 +50,7 @@ function calculateVikpgFreshness(
 }
 
 async function readVikpgCacheResult(
-  cachePath = process.env.VIKPG_CACHE_PATH ?? defaultVikpgCachePath,
+  cachePath = process.env.VIKPG_CACHE_PATH ?? resolveRuntimeCachePath("vikpg-water-alerts.json"),
   fileSystem: CacheFileSystem = nodeFileSystem,
 ): Promise<VikpgCacheReadResult> {
   try {
@@ -72,7 +73,7 @@ async function readVikpgCacheResult(
 }
 
 async function readVikpgCache(
-  cachePath = process.env.VIKPG_CACHE_PATH ?? defaultVikpgCachePath,
+  cachePath = process.env.VIKPG_CACHE_PATH ?? resolveRuntimeCachePath("vikpg-water-alerts.json"),
   fileSystem: CacheFileSystem = nodeFileSystem,
 ) {
   return (await readVikpgCacheResult(cachePath, fileSystem)).snapshot;
@@ -80,7 +81,7 @@ async function readVikpgCache(
 
 async function writeVikpgCache(
   snapshot: VikpgCacheSnapshot,
-  cachePath = process.env.VIKPG_CACHE_PATH ?? defaultVikpgCachePath,
+  cachePath = process.env.VIKPG_CACHE_PATH ?? resolveRuntimeCachePath("vikpg-water-alerts.json"),
   fileSystem: CacheFileSystem = nodeFileSystem,
 ) {
   try {

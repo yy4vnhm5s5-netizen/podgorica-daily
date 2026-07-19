@@ -1,3 +1,6 @@
+import { dirname } from "node:path";
+
+import { acquireRefreshLock } from "../../../shared/lib/refresh-lock.ts";
 import { defaultCachePath, readCedisCache, writeCedisCache } from "./cedis-cache.ts";
 import { createCedisHttpClient } from "./cedis-http-client.ts";
 import { refreshCedis, type RefreshResult } from "./cedis-refresh.ts";
@@ -17,7 +20,7 @@ interface CollectorResult {
     completedAt: string;
     errorCode?: string;
     retainedPreviousSnapshot: boolean;
-    status: "retained" | "success" | "unavailable";
+    status: "already-running" | "retained" | "success" | "unavailable";
     warnings: string[];
   };
 }
@@ -27,30 +30,49 @@ async function runCedisCollector({
   refresh,
   writeOutput = console.log,
 }: CollectorDependencies = {}): Promise<CollectorResult> {
-  const result = await (
-    refresh ??
-    (() =>
-      refreshCedis({
-        cache: {
-          read: () => readCedisCache(cachePath),
-          write: (snapshot) => writeCedisCache(snapshot, cachePath),
-        },
-        httpClient: createCedisHttpClient(),
-      }))
-  )();
-  const retainedPreviousSnapshot = result.retainedPreviousSnapshot;
-  const summary: CollectorResult["summary"] = {
-    alertCount: result.snapshot?.alerts.length ?? 0,
-    cachePath,
-    cacheStatus: result.snapshot?.freshnessStatus ?? "unavailable",
-    completedAt: new Date().toISOString(),
-    ...(result.errorCode ? { errorCode: result.errorCode } : {}),
-    retainedPreviousSnapshot,
-    status: result.success ? "success" : retainedPreviousSnapshot ? "retained" : "unavailable",
-    warnings: result.warnings,
-  };
-  writeOutput(JSON.stringify(summary));
-  return { exitCode: result.success || retainedPreviousSnapshot ? 0 : 1, summary };
+  const lock = await acquireRefreshLock(dirname(cachePath), { lockFileName: ".cedis-refresh.lock" });
+  if (!("release" in lock)) {
+    const summary: CollectorResult["summary"] = {
+      alertCount: 0,
+      cachePath,
+      cacheStatus: "unavailable",
+      completedAt: new Date().toISOString(),
+      retainedPreviousSnapshot: false,
+      status: "already-running",
+      warnings: [],
+    };
+    writeOutput(JSON.stringify(summary));
+    return { exitCode: 0, summary };
+  }
+
+  try {
+    const result = await (
+      refresh ??
+      (() =>
+        refreshCedis({
+          cache: {
+            read: () => readCedisCache(cachePath),
+            write: (snapshot) => writeCedisCache(snapshot, cachePath),
+          },
+          httpClient: createCedisHttpClient(),
+        }))
+    )();
+    const retainedPreviousSnapshot = result.retainedPreviousSnapshot;
+    const summary: CollectorResult["summary"] = {
+      alertCount: result.snapshot?.alerts.length ?? 0,
+      cachePath,
+      cacheStatus: result.snapshot?.freshnessStatus ?? "unavailable",
+      completedAt: new Date().toISOString(),
+      ...(result.errorCode ? { errorCode: result.errorCode } : {}),
+      retainedPreviousSnapshot,
+      status: result.success ? "success" : retainedPreviousSnapshot ? "retained" : "unavailable",
+      warnings: result.warnings,
+    };
+    writeOutput(JSON.stringify(summary));
+    return { exitCode: result.success || retainedPreviousSnapshot ? 0 : 1, summary };
+  } finally {
+    await lock.release();
+  }
 }
 
 if (process.argv[1]?.endsWith("collect-cedis.ts")) {

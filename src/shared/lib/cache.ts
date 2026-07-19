@@ -21,6 +21,10 @@ const nodeFileSystem: CacheFileSystem = {
   writeFile,
 };
 
+async function ensureCacheDirectory(cachePath: string, fileSystem: CacheFileSystem = nodeFileSystem) {
+  await fileSystem.mkdir(dirname(cachePath), { recursive: true });
+}
+
 function calculateCacheFreshness(
   fetchedAt: Date | undefined,
   now = new Date(),
@@ -48,7 +52,7 @@ async function writeJsonCache<T>(
 ) {
   const temporaryPath = `${cachePath}.tmp`;
   try {
-    await fileSystem.mkdir(dirname(cachePath), { recursive: true });
+    await ensureCacheDirectory(cachePath, fileSystem);
     await fileSystem.writeFile(temporaryPath, JSON.stringify(snapshot), "utf8");
     await fileSystem.rename(temporaryPath, cachePath);
   } catch {
@@ -59,6 +63,7 @@ async function writeJsonCache<T>(
 
 export {
   calculateCacheFreshness,
+  ensureCacheDirectory,
   nodeFileSystem,
   readJsonCache,
   writeJsonCache,
