@@ -36,7 +36,11 @@ test("emits every structured Events diagnostic as one non-empty JSON string", ()
     assert.equal(call.length, 1);
     assert.equal(typeof call[0], "string");
     assert.ok((call[0] as string).trim().length > 0);
-    assert.equal(typeof JSON.parse(call[0] as string).event, "string");
+    const payload = JSON.parse(call[0] as string);
+    assert.equal(typeof payload.event, "string");
+    assert.equal(typeof payload.message, "string");
+    assert.ok(payload.message.trim());
+    assert.ok(["error", "info"].includes(payload.level));
   }
 
   const kicFailure = JSON.parse(errorCalls[0][0] as string);

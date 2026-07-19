@@ -1,11 +1,11 @@
 type EventRefreshLogPayload = Record<string, unknown>;
 
 function emitInfo(payload: EventRefreshLogPayload): void {
-  console.info(serializePayload(payload));
+  console.info(serializePayload(withRailwayMessage(payload, "info")));
 }
 
 function emitError(payload: EventRefreshLogPayload): void {
-  console.error(serializePayload(payload));
+  console.error(serializePayload(withRailwayMessage(payload, "error")));
 }
 
 function emitInfoMessage(message: string): void {
@@ -23,6 +23,15 @@ function serializePayload(payload: EventRefreshLogPayload): string {
     throw new Error("Event refresh diagnostics could not be serialized.");
 
   return serialized;
+}
+
+function withRailwayMessage(
+  payload: EventRefreshLogPayload,
+  level: "error" | "info",
+): EventRefreshLogPayload {
+  const event = typeof payload.event === "string" ? payload.event : "events-diagnostic";
+  const message = typeof payload.message === "string" && payload.message.trim() ? payload.message : event;
+  return { ...payload, level, message };
 }
 
 export { emitError, emitInfo, emitInfoMessage, type EventRefreshLogPayload };
