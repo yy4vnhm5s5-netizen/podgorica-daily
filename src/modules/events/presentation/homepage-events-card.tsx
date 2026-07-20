@@ -1,8 +1,10 @@
 import { CalendarDays, Clock3 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 import type { CityEvent } from "../domain/event.ts";
 import { getEventsTranslations } from "./events-translations";
+import { getHomepageVenueName } from "./events-ui-model";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { getLocaleTag, type Locale } from "@/shared/config/locale";
 import { formatDateTime } from "@/shared/lib/date";
@@ -23,32 +25,19 @@ function HomepageEventsCard({ eventCount, events, isUnavailable, locale }: Homep
         <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
           <CalendarDays aria-hidden="true" className="size-[1.125rem]" strokeWidth={1.8} />
         </div>
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0">
           <h2 className="text-base font-semibold tracking-tight">{translations.heading}</h2>
-          <p className="mt-0.5 text-sm text-muted-foreground">{translations.homepageSupportingText}</p>
+          <p className="mt-0.5 text-xs leading-4 text-muted-foreground sm:text-sm">
+            {translations.homepageSupportingText} <span aria-hidden="true">•</span>{" "}
+            {translations.eventsCount(eventCount)}
+          </p>
         </div>
-        <p className="shrink-0 text-xs font-medium text-muted-foreground">
-          {translations.eventsCount(eventCount)}
-        </p>
       </CardHeader>
       <CardContent className="p-4 pt-0 sm:p-5 sm:pt-0">
         {events.length > 0 ? (
           <ul className="divide-y divide-primary/10">
             {events.map((event) => (
-              <li className="py-2.5 first:pt-0 last:pb-0" key={event.id}>
-                <Link
-                  className="group block rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                  href={`/${locale}/events/${encodeURIComponent(event.id)}`}
-                >
-                  <h3 className="text-sm font-semibold leading-5 group-hover:text-primary">{event.title}</h3>
-                  <p className="mt-1 text-sm leading-5 text-muted-foreground">
-                    <EventSchedule event={event} locale={locale} />
-                  </p>
-                  {event.venueName ? (
-                    <p className="truncate text-xs leading-5 text-muted-foreground">{event.venueName}</p>
-                  ) : null}
-                </Link>
-              </li>
+              <HomepageEvent event={event} key={event.id} locale={locale} />
             ))}
           </ul>
         ) : isUnavailable ? (
@@ -64,6 +53,39 @@ function HomepageEventsCard({ eventCount, events, isUnavailable, locale }: Homep
         </Link>
       </CardContent>
     </Card>
+  );
+}
+
+function HomepageEvent({ event, locale }: { event: CityEvent; locale: Locale }) {
+  const venueName = getHomepageVenueName(event.venueName);
+
+  return (
+    <li className="py-2.5 first:pt-0 last:pb-0">
+      <Link
+        className="group flex items-start gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        href={`/${locale}/events/${encodeURIComponent(event.id)}`}
+      >
+        {event.imageUrl ? (
+          <Image
+            alt=""
+            className="size-12 shrink-0 rounded-lg object-cover"
+            height={48}
+            src={event.imageUrl}
+            unoptimized
+            width={48}
+          />
+        ) : null}
+        <div className="min-w-0 flex-1">
+          <h3 className="text-sm font-semibold leading-5 group-hover:text-primary">{event.title}</h3>
+          <p className="mt-1 text-sm leading-5 text-muted-foreground">
+            <EventSchedule event={event} locale={locale} />
+          </p>
+          {venueName ? (
+            <p className="truncate text-xs leading-5 text-muted-foreground">{venueName}</p>
+          ) : null}
+        </div>
+      </Link>
+    </li>
   );
 }
 

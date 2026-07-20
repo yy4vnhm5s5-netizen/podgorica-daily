@@ -130,7 +130,8 @@ const eventTranslations = {
     dateAndTime: "Datum i vrijeme",
     date: "Datum",
     endTime: "Završava se",
-    eventsCount: (count: number) => `${count} ${count === 1 ? "događaj" : "događaja"}`,
+    eventsCount: (count: number) =>
+      `${count} ${count % 10 === 1 && count % 100 !== 11 ? "događaj" : "događaja"}`,
     filters: "Filteri",
     heading: "Događaji u Podgorici",
     homepageEmpty: "Trenutno nema predstojećih događaja.",

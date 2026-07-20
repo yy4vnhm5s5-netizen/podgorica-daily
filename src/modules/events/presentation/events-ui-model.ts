@@ -10,6 +10,8 @@ import type { CityContext } from "@/shared/types/city";
 
 type EventDatePreset = "today" | "tomorrow" | "upcoming" | "weekend";
 
+const genericHomepageVenueNames = new Set(["grad", "online", "podgorica", "tba"]);
+
 interface EventsUiFilters {
   category?: EventPresentationCategory;
   datePreset: EventDatePreset;
@@ -108,6 +110,13 @@ function selectHomepageEvents(events: readonly CityEvent[], context: CityContext
   return getHomepageEvents(events, context, now).slice(0, 3);
 }
 
+function getHomepageVenueName(value: string | undefined) {
+  const venueName = value?.replace(/\s+/g, " ").trim();
+  if (!venueName || venueName.length < 3 || /^[\p{Ll}]/u.test(venueName)) return undefined;
+
+  return genericHomepageVenueNames.has(venueName.toLocaleLowerCase()) ? undefined : venueName;
+}
+
 function isHomepageEventsUnavailable(providers: readonly Pick<EventProviderReadState, "state">[]) {
   return providers.length > 0 && providers.every((provider) => provider.state === "unavailable");
 }
@@ -154,6 +163,7 @@ function isEventSort(value: unknown): value is EventSort {
 export {
   filterEventsForUi,
   getHomepageEvents,
+  getHomepageVenueName,
   groupEventsByDay,
   isHomepageEventsUnavailable,
   parseEventsUiFilters,

@@ -13,6 +13,7 @@ import {
 import {
   filterEventsForUi,
   getHomepageEvents,
+  getHomepageVenueName,
   groupEventsByDay,
   isHomepageEventsUnavailable,
   parseEventsUiFilters,
@@ -192,6 +193,13 @@ test("continues with tomorrow and later dates when no event remains today", () =
   );
 });
 
+test("keeps only meaningful venue names in compact homepage event rows", () => {
+  assert.equal(getHomepageVenueName("KIC Budo Tomović"), "KIC Budo Tomović");
+  assert.equal(getHomepageVenueName("digitalizovanoj bioskopskoj sali KIC-a"), undefined);
+  assert.equal(getHomepageVenueName("Podgorica"), undefined);
+  assert.equal(getHomepageVenueName(undefined), undefined);
+});
+
 test("treats an empty event list as unavailable only when every provider is unavailable", () => {
   assert.equal(isHomepageEventsUnavailable([]), false);
   assert.equal(isHomepageEventsUnavailable([{ state: "fresh" }]), false);
@@ -234,6 +242,10 @@ test("supports all official provider names and communicates cancellation or post
   assert.equal(getEventCategoryLabel("me", "concert"), "Koncert");
   assert.equal(getEventPresentationCategoryLabel("me", "music"), "Muzika");
   assert.equal(getEventsTranslations("me").quickFilters.tomorrow, "Sjutra");
+  assert.equal(getEventsTranslations("me").eventsCount(1), "1 događaj");
+  assert.equal(getEventsTranslations("me").eventsCount(4), "4 događaja");
+  assert.equal(getEventsTranslations("me").eventsCount(5), "5 događaja");
+  assert.equal(getEventsTranslations("me").eventsCount(21), "21 događaj");
   assert.equal(getEventsTranslations("me").officialSource, "Pogledajte originalnu objavu");
   assert.equal(getEventStatusLabel("me", "cancelled"), "Otkazano");
   assert.equal(getEventStatusLabel("en", "postponed"), "Postponed");
