@@ -5,6 +5,7 @@ import { cineplexxProgrammeUrl } from "./cineplexx-programme-parser.ts";
 
 const executeFile = promisify(execFile);
 const allowedCineplexxHosts = new Set(["cineplexx.me", "www.cineplexx.me"]);
+const chromiumCommands = ["chromium-browser", "chromium", "google-chrome", "google-chrome-stable"];
 
 type CineplexxBrowserFailurePhase =
   | "chromium-launch"
@@ -63,9 +64,14 @@ interface CineplexxBrowserRenderer {
 }
 
 interface CineplexxBrowserRendererOptions {
-  browserPath?: string;
+  chromiumPath?: string;
   execute?: CineplexxProcessExecutor;
+  resolveExecutable?: CineplexxExecutableResolver;
   timeoutMs?: number;
+}
+
+interface CineplexxExecutableResolver {
+  (candidates: readonly string[]): Promise<string | undefined>;
 }
 
 interface CineplexxProcessExecutor {
@@ -81,14 +87,40 @@ const nodeProcessExecutor: CineplexxProcessExecutor = async (file, arguments_, o
   return { stderr: String(stderr), stdout: String(stdout) };
 };
 
+const nodeExecutableResolver: CineplexxExecutableResolver = async (candidates) => {
+  for (const candidate of candidates) {
+    try {
+      const { stdout } = await executeFile("which", [candidate], {
+        encoding: "utf8",
+        maxBuffer: 8 * 1024,
+        timeout: 2_000,
+      });
+      const executable = String(stdout).trim().split(/\r?\n/)[0];
+      if (executable) return executable;
+    } catch {
+      // Try the next approved Chromium command.
+    }
+  }
+  return undefined;
+};
+
 function createCineplexxBrowserRenderer({
-  browserPath = "/usr/bin/chromium-browser",
+  chromiumPath,
   execute = nodeProcessExecutor,
+  resolveExecutable = nodeExecutableResolver,
   timeoutMs = 30_000,
 }: CineplexxBrowserRendererOptions = {}): CineplexxBrowserRenderer {
   return {
     async renderProgramme(url = cineplexxProgrammeUrl) {
       assertCineplexxProgrammeUrl(url);
+      const candidates = getChromiumCandidates(chromiumPath);
+      const browserPath = await resolveExecutable(candidates);
+      if (!browserPath)
+        throw new CineplexxBrowserError(
+          "cineplexx-browser-failed",
+          `Chromium executable was not found. Checked: ${candidates.join(", ")}.`,
+          { executableMissing: true, phase: "chromium-launch" },
+        );
       try {
         const { stdout } = await execute(
           browserPath,
@@ -138,6 +170,14 @@ function createCineplexxBrowserRenderer({
       }
     },
   };
+}
+
+function getChromiumCandidates(chromiumPath: string | undefined) {
+  return [...new Set([chromiumPath?.trim(), ...chromiumCommands].filter(isNonEmptyString))];
+}
+
+function isNonEmptyString(value: string | undefined): value is string {
+  return Boolean(value);
 }
 
 function assertCineplexxProgrammeUrl(value: string) {
@@ -190,6 +230,7 @@ export {
   inspectCineplexxRenderedDom,
   type CineplexxBrowserRenderer,
   type CineplexxBrowserRendererOptions,
+  type CineplexxExecutableResolver,
   type CineplexxBrowserFailurePhase,
   type CineplexxDomDiagnostics,
   type CineplexxProcessExecutor,

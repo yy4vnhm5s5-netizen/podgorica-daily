@@ -17,7 +17,10 @@ RUN pnpm run build
 FROM dependencies AS scheduler
 
 RUN addgroup --system --gid 1001 nodejs \
-  && adduser --system --uid 1001 nextjs
+  && adduser --system --uid 1001 nextjs \
+  && apk add --no-cache chromium nss tzdata \
+  && command -v which >/dev/null \
+  && (which chromium-browser || which chromium) >/dev/null
 
 COPY src ./src
 COPY scripts/scheduler-entrypoint.sh /usr/local/bin/scheduler-entrypoint
@@ -27,6 +30,7 @@ RUN mkdir -p /app/.runtime/cache \
 
 USER nextjs
 ENV RUNTIME_DATA_DIR=/app/.runtime
+ENV TZ=Europe/Podgorica
 
 ENTRYPOINT ["scheduler-entrypoint"]
 
@@ -36,7 +40,9 @@ ENV NODE_ENV=production
 
 RUN addgroup --system --gid 1001 nodejs \
   && adduser --system --uid 1001 nextjs \
-  && apk add --no-cache su-exec
+  && apk add --no-cache chromium nss su-exec \
+  && command -v which >/dev/null \
+  && (which chromium-browser || which chromium) >/dev/null
 
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
