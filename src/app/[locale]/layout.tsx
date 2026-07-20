@@ -19,6 +19,7 @@ async function generateMetadata({ params }: LocaleLayoutProps): Promise<Metadata
   const translations = getTranslations(locale);
 
   return {
+    alternates: { canonical: `/${locale}` },
     description: translations.metadata.description,
     title: translations.metadata.title,
   };

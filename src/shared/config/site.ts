@@ -1,4 +1,5 @@
 export const siteConfig = {
-  logoPath: "/brand/logo-blue.svg",
+  logoPath: "/logo.svg",
   name: "Gradom",
+  url: "https://gradom.me",
 } as const;
