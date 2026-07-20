@@ -13,6 +13,7 @@ import {
 import {
   filterEventsForUi,
   getHomepageEvents,
+  getHomepageEventsTodayCount,
   getHomepageVenueName,
   groupEventsByDay,
   isHomepageEventsUnavailable,
@@ -191,6 +192,17 @@ test("continues with tomorrow and later dates when no event remains today", () =
     getHomepageEvents(events, context, new Date("2026-07-17T10:00:00.000Z")).length,
     2,
   );
+});
+
+test("counts only homepage-eligible events on the current Podgorica calendar day", () => {
+  const now = new Date("2026-07-17T10:00:00.000Z");
+  const events = [
+    podgoricaEvent({ id: "today", startsAt: "2026-07-17T13:00:00.000Z" }),
+    podgoricaEvent({ id: "tomorrow", startsAt: "2026-07-18T13:00:00.000Z" }),
+  ];
+
+  const homepageEvents = getHomepageEvents(events, context, now);
+  assert.equal(getHomepageEventsTodayCount(homepageEvents, context.timezone, now), 1);
 });
 
 test("keeps only meaningful venue names in compact homepage event rows", () => {

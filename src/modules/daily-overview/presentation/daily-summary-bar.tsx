@@ -3,8 +3,14 @@ import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
 import type { DailyOverviewResult } from "@/modules/daily-overview/application/get-daily-overview";
-import { getDailyEventsSummary } from "@/modules/daily-overview/presentation/daily-summary-events";
-import { getDailyOverviewTranslations } from "@/modules/daily-overview/presentation/daily-overview-translations";
+import {
+  getDailyEventsSummary,
+  type DailyEventsSummaryInput,
+} from "@/modules/daily-overview/presentation/daily-summary-events";
+import {
+  getDailyOverviewTranslations,
+  type DailyOverviewTranslations,
+} from "@/modules/daily-overview/presentation/daily-overview-translations";
 import type { CurrentWeatherResult } from "@/modules/weather/application/get-current-weather";
 import { getWeatherTemperature } from "@/modules/weather/presentation/weather-temperature";
 import { StatusBadge, type StatusTone } from "@/shared/components/status-badge";
@@ -15,12 +21,13 @@ import { getLocaleTag } from "@/shared/config/locale";
 import { dailySummaryLayout } from "./daily-summary-layout";
 
 interface DailySummaryBarProps {
+  events: DailyEventsSummaryInput;
   locale: Locale;
   result: DailyOverviewResult;
   weather: CurrentWeatherResult | null;
 }
 
-function DailySummaryBar({ locale, result, weather }: DailySummaryBarProps) {
+function DailySummaryBar({ events, locale, result, weather }: DailySummaryBarProps) {
   const translations = getDailyOverviewTranslations(locale);
 
   if (result.status !== "success") {
@@ -39,8 +46,8 @@ function DailySummaryBar({ locale, result, weather }: DailySummaryBarProps) {
     );
   }
 
-  const { airQualityCategory, eventsToday, generatedAt } = result.data;
-  const eventsSummary = getDailyEventsSummary(eventsToday);
+  const { airQualityCategory, generatedAt } = result.data;
+  const eventsSummary = getDailyEventsSummary(events);
   const temperatureCelsius = getWeatherTemperature(weather);
 
   return (
@@ -75,11 +82,7 @@ function DailySummaryBar({ locale, result, weather }: DailySummaryBarProps) {
             )}
           </SummaryItem>
           <SummaryItem icon={CalendarDays} label={translations.eventsLabel}>
-            {eventsSummary.status === "unavailable" ? (
-              translations.unavailable
-            ) : (
-              <span className="tabular-nums">{eventsSummary.count}</span>
-            )}
+            <EventsSummaryValue summary={eventsSummary} translations={translations} />
           </SummaryItem>
           <SummaryItem icon={Clock3} label={translations.lastUpdated}>
             <Timestamp locale={getLocaleTag(locale)} value={generatedAt} />
@@ -88,6 +91,20 @@ function DailySummaryBar({ locale, result, weather }: DailySummaryBarProps) {
       </Card>
     </section>
   );
+}
+
+function EventsSummaryValue({
+  summary,
+  translations,
+}: {
+  summary: ReturnType<typeof getDailyEventsSummary>;
+  translations: DailyOverviewTranslations;
+}) {
+  if (summary.status === "unavailable") return translations.unavailable;
+  if (summary.status === "empty") return translations.eventsEmpty;
+  return summary.status === "today"
+    ? translations.eventsToday(summary.count)
+    : translations.eventsUpcoming(summary.count);
 }
 
 interface SummaryItemProps {

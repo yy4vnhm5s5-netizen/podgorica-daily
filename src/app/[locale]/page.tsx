@@ -9,6 +9,7 @@ import { CineplexxProgrammeCard } from "@/modules/events/presentation/cineplexx-
 import { HomepageEventsCard } from "@/modules/events/presentation/homepage-events-card";
 import {
   getHomepageEvents,
+  getHomepageEventsTodayCount,
   isHomepageEventsUnavailable,
   selectHomepageEvents,
 } from "@/modules/events/presentation/events-ui-model";
@@ -62,12 +63,20 @@ async function DashboardPage({ locale }: { locale: Locale }) {
     (provider) => provider.id !== "cineplexx-podgorica",
   );
   const homepageCityEvents = getHomepageEvents(cityEvents, context);
+  const cityEventsUnavailable = isHomepageEventsUnavailable(cityEventProviders);
+  const dailyEvents = {
+    isUnavailable: cityEventsUnavailable,
+    todayCount: getHomepageEventsTodayCount(homepageCityEvents, context.timezone),
+    upcomingCount: homepageCityEvents.length,
+  };
 
   return (
     <DashboardLayout locale={locale} translations={translations}>
       <section className="space-y-10" id="dashboard">
         <div className="space-y-7">
-          {dailyOverview ? <DailySummaryBar locale={locale} result={dailyOverview} weather={weather} /> : null}
+          {dailyOverview ? (
+            <DailySummaryBar events={dailyEvents} locale={locale} result={dailyOverview} weather={weather} />
+          ) : null}
           {isFeatureEnabled("cityAlerts") ? (
             <Suspense fallback={<CityAlertsSectionLoading locale={locale} />}>
               <CityAlertsSection locale={locale} />
@@ -79,7 +88,7 @@ async function DashboardPage({ locale }: { locale: Locale }) {
           <HomepageEventsCard
             eventCount={homepageCityEvents.length}
             events={homepageCityEvents.slice(0, 3)}
-            isUnavailable={isHomepageEventsUnavailable(cityEventProviders)}
+            isUnavailable={cityEventsUnavailable}
             locale={locale}
           />
           <CineplexxProgrammeCard
