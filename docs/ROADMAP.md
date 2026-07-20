@@ -30,6 +30,8 @@ Glavni Grad Podgorica is the third approved Event source. Its Podgorica-only pro
 
 Turistička organizacija Podgorice is the fourth approved Event source. Its Podgorica-only provider reads the official calendar through `pnpm run collect:tourism-events`, writes `.runtime/cache/tourism-events.json`, and remains disabled until `ENABLE_EVENTS=true` with `EVENT_PROVIDER_MODE=live`. Listing and detail parsing are deterministic, use fixture-only tests with injected HTTP, and preserve unavailable schedule fields rather than inferring them. See ADR 0015.
 
+Cineplexx Podgorica is the fifth approved Event source. Its provider renders the official public programme page through `pnpm run collect:cineplexx-events`, writes `.runtime/cache/cineplexx-events.json`, and remains disabled until `ENABLE_EVENTS=true` with `EVENT_PROVIDER_MODE=live`. It collects distinct screenings from saved-rendered-DOM patterns, uses fixture-only parser and failure tests, retains a valid cache on rendering failures, and runs at approximately 05:00 and 17:00. See ADR 0017.
+
 Event quality validation now protects cache writes with deterministic acceptance, warning, rejection, score, and count-drop diagnostics. Future provider rollout must preserve this pipeline.
 
 The Event Quality Layer is complete: policy is validated from environment configuration, provider health is deterministic, and cache/application diagnostics are available for future operational UI.

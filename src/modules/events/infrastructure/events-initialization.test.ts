@@ -4,7 +4,13 @@ import test from "node:test";
 import { initializeEventCaches, type EventCacheProvider } from "./events-initialization.ts";
 import type { EventRefreshSummary } from "./events-refresh-runner.ts";
 
-const providerIds = ["kic", "cnp", "glavni-grad-podgorica", "tourism-podgorica"] as const;
+const providerIds = [
+  "cineplexx-podgorica",
+  "kic",
+  "cnp",
+  "glavni-grad-podgorica",
+  "tourism-podgorica",
+] as const;
 
 function provider(
   id: EventCacheProvider["id"],
@@ -43,12 +49,10 @@ test("does not refresh when every enabled provider has a usable cache", async ()
   });
 
   assert.equal(refreshCalls, 0);
-  assert.deepEqual(summary.providers.map(({ state }) => state), [
-    "cache-found",
-    "cache-found",
-    "cache-found",
-    "cache-found",
-  ]);
+  assert.deepEqual(
+    summary.providers.map(({ state }) => state),
+    providerIds.map(() => "cache-found"),
+  );
   assert.ok(messages.includes("Events: usable caches found; initialization refresh skipped."));
 });
 
@@ -74,12 +78,13 @@ test("refreshes all providers once when an enabled cache is unavailable and logs
   assert.equal(refreshCalls, 1);
   assert.deepEqual(directories, providerIds.map((id) => `/data/events/${id}.json`));
   assert.equal(summary.refresh?.state, "success");
-  assert.deepEqual(summary.providers.map(({ state }) => state), [
-    "cache-found",
-    "cache-found",
-    "refreshed",
-    "cache-found",
-  ]);
+  assert.deepEqual(
+    summary.providers.map(({ id, state }) => ({ id, state })),
+    providerIds.map((id) => ({
+      id,
+      state: id === "glavni-grad-podgorica" ? "refreshed" : "cache-found",
+    })),
+  );
   assert.ok(messages.includes("Events: one or more caches are unavailable; refresh started."));
   assert.ok(messages.includes("Events: refresh completed with state success."));
 });

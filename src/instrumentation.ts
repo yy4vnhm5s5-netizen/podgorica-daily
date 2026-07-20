@@ -34,6 +34,12 @@ export function register() {
     void initializeEventCaches({
       providers: [
         {
+          cachePath: env.CINEPLEXX_EVENT_CACHE_PATH,
+          enabled: true,
+          id: "cineplexx-podgorica",
+          readCache: () => readEventCacheSnapshot(env.CINEPLEXX_EVENT_CACHE_PATH),
+        },
+        {
           cachePath: env.KIC_EVENT_CACHE_PATH,
           enabled: true,
           id: "kic",

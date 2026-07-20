@@ -34,7 +34,13 @@ test("registers Tourism only through the live registry and never fetches in appl
     ),
   );
   assert.ok(
-    ["kic-budo-tomovic", "cnp", "glavni-grad-podgorica", "tourism-podgorica"].every((id) =>
+    [
+      "kic-budo-tomovic",
+      "cnp",
+      "glavni-grad-podgorica",
+      "tourism-podgorica",
+      "cineplexx-podgorica",
+    ].every((id) =>
       eventProviderRegistry.some((provider) => provider.metadata.id === id),
     ),
   );

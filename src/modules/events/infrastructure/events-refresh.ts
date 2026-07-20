@@ -1,6 +1,9 @@
 import { getDefaultCityContext } from "../../../config/city-context.ts";
+import { getEventQualityPolicy } from "../../../config/event-quality.ts";
 import { env } from "../../../config/env.ts";
 import { createCnpHttpClient } from "./cnp-http-client.ts";
+import { createCineplexxBrowserRenderer } from "./cineplexx-browser-renderer.ts";
+import { refreshCineplexxProgramme } from "./cineplexx-refresh.ts";
 import { emitError, emitInfo } from "./event-refresh-logger.ts";
 import { refreshCnpEvents } from "./cnp-refresh.ts";
 import { readEventCacheSnapshot } from "./events-cache.ts";
@@ -19,6 +22,23 @@ import { refreshTourismEvents } from "./tourism-refresh.ts";
 async function refreshAllEvents(): Promise<EventRefreshSummary> {
   const context = getDefaultCityContext();
   const providers: EventRefreshProvider[] = [
+    {
+      id: "cineplexx-podgorica",
+      refresh: async () => {
+        const result = await refreshCineplexxProgramme({
+          cachePath: env.CINEPLEXX_EVENT_CACHE_PATH,
+          context,
+          previousSnapshot: await readEventCacheSnapshot(env.CINEPLEXX_EVENT_CACHE_PATH),
+          qualityPolicy: getEventQualityPolicy(),
+          renderer: createCineplexxBrowserRenderer(),
+        });
+        return {
+          acceptedCount: result.snapshot?.events.length ?? 0,
+          retainedPreviousSnapshot: result.retainedPreviousSnapshot,
+          success: result.success,
+        };
+      },
+    },
     {
       id: "kic",
       refresh: async () => {

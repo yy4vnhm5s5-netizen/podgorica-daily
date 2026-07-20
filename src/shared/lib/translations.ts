@@ -5,9 +5,6 @@ const translations = {
     dashboard: {
       cards: {
         airQuality: "Air Quality",
-        cinema: "In cinemas",
-        cinemaAction: "All screenings →",
-        cinemaDescription: "Cinema listings are currently unavailable.",
         explorePodgorica: "Explore Podgorica",
         explorePodgoricaDescription: "Places are currently unavailable.",
         importantNumbers: "Important Numbers",
@@ -48,9 +45,6 @@ const translations = {
     dashboard: {
       cards: {
         airQuality: "Kvalitet vazduha",
-        cinema: "U bioskopu",
-        cinemaAction: "Sve projekcije →",
-        cinemaDescription: "Program bioskopa trenutno nije dostupan.",
         explorePodgorica: "Istražite Podgoricu",
         explorePodgoricaDescription: "Mjesta trenutno nijesu dostupna.",
         importantNumbers: "Važni brojevi",

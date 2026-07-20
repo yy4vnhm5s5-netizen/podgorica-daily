@@ -99,6 +99,7 @@ interface EventCandidate {
   sourceUpdatedAt?: string;
   startsAt?: string;
   startDate?: string;
+  tags?: string[];
   endsAt?: string;
   timezone: string;
 }

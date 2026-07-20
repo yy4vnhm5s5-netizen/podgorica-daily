@@ -12,6 +12,7 @@ const environmentSchema = z.object({
   EVENT_CACHE_DIR: z.string().min(1).optional(),
   EVENT_REFRESH_SECRET: z.string().min(32).optional(),
   EVENT_CACHE_FRESHNESS_MINUTES: z.coerce.number().int().positive().default(120),
+  CINEPLEXX_CACHE_FRESHNESS_MINUTES: z.coerce.number().int().positive().default(780),
   EVENT_MAX_QUERY_RANGE_DAYS: z.coerce.number().int().positive().max(366).default(90),
   EVENT_MAX_RECURRENCE_OCCURRENCES: z.coerce.number().int().positive().max(100).default(30),
   EVENT_QUALITY_COUNT_DROP_RATIO: z.coerce.number().min(0).max(1).default(0.5),
@@ -27,6 +28,7 @@ const environmentSchema = z.object({
   CNP_EVENT_CACHE_PATH: z.string().min(1).optional(),
   GLAVNI_GRAD_EVENT_CACHE_PATH: z.string().min(1).optional(),
   TOURISM_EVENT_CACHE_PATH: z.string().min(1).optional(),
+  CINEPLEXX_EVENT_CACHE_PATH: z.string().min(1).optional(),
   CEDIS_CACHE_PATH: z.string().min(1).optional(),
   AMSCG_CACHE_PATH: z.string().min(1).optional(),
   VIKPG_CACHE_PATH: z.string().min(1).optional(),
@@ -63,6 +65,7 @@ const parsedEnvironment = environmentSchema.safeParse({
   EVENT_CACHE_DIR: process.env.EVENT_CACHE_DIR,
   EVENT_REFRESH_SECRET: process.env.EVENT_REFRESH_SECRET,
   EVENT_CACHE_FRESHNESS_MINUTES: process.env.EVENT_CACHE_FRESHNESS_MINUTES,
+  CINEPLEXX_CACHE_FRESHNESS_MINUTES: process.env.CINEPLEXX_CACHE_FRESHNESS_MINUTES,
   EVENT_MAX_QUERY_RANGE_DAYS: process.env.EVENT_MAX_QUERY_RANGE_DAYS,
   EVENT_MAX_RECURRENCE_OCCURRENCES: process.env.EVENT_MAX_RECURRENCE_OCCURRENCES,
   EVENT_QUALITY_COUNT_DROP_RATIO: process.env.EVENT_QUALITY_COUNT_DROP_RATIO,
@@ -78,6 +81,7 @@ const parsedEnvironment = environmentSchema.safeParse({
   CNP_EVENT_CACHE_PATH: process.env.CNP_EVENT_CACHE_PATH,
   GLAVNI_GRAD_EVENT_CACHE_PATH: process.env.GLAVNI_GRAD_EVENT_CACHE_PATH,
   TOURISM_EVENT_CACHE_PATH: process.env.TOURISM_EVENT_CACHE_PATH,
+  CINEPLEXX_EVENT_CACHE_PATH: process.env.CINEPLEXX_EVENT_CACHE_PATH,
   CEDIS_CACHE_PATH: process.env.CEDIS_CACHE_PATH,
   AMSCG_CACHE_PATH: process.env.AMSCG_CACHE_PATH,
   VIKPG_CACHE_PATH: process.env.VIKPG_CACHE_PATH,
@@ -134,6 +138,8 @@ const resolvedEnvironment = {
   EVENT_CACHE_PATH: parsedEnvironment.data.EVENT_CACHE_PATH ?? `${cacheDirectory}/events.json`,
   TOURISM_EVENT_CACHE_PATH:
     parsedEnvironment.data.TOURISM_EVENT_CACHE_PATH ?? `${cacheDirectory}/tourism-events.json`,
+  CINEPLEXX_EVENT_CACHE_PATH:
+    parsedEnvironment.data.CINEPLEXX_EVENT_CACHE_PATH ?? `${cacheDirectory}/cineplexx-events.json`,
   VIKPG_CACHE_PATH:
     parsedEnvironment.data.VIKPG_CACHE_PATH ??
     resolveRuntimeCachePath("vikpg-water-alerts.json", runtimeDataDirectory),

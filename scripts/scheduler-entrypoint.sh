@@ -17,8 +17,12 @@ while true; do
   minute="$(date +%M)"
 
   case "$minute" in
+    05) run_collector "cineplexx-events" "pnpm run collect:cineplexx-events" ;;
     07) run_collector "kic-events" "pnpm run collect:kic-events" ;;
-    17) run_collector "cnp-events" "pnpm run collect:cnp-events" ;;
+    17)
+      run_collector "cnp-events" "pnpm run collect:cnp-events"
+      run_collector "cineplexx-events" "pnpm run collect:cineplexx-events"
+      ;;
     27) run_collector "glavni-grad-events" "pnpm run collect:glavni-grad-events" ;;
     37) run_collector "tourism-events" "pnpm run collect:tourism-events" ;;
     00|30)

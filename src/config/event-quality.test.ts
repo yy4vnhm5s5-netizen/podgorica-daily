@@ -9,6 +9,7 @@ test("parses Event Quality defaults, boundaries, and valid overrides", () => {
   assert.equal(defaults.CEDIS_CACHE_PATH, undefined);
   assert.equal(defaults.EVENT_QUALITY_MAX_PAST_DAYS, 30);
   assert.equal(defaults.EVENT_QUALITY_COUNT_DROP_RATIO, 0.5);
+  assert.equal(defaults.CINEPLEXX_CACHE_FRESHNESS_MINUTES, 780);
   const values = parseEnvironment({
     EVENT_QUALITY_MAX_PAST_DAYS: "1",
     EVENT_QUALITY_MAX_FUTURE_DAYS: "2",

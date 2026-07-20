@@ -1,12 +1,14 @@
 import { env } from "../../../config/env.ts";
 import type { EventProvider } from "../domain/event.ts";
 import { cnpEventProvider } from "./cnp-event-provider.ts";
+import { cineplexxEventProvider } from "./cineplexx-event-provider.ts";
 import { glavniGradEventProvider } from "./glavni-grad-event-provider.ts";
 import { tourismEventProvider } from "./tourism-event-provider.ts";
 import { kicEventProvider } from "./kic-event-provider.ts";
 
 const eventProviderRegistry: readonly EventProvider[] = [
   cnpEventProvider,
+  cineplexxEventProvider,
   glavniGradEventProvider,
   tourismEventProvider,
   kicEventProvider,

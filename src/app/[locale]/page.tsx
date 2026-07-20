@@ -5,6 +5,7 @@ import { getDefaultCityContext } from "@/config/city-context";
 import { getDailyOverview } from "@/modules/daily-overview/application/get-daily-overview";
 import { DailySummaryBar } from "@/modules/daily-overview/presentation/daily-summary-bar";
 import { getCityEvents } from "@/modules/events/application/get-city-events";
+import { CineplexxProgrammeCard } from "@/modules/events/presentation/cineplexx-programme-card";
 import { HomepageEventsCard } from "@/modules/events/presentation/homepage-events-card";
 import {
   isHomepageEventsUnavailable,
@@ -17,7 +18,6 @@ import {
   CityAlertsSectionLoading,
 } from "@/modules/city-alerts/presentation/city-alerts-section";
 import { AdvertisingCard } from "@/shared/components/dashboard/advertising-card";
-import { CinemaPlaceholderCard } from "@/shared/components/dashboard/cinema-placeholder-card";
 import { getEmergencyNumbers } from "@/shared/components/dashboard/emergency-numbers";
 import { EmergencyNumbersStrip } from "@/shared/components/dashboard/emergency-numbers-strip";
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
@@ -45,13 +45,18 @@ async function LocalePage({ params }: LocalePageProps) {
 
 async function DashboardPage({ locale }: { locale: Locale }) {
   const translations = getTranslations(locale);
-  const { advertising, cards, emergencyNumbers } = translations.dashboard;
+  const { advertising, emergencyNumbers } = translations.dashboard;
   const context = getDefaultCityContext(locale);
   const [dailyOverview, events, weather] = await Promise.all([
     isFeatureEnabled("dailyOverview") ? getDailyOverview(context) : null,
     getCityEvents(context),
     isFeatureEnabled("weather") ? getCurrentWeather(context) : null,
   ]);
+  const cinemaEvents = events.events.filter((event) => event.sourceId === "cineplexx-podgorica");
+  const cityEvents = events.events.filter((event) => event.sourceId !== "cineplexx-podgorica");
+  const cityEventProviders = events.providers.filter(
+    (provider) => provider.id !== "cineplexx-podgorica",
+  );
 
   return (
     <DashboardLayout locale={locale} translations={translations}>
@@ -68,14 +73,14 @@ async function DashboardPage({ locale }: { locale: Locale }) {
         <div className="grid items-start gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {isFeatureEnabled("busStation") ? <BusStationCard city={context.city} locale={locale} /> : null}
           <HomepageEventsCard
-            events={selectHomepageEvents(events.events, context)}
-            isUnavailable={isHomepageEventsUnavailable(events.providers)}
+            events={selectHomepageEvents(cityEvents, context)}
+            isUnavailable={isHomepageEventsUnavailable(cityEventProviders)}
             locale={locale}
           />
-          <CinemaPlaceholderCard
-            actionLabel={cards.cinemaAction}
-            description={cards.cinemaDescription}
-            title={cards.cinema}
+          <CineplexxProgrammeCard
+            events={selectHomepageEvents(cinemaEvents, context)}
+            locale={locale}
+            state={events.providers.find((provider) => provider.id === "cineplexx-podgorica")?.state}
           />
         </div>
         <EmergencyNumbersStrip items={getEmergencyNumbers(emergencyNumbers)} label={emergencyNumbers.label} />

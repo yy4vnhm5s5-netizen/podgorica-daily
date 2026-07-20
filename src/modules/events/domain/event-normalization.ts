@@ -93,7 +93,7 @@ function normalizeEventCandidate(
       },
       now,
     ),
-    tags: [],
+    tags: candidate.tags ?? [],
     timezone: candidate.timezone,
     title,
     venueName,
