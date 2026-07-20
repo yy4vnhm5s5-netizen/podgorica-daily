@@ -33,19 +33,19 @@ export const metadata: Metadata = {
     images: [{ height: 630, url: "/og-image.png", width: 1200 }],
     locale: "sr_Latn_ME",
     siteName: siteConfig.name,
-    title: siteConfig.name,
+    title: siteConfig.homepageTitle,
     type: "website",
     url: siteConfig.url,
   },
   title: {
-    default: siteConfig.name,
+    default: siteConfig.homepageTitle,
     template: `%s | ${siteConfig.name}`,
   },
   twitter: {
     card: "summary_large_image",
     description: getTranslations("me").metadata.description,
     images: ["/og-image.png"],
-    title: siteConfig.name,
+    title: siteConfig.homepageTitle,
   },
 };
 

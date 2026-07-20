@@ -10,6 +10,7 @@ import {
 } from "@/modules/events/presentation/event-structured-data";
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
 import { getLocaleAlternates, isLocale, type Locale } from "@/shared/config/locale";
+import { getPageTitle } from "@/shared/config/site";
 import { getTranslations } from "@/shared/lib/translations";
 
 interface EventDetailPageProps {
@@ -33,9 +34,10 @@ async function generateMetadata({ params }: EventDetailPageProps): Promise<Metad
     openGraph: {
       description: event.description,
       images: event.imageUrl ? [{ url: event.imageUrl }] : undefined,
-      title: event.title,
+      title: getPageTitle(event.title),
     },
-    title: event.title,
+    title: { absolute: getPageTitle(event.title) },
+    twitter: { description: event.description, title: getPageTitle(event.title) },
   };
 }
 

@@ -3,6 +3,7 @@ import type { PropsWithChildren } from "react";
 import { notFound } from "next/navigation";
 
 import { getLocaleAlternates, getLocaleTag, isLocale, locales } from "@/shared/config/locale";
+import { siteConfig } from "@/shared/config/site";
 import { getTranslations } from "@/shared/lib/translations";
 
 interface LocaleLayoutProps extends PropsWithChildren {
@@ -21,7 +22,16 @@ async function generateMetadata({ params }: LocaleLayoutProps): Promise<Metadata
   return {
     alternates: { canonical: `/${locale}`, languages: getLocaleAlternates() },
     description: translations.metadata.description,
-    title: translations.metadata.title,
+    openGraph: {
+      description: translations.metadata.description,
+      title: siteConfig.homepageTitle,
+      url: `/${locale}`,
+    },
+    title: { absolute: siteConfig.homepageTitle },
+    twitter: {
+      description: translations.metadata.description,
+      title: siteConfig.homepageTitle,
+    },
   };
 }
 

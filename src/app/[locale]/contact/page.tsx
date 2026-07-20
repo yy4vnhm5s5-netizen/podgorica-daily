@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ContactPage } from "@/modules/contact/presentation/contact-page";
 import { getContactTranslations } from "@/modules/contact/presentation/contact-translations";
 import { getContactLocaleAlternates, getContactPath } from "@/shared/config/public-routes";
+import { getPageTitle } from "@/shared/config/site";
 
 interface ContactRouteProps {
   params: Promise<{ locale: string }>;
@@ -17,8 +18,9 @@ async function generateMetadata({ params }: ContactRouteProps): Promise<Metadata
   return {
     alternates: { canonical: getContactPath("en"), languages: getContactLocaleAlternates() },
     description: translations.description,
-    openGraph: { description: translations.description, title: translations.heading },
-    title: translations.heading,
+    openGraph: { description: translations.description, title: getPageTitle(translations.heading) },
+    title: { absolute: getPageTitle(translations.heading) },
+    twitter: { description: translations.description, title: getPageTitle(translations.heading) },
   };
 }
 
