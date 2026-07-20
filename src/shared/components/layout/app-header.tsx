@@ -21,14 +21,27 @@ function AppHeader({ locale, translations }: AppHeaderProps) {
           className="shrink-0 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           href={`/${locale}#dashboard`}
         >
-          <Image
-            alt={siteConfig.name}
-            className="h-9 w-auto"
-            height={36}
-            priority
-            src={siteConfig.logoPath}
-            width={120}
-          />
+          <span aria-hidden="true" className="flex h-9 w-[136px] items-center overflow-hidden">
+            <span className="relative h-9 w-8 shrink-0 overflow-hidden">
+              <Image
+                alt=""
+                className="absolute left-0 top-0 h-9 w-auto max-w-none"
+                height={140}
+                priority
+                src={siteConfig.logoPath}
+                width={530}
+              />
+            </span>
+            <span className="relative ml-2.5 h-9 w-[77px] shrink-0 overflow-hidden">
+              <Image
+                alt=""
+                className="absolute -left-[57px] top-0 h-9 w-auto max-w-none"
+                height={140}
+                src={siteConfig.logoPath}
+                width={530}
+              />
+            </span>
+          </span>
         </a>
         <div className="hidden flex-1 justify-center md:flex">
           <Navigation locale={locale} translations={translations} />
