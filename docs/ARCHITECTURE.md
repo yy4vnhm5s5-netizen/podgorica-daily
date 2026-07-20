@@ -27,6 +27,10 @@ Provider metadata is centrally registered for Weather, CEDIS, AMSCG, and VIK Pod
 
 `src/modules/transport` owns the external BusTicket4.me station-link configuration and the ŽPCG railway-departure domain, parser, cache, collector, application query, and homepage presentation. The bus card is link-only and never collects departures. The ŽPCG collector fetches only the official timetable, writes `.runtime/cache/zpcg-railway-departures.json` atomically, and the homepage reads that cache only. The module exposes fresh, stale, empty, and unavailable read states without inventing schedules.
 
+## Contact boundary
+
+`src/modules/contact` owns contact-inquiry validation, a server-side submission use case, an in-memory request limiter for the current single-instance deployment, SMTP delivery, and localized presentation. The public route posts only to `/api/contact`; it never exposes a destination address, stores inquiries, or claims success before the SMTP transport accepts delivery. A multi-instance deployment requires a shared rate-limit adapter before the contact form can retain the same abuse-protection guarantee.
+
 ## Event platform boundary
 
 `src/modules/events` owns the normalized Event and Venue domains, provider contracts, candidate normalization, deterministic ID and deduplication logic, query semantics, and event cache schema. Collection and cache reading are intentionally separate: any future collector writes a module-owned snapshot using shared atomic JSON helpers, while application reads combine only enabled cached providers. No visitor request may invoke collection.

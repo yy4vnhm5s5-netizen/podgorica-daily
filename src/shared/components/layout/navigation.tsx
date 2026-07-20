@@ -1,6 +1,8 @@
-import { CalendarDays, LayoutDashboard } from "lucide-react";
+import { CalendarDays, LayoutDashboard, Mail } from "lucide-react";
 
 import type { Locale } from "@/shared/config/locale";
+import { isFeatureEnabled } from "@/shared/config/features";
+import { getContactPath } from "@/shared/config/public-routes";
 import type { Translations } from "@/shared/lib/translations";
 import { cn } from "@/shared/lib/utils";
 
@@ -18,6 +20,9 @@ function Navigation({ locale, mobile = false, translations }: NavigationProps) {
       label: translations.shell.navigation.dashboard,
     },
     { href: `/${locale}/events`, icon: CalendarDays, label: translations.shell.navigation.events },
+    ...(isFeatureEnabled("contact")
+      ? [{ href: getContactPath(locale), icon: Mail, label: translations.shell.navigation.contact }]
+      : []),
   ];
 
   return (
@@ -28,7 +33,15 @@ function Navigation({ locale, mobile = false, translations }: NavigationProps) {
           : translations.shell.primaryNavigationLabel
       }
     >
-      <ul className={cn(mobile ? "grid grid-cols-2 gap-2" : "flex items-center gap-1")}>
+      <ul
+        className={cn(
+          mobile
+            ? navigationItems.length === 3
+              ? "grid grid-cols-3 gap-2"
+              : "grid grid-cols-2 gap-2"
+            : "flex items-center gap-1",
+        )}
+      >
         {navigationItems.map(({ href, icon: Icon, label }) => (
           <li key={href}>
             <a

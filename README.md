@@ -26,6 +26,12 @@ The default language is Montenegrin Latin, ijekavian (`/me`). English is availab
 
 The BusTicket4.me card is an external station link only; Gradom does not collect or republish bus departures. The ŽPCG railway card reads a cache generated solely from the official [ŽPCG timetable](https://zpcg.me/red-voznje/ukupno). Run `pnpm run collect:zpcg-railway` to write `.runtime/cache/zpcg-railway-departures.json`; homepage requests never fetch ŽPCG directly. The bundled VPS scheduler refreshes it at approximately 06:45 and 18:45 host-local time.
 
+## Contact
+
+Gradom’s contact page is available at `/me/kontakt` and `/en/contact` for advertising and business inquiries. It validates requests on the server, rejects a hidden honeypot field, and uses a small in-memory limit of five requests per client address per 15 minutes on the current single-instance deployment. Inquiries are not stored by Gradom; a successful response is returned only after SMTP accepts delivery.
+
+Configure `CONTACT_EMAIL`, `SMTP_FROM`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, and, when required by the SMTP server, `SMTP_USERNAME` and `SMTP_PASSWORD` as server-only values. Until that complete configuration exists, the form safely reports that delivery is unavailable rather than claiming an inquiry was sent.
+
 ## City-aware foundation
 
 Podgorica is the only enabled city and the public experience remains unchanged. Internally, providers receive a city context and normalized records carry `cityIds`, preparing future city-specific routes without exposing them today. `DEFAULT_CITY=podgorica` is validated against the central registry. See [ADR 0009](docs/adr/0009-multi-city-platform-foundation.md).

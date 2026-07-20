@@ -35,6 +35,18 @@ const environmentSchema = z.object({
   AMSCG_CACHE_PATH: z.string().min(1).optional(),
   VIKPG_CACHE_PATH: z.string().min(1).optional(),
   CITY_ALERTS_REFRESH_SECRET: z.string().min(32).optional(),
+  CONTACT_EMAIL: z.string().email().optional(),
+  SMTP_FROM: z
+    .string()
+    .trim()
+    .min(3)
+    .refine(isValidSmtpFromAddress, "SMTP_FROM must be an email address or named mailbox address.")
+    .optional(),
+  SMTP_HOST: z.string().min(1).optional(),
+  SMTP_PASSWORD: z.string().min(1).optional(),
+  SMTP_PORT: z.coerce.number().int().min(1).max(65535).optional(),
+  SMTP_SECURE: z.enum(["false", "true"]).default("false"),
+  SMTP_USERNAME: z.string().min(1).optional(),
   RUNTIME_DATA_DIR: z.string().min(1).default(".runtime"),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   DEFAULT_CITY: z.string().default("podgorica"),
@@ -46,6 +58,11 @@ const environmentSchema = z.object({
   NEXT_PUBLIC_APP_ENV: z.string().min(1).default("development"),
   NEXT_PUBLIC_SITE_URL: z.string().url().optional(),
 });
+
+function isValidSmtpFromAddress(value: string) {
+  const mailbox = value.match(/^.+<([^<>]+)>$/)?.[1]?.trim() ?? value;
+  return z.string().email().safeParse(mailbox).success;
+}
 
 function parseEnvironment(values: Record<string, string | undefined>) {
   const parsed = environmentSchema.safeParse({
@@ -90,6 +107,13 @@ const parsedEnvironment = environmentSchema.safeParse({
   AMSCG_CACHE_PATH: process.env.AMSCG_CACHE_PATH,
   VIKPG_CACHE_PATH: process.env.VIKPG_CACHE_PATH,
   CITY_ALERTS_REFRESH_SECRET: process.env.CITY_ALERTS_REFRESH_SECRET,
+  CONTACT_EMAIL: process.env.CONTACT_EMAIL,
+  SMTP_FROM: process.env.SMTP_FROM,
+  SMTP_HOST: process.env.SMTP_HOST,
+  SMTP_PASSWORD: process.env.SMTP_PASSWORD,
+  SMTP_PORT: process.env.SMTP_PORT,
+  SMTP_SECURE: process.env.SMTP_SECURE,
+  SMTP_USERNAME: process.env.SMTP_USERNAME,
   RUNTIME_DATA_DIR: process.env.RUNTIME_DATA_DIR,
   DEFAULT_CITY: process.env.DEFAULT_CITY,
   ENABLE_AMSCG: process.env.ENABLE_AMSCG,
@@ -169,6 +193,7 @@ export const env = {
   EVENT_QUALITY_WARN_MISSING_START_TIME:
     resolvedEnvironment.EVENT_QUALITY_WARN_MISSING_START_TIME === "true",
   EVENT_QUALITY_WARN_MISSING_VENUE: resolvedEnvironment.EVENT_QUALITY_WARN_MISSING_VENUE === "true",
+  SMTP_SECURE: resolvedEnvironment.SMTP_SECURE === "true",
 };
 
 export { parseEnvironment };

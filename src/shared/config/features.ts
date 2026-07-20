@@ -6,6 +6,7 @@ const featureFlags = {
   authentication: false,
   busStation: true,
   cityAlerts: true,
+  contact: true,
   cedis: env.ENABLE_CEDIS,
   dailyOverview: true,
   events: env.ENABLE_EVENTS && env.EVENT_PROVIDER_MODE !== "disabled",

@@ -12,6 +12,7 @@ The repository has a Railway Docker web deployment configuration. CEDIS, VIK Pod
 - Events are public only from cache. Enable live event content with `ENABLE_EVENTS=true` and `EVENT_PROVIDER_MODE=live`; disabled mode safely shows no event data. Mock provider modes are rejected in production.
 - `RUNTIME_DATA_DIR` is the shared root for file-backed provider caches. It defaults to `.runtime` locally. Without an explicit per-provider override, CEDIS resolves to `<RUNTIME_DATA_DIR>/cache/cedis-planned-outages.json`, VIK to `<RUNTIME_DATA_DIR>/cache/vikpg-water-alerts.json`, and AMSCG to `<RUNTIME_DATA_DIR>/cache/amscg-road-conditions.json`.
 - `CITY_ALERTS_REFRESH_SECRET` must be a server-only value of at least 32 characters before enabling scheduled City Alerts refreshes. It is intentionally separate from `EVENT_REFRESH_SECRET`.
+- The contact form delivers only through server-side SMTP. Set `CONTACT_EMAIL`, `SMTP_FROM`, `SMTP_HOST`, `SMTP_PORT`, and `SMTP_SECURE`; provide `SMTP_USERNAME` and `SMTP_PASSWORD` together when the relay requires authentication. Do not expose any of these values to the browser. Without a complete SMTP configuration, the form returns a safe delivery-unavailable state and does not claim that an inquiry was sent.
 - Weather may call Open-Meteo during server rendering and already has a safe failure state. It does not require an API key.
 
 `CITY_ALERTS_REFRESH_SECRET` and `EVENT_REFRESH_SECRET` are server-only secrets when configured. Do not commit a real `.env.production`, expose either value to the browser, or include it in logs.

@@ -25,7 +25,7 @@ function DashboardLayout({ children, locale, translations }: DashboardLayoutProp
       <main id="main-content">
         <ResponsiveContainer className="py-8 sm:py-14">{children}</ResponsiveContainer>
       </main>
-      <AppFooter tagline={translations.shell.tagline} />
+      <AppFooter locale={locale} tagline={translations.shell.tagline} translations={translations} />
       <MobileNavigation locale={locale} translations={translations} />
     </div>
   );

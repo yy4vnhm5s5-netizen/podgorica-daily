@@ -33,6 +33,7 @@ const translations = {
       languageSwitcherLabel: "Language",
       mobileNavigationLabel: "Mobile navigation",
       navigation: {
+        contact: "Contact",
         dashboard: "Dashboard",
         events: "Events",
       },
@@ -73,6 +74,7 @@ const translations = {
       languageSwitcherLabel: "Jezik",
       mobileNavigationLabel: "Mobilna navigacija",
       navigation: {
+        contact: "Kontakt",
         dashboard: "Pregled",
         events: "Događaji",
       },

@@ -19,3 +19,7 @@ Errors separate invalid requests, authorization failures, absence, conflicts, ra
 ## Governance
 
 An API contract change requires ownership, compatibility review, test fixtures, and consumer migration guidance. Public APIs require abuse prevention and an explicit retention policy for telemetry.
+
+## Contact submission
+
+`POST /api/contact` is a server-owned form boundary, not a general public API. It accepts only validated contact fields, rejects a hidden honeypot, applies the current single-instance in-memory request limit, and returns success only after SMTP accepts delivery. The route does not persist inquiries or expose the configured destination address. SMTP credentials and the destination address remain server-only environment variables.
