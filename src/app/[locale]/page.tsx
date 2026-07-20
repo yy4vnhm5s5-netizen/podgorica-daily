@@ -11,7 +11,9 @@ import {
   isHomepageEventsUnavailable,
   selectHomepageEvents,
 } from "@/modules/events/presentation/events-ui-model";
+import { getRailwayDepartures } from "@/modules/transport/application/get-railway-departures";
 import { BusStationCard } from "@/modules/transport/presentation/bus-station-card";
+import { RailwayStationCard } from "@/modules/transport/presentation/railway-station-card";
 import { getCurrentWeather } from "@/modules/weather/application/get-current-weather";
 import {
   CityAlertsSection,
@@ -47,9 +49,10 @@ async function DashboardPage({ locale }: { locale: Locale }) {
   const translations = getTranslations(locale);
   const { advertising, emergencyNumbers } = translations.dashboard;
   const context = getDefaultCityContext(locale);
-  const [dailyOverview, events, weather] = await Promise.all([
+  const [dailyOverview, events, railway, weather] = await Promise.all([
     isFeatureEnabled("dailyOverview") ? getDailyOverview(context) : null,
     getCityEvents(context),
+    getRailwayDepartures(),
     isFeatureEnabled("weather") ? getCurrentWeather(context) : null,
   ]);
   const cinemaEvents = events.events.filter((event) => event.sourceId === "cineplexx-podgorica");
@@ -71,7 +74,16 @@ async function DashboardPage({ locale }: { locale: Locale }) {
           <AdvertisingCard subtitle={advertising.subtitle} title={advertising.title} />
         </div>
         <div className="grid items-start gap-5 sm:grid-cols-2 xl:grid-cols-3">
-          {isFeatureEnabled("busStation") ? <BusStationCard city={context.city} locale={locale} /> : null}
+          {isFeatureEnabled("busStation") ? (
+            <div className="space-y-5">
+              <BusStationCard city={context.city} locale={locale} />
+              <RailwayStationCard
+                departures={railway.departures}
+                locale={locale}
+                state={railway.state}
+              />
+            </div>
+          ) : null}
           <HomepageEventsCard
             events={selectHomepageEvents(cityEvents, context)}
             isUnavailable={isHomepageEventsUnavailable(cityEventProviders)}

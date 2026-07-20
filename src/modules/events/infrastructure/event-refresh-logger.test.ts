@@ -154,7 +154,7 @@ test("keeps Cineplexx failure context visible in Railway-readable messages", () 
     });
     emitError({
       causeClass: "Error",
-      causeMessage: "spawn /usr/bin/chromium-browser ENOENT",
+      causeMessage: "spawn chromium-browser ENOENT",
       chromiumExecutableMissing: true,
       error: { class: "CineplexxBrowserError", message: "Cineplexx browser renderer failed." },
       event: "cineplexx-refresh-failed",
@@ -173,7 +173,7 @@ test("keeps Cineplexx failure context visible in Railway-readable messages", () 
   const launchFailure = JSON.parse(errorCalls[0][0] as string);
   assert.equal(
     launchFailure.message,
-    "cineplexx-refresh-failed phase=chromium-launch errorClass=CineplexxBrowserError errorMessage=Cineplexx browser renderer failed. causeClass=Error cause=spawn /usr/bin/chromium-browser ENOENT chromiumMissing=true",
+    "cineplexx-refresh-failed phase=chromium-launch errorClass=CineplexxBrowserError errorMessage=Cineplexx browser renderer failed. causeClass=Error cause=spawn chromium-browser ENOENT chromiumMissing=true",
   );
 });
 

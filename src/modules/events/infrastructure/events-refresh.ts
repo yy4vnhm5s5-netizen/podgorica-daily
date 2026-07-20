@@ -30,7 +30,7 @@ async function refreshAllEvents(): Promise<EventRefreshSummary> {
           context,
           previousSnapshot: await readEventCacheSnapshot(env.CINEPLEXX_EVENT_CACHE_PATH),
           qualityPolicy: getEventQualityPolicy(),
-          renderer: createCineplexxBrowserRenderer(),
+          renderer: createCineplexxBrowserRenderer({ chromiumPath: env.CHROMIUM_PATH }),
         });
         return {
           acceptedCount: result.snapshot?.events.length ?? 0,

@@ -15,6 +15,7 @@ run_collector() {
 
 while true; do
   minute="$(date +%M)"
+  hour="$(date +%H)"
 
   case "$minute" in
     05) run_collector "cineplexx-events" "pnpm run collect:cineplexx-events" ;;
@@ -29,6 +30,10 @@ while true; do
       run_collector "cedis" "pnpm run collect:cedis"
       run_collector "vikpg" "pnpm run collect:vikpg"
       ;;
+  esac
+
+  case "$hour:$minute" in
+    06:45|18:45) run_collector "zpcg-railway" "pnpm run collect:zpcg-railway" ;;
   esac
 
   sleep 60

@@ -11,15 +11,27 @@ const renderedProgramme = '<li class="l-sessions__item"><a href="/purchase/wizar
 
 test("renders the approved Cineplexx programme URL with bounded browser arguments", async () => {
   let received: unknown;
+  let candidates: readonly string[] = [];
   const renderer = createCineplexxBrowserRenderer({
-    browserPath: "/usr/bin/chromium-browser",
+    chromiumPath: "/custom/chromium",
     execute: async (file, args) => {
       received = { args, file };
       return { stderr: "", stdout: renderedProgramme };
     },
+    resolveExecutable: async (values) => {
+      candidates = values;
+      return "/custom/chromium";
+    },
   });
 
   assert.equal(await renderer.renderProgramme(), renderedProgramme);
+  assert.deepEqual(candidates, [
+    "/custom/chromium",
+    "chromium-browser",
+    "chromium",
+    "google-chrome",
+    "google-chrome-stable",
+  ]);
   assert.deepEqual(received, {
     args: [
       "--disable-dev-shm-usage",
@@ -31,7 +43,7 @@ test("renders the approved Cineplexx programme URL with bounded browser argument
       "--dump-dom",
       "https://www.cineplexx.me/cinemas/CINEPLEXX-PODGORICA/",
     ],
-    file: "/usr/bin/chromium-browser",
+    file: "/custom/chromium",
   });
 });
 
@@ -42,6 +54,7 @@ test("rejects off-domain source URLs and incomplete rendered programmes", async 
   );
   const renderer = createCineplexxBrowserRenderer({
     execute: async () => ({ stderr: "", stdout: "<main>Loading</main>" }),
+    resolveExecutable: async () => "chromium",
   });
   await assert.rejects(
     () => renderer.renderProgramme(),
@@ -65,6 +78,7 @@ test("maps browser timeouts to typed Cineplexx failures", async () => {
     execute: async () => {
       throw new Error("Command timed out");
     },
+    resolveExecutable: async () => "chromium",
   });
   await assert.rejects(
     () => renderer.renderProgramme(),
@@ -75,10 +89,8 @@ test("maps browser timeouts to typed Cineplexx failures", async () => {
 
 test("identifies a missing Chromium executable as a launch failure", async () => {
   const renderer = createCineplexxBrowserRenderer({
-    execute: async () => {
-      const error = Object.assign(new Error("spawn chromium-browser ENOENT"), { code: "ENOENT" });
-      throw error;
-    },
+    chromiumPath: "/custom/missing-chromium",
+    resolveExecutable: async () => undefined,
   });
 
   await assert.rejects(
@@ -87,7 +99,10 @@ test("identifies a missing Chromium executable as a launch failure", async () =>
       assert.ok(error instanceof CineplexxBrowserError);
       assert.equal(error.executableMissing, true);
       assert.equal(error.phase, "chromium-launch");
-      assert.equal(error.causeClass, "Error");
+      assert.equal(
+        error.message,
+        "Chromium executable was not found. Checked: /custom/missing-chromium, chromium-browser, chromium, google-chrome, google-chrome-stable.",
+      );
       return true;
     },
   );

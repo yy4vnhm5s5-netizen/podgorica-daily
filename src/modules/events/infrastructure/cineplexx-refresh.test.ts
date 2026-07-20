@@ -80,6 +80,7 @@ test("logs DOM mismatch diagnostics when the rendered programme is incomplete", 
       context,
       renderer: createCineplexxBrowserRenderer({
         execute: async () => ({ stderr: "", stdout: "<title>Cineplexx</title><main>Loading</main>" }),
+        resolveExecutable: async () => "chromium",
       }),
     });
 

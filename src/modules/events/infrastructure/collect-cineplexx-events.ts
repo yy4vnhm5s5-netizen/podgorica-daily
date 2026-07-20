@@ -10,7 +10,7 @@ void refreshCineplexxProgramme({
   context: getDefaultCityContext(),
   previousSnapshot: await readEventCacheSnapshot(env.CINEPLEXX_EVENT_CACHE_PATH),
   qualityPolicy: getEventQualityPolicy(),
-  renderer: createCineplexxBrowserRenderer(),
+  renderer: createCineplexxBrowserRenderer({ chromiumPath: env.CHROMIUM_PATH }),
 }).then((result) => {
   process.stdout.write(
     `${JSON.stringify({ status: result.success ? "success" : result.retainedPreviousSnapshot ? "retained" : "unavailable", ...result })}\n`,
