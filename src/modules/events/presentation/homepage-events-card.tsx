@@ -1,13 +1,8 @@
-import { CalendarDays, Clock3, MapPin } from "lucide-react";
+import { CalendarDays, Clock3 } from "lucide-react";
 import Link from "next/link";
 
 import type { CityEvent } from "../domain/event.ts";
-import { getEventPresentationCategory } from "./event-presentation-category";
-import {
-  getEventPresentationCategoryLabel,
-  getEventsTranslations,
-} from "./events-translations";
-import { Badge } from "@/shared/components/ui/badge";
+import { getEventsTranslations } from "./events-translations";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { getLocaleTag, type Locale } from "@/shared/config/locale";
 import { formatDateTime } from "@/shared/lib/date";
@@ -22,9 +17,9 @@ function HomepageEventsCard({ events, isUnavailable, locale }: HomepageEventsCar
   const translations = getEventsTranslations(locale);
 
   return (
-    <Card className="card-fog card-fog--warning border-amber-200/80 bg-amber-50/60 transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-[0_12px_24px_-20px_rgb(15_23_42_/_0.32)]">
+    <Card className="card-fog card-fog--warning border-primary/15 bg-amber-50/60 transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-[0_12px_24px_-20px_rgb(15_23_42_/_0.32)]">
       <CardHeader className="flex-row items-center gap-3 space-y-0 p-4 sm:p-5">
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-amber-100/80 text-amber-800">
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
           <CalendarDays aria-hidden="true" className="size-[1.125rem]" strokeWidth={1.8} />
         </div>
         <div className="min-w-0">
@@ -34,33 +29,20 @@ function HomepageEventsCard({ events, isUnavailable, locale }: HomepageEventsCar
       </CardHeader>
       <CardContent className="p-4 pt-0 sm:p-5 sm:pt-0">
         {events.length > 0 ? (
-          <ul className="divide-y divide-amber-200/70">
+          <ul className="divide-y divide-primary/10">
             {events.map((event) => (
-              <li className="py-3 first:pt-0 last:pb-0" key={event.id}>
+              <li className="py-2.5 first:pt-0 last:pb-0" key={event.id}>
                 <Link
                   className="group block rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   href={`/${locale}/events/${encodeURIComponent(event.id)}`}
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <h3 className="min-w-0 text-sm font-semibold leading-5 group-hover:text-primary">
-                      {event.title}
-                    </h3>
-                    <Badge className="shrink-0" variant="outline">
-                      {getEventPresentationCategoryLabel(
-                        locale,
-                        getEventPresentationCategory(event.category),
-                      )}
-                    </Badge>
-                  </div>
-                  <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-sm text-muted-foreground">
+                  <h3 className="text-sm font-semibold leading-5 group-hover:text-primary">{event.title}</h3>
+                  <div className="mt-1 flex text-sm text-muted-foreground">
                     <EventSchedule event={event} locale={locale} />
-                    {event.venueName ? (
-                      <span className="inline-flex items-center gap-1">
-                        <MapPin aria-hidden="true" className="size-3.5" />
-                        {event.venueName}
-                      </span>
-                    ) : null}
                   </div>
+                  {event.venueName ? (
+                    <p className="mt-0.5 truncate text-xs leading-5 text-muted-foreground">{event.venueName}</p>
+                  ) : null}
                 </Link>
               </li>
             ))}

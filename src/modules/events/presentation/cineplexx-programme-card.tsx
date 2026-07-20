@@ -27,9 +27,9 @@ function CineplexxProgrammeCard({ events, locale, state }: CineplexxProgrammeCar
   });
 
   return (
-    <Card className="card-fog card-fog--neutral border-indigo-200/80 bg-indigo-50/60 transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-[0_12px_24px_-20px_rgb(15_23_42_/_0.32)]">
+    <Card className="card-fog card-fog--neutral border-primary/15 bg-indigo-50/60 transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-[0_12px_24px_-20px_rgb(15_23_42_/_0.32)]">
       <CardHeader className="flex-row items-center gap-3 space-y-0 p-4 sm:p-5">
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-indigo-100/80 text-indigo-800">
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
           <Clapperboard aria-hidden="true" className="size-[1.125rem]" strokeWidth={1.8} />
         </div>
         <div className="min-w-0">
@@ -39,7 +39,7 @@ function CineplexxProgrammeCard({ events, locale, state }: CineplexxProgrammeCar
       </CardHeader>
       <CardContent className="p-4 pt-0 sm:p-5 sm:pt-0">
         {displayState === "programme" || displayState === "stale" ? (
-          <ul className="divide-y divide-indigo-200/70">
+          <ul className="divide-y divide-primary/10">
             {movies.map((movie) => (
               <CinemaMovie item={movie} key={movie.id} locale={locale} />
             ))}
@@ -87,7 +87,7 @@ function CinemaMovie({ item, locale }: { item: CineplexxMovieGroup; locale: Loca
             {item.screenings.map((screening) => (
               <li key={screening.id}>
                 <a
-                  className="inline-flex min-h-8 items-center gap-1 rounded-md border border-indigo-200/80 bg-white/50 px-2 text-xs font-medium text-indigo-950 hover:border-indigo-300 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  className="inline-flex min-h-8 items-center gap-1 rounded-md border border-primary/15 bg-white/50 px-2 text-xs font-medium text-foreground hover:border-primary/35 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   href={screening.sourceUrl}
                 >
                   <Clock3 aria-hidden="true" className="size-3" />
