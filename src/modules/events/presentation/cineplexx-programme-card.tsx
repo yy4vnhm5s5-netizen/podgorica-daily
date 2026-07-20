@@ -1,4 +1,4 @@
-import { Clapperboard, Clock3 } from "lucide-react";
+import { Clapperboard, Clock3, ExternalLink } from "lucide-react";
 import Image from "next/image";
 
 import type { CityEvent, EventProviderState } from "../domain/event.ts";
@@ -11,6 +11,8 @@ import {
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import type { Locale } from "@/shared/config/locale";
 import { formatDateTime } from "@/shared/lib/date";
+
+const cineplexxProgrammeUrl = "https://www.cineplexx.me/cinemas/CINEPLEXX-PODGORICA/";
 
 interface CineplexxProgrammeCardProps {
   events: readonly CityEvent[];
@@ -51,6 +53,17 @@ function CineplexxProgrammeCard({ events, locale, state }: CineplexxProgrammeCar
         )}
         {displayState === "stale" ? (
           <p className="mt-3 text-xs leading-5 text-muted-foreground">{translations.stale}</p>
+        ) : null}
+        {displayState === "programme" || displayState === "stale" ? (
+          <a
+            className="mt-4 inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            href={cineplexxProgrammeUrl}
+            rel="noreferrer"
+            target="_blank"
+          >
+            {translations.cta}
+            <ExternalLink aria-hidden="true" className="size-3.5" />
+          </a>
         ) : null}
       </CardContent>
     </Card>
