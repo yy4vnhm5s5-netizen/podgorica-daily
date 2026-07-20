@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import type { Locale } from "@/shared/config/locale";
 
 const timetableUrl = "https://zpcg.me/red-voznje/ukupno";
+const homepageDepartureLimit = 3;
 
 interface RailwayStationCardProps {
   departures: readonly RailwayDeparture[];
@@ -21,7 +22,11 @@ interface RailwayStationCardProps {
 
 function RailwayStationCard({ departures, locale, state }: RailwayStationCardProps) {
   const copy = locale === "me" ? montenegrinCopy : englishCopy;
-  const upcoming = selectUpcomingRailwayDepartures(departures);
+  const upcoming = selectUpcomingRailwayDepartures(
+    departures,
+    new Date(),
+    homepageDepartureLimit,
+  );
   const displayState = getRailwayStationDisplayState({
     departureCount: upcoming.length,
     state,
