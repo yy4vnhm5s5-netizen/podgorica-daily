@@ -32,7 +32,7 @@ function AppHeader({ locale, translations }: AppHeaderProps) {
                 width={530}
               />
             </span>
-            <span className="relative ml-2.5 h-9 w-[77px] shrink-0 overflow-hidden">
+            <span className="relative ml-0.5 h-9 w-[77px] shrink-0 overflow-hidden">
               <Image
                 alt=""
                 className="absolute -left-[57px] top-0 h-9 w-auto max-w-none"
