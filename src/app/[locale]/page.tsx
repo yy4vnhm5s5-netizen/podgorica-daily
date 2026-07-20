@@ -8,6 +8,7 @@ import { getCityEvents } from "@/modules/events/application/get-city-events";
 import { CineplexxProgrammeCard } from "@/modules/events/presentation/cineplexx-programme-card";
 import { HomepageEventsCard } from "@/modules/events/presentation/homepage-events-card";
 import {
+  getHomepageEvents,
   isHomepageEventsUnavailable,
   selectHomepageEvents,
 } from "@/modules/events/presentation/events-ui-model";
@@ -60,6 +61,7 @@ async function DashboardPage({ locale }: { locale: Locale }) {
   const cityEventProviders = events.providers.filter(
     (provider) => provider.id !== "cineplexx-podgorica",
   );
+  const homepageCityEvents = getHomepageEvents(cityEvents, context);
 
   return (
     <DashboardLayout locale={locale} translations={translations}>
@@ -73,19 +75,10 @@ async function DashboardPage({ locale }: { locale: Locale }) {
           ) : null}
           <AdvertisingCard subtitle={advertising.subtitle} title={advertising.title} />
         </div>
-        <div className="grid items-start gap-5 sm:grid-cols-2 xl:grid-cols-3">
-          {isFeatureEnabled("busStation") ? (
-            <div className="space-y-5">
-              <BusStationCard city={context.city} locale={locale} />
-              <RailwayStationCard
-                departures={railway.departures}
-                locale={locale}
-                state={railway.state}
-              />
-            </div>
-          ) : null}
+        <div className="grid items-start gap-5 sm:grid-cols-2">
           <HomepageEventsCard
-            events={selectHomepageEvents(cityEvents, context)}
+            eventCount={homepageCityEvents.length}
+            events={homepageCityEvents.slice(0, 3)}
             isUnavailable={isHomepageEventsUnavailable(cityEventProviders)}
             locale={locale}
           />
@@ -94,6 +87,16 @@ async function DashboardPage({ locale }: { locale: Locale }) {
             locale={locale}
             state={events.providers.find((provider) => provider.id === "cineplexx-podgorica")?.state}
           />
+          {isFeatureEnabled("busStation") ? (
+            <BusStationCard city={context.city} locale={locale} />
+          ) : null}
+          {isFeatureEnabled("busStation") ? (
+            <RailwayStationCard
+              departures={railway.departures}
+              locale={locale}
+              state={railway.state}
+            />
+          ) : null}
         </div>
         <EmergencyNumbersStrip items={getEmergencyNumbers(emergencyNumbers)} label={emergencyNumbers.label} />
       </section>

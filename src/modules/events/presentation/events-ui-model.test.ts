@@ -12,6 +12,7 @@ import {
 } from "./events-translations.ts";
 import {
   filterEventsForUi,
+  getHomepageEvents,
   groupEventsByDay,
   isHomepageEventsUnavailable,
   parseEventsUiFilters,
@@ -166,6 +167,10 @@ test("selects at most three upcoming events for the homepage cache read", () => 
     ["movie", "one", "two"],
   );
   assert.deepEqual(selectHomepageEvents([], context, new Date("2026-07-17T10:00:00.000Z")), []);
+  assert.equal(
+    getHomepageEvents(events, context, new Date("2026-07-17T10:00:00.000Z")).length,
+    5,
+  );
 });
 
 test("continues with tomorrow and later dates when no event remains today", () => {
@@ -180,6 +185,10 @@ test("continues with tomorrow and later dates when no event remains today", () =
       (event) => event.id,
     ),
     ["tomorrow", "next-date"],
+  );
+  assert.equal(
+    getHomepageEvents(events, context, new Date("2026-07-17T10:00:00.000Z")).length,
+    2,
   );
 });
 

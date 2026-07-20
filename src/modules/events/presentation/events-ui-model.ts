@@ -94,15 +94,18 @@ function toEventQueryPeriod(datePreset: EventDatePreset) {
   return "upcoming";
 }
 
-function selectHomepageEvents(events: readonly CityEvent[], context: CityContext, now = new Date()) {
+function getHomepageEvents(events: readonly CityEvent[], context: CityContext, now = new Date()) {
   return queryEvents(
     events,
     context,
     { period: "upcoming", statuses: ["active", "scheduled"] },
     now,
   )
-    .filter((event) => isCurrentOrFutureEvent(event, now, context.timezone))
-    .slice(0, 3);
+    .filter((event) => isCurrentOrFutureEvent(event, now, context.timezone));
+}
+
+function selectHomepageEvents(events: readonly CityEvent[], context: CityContext, now = new Date()) {
+  return getHomepageEvents(events, context, now).slice(0, 3);
 }
 
 function isHomepageEventsUnavailable(providers: readonly Pick<EventProviderReadState, "state">[]) {
@@ -150,6 +153,7 @@ function isEventSort(value: unknown): value is EventSort {
 
 export {
   filterEventsForUi,
+  getHomepageEvents,
   groupEventsByDay,
   isHomepageEventsUnavailable,
   parseEventsUiFilters,

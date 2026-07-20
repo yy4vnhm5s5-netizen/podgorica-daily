@@ -8,12 +8,13 @@ import { getLocaleTag, type Locale } from "@/shared/config/locale";
 import { formatDateTime } from "@/shared/lib/date";
 
 interface HomepageEventsCardProps {
+  eventCount: number;
   events: readonly CityEvent[];
   isUnavailable: boolean;
   locale: Locale;
 }
 
-function HomepageEventsCard({ events, isUnavailable, locale }: HomepageEventsCardProps) {
+function HomepageEventsCard({ eventCount, events, isUnavailable, locale }: HomepageEventsCardProps) {
   const translations = getEventsTranslations(locale);
 
   return (
@@ -22,10 +23,13 @@ function HomepageEventsCard({ events, isUnavailable, locale }: HomepageEventsCar
         <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
           <CalendarDays aria-hidden="true" className="size-[1.125rem]" strokeWidth={1.8} />
         </div>
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <h2 className="text-base font-semibold tracking-tight">{translations.heading}</h2>
           <p className="mt-0.5 text-sm text-muted-foreground">{translations.homepageSupportingText}</p>
         </div>
+        <p className="shrink-0 text-xs font-medium text-muted-foreground">
+          {translations.eventsCount(eventCount)}
+        </p>
       </CardHeader>
       <CardContent className="p-4 pt-0 sm:p-5 sm:pt-0">
         {events.length > 0 ? (
@@ -37,11 +41,11 @@ function HomepageEventsCard({ events, isUnavailable, locale }: HomepageEventsCar
                   href={`/${locale}/events/${encodeURIComponent(event.id)}`}
                 >
                   <h3 className="text-sm font-semibold leading-5 group-hover:text-primary">{event.title}</h3>
-                  <div className="mt-1 flex text-sm text-muted-foreground">
+                  <p className="mt-1 text-sm leading-5 text-muted-foreground">
                     <EventSchedule event={event} locale={locale} />
-                  </div>
+                  </p>
                   {event.venueName ? (
-                    <p className="mt-0.5 truncate text-xs leading-5 text-muted-foreground">{event.venueName}</p>
+                    <p className="truncate text-xs leading-5 text-muted-foreground">{event.venueName}</p>
                   ) : null}
                 </Link>
               </li>
