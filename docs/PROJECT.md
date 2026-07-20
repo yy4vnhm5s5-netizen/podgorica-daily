@@ -2,7 +2,7 @@
 
 ## Product boundaries
 
-Podgorica Daily is a public information product, not a social network or a generic content aggregator. Public information must remain usable without an account. Accounts are reserved for approved editorial and administrative workflows.
+Gradom is a public information product, not a social network or a generic content aggregator. Public information must remain usable without an account. Accounts are reserved for approved editorial and administrative workflows.
 
 ## Delivery standards
 

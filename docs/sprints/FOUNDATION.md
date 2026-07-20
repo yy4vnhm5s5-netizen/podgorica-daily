@@ -5,7 +5,7 @@
 
 ## Goals achieved
 
-The Foundation phase established a maintainable, production-oriented base for Podgorica Daily without implementing product features or live data. The result is a responsive, accessible shell with a documented engineering model for future modules.
+The Foundation phase established a maintainable, production-oriented base for Gradom without implementing product features or live data. The result is a responsive, accessible shell with a documented engineering model for future modules.
 
 ## Architecture
 

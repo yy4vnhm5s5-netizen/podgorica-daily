@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Podgorica Daily is a trusted, fast, and accessible digital guide to daily life in Podgorica. It makes local information easier to discover without obscuring its source, freshness, or limitations.
+Gradom is a trusted, fast, and accessible digital guide to daily life in Podgorica. It makes local information easier to discover without obscuring its source, freshness, or limitations.
 
 ## Principles
 

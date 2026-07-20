@@ -8,9 +8,32 @@ import { siteConfig } from "@/shared/config/site";
 import { getTranslations } from "@/shared/lib/translations";
 
 export const metadata: Metadata = {
+  appleWebApp: {
+    capable: true,
+    title: siteConfig.name,
+  },
+  applicationName: siteConfig.name,
   description: getTranslations("me").metadata.description,
+  icons: {
+    apple: [{ sizes: "180x180", type: "image/png", url: "/apple-touch-icon.png" }],
+    icon: [
+      { url: "/favicon.ico" },
+      { sizes: "16x16", type: "image/png", url: "/favicon-16x16.png" },
+      { sizes: "32x32", type: "image/png", url: "/favicon-32x32.png" },
+    ],
+  },
+  manifest: "/manifest.webmanifest",
   metadataBase: env.NEXT_PUBLIC_SITE_URL ? new URL(env.NEXT_PUBLIC_SITE_URL) : undefined,
+  openGraph: {
+    images: [{ height: 630, url: "/og-image.png", width: 1200 }],
+    siteName: siteConfig.name,
+    title: siteConfig.name,
+  },
   title: siteConfig.name,
+  twitter: {
+    card: "summary_large_image",
+    images: ["/og-image.png"],
+  },
 };
 
 export default function RootLayout({ children }: Readonly<PropsWithChildren>) {

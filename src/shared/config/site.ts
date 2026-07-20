@@ -1,3 +1,4 @@
 export const siteConfig = {
-  name: "Podgorica Daily",
+  logoPath: "/brand/logo-blue.svg",
+  name: "Gradom",
 } as const;

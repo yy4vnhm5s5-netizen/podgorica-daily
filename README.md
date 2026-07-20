@@ -1,6 +1,6 @@
-# Podgorica Daily
+# Gradom
 
-Podgorica Daily is a production-oriented local information platform for Podgorica. It currently provides server-rendered current weather, a deterministic Daily Overview, and City Alerts backed by cached official CEDIS planned power-outage, AMSCG road-condition, and VIK Podgorica water-service snapshots when collector data is available. Transport, maps, search, and editorial workflows are not yet implemented.
+Gradom is a production-oriented local information platform for Podgorica. It currently provides server-rendered current weather, a deterministic Daily Overview, and City Alerts backed by cached official CEDIS planned power-outage, AMSCG road-condition, and VIK Podgorica water-service snapshots when collector data is available. Transport, maps, search, and editorial workflows are not yet implemented.
 
 Daily Overview is a zero-cost deterministic summary generated from normalized cached city data. It does not use generative services, language models, or visitor-triggered data collection.
 

@@ -18,7 +18,7 @@ Each collector has a named owner, monitoring for failure and staleness, alert th
 
 ## CEDIS planned outages
 
-CEDIS is the currently approved HTML collection source for planned Podgorica power outages. The collector uses only `https://cedis.me/servisne-informacije/` and validated official article URLs, with a clear Podgorica Daily user agent, a 10-second timeout, one retry, and low request volume. It is manually invoked with `pnpm run collect:cedis`; pages only read its cache.
+CEDIS is the currently approved HTML collection source for planned Podgorica power outages. The collector uses only `https://cedis.me/servisne-informacije/` and validated official article URLs, with a clear product user agent, a 10-second timeout, one retry, and low request volume. It is manually invoked with `pnpm run collect:cedis`; pages only read its cache.
 
 The collector recommends a 60-minute cadence. It uses local fixtures for automated tests and preserves a valid cached snapshot when the source, network, or markup is suspicious. The local cache is appropriate for development and persistent servers, but not as durable shared storage in serverless deployments. See ADR 0007 for configuration, classification, and scheduling constraints.
 
@@ -36,7 +36,7 @@ The parser uses local fixtures and injected HTTP in tests. It retains a valid sn
 
 KIC Budo Tomović is an approved event collector. It reads only the official `https://kic.podgorica.me/novosti` listing and validated same-host programme articles, using the established timeout, one-retry, user-agent, and cache-first policy. It is invoked by `pnpm run collect:kic-events`; pages read `.runtime/cache/kic-events.json` only. The initial cadence is 60 minutes. Parsing is fixture-tested and preserves missing fields rather than inferring them. See ADR 0011.
 
-Crnogorsko narodno pozorište (CNP) is an approved Event collector. It reads only `https://cnp.me/repertoar/` and validated `https://cnp.me` detail pages. `pnpm run collect:cnp-events` uses the established Podgorica Daily user agent, a 10-second timeout, one retry, typed HTTP failures, and a low request volume; application reads only `.runtime/cache/cnp-events.json`. The initial cadence is 60 minutes. Listing/detail parsing and refresh tests use deterministic local fixtures only and never call the live CNP site. Missing fields remain unavailable rather than inferred. See ADR 0013.
+Crnogorsko narodno pozorište (CNP) is an approved Event collector. It reads only `https://cnp.me/repertoar/` and validated `https://cnp.me` detail pages. `pnpm run collect:cnp-events` uses the established product user agent, a 10-second timeout, one retry, typed HTTP failures, and a low request volume; application reads only `.runtime/cache/cnp-events.json`. The initial cadence is 60 minutes. Listing/detail parsing and refresh tests use deterministic local fixtures only and never call the live CNP site. Missing fields remain unavailable rather than inferred. See ADR 0013.
 
 Glavni Grad Podgorica is an approved Event collector. It reads only `https://podgorica.me/category/aktuelni-dogadjaji/` and validated `podgorica.me` detail pages. `pnpm run collect:glavni-grad-events` uses the established timeout, one retry, cache-first, and local-fixture test policy; application reads only `.runtime/cache/glavni-grad-events.json`. See ADR 0014.
 

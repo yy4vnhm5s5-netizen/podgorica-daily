@@ -26,7 +26,7 @@ const translations = {
     },
     metadata: {
       description: "A trusted, accessible guide to daily life in Podgorica.",
-      title: "Podgorica Daily",
+      title: "Gradom",
     },
     shell: {
       languageNames: {
@@ -69,7 +69,7 @@ const translations = {
     },
     metadata: {
       description: "Pouzdan i pristupačan vodič kroz svakodnevni život u Podgorici.",
-      title: "Podgorica Daily",
+      title: "Gradom",
     },
     shell: {
       languageNames: {

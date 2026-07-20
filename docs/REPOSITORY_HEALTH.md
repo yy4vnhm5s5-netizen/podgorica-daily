@@ -5,7 +5,7 @@
 
 ## Executive assessment
 
-Podgorica Daily is a well-structured foundation, not yet a production product. Its architecture, documentation, quality gates, and application shell are strong for this stage. It is ready to begin controlled module delivery, but it is not ready to serve live information or claim full operational production readiness.
+Gradom is a well-structured foundation, not yet a production product. Its architecture, documentation, quality gates, and application shell are strong for this stage. It is ready to begin controlled module delivery, but it is not ready to serve live information or claim full operational production readiness.
 
 | Area                       | Score | Assessment                                                                                                                                                       |
 | -------------------------- | ----: | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
