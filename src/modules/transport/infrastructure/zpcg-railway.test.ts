@@ -175,6 +175,32 @@ test("includes final URL and HTTP status in diagnostics for an upstream HTTP fai
   });
 });
 
+test("retains the cache and logs actual and maximum sizes for an oversized ŽPCG document", async () => {
+  const diagnostics: Record<string, unknown>[] = [];
+  const client = createZpcgHttpClient({
+    fetchImplementation: async () => ({
+      headers: { get: () => "text/html" },
+      ok: true,
+      status: 200,
+      text: async () => "x".repeat(2_500_001),
+      url: zpcgTimetableUrl,
+    }),
+    retries: 0,
+  });
+  const result = await refreshZpcgRailway({
+    cachePath: join(await mkdtemp(join(tmpdir(), "zpcg-test-")), "railway.json"),
+    emitDiagnostic: (diagnostic) => diagnostics.push(diagnostic),
+    httpClient: client,
+  });
+  const diagnostic = diagnostics.at(-1);
+
+  assert.equal(result.success, false);
+  assert.equal(result.errorCode, "zpcg-response-too-large");
+  assert.equal(diagnostic?.actualResponseLength, 2_500_001);
+  assert.equal(diagnostic?.maximumResponseLength, 2_500_000);
+  assert.equal(diagnostic?.status, 200);
+});
+
 test("uses the same cache path for atomic refresh writes and homepage reads", async () => {
   const cachePath = join(await mkdtemp(join(tmpdir(), "zpcg-test-")), "nested", "railway.json");
   const result = await refreshZpcgRailway({

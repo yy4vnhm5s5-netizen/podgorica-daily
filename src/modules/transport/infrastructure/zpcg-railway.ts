@@ -12,7 +12,7 @@ import {
 
 const zpcgTimetableUrl = "https://zpcg.me/red-voznje/ukupno";
 const defaultCachePath = resolveZpcgRailwayCachePath();
-const maximumResponseLength = 1_500_000;
+const maximumResponseLength = 2_500_000;
 const providerId = "zpcg-railway";
 
 type RailwayCacheState = "fresh" | "stale" | "unavailable";
@@ -63,12 +63,14 @@ interface ZpcgHttpClient {
 
 interface ZpcgRefreshDiagnostic {
   acceptedDepartures?: number;
+  actualResponseLength?: number;
   cachePath: string;
   cacheWriteResult?: "not-attempted" | "retained" | "written";
   contentType?: string | null;
   error?: { message: string; name: string };
   finalUrl?: string;
   htmlLength?: number;
+  maximumResponseLength: number;
   phase: ZpcgRefreshPhase;
   podgoricaSectionFound?: boolean;
   previousSnapshotRetained?: boolean;
@@ -114,10 +116,12 @@ class ZpcgFetchError extends Error {
     | "zpcg-request-timeout"
     | "zpcg-response-too-large";
   readonly details?: {
+    actualResponseLength?: number;
     contentType?: string | null;
     finalUrl?: string;
     requestedUrl?: string;
     status?: number;
+    maximumResponseLength?: number;
   };
 
   constructor(
@@ -193,7 +197,14 @@ function createZpcgHttpClient({
             throw new ZpcgFetchError(
               "zpcg-response-too-large",
               "ŽPCG response exceeded the allowed size.",
-              { contentType, finalUrl, requestedUrl, status: response.status },
+              {
+                actualResponseLength: html.length,
+                contentType,
+                finalUrl,
+                maximumResponseLength,
+                requestedUrl,
+                status: response.status,
+              },
             );
           }
 
@@ -332,6 +343,7 @@ async function refreshZpcgRailway({
   emitDiagnostic({
     cachePath,
     cacheWriteResult: "not-attempted",
+    maximumResponseLength,
     phase: "request",
     provider: providerId,
     requestedUrl: zpcgTimetableUrl,
@@ -341,11 +353,13 @@ async function refreshZpcgRailway({
   try {
     const response = await httpClient.get(zpcgTimetableUrl);
     emitDiagnostic({
+      actualResponseLength: response.html.length,
       cachePath,
       cacheWriteResult: "not-attempted",
       contentType: response.contentType,
       finalUrl: response.finalUrl,
       htmlLength: response.html.length,
+      maximumResponseLength,
       phase: "response",
       provider: providerId,
       requestedUrl: response.requestedUrl,
@@ -356,12 +370,14 @@ async function refreshZpcgRailway({
     const parsed = parseZpcgPodgoricaDepartures(response.html, requestedDate);
     emitDiagnostic({
       acceptedDepartures: parsed.acceptedDepartures,
+      actualResponseLength: response.html.length,
       cachePath,
       cacheWriteResult: "not-attempted",
       contentType: response.contentType,
       finalUrl: response.finalUrl,
       headings: parsed.sectionFound ? undefined : parsed.document.headings,
       htmlLength: response.html.length,
+      maximumResponseLength,
       phase: "parser",
       podgoricaSectionFound: parsed.sectionFound,
       provider: providerId,
@@ -415,11 +431,13 @@ async function refreshZpcgRailway({
 
     emitDiagnostic({
       acceptedDepartures: parsed.acceptedDepartures,
+      actualResponseLength: response.html.length,
       cachePath,
       cacheWriteResult: "written",
       contentType: response.contentType,
       finalUrl: response.finalUrl,
       htmlLength: response.html.length,
+      maximumResponseLength,
       phase: "cache",
       podgoricaSectionFound: true,
       previousSnapshotRetained: false,
@@ -450,6 +468,7 @@ async function refreshZpcgRailway({
       emitDiagnostic,
       {
         cachePath,
+        maximumResponseLength: fetchError?.details?.maximumResponseLength,
         contentType: fetchError?.details?.contentType,
         error,
         finalUrl: fetchError?.details?.finalUrl,
@@ -609,6 +628,7 @@ function retain(
   emitDiagnostic: ZpcgDiagnosticEmitter,
   context: {
     cachePath: string;
+    maximumResponseLength?: number;
     contentType?: string | null;
     error?: unknown;
     finalUrl?: string;
@@ -620,6 +640,11 @@ function retain(
 ): ZpcgRefreshResult {
   emitDiagnostic({
     acceptedDepartures: context.parsed?.acceptedDepartures,
+    actualResponseLength:
+      context.response?.html.length ??
+      (context.error instanceof ZpcgFetchError
+        ? context.error.details?.actualResponseLength
+        : undefined),
     cachePath: context.cachePath,
     cacheWriteResult: previous ? "retained" : "not-attempted",
     contentType: context.response?.contentType ?? context.contentType,
@@ -627,6 +652,8 @@ function retain(
     finalUrl: context.response?.finalUrl ?? context.finalUrl,
     headings: context.parsed?.sectionFound ? undefined : context.parsed?.document.headings,
     htmlLength: context.response?.html.length,
+    maximumResponseLength:
+      context.maximumResponseLength ?? maximumResponseLength,
     phase,
     podgoricaSectionFound: context.parsed?.sectionFound,
     previousSnapshotRetained: Boolean(previous),
