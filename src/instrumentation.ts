@@ -7,6 +7,7 @@ import { readVikpgCacheResult } from "@/modules/city-alerts/infrastructure/vikpg
 import { readEventCacheSnapshot } from "@/modules/events/infrastructure/events-cache";
 import { initializeEventCaches } from "@/modules/events/infrastructure/events-initialization";
 import { refreshAllEvents } from "@/modules/events/infrastructure/events-refresh";
+import { initializeZpcgRailwayCache } from "@/modules/transport/infrastructure/zpcg-railway-initialization";
 
 export function register() {
   if (process.env.NEXT_RUNTIME !== "nodejs" || env.NODE_ENV !== "production") return;
@@ -28,6 +29,10 @@ export function register() {
         refresh: () => runVikpgCollector({ cachePath: env.VIKPG_CACHE_PATH }),
       },
     ],
+  });
+
+  void initializeZpcgRailwayCache({
+    cachePath: env.ZPCG_RAILWAY_CACHE_PATH,
   });
 
   if (env.ENABLE_EVENTS && env.EVENT_PROVIDER_MODE === "live") {
