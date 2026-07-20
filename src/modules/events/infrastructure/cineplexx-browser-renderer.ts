@@ -6,17 +6,55 @@ import { cineplexxProgrammeUrl } from "./cineplexx-programme-parser.ts";
 const executeFile = promisify(execFile);
 const allowedCineplexxHosts = new Set(["cineplexx.me", "www.cineplexx.me"]);
 
+type CineplexxBrowserFailurePhase =
+  | "chromium-launch"
+  | "dom-dump"
+  | "page-load"
+  | "source-validation";
+
+interface CineplexxDomDiagnostics {
+  expectedBookingSelectorExists: boolean;
+  expectedSessionSelectorExists: boolean;
+  finalUrl: string;
+  htmlLength: number;
+  title: string;
+}
+
 class CineplexxBrowserError extends Error {
   readonly code:
     | "cineplexx-browser-failed"
     | "cineplexx-browser-invalid-output"
     | "cineplexx-browser-timeout"
     | "cineplexx-source-rejected";
+  readonly causeClass?: string;
+  readonly causeMessage?: string;
+  readonly domDiagnostics?: CineplexxDomDiagnostics;
+  readonly executableMissing: boolean;
+  readonly phase: CineplexxBrowserFailurePhase;
 
-  constructor(code: CineplexxBrowserError["code"], message: string) {
+  constructor(
+    code: CineplexxBrowserError["code"],
+    message: string,
+    {
+      cause,
+      domDiagnostics,
+      executableMissing = false,
+      phase,
+    }: {
+      cause?: unknown;
+      domDiagnostics?: CineplexxDomDiagnostics;
+      executableMissing?: boolean;
+      phase: CineplexxBrowserFailurePhase;
+    },
+  ) {
     super(message);
     this.name = "CineplexxBrowserError";
     this.code = code;
+    this.causeClass = cause instanceof Error ? cause.name : undefined;
+    this.causeMessage = cause instanceof Error ? cause.message : undefined;
+    this.domDiagnostics = domDiagnostics;
+    this.executableMissing = executableMissing;
+    this.phase = phase;
   }
 }
 
@@ -70,20 +108,33 @@ function createCineplexxBrowserRenderer({
           throw new CineplexxBrowserError(
             "cineplexx-browser-invalid-output",
             "Cineplexx browser renderer returned an empty document.",
+            {
+              domDiagnostics: inspectCineplexxRenderedDom(stdout, url),
+              phase: "dom-dump",
+            },
           );
         if (!/l-sessions__item/.test(stdout) || !/\/purchase\/wizard\//.test(stdout))
           throw new CineplexxBrowserError(
             "cineplexx-browser-invalid-output",
             "Cineplexx programme did not finish rendering.",
+            {
+              domDiagnostics: inspectCineplexxRenderedDom(stdout, url),
+              phase: "dom-dump",
+            },
           );
         return stdout;
       } catch (error) {
         if (error instanceof CineplexxBrowserError) throw error;
         const message = error instanceof Error ? error.message : "Unknown browser renderer failure.";
+        const executableMissing = isExecutableMissing(error);
         const code = /timed out|ETIMEDOUT/i.test(message)
           ? "cineplexx-browser-timeout"
           : "cineplexx-browser-failed";
-        throw new CineplexxBrowserError(code, "Cineplexx browser renderer failed.");
+        throw new CineplexxBrowserError(code, "Cineplexx browser renderer failed.", {
+          cause: error,
+          executableMissing,
+          phase: executableMissing ? "chromium-launch" : "page-load",
+        });
       }
     },
   };
@@ -97,15 +148,49 @@ function assertCineplexxProgrammeUrl(value: string) {
     throw new CineplexxBrowserError(
       "cineplexx-source-rejected",
       "Cineplexx programme URL is not allowed.",
+      { phase: "source-validation" },
     );
   }
+}
+
+function inspectCineplexxRenderedDom(html: string, requestedUrl: string): CineplexxDomDiagnostics {
+  const title = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.replace(/\s+/g, " ").trim() ?? "";
+  const canonical = html.match(
+    /<link[^>]+rel=["']canonical["'][^>]+href=["']([^"']+)["']/i,
+  )?.[1];
+  return {
+    expectedBookingSelectorExists: /\/purchase\/wizard\//.test(html),
+    expectedSessionSelectorExists: /l-sessions__item/.test(html),
+    finalUrl: resolveCineplexxDiagnosticUrl(canonical, requestedUrl),
+    htmlLength: html.length,
+    title,
+  };
+}
+
+function resolveCineplexxDiagnosticUrl(value: string | undefined, fallback: string) {
+  if (!value) return fallback;
+  try {
+    return new URL(value, fallback).toString();
+  } catch {
+    return fallback;
+  }
+}
+
+function isExecutableMissing(error: unknown) {
+  if (typeof error !== "object" || error === null) return false;
+  const code = "code" in error ? error.code : undefined;
+  const message = error instanceof Error ? error.message : "";
+  return code === "ENOENT" || /ENOENT|not found|no such file/i.test(message);
 }
 
 export {
   assertCineplexxProgrammeUrl,
   createCineplexxBrowserRenderer,
   CineplexxBrowserError,
+  inspectCineplexxRenderedDom,
   type CineplexxBrowserRenderer,
   type CineplexxBrowserRendererOptions,
+  type CineplexxBrowserFailurePhase,
+  type CineplexxDomDiagnostics,
   type CineplexxProcessExecutor,
 };

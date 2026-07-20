@@ -43,7 +43,21 @@ test("rejects off-domain source URLs and incomplete rendered programmes", async 
   const renderer = createCineplexxBrowserRenderer({
     execute: async () => ({ stderr: "", stdout: "<main>Loading</main>" }),
   });
-  await assert.rejects(() => renderer.renderProgramme(), CineplexxBrowserError);
+  await assert.rejects(
+    () => renderer.renderProgramme(),
+    (error: unknown) => {
+      assert.ok(error instanceof CineplexxBrowserError);
+      assert.equal(error.phase, "dom-dump");
+      assert.deepEqual(error.domDiagnostics, {
+        expectedBookingSelectorExists: false,
+        expectedSessionSelectorExists: false,
+        finalUrl: "https://www.cineplexx.me/cinemas/CINEPLEXX-PODGORICA/",
+        htmlLength: 20,
+        title: "",
+      });
+      return true;
+    },
+  );
 });
 
 test("maps browser timeouts to typed Cineplexx failures", async () => {
@@ -56,5 +70,25 @@ test("maps browser timeouts to typed Cineplexx failures", async () => {
     () => renderer.renderProgramme(),
     (error: unknown) =>
       error instanceof CineplexxBrowserError && error.code === "cineplexx-browser-timeout",
+  );
+});
+
+test("identifies a missing Chromium executable as a launch failure", async () => {
+  const renderer = createCineplexxBrowserRenderer({
+    execute: async () => {
+      const error = Object.assign(new Error("spawn chromium-browser ENOENT"), { code: "ENOENT" });
+      throw error;
+    },
+  });
+
+  await assert.rejects(
+    () => renderer.renderProgramme(),
+    (error: unknown) => {
+      assert.ok(error instanceof CineplexxBrowserError);
+      assert.equal(error.executableMissing, true);
+      assert.equal(error.phase, "chromium-launch");
+      assert.equal(error.causeClass, "Error");
+      return true;
+    },
   );
 });

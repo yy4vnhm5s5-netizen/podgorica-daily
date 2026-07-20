@@ -131,6 +131,52 @@ test("formats parsed samples with empty values, escaped quotes, and bounded warn
   assert.ok(payload.message.includes('\\"quotes\\"'));
 });
 
+test("keeps Cineplexx failure context visible in Railway-readable messages", () => {
+  const infoCalls: unknown[][] = [];
+  const errorCalls: unknown[][] = [];
+  const originalInfo = console.info;
+  const originalError = console.error;
+  console.info = (...arguments_: unknown[]) => infoCalls.push(arguments_);
+  console.error = (...arguments_: unknown[]) => errorCalls.push(arguments_);
+
+  try {
+    emitInfo({
+      dom: {
+        expectedBookingSelectorExists: true,
+        expectedSessionSelectorExists: true,
+        finalUrl: "https://www.cineplexx.me/cinemas/CINEPLEXX-PODGORICA/",
+        htmlLength: 321,
+        title: "Cineplexx Podgorica",
+      },
+      event: "cineplexx-refresh-zero-screenings",
+      phase: "parser",
+      reason: "zero-screenings",
+    });
+    emitError({
+      causeClass: "Error",
+      causeMessage: "spawn /usr/bin/chromium-browser ENOENT",
+      chromiumExecutableMissing: true,
+      error: { class: "CineplexxBrowserError", message: "Cineplexx browser renderer failed." },
+      event: "cineplexx-refresh-failed",
+      phase: "chromium-launch",
+    });
+  } finally {
+    console.info = originalInfo;
+    console.error = originalError;
+  }
+
+  const zeroScreenings = JSON.parse(infoCalls[0][0] as string);
+  assert.equal(
+    zeroScreenings.message,
+    'cineplexx-refresh-zero-screenings phase=parser reason=zero-screenings title="Cineplexx Podgorica" finalUrl="https://www.cineplexx.me/cinemas/CINEPLEXX-PODGORICA/" htmlLength=321 sessions=true bookings=true',
+  );
+  const launchFailure = JSON.parse(errorCalls[0][0] as string);
+  assert.equal(
+    launchFailure.message,
+    "cineplexx-refresh-failed phase=chromium-launch errorClass=CineplexxBrowserError errorMessage=Cineplexx browser renderer failed. causeClass=Error cause=spawn /usr/bin/chromium-browser ENOENT chromiumMissing=true",
+  );
+});
+
 test("emits startup messages as one non-empty string", () => {
   const calls: unknown[][] = [];
   const originalInfo = console.info;

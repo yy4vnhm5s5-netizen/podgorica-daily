@@ -2,10 +2,18 @@ import { normalizeEventCandidate } from "../domain/event-normalization.ts";
 import { defaultEventQualityPolicy, runEventQualityPipeline } from "../domain/event-quality.ts";
 import type { EventQualityPolicy } from "../domain/event-quality.ts";
 import { writeEventCache, type EventCacheSnapshot } from "./events-cache.ts";
-import type { CineplexxBrowserRenderer } from "./cineplexx-browser-renderer.ts";
+import {
+  CineplexxBrowserError,
+  inspectCineplexxRenderedDom,
+  type CineplexxBrowserFailurePhase,
+  type CineplexxBrowserRenderer,
+} from "./cineplexx-browser-renderer.ts";
 import { cineplexxProgrammeUrl, parseCineplexxProgramme } from "./cineplexx-programme-parser.ts";
+import { emitError, emitInfo } from "./event-refresh-logger.ts";
 import { logEventRefreshObservability, logEventRefreshParsedSample } from "./event-refresh-observability.ts";
 import type { CityContext } from "@/shared/types/city";
+
+type CineplexxRefreshPhase = CineplexxBrowserFailurePhase | "cache-write" | "normalization" | "parser";
 
 interface CineplexxRefreshResult {
   lastRefreshError?: string;
@@ -31,12 +39,25 @@ async function refreshCineplexxProgramme({
   renderer: CineplexxBrowserRenderer;
   writeCache?: (snapshot: EventCacheSnapshot, path: string) => Promise<void>;
 }): Promise<CineplexxRefreshResult> {
+  let phase: CineplexxRefreshPhase = "page-load";
   try {
     const refreshedAt = now();
-    const candidates = parseCineplexxProgramme(await renderer.renderProgramme(), {
+    const html = await renderer.renderProgramme();
+    phase = "parser";
+    const candidates = parseCineplexxProgramme(html, {
       today: getPodgoricaDate(refreshedAt),
     });
+    if (!candidates.length) {
+      emitInfo({
+        dom: inspectCineplexxRenderedDom(html, cineplexxProgrammeUrl),
+        event: "cineplexx-refresh-zero-screenings",
+        phase,
+        provider: "cineplexx-podgorica",
+        reason: "zero-screenings",
+      });
+    }
     logEventRefreshParsedSample({ candidates, provider: "cineplexx-podgorica" });
+    phase = "normalization";
     const normalized = candidates.map((candidate) =>
       normalizeEventCandidate(candidate, context, refreshedAt),
     );
@@ -58,8 +79,10 @@ async function refreshCineplexxProgramme({
     });
 
     if (!quality.finalEvents.length && previousSnapshot?.events.length) {
+      const error = new CineplexxRefreshError("No valid Cineplexx screenings were collected.");
+      logCineplexxRefreshFailure({ error, phase });
       return {
-        lastRefreshError: "No valid Cineplexx screenings were collected.",
+        lastRefreshError: error.message,
         retainedPreviousSnapshot: true,
         snapshot: previousSnapshot,
         success: false,
@@ -83,9 +106,11 @@ async function refreshCineplexxProgramme({
       schemaVersion: 2,
       venues: [],
     };
+    phase = "cache-write";
     await writeCache(snapshot, cachePath);
     return { retainedPreviousSnapshot: false, snapshot, success: true };
-  } catch {
+  } catch (error) {
+    logCineplexxRefreshFailure({ error, phase });
     return {
       lastRefreshError: "Cineplexx programme refresh failed.",
       retainedPreviousSnapshot: Boolean(previousSnapshot),
@@ -93,6 +118,38 @@ async function refreshCineplexxProgramme({
       success: false,
     };
   }
+}
+
+class CineplexxRefreshError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "CineplexxRefreshError";
+  }
+}
+
+function logCineplexxRefreshFailure({
+  error,
+  phase,
+}: {
+  error: unknown;
+  phase: CineplexxRefreshPhase;
+}) {
+  const exception = error instanceof Error ? error : new Error(String(error));
+  const browserError = error instanceof CineplexxBrowserError ? error : undefined;
+  emitError({
+    chromiumExecutableMissing: browserError?.executableMissing ?? false,
+    ...(browserError?.causeClass ? { causeClass: browserError.causeClass } : {}),
+    ...(browserError?.causeMessage ? { causeMessage: browserError.causeMessage } : {}),
+    ...(browserError?.domDiagnostics ? { dom: browserError.domDiagnostics } : {}),
+    error: {
+      class: exception.name,
+      message: exception.message,
+      ...(process.env.NODE_ENV === "development" ? { stack: exception.stack ?? "" } : {}),
+    },
+    event: "cineplexx-refresh-failed",
+    phase: browserError?.phase ?? phase,
+    provider: "cineplexx-podgorica",
+  });
 }
 
 function getPodgoricaDate(value: Date) {
@@ -106,4 +163,10 @@ function getPodgoricaDate(value: Date) {
   return `${values.year}-${values.month}-${values.day}`;
 }
 
-export { getPodgoricaDate, refreshCineplexxProgramme, type CineplexxRefreshResult };
+export {
+  getPodgoricaDate,
+  logCineplexxRefreshFailure,
+  refreshCineplexxProgramme,
+  type CineplexxRefreshResult,
+  type CineplexxRefreshPhase,
+};

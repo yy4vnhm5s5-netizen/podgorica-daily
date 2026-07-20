@@ -86,7 +86,46 @@ function createReadableMessage(event: string, payload: EventRefreshLogPayload): 
       : undefined;
     return appendDetails(event, { ...payload, providers }, [["providers", "providers"]]);
   }
+  if (event === "cineplexx-refresh-failed") {
+    const error = isRecord(payload.error) ? payload.error : {};
+    const message = appendDetails(
+      event,
+      { ...payload, errorClass: error.class, errorMessage: error.message },
+      [
+        ["phase", "phase"],
+        ["errorClass", "errorClass"],
+        ["errorMessage", "errorMessage"],
+        ["causeClass", "causeClass"],
+        ["cause", "causeMessage"],
+        ["chromiumMissing", "chromiumExecutableMissing"],
+      ],
+    );
+    return appendCineplexxDomDetails(message, payload.dom);
+  }
+  if (event === "cineplexx-refresh-zero-screenings") {
+    const message = appendDetails(event, payload, [
+      ["phase", "phase"],
+      ["reason", "reason"],
+    ]);
+    return appendCineplexxDomDetails(message, payload.dom);
+  }
   return event;
+}
+
+function appendCineplexxDomDetails(message: string, value: unknown): string {
+  if (!isRecord(value)) return message;
+  const title = typeof value.title === "string" ? value.title : "";
+  const finalUrl = typeof value.finalUrl === "string" ? value.finalUrl : "";
+  const htmlLength = typeof value.htmlLength === "number" ? value.htmlLength : "";
+  const sessions =
+    typeof value.expectedSessionSelectorExists === "boolean"
+      ? value.expectedSessionSelectorExists
+      : "";
+  const bookings =
+    typeof value.expectedBookingSelectorExists === "boolean"
+      ? value.expectedBookingSelectorExists
+      : "";
+  return `${message} title=${quoteMessageValue(title)} finalUrl=${quoteMessageValue(finalUrl)} htmlLength=${htmlLength} sessions=${sessions} bookings=${bookings}`;
 }
 
 function createParsedSampleMessage(event: string, payload: EventRefreshLogPayload): string {
@@ -135,8 +174,8 @@ function appendDetails(
 ): string {
   const details = fields.flatMap(([label, key]) => {
     const value = payload[key];
-    return typeof value === "number" || (typeof value === "string" && value.trim())
-      ? [`${label}=${value}`]
+    return typeof value === "number" || typeof value === "boolean" || (typeof value === "string" && value.trim())
+      ? [`${label}=${compactMessageValue(String(value))}`]
       : [];
   });
   return details.length ? `${event} ${details.join(" ")}` : event;
