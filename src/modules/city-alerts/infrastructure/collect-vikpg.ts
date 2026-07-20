@@ -1,5 +1,6 @@
 import { dirname } from "node:path";
 
+import { env } from "../../../config/env.ts";
 import { acquireRefreshLock } from "../../../shared/lib/refresh-lock.ts";
 import type { CityAlertCollectorResult } from "./city-alerts-collector.ts";
 import { defaultVikpgCachePath, readVikpgCache, writeVikpgCache } from "./vikpg-cache.ts";
@@ -15,7 +16,7 @@ interface VikpgCollectorDependencies {
 type VikpgCollectorResult = CityAlertCollectorResult;
 
 async function runVikpgCollector({
-  cachePath = process.env.VIKPG_CACHE_PATH ?? defaultVikpgCachePath,
+  cachePath = env.VIKPG_CACHE_PATH ?? defaultVikpgCachePath,
   refresh,
   writeOutput = console.log,
 }: VikpgCollectorDependencies = {}): Promise<VikpgCollectorResult> {

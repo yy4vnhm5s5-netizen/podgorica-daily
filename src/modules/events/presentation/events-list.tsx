@@ -22,7 +22,9 @@ function EventsList({ allEvents, events, filters, locale, timezone }: EventsList
   const translations = getEventsTranslations(locale);
   const { eventsCount, ...filterTranslations } = translations;
   const groups = groupEventsByDay(events, timezone);
-  const categories = [...new Set(allEvents.map((event) => getEventPresentationCategory(event.category)))].sort();
+  const categories = [
+    ...new Set(allEvents.map((event) => getEventPresentationCategory(event.category))),
+  ].sort();
   const sources = [
     ...new Map(allEvents.map((event) => [event.sourceId, event.sourceName])).entries(),
   ]

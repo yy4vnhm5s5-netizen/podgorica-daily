@@ -204,14 +204,18 @@ test("combines cached KIC and CNP events with deterministic sorting, shared dedu
       createCnpEventProvider({ configuration: liveConfiguration(cnp) }),
     ]);
 
-    assert.equal(result.events.length, 3);
+    assert.equal(result.events.length, 2);
     assert.deepEqual(
       result.events.map((event) => event.startsAt),
-      ["2026-07-20T18:00:00.000Z", "2026-07-20T18:00:00.000Z", "2026-07-21T18:00:00.000Z"],
+      ["2026-07-20T18:00:00.000Z", "2026-07-21T18:00:00.000Z"],
     );
     const shared = result.events.find((event) => event.id === "kic-shared");
     assert.equal(shared?.status, "cancelled");
-    assert.equal(shared?.sourceReferences.length, 2);
+    assert.equal(shared?.sourceReferences.length, 3);
+    assert.deepEqual(
+      shared?.sourceReferences.map(({ sourceUrl }) => sourceUrl),
+      ["https://kic.podgorica.me/shared", "https://cnp.me/shared", "https://cnp.me/other-venue"],
+    );
     assert.equal(shared?.sourceId, "kic-budo-tomovic");
   });
 });

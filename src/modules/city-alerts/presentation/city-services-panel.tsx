@@ -97,7 +97,7 @@ function CityServicesPanel({ services, translations }: CityServicesPanelProps) {
               aria-controls={panelId}
               aria-selected={isSelected}
               className={cn(
-                "flex min-h-10 flex-1 items-center justify-center gap-2 rounded-lg px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                "focus-visible:ring-ring flex min-h-10 flex-1 items-center justify-center gap-2 rounded-lg px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
                 isSelected
                   ? cn(
                       "card-fog border border-slate-200 bg-background text-foreground shadow-[0_2px_5px_-4px_rgb(15_23_42_/_0.3)]",

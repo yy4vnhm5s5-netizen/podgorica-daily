@@ -15,8 +15,4 @@ function getRailwayStationDisplayState({
   return state === "unavailable" ? "unavailable" : "empty";
 }
 
-export {
-  getRailwayStationDisplayState,
-  type RailwayCacheState,
-  type RailwayStationDisplayState,
-};
+export { getRailwayStationDisplayState, type RailwayCacheState, type RailwayStationDisplayState };

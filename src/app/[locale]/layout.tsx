@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import type { PropsWithChildren } from "react";
 import { notFound } from "next/navigation";
 
-import { getLocaleTag, isLocale, locales } from "@/shared/config/locale";
+import { getLocaleAlternates, getLocaleTag, isLocale, locales } from "@/shared/config/locale";
 import { getTranslations } from "@/shared/lib/translations";
 
 interface LocaleLayoutProps extends PropsWithChildren {
@@ -19,7 +19,7 @@ async function generateMetadata({ params }: LocaleLayoutProps): Promise<Metadata
   const translations = getTranslations(locale);
 
   return {
-    alternates: { canonical: `/${locale}` },
+    alternates: { canonical: `/${locale}`, languages: getLocaleAlternates() },
     description: translations.metadata.description,
     title: translations.metadata.title,
   };

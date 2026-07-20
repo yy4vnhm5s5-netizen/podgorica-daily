@@ -14,7 +14,7 @@ Gradom is a trusted, fast, and accessible digital guide to daily life in Podgori
 
 ## Scope
 
-The platform will support local weather, mobility, events, search, maps, editorial operations, and deterministic daily overviews based on verified city data. Sprint 0 defines the foundation and delivery standards; it does not introduce product features.
+The platform supports verified local weather, city alerts, events, selected transport information, and deterministic daily overviews. Maps, unified search, editorial operations, accounts, and further mobility coverage remain future work.
 
 ## Success
 

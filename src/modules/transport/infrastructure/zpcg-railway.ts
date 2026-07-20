@@ -1,4 +1,4 @@
-import { resolveRuntimeCachePath } from "../../../config/runtime-data.ts";
+import { env } from "../../../config/env.ts";
 import {
   calculateCacheFreshness,
   readJsonCache,
@@ -11,7 +11,7 @@ import {
 } from "../domain/railway-departure.ts";
 
 const zpcgTimetableUrl = "https://zpcg.me/red-voznje/ukupno";
-const defaultCachePath = resolveZpcgRailwayCachePath();
+const defaultCachePath = env.ZPCG_RAILWAY_CACHE_PATH;
 const maximumResponseLength = 2_500_000;
 const providerId = "zpcg-railway";
 
@@ -124,11 +124,7 @@ class ZpcgFetchError extends Error {
     maximumResponseLength?: number;
   };
 
-  constructor(
-    code: ZpcgFetchError["code"],
-    message: string,
-    details?: ZpcgFetchError["details"],
-  ) {
+  constructor(code: ZpcgFetchError["code"], message: string, details?: ZpcgFetchError["details"]) {
     super(message);
     this.name = "ZpcgFetchError";
     this.code = code;
@@ -249,17 +245,11 @@ function assertZpcgUrl(value: string): void {
       throw new Error("Rejected ŽPCG URL.");
     }
   } catch {
-    throw new ZpcgFetchError(
-      "zpcg-host-rejected",
-      "ŽPCG URL host is not allowed.",
-    );
+    throw new ZpcgFetchError("zpcg-host-rejected", "ŽPCG URL host is not allowed.");
   }
 }
 
-function parseZpcgPodgoricaDepartures(
-  html: string,
-  requestedDate: string,
-): ZpcgParseResult {
+function parseZpcgPodgoricaDepartures(html: string, requestedDate: string): ZpcgParseResult {
   const document = summarizeDocument(html);
   const sectionHtml = extractPodgoricaSectionHtml(html);
   const timetableDateFromDocument = extractTimetableDate(html);
@@ -299,8 +289,7 @@ function parseZpcgPodgoricaDepartures(
 
   return {
     acceptedDepartures,
-    contentRecognized:
-      acceptedDepartures > 0 || (explicitlyEmpty && timetableDateConfirmed),
+    contentRecognized: acceptedDepartures > 0 || (explicitlyEmpty && timetableDateConfirmed),
     departures: deduplicatedDepartures,
     document,
     explicitlyEmpty,
@@ -391,19 +380,33 @@ async function refreshZpcgRailway({
     });
 
     if (!parsed.sectionFound) {
-      return retain(previous, "parser", "zpcg-section-unavailable", parsed.warnings, emitDiagnostic, {
-        cachePath,
-        parsed,
-        response,
-      });
+      return retain(
+        previous,
+        "parser",
+        "zpcg-section-unavailable",
+        parsed.warnings,
+        emitDiagnostic,
+        {
+          cachePath,
+          parsed,
+          response,
+        },
+      );
     }
 
     if (!parsed.contentRecognized) {
-      return retain(previous, "parser", "zpcg-records-unrecognized", parsed.warnings, emitDiagnostic, {
-        cachePath,
-        response,
-        parsed,
-      });
+      return retain(
+        previous,
+        "parser",
+        "zpcg-records-unrecognized",
+        parsed.warnings,
+        emitDiagnostic,
+        {
+          cachePath,
+          response,
+          parsed,
+        },
+      );
     }
 
     const timestamp = now().toISOString();
@@ -484,11 +487,7 @@ async function getCachedZpcgRailway(cachePath = defaultCachePath) {
 
   if (!snapshot) return { departures: [], state: "unavailable" as const };
 
-  const freshness = calculateCacheFreshness(
-    new Date(snapshot.fetchedAt),
-    new Date(),
-    780,
-  );
+  const freshness = calculateCacheFreshness(new Date(snapshot.fetchedAt), new Date(), 780);
 
   return { departures: snapshot.departures, state: freshness };
 }
@@ -501,13 +500,12 @@ function extractPodgoricaSectionHtml(html: string): string | undefined {
 
   if (podgoricaHeadingIndex < 0) return undefined;
 
-  const start = (headings[podgoricaHeadingIndex].index ?? 0) + headings[podgoricaHeadingIndex][0].length;
-  const nextStationHeading = headings
-    .slice(podgoricaHeadingIndex + 1)
-    .find((heading) => {
-      const text = normalizeHtmlText(heading[2]);
-      return /polasci\s+iz\s+stanice/i.test(text) && !isPodgoricaDepartureHeading(text);
-    });
+  const start =
+    (headings[podgoricaHeadingIndex].index ?? 0) + headings[podgoricaHeadingIndex][0].length;
+  const nextStationHeading = headings.slice(podgoricaHeadingIndex + 1).find((heading) => {
+    const text = normalizeHtmlText(heading[2]);
+    return /polasci\s+iz\s+stanice/i.test(text) && !isPodgoricaDepartureHeading(text);
+  });
   const end = nextStationHeading?.index ?? html.length;
 
   return html.slice(start, end);
@@ -590,9 +588,7 @@ function compactPrice(value: string): string {
 }
 
 function extractDetailsUrls(sectionHtml: string): (string | undefined)[] {
-  return [
-    ...sectionHtml.matchAll(/<a\b(?=[^>]*\bhref=["']([^"']+)["'])[^>]*>([\s\S]*?)<\/a>/gi),
-  ]
+  return [...sectionHtml.matchAll(/<a\b(?=[^>]*\bhref=["']([^"']+)["'])[^>]*>([\s\S]*?)<\/a>/gi)]
     .filter((link) => /detalji|details/i.test(normalizeHtmlText(link[2])))
     .map((link) => resolveZpcgUrl(link[1]));
 }
@@ -600,9 +596,7 @@ function extractDetailsUrls(sectionHtml: string): (string | undefined)[] {
 function resolveZpcgUrl(value: string): string | undefined {
   try {
     const url = new URL(value, zpcgTimetableUrl);
-    return url.protocol === "https:" && url.hostname === "zpcg.me"
-      ? url.toString()
-      : undefined;
+    return url.protocol === "https:" && url.hostname === "zpcg.me" ? url.toString() : undefined;
   } catch {
     return undefined;
   }
@@ -610,9 +604,7 @@ function resolveZpcgUrl(value: string): string | undefined {
 
 function summarizeDocument(html: string): ZpcgDocumentSummary {
   const title = normalizeHtmlText(html.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? "");
-  const headings = [
-    ...html.matchAll(/<h[1-6]\b[^>]*>([\s\S]*?)<\/h[1-6]>/gi),
-  ]
+  const headings = [...html.matchAll(/<h[1-6]\b[^>]*>([\s\S]*?)<\/h[1-6]>/gi)]
     .map((heading) => normalizeHtmlText(heading[1]))
     .filter(Boolean)
     .slice(0, 8);
@@ -652,8 +644,7 @@ function retain(
     finalUrl: context.response?.finalUrl ?? context.finalUrl,
     headings: context.parsed?.sectionFound ? undefined : context.parsed?.document.headings,
     htmlLength: context.response?.html.length,
-    maximumResponseLength:
-      context.maximumResponseLength ?? maximumResponseLength,
+    maximumResponseLength: context.maximumResponseLength ?? maximumResponseLength,
     phase,
     podgoricaSectionFound: context.parsed?.sectionFound,
     previousSnapshotRetained: Boolean(previous),
@@ -708,23 +699,9 @@ function localDate(now: Date): string {
     timeZone: "Europe/Podgorica",
     year: "numeric",
   }).formatToParts(now);
-  const value = Object.fromEntries(
-    parts.map(({ type, value: part }) => [type, part]),
-  );
+  const value = Object.fromEntries(parts.map(({ type, value: part }) => [type, part]));
 
   return `${value.year}-${value.month}-${value.day}`;
-}
-
-function resolveZpcgRailwayCachePath(): string {
-  if (process.env.ZPCG_RAILWAY_CACHE_PATH) {
-    return process.env.ZPCG_RAILWAY_CACHE_PATH;
-  }
-
-  const eventCacheDirectory = process.env.EVENT_CACHE_DIR?.replace(/\/+$/, "");
-
-  return eventCacheDirectory
-    ? `${eventCacheDirectory}/zpcg-railway-departures.json`
-    : resolveRuntimeCachePath("zpcg-railway-departures.json");
 }
 
 export {

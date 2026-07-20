@@ -6,10 +6,7 @@ const cineplexxEventProvider: EventProvider = {
   async getCachedEvents(context) {
     if (!env.ENABLE_EVENTS || env.EVENT_PROVIDER_MODE !== "live" || context.city.id !== "podgorica")
       return { events: [], parserWarnings: [], state: "disabled", venues: [] };
-    return readEventCache(
-      env.CINEPLEXX_EVENT_CACHE_PATH,
-      env.CINEPLEXX_CACHE_FRESHNESS_MINUTES,
-    );
+    return readEventCache(env.CINEPLEXX_EVENT_CACHE_PATH, env.CINEPLEXX_CACHE_FRESHNESS_MINUTES);
   },
   metadata: {
     cachePath: ".runtime/cache/cineplexx-events.json",

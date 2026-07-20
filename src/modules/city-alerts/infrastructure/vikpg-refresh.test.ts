@@ -12,7 +12,8 @@ const fixture = (name: string) =>
 const fixedNow = () => new Date("2026-07-20T10:00:00.000Z");
 const activeUrl = "https://vikpg.me/index.php?option=com_gridbox&view=page&id=2001&lang=me";
 const plannedUrl = "https://vikpg.me/index.php?option=com_gridbox&view=page&id=2002&lang=me";
-const secondaryActiveUrl = "https://vikpg.me/index.php?option=com_gridbox&view=page&id=2003&lang=me";
+const secondaryActiveUrl =
+  "https://vikpg.me/index.php?option=com_gridbox&view=page&id=2003&lang=me";
 
 const previousSnapshot = (): VikpgCacheSnapshot => ({
   alerts: [{ id: "previous" }] as never[],
@@ -55,16 +56,22 @@ test("writes active and planned water notices from a successful refresh", async 
   assert.equal(result.success, true);
   assert.equal(result.classification, "trustworthy-non-empty");
   assert.equal(memory.snapshot()?.alerts.length, 3);
-  assert.deepEqual(memory.snapshot()?.alerts.map(({ status }) => status).sort(), [
-    "active",
-    "active",
-    "scheduled",
-  ]);
+  assert.deepEqual(
+    memory
+      .snapshot()
+      ?.alerts.map(({ status }) => status)
+      .sort(),
+    ["active", "active", "scheduled"],
+  );
 });
 
 test("retains a valid cache after a fetch failure", async () => {
   const memory = memoryCache(previousSnapshot());
-  const result = await refreshVikpg({ cache: memory.cache, httpClient: fixtureClient({}), now: fixedNow });
+  const result = await refreshVikpg({
+    cache: memory.cache,
+    httpClient: fixtureClient({}),
+    now: fixedNow,
+  });
   assert.equal(result.success, false);
   assert.equal(result.retainedPreviousSnapshot, true);
   assert.equal(result.snapshot?.alerts[0]?.id, "previous");
@@ -75,7 +82,8 @@ test("retains a valid cache for a suspicious empty parse", async () => {
   const result = await refreshVikpg({
     cache: memory.cache,
     httpClient: fixtureClient({
-      [vikpgWaterNoticesUrl]: "<main><h2>Servisne informacije</h2><a href='/index.php?id=2001'>Informacija o kvaru</a></main>",
+      [vikpgWaterNoticesUrl]:
+        "<main><h2>Servisne informacije</h2><a href='/index.php?id=2001'>Informacija o kvaru</a></main>",
       "https://vikpg.me/index.php?id=2001": await fixture("vikpg-malformed.html"),
     }),
     now: fixedNow,
@@ -89,7 +97,8 @@ test("replaces a cache with a genuinely empty successful listing", async () => {
   const result = await refreshVikpg({
     cache: memory.cache,
     httpClient: fixtureClient({
-      [vikpgWaterNoticesUrl]: "<main><h2>Servisne informacije</h2><a href='/cjenovnik'>Novi cjenovnik</a></main>",
+      [vikpgWaterNoticesUrl]:
+        "<main><h2>Servisne informacije</h2><a href='/cjenovnik'>Novi cjenovnik</a></main>",
     }),
     now: fixedNow,
   });

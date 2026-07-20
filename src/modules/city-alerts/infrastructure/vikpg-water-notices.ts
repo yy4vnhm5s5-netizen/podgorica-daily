@@ -3,8 +3,7 @@ import { createHash } from "node:crypto";
 import type { CityAlert } from "@/modules/city-alerts/domain/city-alert";
 
 const vikpgOrigin = "https://vikpg.me";
-const vikpgWaterNoticesUrl =
-  "https://vikpg.me/me/mediji/servisne-informacije/obavjestenja.html";
+const vikpgWaterNoticesUrl = "https://vikpg.me/me/mediji/servisne-informacije/obavjestenja.html";
 
 const servicePattern =
   /\b(?:vodosnabdijevanj\w*|obustav\w*|prekid\w*|kvar\w*|havarij\w*|sanacij\w*|radov\w*|pritis\w*|restrikc\w*|vodovodn\w*|cjevovod\w*|otklonjen\w*|normalizovan\w*|uspostavljen\w*)\b/i;
@@ -52,7 +51,7 @@ interface VikpgParseResult {
  * renders service entries on the home page after redirecting the legacy listing URL.
  */
 function discoverVikpgNotices(html: string, now = new Date()): VikpgNoticeLink[] {
-  const links = [...html.matchAll(/<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi)]
+  const links = [...html.matchAll(/<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a\s*>/gi)]
     .map((match) => ({
       publishedAt: extractListingPublicationDate(html, match.index, now),
       title: normalize(stripHtml(match[2])),
@@ -64,9 +63,7 @@ function discoverVikpgNotices(html: string, now = new Date()): VikpgNoticeLink[]
 
   return deduplicateLinks(links).filter(({ publishedAt, title }) => {
     const publicationDate = publishedAt ?? parseDate(title, now.getFullYear());
-    return (
-      !publicationDate || publicationDate.getTime() >= startOfDay(addDays(now, -2)).getTime()
-    );
+    return !publicationDate || publicationDate.getTime() >= startOfDay(addDays(now, -2)).getTime();
   });
 }
 
@@ -232,7 +229,9 @@ function parseDate(value: string, defaultYear: number) {
   const named = /\b(\d{1,2})\.?\s+(\p{L}+)(?:\s+(\d{4}))?\b/iu.exec(value);
   if (!named) return undefined;
   const month = monthNumbers[named[2].toLocaleLowerCase("sr-Latn-ME")];
-  return month === undefined ? undefined : createDate(Number(named[3] ?? defaultYear), month, Number(named[1]));
+  return month === undefined
+    ? undefined
+    : createDate(Number(named[3] ?? defaultYear), month, Number(named[1]));
 }
 
 function createDate(year: number, month: number, day: number) {
@@ -252,7 +251,13 @@ function parseTime(value: string) {
 }
 
 function withLocalTime(date: Date, time: { hour: number; minute: number }) {
-  const utc = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), time.hour, time.minute);
+  const utc = Date.UTC(
+    date.getUTCFullYear(),
+    date.getUTCMonth(),
+    date.getUTCDate(),
+    time.hour,
+    time.minute,
+  );
   const offset = getPodgoricaOffset(new Date(utc));
   return new Date(utc - offset);
 }

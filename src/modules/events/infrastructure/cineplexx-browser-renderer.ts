@@ -8,10 +8,7 @@ const allowedCineplexxHosts = new Set(["cineplexx.me", "www.cineplexx.me"]);
 const chromiumCommands = ["chromium-browser", "chromium", "google-chrome", "google-chrome-stable"];
 
 type CineplexxBrowserFailurePhase =
-  | "chromium-launch"
-  | "dom-dump"
-  | "page-load"
-  | "source-validation";
+  "chromium-launch" | "dom-dump" | "page-load" | "source-validation";
 
 interface CineplexxDomDiagnostics {
   expectedBookingSelectorExists: boolean;
@@ -157,7 +154,8 @@ function createCineplexxBrowserRenderer({
         return stdout;
       } catch (error) {
         if (error instanceof CineplexxBrowserError) throw error;
-        const message = error instanceof Error ? error.message : "Unknown browser renderer failure.";
+        const message =
+          error instanceof Error ? error.message : "Unknown browser renderer failure.";
         const executableMissing = isExecutableMissing(error);
         const code = /timed out|ETIMEDOUT/i.test(message)
           ? "cineplexx-browser-timeout"
@@ -194,10 +192,12 @@ function assertCineplexxProgrammeUrl(value: string) {
 }
 
 function inspectCineplexxRenderedDom(html: string, requestedUrl: string): CineplexxDomDiagnostics {
-  const title = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.replace(/\s+/g, " ").trim() ?? "";
-  const canonical = html.match(
-    /<link[^>]+rel=["']canonical["'][^>]+href=["']([^"']+)["']/i,
-  )?.[1];
+  const title =
+    html
+      .match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]
+      ?.replace(/\s+/g, " ")
+      .trim() ?? "";
+  const canonical = html.match(/<link[^>]+rel=["']canonical["'][^>]+href=["']([^"']+)["']/i)?.[1];
   return {
     expectedBookingSelectorExists: /\/purchase\/wizard\//.test(html),
     expectedSessionSelectorExists: /l-sessions__item/.test(html),

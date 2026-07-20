@@ -113,13 +113,16 @@ function decodeHtmlEntities(value: string) {
     quot: '"',
   };
 
-  return value.replace(/&(?:#(\d+)|#x([\da-f]+)|([a-z]+));/gi, (entity, decimal, hexadecimal, named) => {
-    if (named) return namedEntities[named.toLocaleLowerCase("en-US")] ?? entity;
-    const codePoint = Number.parseInt(decimal ?? hexadecimal, hexadecimal ? 16 : 10);
-    return Number.isInteger(codePoint) && codePoint >= 0 && codePoint <= 0x10ffff
-      ? String.fromCodePoint(codePoint)
-      : entity;
-  });
+  return value.replace(
+    /&(?:#(\d+)|#x([\da-f]+)|([a-z]+));/gi,
+    (entity, decimal, hexadecimal, named) => {
+      if (named) return namedEntities[named.toLocaleLowerCase("en-US")] ?? entity;
+      const codePoint = Number.parseInt(decimal ?? hexadecimal, hexadecimal ? 16 : 10);
+      return Number.isInteger(codePoint) && codePoint >= 0 && codePoint <= 0x10ffff
+        ? String.fromCodePoint(codePoint)
+        : entity;
+    },
+  );
 }
 
 function normalizeEventDisplayText(value: string | undefined) {

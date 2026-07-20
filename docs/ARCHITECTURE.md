@@ -23,6 +23,10 @@ The central city registry supplies a `CityContext` with city, locale, and timezo
 
 Provider metadata is centrally registered for Weather, CEDIS, AMSCG, and VIK Podgorica. It records ownership-facing source and cache details without moving module implementation into shared code. The shared cache abstraction owns atomic JSON persistence and freshness calculation; each module owns its snapshot schema and stale-data policy.
 
+## Transport boundary
+
+`src/modules/transport` owns the external BusTicket4.me station-link configuration and the ŽPCG railway-departure domain, parser, cache, collector, application query, and homepage presentation. The bus card is link-only and never collects departures. The ŽPCG collector fetches only the official timetable, writes `.runtime/cache/zpcg-railway-departures.json` atomically, and the homepage reads that cache only. The module exposes fresh, stale, empty, and unavailable read states without inventing schedules.
+
 ## Event platform boundary
 
 `src/modules/events` owns the normalized Event and Venue domains, provider contracts, candidate normalization, deterministic ID and deduplication logic, query semantics, and event cache schema. Collection and cache reading are intentionally separate: any future collector writes a module-owned snapshot using shared atomic JSON helpers, while application reads combine only enabled cached providers. No visitor request may invoke collection.
@@ -41,7 +45,7 @@ Events presentation is module-owned under `src/modules/events/presentation`. It 
 
 ## Reliability and security
 
-The first production deployment model is a single VPS with Docker Compose, where the application and staggered collector scheduler share a persistent file-cache volume. This preserves atomic local cache writes and cache-only reads. Serverless or multi-instance deployment is not currently supported because its filesystem is not a durable shared cache. See [DEPLOYMENT.md](DEPLOYMENT.md).
+The first production deployment model is a single VPS with Docker Compose, where the application and staggered collector scheduler share a persistent file-cache volume. This preserves atomic local cache writes and cache-only reads. The scheduler runs CEDIS and VIK every 30 minutes, KIC/CNP/Glavni Grad/Tourism hourly at staggered minutes, Cineplexx twice daily, and ŽPCG twice daily. AMSCG currently has a cache-backed collector but no bundled periodic scheduler entry; an operator must schedule `pnpm run collect:amscg` before relying on current road-condition freshness. Serverless or multi-instance deployment is not currently supported because its filesystem is not a durable shared cache. See [DEPLOYMENT.md](DEPLOYMENT.md).
 
 External integrations require timeouts, bounded retries, structured errors, cache policy, rate limits, and health signals. Authentication and authorization are enforced on the server. Configuration is validated at process start. Logs use structured, privacy-safe fields and carry correlation identifiers.
 

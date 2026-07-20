@@ -23,7 +23,7 @@ test("refreshes Tourism listing through quality and atomic cache injection", asy
     httpClient: {
       get: async (url) =>
         url.includes("dogadjaji-kalendar")
-          ? '<a href="/event/a/">A</a>'
+          ? '<a href="/calendar-event/a/">A</a>'
           : "<h1>Koncert</h1>20.07.2026. 21:00 – 23:00h",
     },
     now: () => new Date("2026-07-01T00:00:00Z"),

@@ -31,8 +31,7 @@ class AmscgFetchError extends Error {
 }
 
 const amscgRoadConditionsUrl = "https://amscg.org/stanje-na-putevima/";
-const defaultUserAgent =
-  "PodgoricaDaily/0.1 (+https://github.com/yy4vnhm5s5-netizen/podgorica-daily)";
+const defaultUserAgent = "Gradom/0.1 (+https://gradom.me)";
 
 function createAmscgHttpClient({
   fetchImplementation = fetch,

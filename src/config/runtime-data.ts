@@ -1,4 +1,4 @@
-function normalizeRuntimeDataDirectory(directory = process.env.RUNTIME_DATA_DIR ?? ".runtime") {
+function normalizeRuntimeDataDirectory(directory = ".runtime") {
   const normalized = directory.replace(/\/+$/, "");
   return normalized || ".";
 }

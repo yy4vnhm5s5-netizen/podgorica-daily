@@ -8,10 +8,7 @@ import {
 } from "./vikpg-water-notices.ts";
 
 type VikpgRefreshClassification =
-  | "failed"
-  | "structurally-suspicious"
-  | "trustworthy-empty"
-  | "trustworthy-non-empty";
+  "failed" | "structurally-suspicious" | "trustworthy-empty" | "trustworthy-non-empty";
 
 interface VikpgRefreshCache {
   read(): Promise<VikpgCacheSnapshot | null>;
@@ -58,10 +55,13 @@ async function refreshVikpg({
     }
 
     const parsed = await Promise.all(
-      notices.map(async (notice) => parseVikpgNotice(notice, await httpClient.get(notice.url), now())),
+      notices.map(async (notice) =>
+        parseVikpgNotice(notice, await httpClient.get(notice.url), now()),
+      ),
     );
     const warnings = parsed.flatMap((notice) => notice.warnings);
-    if (parsed.some((notice) => !notice.contentRecognized)) warnings.push("article-content-unrecognized");
+    if (parsed.some((notice) => !notice.contentRecognized))
+      warnings.push("article-content-unrecognized");
     const alerts = deduplicateAlerts(
       parsed
         .flatMap(({ alert }) => (alert ? [alert] : []))
@@ -69,7 +69,8 @@ async function refreshVikpg({
     );
     const suspiciousEmpty =
       alerts.length === 0 &&
-      ((notices.length > 0 && warnings.length > 0) || (notices.length === 0 && !hasServiceInformationSection(listing)));
+      ((notices.length > 0 && warnings.length > 0) ||
+        (notices.length === 0 && !hasServiceInformationSection(listing)));
     if (suspiciousEmpty) {
       return retainPrevious(
         previous,
@@ -147,9 +148,17 @@ function deduplicateAlerts(alerts: CityAlert[]) {
 }
 
 function getErrorCode(error: unknown) {
-  return typeof error === "object" && error !== null && "code" in error && typeof error.code === "string"
+  return typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    typeof error.code === "string"
     ? error.code
     : "vikpg-refresh-failed";
 }
 
-export { refreshVikpg, type VikpgRefreshCache, type VikpgRefreshClassification, type VikpgRefreshResult };
+export {
+  refreshVikpg,
+  type VikpgRefreshCache,
+  type VikpgRefreshClassification,
+  type VikpgRefreshResult,
+};

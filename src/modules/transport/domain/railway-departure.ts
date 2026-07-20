@@ -13,21 +13,21 @@ interface RailwayDeparture {
   trainNumber?: string;
 }
 
-interface RailwayDepartureCandidate
-  extends Omit<RailwayDeparture, "departureDate" | "departureStation"> {
+interface RailwayDepartureCandidate extends Omit<
+  RailwayDeparture,
+  "departureDate" | "departureStation"
+> {
   departureDate: string;
   departureStation?: string;
 }
 
-function normalizeRailwayDeparture(candidate: RailwayDepartureCandidate): RailwayDeparture | undefined {
+function normalizeRailwayDeparture(
+  candidate: RailwayDepartureCandidate,
+): RailwayDeparture | undefined {
   const departureDate = candidate.departureDate.trim();
   const departureTime = candidate.departureTime.trim();
   const destination = candidate.destination.replace(/\s+/g, " ").trim();
-  if (
-    !/^\d{4}-\d{2}-\d{2}$/.test(departureDate) ||
-    !isTime(departureTime) ||
-    !destination
-  ) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(departureDate) || !isTime(departureTime) || !destination) {
     return undefined;
   }
 
@@ -45,9 +45,7 @@ function normalizeRailwayDeparture(candidate: RailwayDepartureCandidate): Railwa
   };
 }
 
-function sortAndDeduplicateRailwayDepartures(
-  departures: readonly RailwayDeparture[],
-) {
+function sortAndDeduplicateRailwayDepartures(departures: readonly RailwayDeparture[]) {
   return [
     ...new Map(
       departures
@@ -92,9 +90,7 @@ function localDateAndTime(value: Date) {
     timeZone: podgoricaTimeZone,
     year: "numeric",
   }).formatToParts(value);
-  const values = Object.fromEntries(
-    parts.map(({ type, value: part }) => [type, part]),
-  );
+  const values = Object.fromEntries(parts.map(({ type, value: part }) => [type, part]));
   return `${values.year}-${values.month}-${values.day}T${values.hour}:${values.minute}`;
 }
 

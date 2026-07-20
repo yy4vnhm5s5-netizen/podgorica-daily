@@ -18,7 +18,8 @@ function getCityServiceFreshnessLabel({
 }) {
   if (freshnessStatus === "unavailable" || !lastSuccessfulUpdate) return undefined;
 
-  const prefix = freshnessStatus === "stale" ? translations.lastAvailableUpdate : translations.updated;
+  const prefix =
+    freshnessStatus === "stale" ? translations.lastAvailableUpdate : translations.updated;
   return `${prefix} ${formatRelativeTime(lastSuccessfulUpdate, { locale, now })}`;
 }
 

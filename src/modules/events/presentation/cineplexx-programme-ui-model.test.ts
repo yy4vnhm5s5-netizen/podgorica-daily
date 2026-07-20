@@ -7,13 +7,22 @@ import {
 } from "./cineplexx-programme-ui-model.ts";
 
 test("distinguishes Cineplexx empty, unavailable, fresh, and stale programme states", () => {
-  assert.equal(getCineplexxProgrammeDisplayState({ eventCount: 0, providerState: "fresh" }), "empty");
+  assert.equal(
+    getCineplexxProgrammeDisplayState({ eventCount: 0, providerState: "fresh" }),
+    "empty",
+  );
   assert.equal(
     getCineplexxProgrammeDisplayState({ eventCount: 0, providerState: "unavailable" }),
     "unavailable",
   );
-  assert.equal(getCineplexxProgrammeDisplayState({ eventCount: 2, providerState: "fresh" }), "programme");
-  assert.equal(getCineplexxProgrammeDisplayState({ eventCount: 2, providerState: "stale" }), "stale");
+  assert.equal(
+    getCineplexxProgrammeDisplayState({ eventCount: 2, providerState: "fresh" }),
+    "programme",
+  );
+  assert.equal(
+    getCineplexxProgrammeDisplayState({ eventCount: 2, providerState: "stale" }),
+    "stale",
+  );
 });
 
 test("groups same-day screenings of one Cineplexx movie without merging another movie", () => {
@@ -23,10 +32,13 @@ test("groups same-day screenings of one Cineplexx movie without merging another 
     cinemaEvent({ id: "three", startsAt: "2026-07-20T16:30:00.000Z", title: "Drugi film" }),
   ]);
 
-  assert.deepEqual(grouped.map(({ screenings, title }) => ({ count: screenings.length, title })), [
-    { count: 2, title: "Film" },
-    { count: 1, title: "Drugi film" },
-  ]);
+  assert.deepEqual(
+    grouped.map(({ screenings, title }) => ({ count: screenings.length, title })),
+    [
+      { count: 2, title: "Film" },
+      { count: 1, title: "Drugi film" },
+    ],
+  );
 });
 
 function cinemaEvent({ id, startsAt, title }: { id: string; startsAt: string; title: string }) {

@@ -175,7 +175,9 @@ function createDailyOverview(snapshot: CityDataSnapshot, context: CityContext): 
     isDemoData: snapshot.isDemoData,
     sentences: sentences.slice(0, 5),
     temperatureCelsius:
-      snapshot.weather.status === "available" ? snapshot.weather.data.temperatureCelsius : undefined,
+      snapshot.weather.status === "available"
+        ? snapshot.weather.data.temperatureCelsius
+        : undefined,
   };
 }
 

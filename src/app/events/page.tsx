@@ -1,7 +1,7 @@
-import { redirect } from "next/navigation";
+import { permanentRedirect } from "next/navigation";
 
 function EventsRedirectPage() {
-  redirect("/me/events");
+  permanentRedirect("/me/events");
 }
 
 export default EventsRedirectPage;

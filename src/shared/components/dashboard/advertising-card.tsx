@@ -15,7 +15,9 @@ function AdvertisingCard({ subtitle, title }: AdvertisingCardProps) {
           <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-indigo-100/70 text-indigo-700">
             <Megaphone aria-hidden="true" className="size-4" strokeWidth={1.8} />
           </div>
-          <p className="min-w-0 flex-1 text-sm font-medium tracking-tight text-foreground">{title}</p>
+          <p className="min-w-0 flex-1 text-sm font-medium tracking-tight text-foreground">
+            {title}
+          </p>
           <span className="shrink-0 whitespace-nowrap text-xs font-medium text-indigo-700 sm:text-sm">
             {subtitle}
           </span>

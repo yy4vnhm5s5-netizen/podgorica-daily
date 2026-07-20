@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { permanentRedirect } from "next/navigation";
 
 interface EventRedirectPageProps {
   params: Promise<{ eventId: string }>;
@@ -6,7 +6,7 @@ interface EventRedirectPageProps {
 
 async function EventRedirectPage({ params }: EventRedirectPageProps) {
   const { eventId } = await params;
-  redirect(`/me/events/${encodeURIComponent(eventId)}`);
+  permanentRedirect(`/me/events/${encodeURIComponent(eventId)}`);
 }
 
 export default EventRedirectPage;

@@ -9,7 +9,11 @@ import {
   deduplicateEvents,
   getEventSourcePriority,
 } from "./domain/event-deduplication.ts";
-import { createEventId, createEventSlug, normalizeEventCandidate } from "./domain/event-normalization.ts";
+import {
+  createEventId,
+  createEventSlug,
+  normalizeEventCandidate,
+} from "./domain/event-normalization.ts";
 import { expandRecurrence, getEventStatus, toZonedIso } from "./domain/event-time.ts";
 import { isValidCityEvent, normalizeEventCategory, type EventProvider } from "./domain/event.ts";
 

@@ -3,7 +3,19 @@ import type { EventCandidate } from "../domain/event.ts";
 
 const cineplexxProgrammeUrl = "https://www.cineplexx.me/cinemas/CINEPLEXX-PODGORICA/";
 const cineplexxHostnames = new Set(["cineplexx.me", "www.cineplexx.me"]);
-const voidElements = new Set(["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "source"]);
+const voidElements = new Set([
+  "area",
+  "base",
+  "br",
+  "col",
+  "embed",
+  "hr",
+  "img",
+  "input",
+  "link",
+  "meta",
+  "source",
+]);
 
 interface CineplexxProgrammeParseOptions {
   sourceUrl?: string;
@@ -38,18 +50,29 @@ function parseMovieScreenings(
 ) {
   const title = getText(findFirst(movie, (node) => node.tag === "h2"));
   const movieUrl = absoluteCineplexxUrl(
-    getAttribute(findFirst(movie, (node) => node.tag === "a" && hrefStartsWith(node, "/film/")), "href"),
+    getAttribute(
+      findFirst(movie, (node) => node.tag === "a" && hrefStartsWith(node, "/film/")),
+      "href",
+    ),
     sourceUrl,
   );
-  const posterUrl = getAttribute(findFirst(movie, (node) => node.tag === "img"), "src");
+  const posterUrl = getAttribute(
+    findFirst(movie, (node) => node.tag === "img"),
+    "src",
+  );
   const genre = getText(findFirst(movie, (node) => hasClass(node, "b-title-with-poster__genre")));
-  const duration = getText(findFirst(movie, (node) => hasClass(node, "b-title-with-poster__duration")));
+  const duration = getText(
+    findFirst(movie, (node) => hasClass(node, "b-title-with-poster__duration")),
+  );
   const ageRating = (getText(movie) ?? "").match(/\b(?:[1-9]|1[0-8])\+\b/)?.[0];
 
   return findAll(movie, (node) => hasClass(node, "l-tickets__item")).flatMap((screening) => {
     const bookingUrl = absoluteCineplexxUrl(
       getAttribute(
-        findFirst(screening, (node) => node.tag === "a" && hrefStartsWith(node, "/purchase/wizard/")),
+        findFirst(
+          screening,
+          (node) => node.tag === "a" && hrefStartsWith(node, "/purchase/wizard/"),
+        ),
         "href",
       ),
       sourceUrl,
@@ -146,7 +169,9 @@ function parseHtml(html: string) {
 
 function parseAttributes(value: string) {
   const attributes: Record<string, string> = {};
-  for (const match of value.matchAll(/([\w:-]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g)) {
+  for (const match of value.matchAll(
+    /([\w:-]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g,
+  )) {
     attributes[match[1].toLowerCase()] = decodeHtml(match[2] ?? match[3] ?? match[4] ?? "");
   }
   return attributes;
@@ -192,7 +217,9 @@ function absoluteCineplexxUrl(value: string | undefined, sourceUrl: string) {
   if (!value) return undefined;
   try {
     const url = new URL(value, sourceUrl);
-    return url.protocol === "https:" && cineplexxHostnames.has(url.hostname) ? url.toString() : undefined;
+    return url.protocol === "https:" && cineplexxHostnames.has(url.hostname)
+      ? url.toString()
+      : undefined;
   } catch {
     return undefined;
   }
@@ -209,13 +236,18 @@ function isValidTime(value: string | undefined): value is string {
 }
 
 function splitFormatAndLanguage(value: string | undefined) {
-  const values = value?.split(",").map((item) => item.trim()).filter(Boolean) ?? [];
+  const values =
+    value
+      ?.split(",")
+      .map((item) => item.trim())
+      .filter(Boolean) ?? [];
   return {
-    format: values.filter((item) => /^(?:2D|3D|IMAX|4DX|DOLBY(?:\s+ATMOS)?|ONE)$/i.test(item)).join(", ") || undefined,
-    language:
+    format:
       values
-        .filter((item) => /(?:sinh|sinhron|titl|sub|dub)/i.test(item))
+        .filter((item) => /^(?:2D|3D|IMAX|4DX|DOLBY(?:\s+ATMOS)?|ONE)$/i.test(item))
         .join(", ") || undefined,
+    language:
+      values.filter((item) => /(?:sinh|sinhron|titl|sub|dub)/i.test(item)).join(", ") || undefined,
   };
 }
 

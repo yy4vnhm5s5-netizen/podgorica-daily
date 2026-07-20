@@ -29,14 +29,23 @@ export const metadata: Metadata = {
   manifest: "/site.webmanifest",
   metadataBase: new URL(siteConfig.url),
   openGraph: {
+    description: getTranslations("me").metadata.description,
     images: [{ height: 630, url: "/og-image.png", width: 1200 }],
+    locale: "sr_Latn_ME",
     siteName: siteConfig.name,
     title: siteConfig.name,
+    type: "website",
+    url: siteConfig.url,
   },
-  title: siteConfig.name,
+  title: {
+    default: siteConfig.name,
+    template: `%s | ${siteConfig.name}`,
+  },
   twitter: {
     card: "summary_large_image",
+    description: getTranslations("me").metadata.description,
     images: ["/og-image.png"],
+    title: siteConfig.name,
   },
 };
 

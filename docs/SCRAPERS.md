@@ -20,7 +20,7 @@ Each collector has a named owner, monitoring for failure and staleness, alert th
 
 CEDIS is the currently approved HTML collection source for planned Podgorica power outages. The collector uses only `https://cedis.me/servisne-informacije/` and validated official article URLs, with a clear product user agent, a 10-second timeout, one retry, and low request volume. It is manually invoked with `pnpm run collect:cedis`; pages only read its cache.
 
-The collector recommends a 60-minute cadence. It uses local fixtures for automated tests and preserves a valid cached snapshot when the source, network, or markup is suspicious. The local cache is appropriate for development and persistent servers, but not as durable shared storage in serverless deployments. See ADR 0007 for configuration, classification, and scheduling constraints.
+The bundled VPS scheduler refreshes CEDIS every 30 minutes. It uses local fixtures for automated tests and preserves a valid cached snapshot when the source, network, or markup is suspicious. The local cache is appropriate for development and persistent servers, but not as durable shared storage in serverless deployments. See ADR 0007 for configuration, classification, and scheduling constraints.
 
 ## AMSCG road conditions
 
@@ -31,6 +31,10 @@ AMSCG is the approved official source for road-condition notices at `https://ams
 VIK Podgorica is the approved official water-service source at `https://vikpg.me/me/mediji/servisne-informacije/obavjestenja.html`. That legacy URL currently redirects to an official first-party page containing service entries and unrelated content. `pnpm run collect:vikpg` accepts only validated HTTPS VIK hosts, uses the established user agent, ten-second timeout, one transient retry, low request volume, and an on-disk refresh lock. It reads and atomically writes `.runtime/cache/vikpg-water-alerts.json`; visitor requests only read the cache.
 
 The parser uses local fixtures and injected HTTP in tests. It retains a valid snapshot on fetch failure, malformed content, or suspicious empty parses. Explicit end times determine expiry; restoration notices and notices older than one local day after publication are conservatively hidden. See ADR 0016.
+
+## ŽPCG railway departures
+
+ŽPCG is the approved official source for departures from Podgorica at `https://zpcg.me/red-voznje/ukupno`. `pnpm run collect:zpcg-railway` requests only that HTTPS host, validates HTML and response size, finds the semantic “Polasci iz stanice Podgorica” section, normalizes departures, and atomically writes `.runtime/cache/zpcg-railway-departures.json`. Homepage reads never request ŽPCG. The bundled VPS scheduler runs the collector at approximately 06:45 and 18:45 host-local time. Tests use saved official-style HTML and injected HTTP only.
 
 ## Events
 

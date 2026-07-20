@@ -4,10 +4,7 @@ import {
   selectUpcomingRailwayDepartures,
   type RailwayDeparture,
 } from "../domain/railway-departure";
-import {
-  getRailwayStationDisplayState,
-  type RailwayCacheState,
-} from "./railway-station-ui-model";
+import { getRailwayStationDisplayState, type RailwayCacheState } from "./railway-station-ui-model";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import type { Locale } from "@/shared/config/locale";
 
@@ -22,11 +19,7 @@ interface RailwayStationCardProps {
 
 function RailwayStationCard({ departures, locale, state }: RailwayStationCardProps) {
   const copy = locale === "me" ? montenegrinCopy : englishCopy;
-  const upcoming = selectUpcomingRailwayDepartures(
-    departures,
-    new Date(),
-    homepageDepartureLimit,
-  );
+  const upcoming = selectUpcomingRailwayDepartures(departures, new Date(), homepageDepartureLimit);
   const displayState = getRailwayStationDisplayState({
     departureCount: upcoming.length,
     state,
@@ -59,7 +52,9 @@ function RailwayStationCard({ departures, locale, state }: RailwayStationCardPro
             {displayState === "unavailable" ? copy.unavailable : copy.empty}
           </p>
         )}
-        {state === "stale" ? <p className="mt-3 text-xs leading-5 text-muted-foreground">{copy.stale}</p> : null}
+        {state === "stale" ? (
+          <p className="mt-3 text-xs leading-5 text-muted-foreground">{copy.stale}</p>
+        ) : null}
         <a
           className="mt-4 inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           href={timetableUrl}
@@ -74,7 +69,13 @@ function RailwayStationCard({ departures, locale, state }: RailwayStationCardPro
   );
 }
 
-function RailwayDepartureRow({ departure, locale }: { departure: RailwayDeparture; locale: Locale }) {
+function RailwayDepartureRow({
+  departure,
+  locale,
+}: {
+  departure: RailwayDeparture;
+  locale: Locale;
+}) {
   return (
     <li className="py-2.5 first:pt-0 last:pb-0">
       <p className="break-words text-sm font-semibold">{departure.destination}</p>

@@ -144,9 +144,12 @@ test("supports tomorrow and aggregates provider categories for the public UI", (
   const filters = parseEventsUiFilters({ period: "tomorrow" });
 
   assert.deepEqual(
-    filterEventsForUi([tomorrow, nextWeek], context, filters, new Date("2026-07-17T10:00:00.000Z")).map(
-      (event) => event.id,
-    ),
+    filterEventsForUi(
+      [tomorrow, nextWeek],
+      context,
+      filters,
+      new Date("2026-07-17T10:00:00.000Z"),
+    ).map((event) => event.id),
     ["tomorrow"],
   );
   assert.equal(getEventPresentationCategory("concert"), "music");
@@ -169,10 +172,7 @@ test("selects at most three upcoming events for the homepage cache read", () => 
     ["movie", "one", "two"],
   );
   assert.deepEqual(selectHomepageEvents([], context, new Date("2026-07-17T10:00:00.000Z")), []);
-  assert.equal(
-    getHomepageEvents(events, context, new Date("2026-07-17T10:00:00.000Z")).length,
-    5,
-  );
+  assert.equal(getHomepageEvents(events, context, new Date("2026-07-17T10:00:00.000Z")).length, 5);
 });
 
 test("continues with tomorrow and later dates when no event remains today", () => {
@@ -188,10 +188,7 @@ test("continues with tomorrow and later dates when no event remains today", () =
     ),
     ["tomorrow", "next-date"],
   );
-  assert.equal(
-    getHomepageEvents(events, context, new Date("2026-07-17T10:00:00.000Z")).length,
-    2,
-  );
+  assert.equal(getHomepageEvents(events, context, new Date("2026-07-17T10:00:00.000Z")).length, 2);
 });
 
 test("counts only homepage-eligible events on the current Podgorica calendar day", () => {

@@ -40,9 +40,7 @@ test("registers Tourism only through the live registry and never fetches in appl
       "glavni-grad-podgorica",
       "tourism-podgorica",
       "cineplexx-podgorica",
-    ].every((id) =>
-      eventProviderRegistry.some((provider) => provider.metadata.id === id),
-    ),
+    ].every((id) => eventProviderRegistry.some((provider) => provider.metadata.id === id)),
   );
   const result = await getCityEvents(context, [
     {

@@ -21,7 +21,10 @@ const nodeFileSystem: CacheFileSystem = {
   writeFile,
 };
 
-async function ensureCacheDirectory(cachePath: string, fileSystem: CacheFileSystem = nodeFileSystem) {
+async function ensureCacheDirectory(
+  cachePath: string,
+  fileSystem: CacheFileSystem = nodeFileSystem,
+) {
   await fileSystem.mkdir(dirname(cachePath), { recursive: true });
 }
 

@@ -71,9 +71,15 @@ test("keeps entries with optional Cineplexx metadata missing and skips malformed
 
   assert.ok(entry);
   assert.equal(entry.imageUrl, undefined);
-  assert.equal(entry.tags?.some((tag) => tag.startsWith("format:")), false);
+  assert.equal(
+    entry.tags?.some((tag) => tag.startsWith("format:")),
+    false,
+  );
   assert.equal(entry.startsAt, "2026-07-20T17:30:00.000Z");
-  assert.equal(candidates.some((candidate) => candidate.source.sourceUrl.includes("example.test")), false);
+  assert.equal(
+    candidates.some((candidate) => candidate.source.sourceUrl.includes("example.test")),
+    false,
+  );
 });
 
 test("does not invent a screening date when the rendered programme lacks its Today marker", async () => {

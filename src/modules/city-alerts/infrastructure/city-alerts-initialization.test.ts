@@ -4,7 +4,23 @@ import test from "node:test";
 import {
   initializeCityAlertCaches,
   type CityAlertCacheProvider,
+  type CityAlertCollectorSummary,
 } from "./city-alerts-initialization.ts";
+
+function collectorSummary(
+  overrides: Partial<CityAlertCollectorSummary> = {},
+): CityAlertCollectorSummary {
+  return {
+    alertCount: 0,
+    cachePath: "/runtime/cache/provider.json",
+    cacheStatus: "fresh",
+    completedAt: "2026-07-20T08:00:00.000Z",
+    retainedPreviousSnapshot: false,
+    status: "success",
+    warnings: [],
+    ...overrides,
+  };
+}
 
 function provider(overrides: Partial<CityAlertCacheProvider> = {}): CityAlertCacheProvider {
   return {
@@ -13,7 +29,7 @@ function provider(overrides: Partial<CityAlertCacheProvider> = {}): CityAlertCac
     id: "CEDIS",
     readCache: async () => ({ snapshot: null }),
     refresh: async () => ({
-      summary: { alertCount: 0, retainedPreviousSnapshot: false, status: "success" },
+      summary: collectorSummary(),
     }),
     ...overrides,
   };
@@ -66,7 +82,7 @@ test("refreshes an invalid cache shape instead of treating it as a provider snap
         refresh: async () => {
           refreshes += 1;
           return {
-            summary: { alertCount: 0, retainedPreviousSnapshot: false, status: "success" },
+            summary: collectorSummary(),
           };
         },
       }),
@@ -96,7 +112,7 @@ test("refreshes an unavailable cache so a repaired provider can recreate it", as
         refresh: async () => {
           refreshes += 1;
           return {
-            summary: { alertCount: 0, retainedPreviousSnapshot: false, status: "success" },
+            summary: collectorSummary(),
           };
         },
       }),
@@ -117,7 +133,7 @@ test("initializes a missing cache and logs the normalized result", async () => {
       provider({
         id: "VIK",
         refresh: async () => ({
-          summary: { alertCount: 2, retainedPreviousSnapshot: false, status: "success" },
+          summary: collectorSummary({ alertCount: 2 }),
         }),
       }),
     ],
@@ -136,13 +152,17 @@ test("logs a successful zero-alert refresh separately from a retained cache", as
     providers: [
       provider({
         refresh: async () => ({
-          summary: { alertCount: 0, retainedPreviousSnapshot: false, status: "success" },
+          summary: collectorSummary(),
         }),
       }),
       provider({
         id: "VIK",
         refresh: async () => ({
-          summary: { alertCount: 3, retainedPreviousSnapshot: true, status: "retained" },
+          summary: collectorSummary({
+            alertCount: 3,
+            retainedPreviousSnapshot: true,
+            status: "retained",
+          }),
         }),
       }),
     ],
@@ -162,10 +182,11 @@ test("reports cache and refresh failures without replacing an existing snapshot"
         readCache: async () => ({ error: { code: "cache-invalid-json" }, snapshot: null }),
         refresh: async () => ({
           summary: {
-            alertCount: 0,
-            errorCode: "cedis-request-timeout",
-            retainedPreviousSnapshot: false,
-            status: "unavailable",
+            ...collectorSummary({
+              errorCode: "cedis-request-timeout",
+              cacheStatus: "unavailable",
+              status: "unavailable",
+            }),
           },
         }),
       }),

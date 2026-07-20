@@ -12,7 +12,7 @@ import {
 import { ErrorState } from "@/shared/components/error-state";
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
 import { SectionTitle } from "@/shared/components/section-title";
-import { isLocale, type Locale } from "@/shared/config/locale";
+import { getLocaleAlternates, isLocale, type Locale } from "@/shared/config/locale";
 import { getTranslations } from "@/shared/lib/translations";
 
 interface EventsPageProps {
@@ -26,7 +26,7 @@ async function generateMetadata({ params }: Pick<EventsPageProps, "params">): Pr
   const translations = getEventsTranslations(localeParam);
 
   return {
-    alternates: { canonical: `/${localeParam}/events` },
+    alternates: { canonical: `/${localeParam}/events`, languages: getLocaleAlternates("/events") },
     description: translations.supportingText,
     openGraph: { description: translations.supportingText, title: translations.heading },
     title: translations.heading,

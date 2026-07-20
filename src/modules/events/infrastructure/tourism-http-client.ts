@@ -50,8 +50,7 @@ function createTourismHttpClient({
         try {
           const response = await fetchImplementation(url, {
             headers: {
-              "User-Agent":
-                "PodgoricaDaily/0.1 (+https://github.com/yy4vnhm5s5-netizen/podgorica-daily)",
+              "User-Agent": "Gradom/0.1 (+https://gradom.me)",
             },
             signal: AbortSignal.timeout(timeoutMs),
           });

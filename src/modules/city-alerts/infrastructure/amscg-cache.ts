@@ -1,5 +1,5 @@
 import type { RoadAlert } from "../domain/road-alert.ts";
-import { resolveRuntimeCachePath } from "../../../config/runtime-data.ts";
+import { env } from "../../../config/env.ts";
 import {
   calculateCacheFreshness,
   readJsonCache,
@@ -20,7 +20,7 @@ interface AmscgCacheSnapshot {
   sourceUrl: string;
 }
 
-const defaultAmscgCachePath = resolveRuntimeCachePath("amscg-road-conditions.json");
+const defaultAmscgCachePath = env.AMSCG_CACHE_PATH;
 
 function calculateAmscgFreshness(
   fetchedAt: Date | undefined,
@@ -30,16 +30,11 @@ function calculateAmscgFreshness(
   return calculateCacheFreshness(fetchedAt, now, maxAgeMinutes);
 }
 
-async function readAmscgCache(
-  cachePath = process.env.AMSCG_CACHE_PATH ?? resolveRuntimeCachePath("amscg-road-conditions.json"),
-) {
+async function readAmscgCache(cachePath = env.AMSCG_CACHE_PATH) {
   return readJsonCache<AmscgCacheSnapshot>(cachePath);
 }
 
-async function writeAmscgCache(
-  snapshot: AmscgCacheSnapshot,
-  cachePath = process.env.AMSCG_CACHE_PATH ?? resolveRuntimeCachePath("amscg-road-conditions.json"),
-) {
+async function writeAmscgCache(snapshot: AmscgCacheSnapshot, cachePath = env.AMSCG_CACHE_PATH) {
   await writeJsonCache(snapshot, cachePath);
 }
 

@@ -6,7 +6,7 @@ import {
   normalizeBusStationDeparture,
   selectUpcomingBusStationDepartures,
 } from "./bus-station.ts";
-import { getCity } from "@/shared/config/cities";
+import { getCity } from "../../../shared/config/cities.ts";
 
 test("configures the confirmed Podgorica BusTicket4.me station", () => {
   assert.deepEqual(getBusStationConfig(getCity("podgorica")), {
@@ -33,12 +33,18 @@ test("normalizes a complete departure candidate without inventing fields", () =>
       platform: "4",
     },
   );
-  assert.equal(normalizeBusStationDeparture({ departureAt: "invalid", destination: "Bar" }), undefined);
+  assert.equal(
+    normalizeBusStationDeparture({ departureAt: "invalid", destination: "Bar" }),
+    undefined,
+  );
   assert.equal(
     normalizeBusStationDeparture({ departureAt: "2026-07-19T20:30", destination: "Bar" }),
     undefined,
   );
-  assert.equal(normalizeBusStationDeparture({ departureAt: "2026-07-19T20:30:00+02:00", destination: " " }), undefined);
+  assert.equal(
+    normalizeBusStationDeparture({ departureAt: "2026-07-19T20:30:00+02:00", destination: " " }),
+    undefined,
+  );
 });
 
 test("selects at most three sorted future departures across the local day boundary", () => {

@@ -12,15 +12,13 @@ import {
   refreshZpcgRailway,
   zpcgTimetableUrl,
   type ZpcgHttpClient,
+  type ZpcgRefreshDiagnostic,
 } from "./zpcg-railway.ts";
 
 const fixture = new URL("./__fixtures__/zpcg-current-timetable.html", import.meta.url);
 
 test("parses the current official-style timetable structure and only Podgorica departures", async () => {
-  const parsed = parseZpcgPodgoricaDepartures(
-    await readFile(fixture, "utf8"),
-    "2026-07-20",
-  );
+  const parsed = parseZpcgPodgoricaDepartures(await readFile(fixture, "utf8"), "2026-07-20");
 
   assert.equal(parsed.sectionFound, true);
   assert.equal(parsed.contentRecognized, true);
@@ -65,28 +63,24 @@ test("supports heading whitespace variations and stops at the next station", () 
 });
 
 test("filters already departed trains using the Podgorica local clock", async () => {
-  const parsed = parseZpcgPodgoricaDepartures(
-    await readFile(fixture, "utf8"),
-    "2026-07-20",
-  );
+  const parsed = parseZpcgPodgoricaDepartures(await readFile(fixture, "utf8"), "2026-07-20");
 
   assert.deepEqual(
-    selectUpcomingRailwayDepartures(
-      parsed.departures,
-      new Date("2026-07-20T05:30:00.000Z"),
-    ).map(({ departureTime }) => departureTime),
+    selectUpcomingRailwayDepartures(parsed.departures, new Date("2026-07-20T05:30:00.000Z")).map(
+      ({ departureTime }) => departureTime,
+    ),
     ["08:00"],
   );
 });
 
 test("retains a valid cache for parser failures and unexpected HTML", async () => {
   const cachePath = await writePreviousSnapshot();
-  const diagnostics: Record<string, unknown>[] = [];
+  const diagnostics: ZpcgRefreshDiagnostic[] = [];
   const result = await refreshZpcgRailway({
     cachePath,
     emitDiagnostic: (diagnostic) => diagnostics.push(diagnostic),
     httpClient: responseClient(
-      '<html><head><title>Access denied</title></head><body><h1>Maintenance</h1></body></html>',
+      "<html><head><title>Access denied</title></head><body><h1>Maintenance</h1></body></html>",
     ),
     now: () => new Date("2026-07-20T08:00:00.000Z"),
   });
@@ -146,7 +140,7 @@ test("retains a valid cache after a request failure", async () => {
 });
 
 test("includes final URL and HTTP status in diagnostics for an upstream HTTP failure", async () => {
-  const diagnostics: Record<string, unknown>[] = [];
+  const diagnostics: ZpcgRefreshDiagnostic[] = [];
   const client = createZpcgHttpClient({
     fetchImplementation: async () => ({
       headers: { get: () => "text/html" },
@@ -176,7 +170,7 @@ test("includes final URL and HTTP status in diagnostics for an upstream HTTP fai
 });
 
 test("retains the cache and logs actual and maximum sizes for an oversized ŽPCG document", async () => {
-  const diagnostics: Record<string, unknown>[] = [];
+  const diagnostics: ZpcgRefreshDiagnostic[] = [];
   const client = createZpcgHttpClient({
     fetchImplementation: async () => ({
       headers: { get: () => "text/html" },

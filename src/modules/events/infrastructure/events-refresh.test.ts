@@ -65,7 +65,11 @@ test("uses an explicit accepted count for providers that return a cache snapshot
     const summary = await runEventRefresh({
       cacheDirectory,
       providers: [
-        provider("snapshot-provider", async () => ({ acceptedCount: 3, events: [], success: true })),
+        provider("snapshot-provider", async () => ({
+          acceptedCount: 3,
+          events: [],
+          success: true,
+        })),
       ],
     });
 

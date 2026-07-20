@@ -8,7 +8,8 @@ test("returns the identical resolved temperature for every weather presentation"
   const weather: CurrentWeatherResult = {
     data: {
       apparentTemperature: 31.2,
-      condition: "clear",
+      cityIds: ["podgorica"],
+      condition: "clearSky",
       humidity: 41,
       temperature: 30.6,
       updatedAt: new Date("2026-07-19T10:00:00.000Z"),

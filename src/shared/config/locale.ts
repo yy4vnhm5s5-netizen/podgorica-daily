@@ -17,4 +17,14 @@ function getLocaleTag(locale: Locale) {
   return localeTags[locale];
 }
 
-export { defaultLocale, getLocaleTag, isLocale, locales, type Locale };
+function getLocaleAlternates(pathname = "") {
+  const suffix = pathname ? (pathname.startsWith("/") ? pathname : `/${pathname}`) : "";
+
+  return {
+    en: `/en${suffix}`,
+    "sr-Latn-ME": `/me${suffix}`,
+    "x-default": `/me${suffix}`,
+  };
+}
+
+export { defaultLocale, getLocaleAlternates, getLocaleTag, isLocale, locales, type Locale };

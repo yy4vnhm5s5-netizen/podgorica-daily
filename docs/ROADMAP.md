@@ -6,11 +6,11 @@ Create and review the project documentation and GitHub issues. No application co
 
 ## Foundation — Complete (v0.1.0-foundation)
 
-Bootstrapped the runtime, quality gates, UI system, environment validation, container build, delivery pipeline, architecture decision records, application shell, feature flags, and engineering handbook. Product modules remain intentionally unimplemented.
+Bootstrapped the runtime, quality gates, UI system, environment validation, container build, delivery pipeline, architecture decision records, application shell, feature flags, and engineering handbook. This historical milestone is complete; subsequent approved modules are listed below.
 
 ## Trusted local data
 
-Current weather for Podgorica is delivered through an isolated Open-Meteo adapter with attribution, freshness, and safe loading, empty, and error states. The homepage has a city-configured BusTicket4.me station link for Podgorica, but does not ingest or show departures: the source terms do not permit public/commercial reuse of its content. Transport data and events remain independently deployable increments; each requires provenance, stale-data behaviour, monitoring, and accessible states.
+Current weather for Podgorica is delivered through an isolated Open-Meteo adapter with attribution, freshness, and safe loading, empty, and error states. The homepage has a city-configured BusTicket4.me station link for Podgorica, but does not ingest or show departures. The ŽPCG railway module collects official timetable departures into `.runtime/cache/zpcg-railway-departures.json` and displays cache-backed upcoming departures from Podgorica. Broader transport coverage, real-time traffic, and route planning remain separate scopes.
 
 City Alerts reads cached official CEDIS planned power outages when a collector snapshot is available. It exposes fresh, stale, and unavailable states with source attribution. Mock alerts remain an explicit development-only provider mode; further sources still require their own approved provider contracts, attribution, freshness, outage handling, and monitoring.
 
@@ -22,7 +22,7 @@ Cached AMSCG road-condition publications provide the first traffic source for ro
 
 The Event Platform defines city-aware event and venue contracts, deterministic candidate normalization, cache-backed provider reads, IDs, deduplication, recurrence limits, query semantics, and Daily Overview event-summary input. KIC Budo Tomović, CNP, Glavni Grad Podgorica, and Turistička organizacija Podgorice collectors/providers are implemented internally. A mobile-first public Events UI now exposes accepted cached records at `/me/events` and `/en/events`, with URL-backed filters and source-attributed detail pages. Before broad production rollout, approve source operations, durable cache storage, monitoring, and operational freshness ownership.
 
-KIC Budo Tomović is the first approved event source. Its cache-backed provider and collector are implemented but remain disabled by default; visible Events presentation and additional source rollout remain separate scope.
+KIC Budo Tomović is the first approved event source. Its cache-backed provider and collector are implemented and remain feature-gated until live Events are explicitly enabled.
 
 Crnogorsko narodno pozorište (CNP) is the second approved event source. Its cache-backed `cnp` provider reads the official repertoire through `pnpm run collect:cnp-events`, writes `.runtime/cache/cnp-events.json`, and remains disabled until `ENABLE_EVENTS=true` with `EVENT_PROVIDER_MODE=live`. CNP parsing, refresh diagnostics, and application integration are fixture-tested with no live test requests. See ADR 0013.
 

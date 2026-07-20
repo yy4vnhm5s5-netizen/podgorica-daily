@@ -137,7 +137,9 @@ function getEventCalendarDay(event: CityEvent) {
 
 function startTimesAreClose(left: CityEvent, right: CityEvent) {
   if (!left.startsAt || !right.startsAt) return false;
-  const difference = Math.abs(new Date(left.startsAt).getTime() - new Date(right.startsAt).getTime());
+  const difference = Math.abs(
+    new Date(left.startsAt).getTime() - new Date(right.startsAt).getTime(),
+  );
   return difference <= 30 * 60 * 1000;
 }
 

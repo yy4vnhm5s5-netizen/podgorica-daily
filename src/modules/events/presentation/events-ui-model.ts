@@ -102,8 +102,7 @@ function getHomepageEvents(events: readonly CityEvent[], context: CityContext, n
     context,
     { period: "upcoming", statuses: ["active", "scheduled"] },
     now,
-  )
-    .filter((event) => isCurrentOrFutureEvent(event, now, context.timezone));
+  ).filter((event) => isCurrentOrFutureEvent(event, now, context.timezone));
 }
 
 function getHomepageEventsTodayCount(
@@ -120,7 +119,11 @@ function getHomepageEventsTodayCount(
   }).length;
 }
 
-function selectHomepageEvents(events: readonly CityEvent[], context: CityContext, now = new Date()) {
+function selectHomepageEvents(
+  events: readonly CityEvent[],
+  context: CityContext,
+  now = new Date(),
+) {
   return getHomepageEvents(events, context, now).slice(0, 3);
 }
 

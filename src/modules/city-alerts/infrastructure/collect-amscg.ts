@@ -3,7 +3,7 @@ import { createAmscgHttpClient } from "./amscg-http-client.ts";
 import { refreshAmscg, type AmscgRefreshResult } from "./amscg-refresh.ts";
 
 async function runAmscgCollector({
-  cachePath = process.env.AMSCG_CACHE_PATH ?? defaultAmscgCachePath,
+  cachePath = env.AMSCG_CACHE_PATH ?? defaultAmscgCachePath,
   refresh,
   writeOutput = console.log,
 }: {
@@ -47,3 +47,4 @@ if (process.argv[1]?.endsWith("collect-amscg.ts")) {
 }
 
 export { runAmscgCollector };
+import { env } from "../../../config/env.ts";

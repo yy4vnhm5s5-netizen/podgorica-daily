@@ -121,8 +121,7 @@ if (
 
 const runtimeDataDirectory = normalizeRuntimeDataDirectory(parsedEnvironment.data.RUNTIME_DATA_DIR);
 const cacheDirectory =
-  parsedEnvironment.data.EVENT_CACHE_DIR?.replace(/\/+$/, "") ||
-  `${runtimeDataDirectory}/cache`;
+  parsedEnvironment.data.EVENT_CACHE_DIR?.replace(/\/+$/, "") || `${runtimeDataDirectory}/cache`;
 const resolvedEnvironment = {
   ...parsedEnvironment.data,
   AMSCG_CACHE_PATH:
@@ -145,7 +144,8 @@ const resolvedEnvironment = {
   CINEPLEXX_EVENT_CACHE_PATH:
     parsedEnvironment.data.CINEPLEXX_EVENT_CACHE_PATH ?? `${cacheDirectory}/cineplexx-events.json`,
   ZPCG_RAILWAY_CACHE_PATH:
-    parsedEnvironment.data.ZPCG_RAILWAY_CACHE_PATH ?? `${cacheDirectory}/zpcg-railway-departures.json`,
+    parsedEnvironment.data.ZPCG_RAILWAY_CACHE_PATH ??
+    `${cacheDirectory}/zpcg-railway-departures.json`,
   VIKPG_CACHE_PATH:
     parsedEnvironment.data.VIKPG_CACHE_PATH ??
     resolveRuntimeCachePath("vikpg-water-alerts.json", runtimeDataDirectory),

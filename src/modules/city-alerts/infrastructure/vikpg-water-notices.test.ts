@@ -2,11 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-import {
-  discoverVikpgNotices,
-  parseVikpgNotice,
-  toVikpgUrl,
-} from "./vikpg-water-notices.ts";
+import { discoverVikpgNotices, parseVikpgNotice, toVikpgUrl } from "./vikpg-water-notices.ts";
 
 const fixture = (name: string) =>
   readFile(new URL(`./__fixtures__/${name}`, import.meta.url), "utf8");
@@ -48,7 +44,7 @@ test("uses the listing publication date when the detail page title has no date",
     new Date("2025-11-11T10:00:00.000Z"),
   );
 
-  assert.equal(result.alert?.publishedAt.toISOString(), "2025-11-11T12:00:00.000Z");
+  assert.equal(result.alert?.publishedAt?.toISOString(), "2025-11-11T12:00:00.000Z");
   assert.deepEqual(result.warnings, []);
 });
 

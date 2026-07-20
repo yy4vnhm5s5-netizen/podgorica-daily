@@ -76,7 +76,10 @@ test("refreshes all providers once when an enabled cache is unavailable and logs
   });
 
   assert.equal(refreshCalls, 1);
-  assert.deepEqual(directories, providerIds.map((id) => `/data/events/${id}.json`));
+  assert.deepEqual(
+    directories,
+    providerIds.map((id) => `/data/events/${id}.json`),
+  );
   assert.equal(summary.refresh?.state, "success");
   assert.deepEqual(
     summary.providers.map(({ id, state }) => ({ id, state })),

@@ -75,7 +75,12 @@ async function DashboardPage({ locale }: { locale: Locale }) {
       <section className="space-y-10" id="dashboard">
         <div className="space-y-7">
           {dailyOverview ? (
-            <DailySummaryBar events={dailyEvents} locale={locale} result={dailyOverview} weather={weather} />
+            <DailySummaryBar
+              events={dailyEvents}
+              locale={locale}
+              result={dailyOverview}
+              weather={weather}
+            />
           ) : null}
           {isFeatureEnabled("cityAlerts") ? (
             <Suspense fallback={<CityAlertsSectionLoading locale={locale} />}>
@@ -94,7 +99,9 @@ async function DashboardPage({ locale }: { locale: Locale }) {
           <CineplexxProgrammeCard
             events={selectHomepageEvents(cinemaEvents, context)}
             locale={locale}
-            state={events.providers.find((provider) => provider.id === "cineplexx-podgorica")?.state}
+            state={
+              events.providers.find((provider) => provider.id === "cineplexx-podgorica")?.state
+            }
           />
           {isFeatureEnabled("busStation") ? (
             <BusStationCard city={context.city} locale={locale} />
@@ -107,7 +114,10 @@ async function DashboardPage({ locale }: { locale: Locale }) {
             />
           ) : null}
         </div>
-        <EmergencyNumbersStrip items={getEmergencyNumbers(emergencyNumbers)} label={emergencyNumbers.label} />
+        <EmergencyNumbersStrip
+          items={getEmergencyNumbers(emergencyNumbers)}
+          label={emergencyNumbers.label}
+        />
       </section>
     </DashboardLayout>
   );

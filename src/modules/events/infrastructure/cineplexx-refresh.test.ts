@@ -79,7 +79,10 @@ test("logs DOM mismatch diagnostics when the rendered programme is incomplete", 
       cachePath: "/tmp/cineplexx.json",
       context,
       renderer: createCineplexxBrowserRenderer({
-        execute: async () => ({ stderr: "", stdout: "<title>Cineplexx</title><main>Loading</main>" }),
+        execute: async () => ({
+          stderr: "",
+          stdout: "<title>Cineplexx</title><main>Loading</main>",
+        }),
         resolveExecutable: async () => "chromium",
       }),
     });

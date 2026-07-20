@@ -20,9 +20,7 @@ function event(overrides: Partial<CityEvent> = {}): CityEvent {
     language: "me",
     sourceId: "test-provider",
     sourceName: "Test provider",
-    sourceReferences: [
-      { sourceId: "test-provider", sourceName: "Test provider", sourceUrl },
-    ],
+    sourceReferences: [{ sourceId: "test-provider", sourceName: "Test provider", sourceUrl }],
     sourceUrl,
     startDate: "2026-07-20",
     status: "scheduled",
@@ -133,7 +131,11 @@ test("logs pipeline diagnostics as one parseable JSON string per event", () => {
       candidates: [candidate(sourceUrl)],
       fetchedCount: 1,
       normalized: [
-        { event: null, parserWarnings: ["Missing event title."], rejectionReasons: ["missing-title"] },
+        {
+          event: null,
+          parserWarnings: ["Missing event title."],
+          rejectionReasons: ["missing-title"],
+        },
       ],
       parsedCount: 1,
       provider: "test-provider",

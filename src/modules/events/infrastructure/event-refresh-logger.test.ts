@@ -89,10 +89,7 @@ test("emits every structured Events diagnostic as one non-empty JSON string", ()
       'events-refresh-parsed-sample provider=cnp parsed=20 title="" dateText="24. jul 2026" timeText="20:00" startDate="" startsAt="" venue="CNP" warnings="Missing start time, Missing image"',
     ],
   );
-  assert.equal(
-    kicFailure.message,
-    "events-refresh-provider-failed provider=kic error=Error",
-  );
+  assert.equal(kicFailure.message, "events-refresh-provider-failed provider=kic error=Error");
 });
 
 test("formats parsed samples with empty values, escaped quotes, and bounded warnings", () => {

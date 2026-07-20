@@ -32,12 +32,9 @@ function parseCnpRepertoire(html: string): EventCandidate[] {
   const rows = [...html.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi)];
 
   return rows.flatMap((row) => {
-    const cells = [...row[1].matchAll(/<td\b[^>]*>([\s\S]*?)<\/td>/gi)].map(
-      (cell) => cell[1],
-    );
+    const cells = [...row[1].matchAll(/<td\b[^>]*>([\s\S]*?)<\/td>/gi)].map((cell) => cell[1]);
     const day = toPlainText(cells[0] ?? "").match(/\b(\d{1,2})\./)?.[1];
-    const title =
-      extractTagText(cells[1] ?? "", "strong") ?? extractTagText(cells[1] ?? "", "b");
+    const title = extractTagText(cells[1] ?? "", "strong") ?? extractTagText(cells[1] ?? "", "b");
     const schedule = toPlainText(cells[2] ?? "");
     const time = schedule.match(/\bu\s*(\d{1,2})(?::(\d{2}))?\s*h?\b/i);
     const startDate =
@@ -73,14 +70,11 @@ function parseCnpRepertoire(html: string): EventCandidate[] {
           ...(startDate ? [] : ["CNP repertoire date was unavailable."]),
           ...(startDate && !time ? ["CNP repertoire start time was unavailable."] : []),
         ],
-        rawDateText: startDate
-          ? `${day}. ${monthAndYear?.name} ${monthAndYear?.year}`
-          : undefined,
+        rawDateText: startDate ? `${day}. ${monthAndYear?.name} ${monthAndYear?.year}` : undefined,
         rawDescription: schedule || undefined,
         rawTimeText: time?.[0],
         rawTitle: title,
-        rawVenue:
-          schedule.replace(/\s+u\s*\d{1,2}(?::\d{2})?\s*h?\b/i, "").trim() || undefined,
+        rawVenue: schedule.replace(/\s+u\s*\d{1,2}(?::\d{2})?\s*h?\b/i, "").trim() || undefined,
         source: {
           sourceId: "cnp",
           sourceName: "Crnogorsko narodno pozorište",
@@ -175,9 +169,7 @@ function extractVenue(text: string) {
 }
 
 function isCnpVenue(value: string | undefined) {
-  return (
-    value === cnpVenue.name || /^(?:Velika scena|Mala scena|Scena Studio)$/i.test(value ?? "")
-  );
+  return value === cnpVenue.name || /^(?:Velika scena|Mala scena|Scena Studio)$/i.test(value ?? "");
 }
 
 function extractTagText(html: string, tag: "b" | "strong") {

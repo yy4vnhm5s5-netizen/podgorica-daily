@@ -24,7 +24,7 @@ function createCnpHttpClient({
   fetchImplementation = fetch,
   retries = 1,
   timeoutMs = 10_000,
-  userAgent = "PodgoricaDaily/0.1 (+https://github.com/yy4vnhm5s5-netizen/podgorica-daily)",
+  userAgent = "Gradom/0.1 (+https://gradom.me)",
 }: {
   fetchImplementation?: FetchImplementation;
   retries?: number;

@@ -1,5 +1,6 @@
 import { dirname } from "node:path";
 
+import { env } from "../../../config/env.ts";
 import { acquireRefreshLock } from "../../../shared/lib/refresh-lock.ts";
 import {
   createZpcgHttpClient,
@@ -22,7 +23,7 @@ interface ZpcgCollectorResult {
 }
 
 async function runZpcgRailwayCollector({
-  cachePath = process.env.ZPCG_RAILWAY_CACHE_PATH ?? defaultZpcgRailwayCachePath,
+  cachePath = env.ZPCG_RAILWAY_CACHE_PATH ?? defaultZpcgRailwayCachePath,
   refresh,
   writeOutput = console.log,
 }: ZpcgCollectorDependencies = {}): Promise<ZpcgCollectorResult> {
@@ -31,7 +32,8 @@ async function runZpcgRailwayCollector({
   });
 
   if (!("release" in lock)) {
-    const output = "provider=zpcg-railway state=already-running phase=cache accepted=0 cache=not-run";
+    const output =
+      "provider=zpcg-railway state=already-running phase=cache accepted=0 cache=not-run";
     writeOutput(output);
     return { exitCode: 0, output, refresh: null, state: "already-running" };
   }
@@ -79,8 +81,4 @@ if (process.argv[1]?.endsWith("collect-zpcg-railway.ts")) {
   });
 }
 
-export {
-  runZpcgRailwayCollector,
-  type ZpcgCollectorDependencies,
-  type ZpcgCollectorResult,
-};
+export { runZpcgRailwayCollector, type ZpcgCollectorDependencies, type ZpcgCollectorResult };

@@ -93,9 +93,7 @@ function EventDetail({ event, locale }: EventDetailProps) {
               />
             ) : null}
           </dl>
-          {summary ? (
-            <p className="leading-7 text-muted-foreground">{summary}</p>
-          ) : null}
+          {summary ? <p className="leading-7 text-muted-foreground">{summary}</p> : null}
           <a
             className="inline-flex min-h-11 items-center gap-2 rounded-md border border-border px-4 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             href={event.sourceUrl}

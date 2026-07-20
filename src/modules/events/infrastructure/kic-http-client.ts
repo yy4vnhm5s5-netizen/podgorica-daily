@@ -21,8 +21,7 @@ class KicFetchError extends Error {
 }
 
 const kicNewsUrl = "https://kic.podgorica.me/novosti";
-const defaultUserAgent =
-  "PodgoricaDaily/0.1 (+https://github.com/yy4vnhm5s5-netizen/podgorica-daily)";
+const defaultUserAgent = "Gradom/0.1 (+https://gradom.me)";
 
 function createKicHttpClient({
   fetchImplementation = fetch,

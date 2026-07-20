@@ -92,7 +92,9 @@ function CinemaMovie({ item, locale }: { item: CineplexxMovieGroup; locale: Loca
                 >
                   <Clock3 aria-hidden="true" className="size-3" />
                   {formatScreeningTime(screening, locale)}
-                  {tagValue(screening.tags, "format") ? ` · ${tagValue(screening.tags, "format")}` : ""}
+                  {tagValue(screening.tags, "format")
+                    ? ` · ${tagValue(screening.tags, "format")}`
+                    : ""}
                   {tagValue(screening.tags, "language")
                     ? ` · ${tagValue(screening.tags, "language")}`
                     : ""}

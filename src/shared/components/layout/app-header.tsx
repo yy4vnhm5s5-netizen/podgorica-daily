@@ -18,7 +18,7 @@ function AppHeader({ locale, translations }: AppHeaderProps) {
       <ResponsiveContainer className="flex h-16 items-center justify-between gap-4">
         <a
           aria-label={siteConfig.name}
-          className="shrink-0 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          className="focus-visible:ring-ring shrink-0 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
           href={`/${locale}#dashboard`}
         >
           <span aria-hidden="true" className="flex h-9 w-[136px] items-center overflow-hidden">

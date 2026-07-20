@@ -15,6 +15,6 @@ Gradom is a public information product, not a social network or a generic conten
 
 Material choices—data providers, maps, identity, persistence, and hosting—require an architecture decision record covering cost, licensing, security, privacy, operational ownership, and exit strategy.
 
-## Non-goals for Sprint 0
+## Historical Sprint 0 non-goals
 
-Sprint 0 does not implement weather, transport, events, maps, search, identity, administration, scraping, or database schemas. It produces the standards and plans that make later work coherent.
+Sprint 0 did not implement weather, transport, events, maps, search, identity, administration, scraping, or database schemas. Later approved milestones introduced the current Weather, City Alerts, Events, and limited transport capabilities; the remaining scope stays subject to the current roadmap and ADR process.

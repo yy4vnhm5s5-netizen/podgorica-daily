@@ -1,6 +1,6 @@
 # Gradom
 
-Gradom is a production-oriented local information platform for Podgorica. It currently provides server-rendered current weather, a deterministic Daily Overview, and City Alerts backed by cached official CEDIS planned power-outage, AMSCG road-condition, and VIK Podgorica water-service snapshots when collector data is available. Transport, maps, search, and editorial workflows are not yet implemented.
+Gradom is a production-oriented local information platform for Podgorica. It provides current weather, a deterministic Daily Overview, City Alerts backed by cached official CEDIS planned power-outage, AMSCG road-condition, and VIK Podgorica water-service snapshots, a cache-backed public Events experience, a Cineplexx programme card, a BusTicket4.me station link, and ŽPCG railway departures from Podgorica. Maps, unified search, accounts, and editorial workflows are not implemented.
 
 Daily Overview is a zero-cost deterministic summary generated from normalized cached city data. It does not use generative services, language models, or visitor-triggered data collection.
 
@@ -12,7 +12,7 @@ CEDIS data is collected only by the cache-backed command below; dashboard reques
 pnpm run collect:cedis
 ```
 
-Refresh every 60 minutes with a local cron job, GitHub Actions scheduling, or Vercel Cron where a durable cache is available. The file cache at `.runtime/cache/cedis-planned-outages.json` persists locally and on a VPS, but is not durable on serverless/Vercel filesystems. See [ADR 0007](docs/adr/0007-cedis-cached-planned-outages.md) for collection, cache, and exit-code behaviour.
+The bundled VPS scheduler refreshes CEDIS every 30 minutes. The file cache at `.runtime/cache/cedis-planned-outages.json` persists locally and on a VPS, but is not durable on serverless/Vercel filesystems. See [ADR 0007](docs/adr/0007-cedis-cached-planned-outages.md) for collection, cache, and exit-code behaviour.
 
 AMSCG road conditions use the same cache-first boundary and can be collected manually with `pnpm run collect:amscg`. Its source is the official [AMSCG road-conditions page](https://amscg.org/stanje-na-putevima/); see [ADR 0008](docs/adr/0008-amscg-cached-road-conditions.md).
 
@@ -21,6 +21,10 @@ AMSCG road conditions use the same cache-first boundary and can be collected man
 VIK Podgorica water-service notices are collected only through `pnpm run collect:vikpg`. The collector fetches the official service-information page and validated first-party notice links, then atomically writes `.runtime/cache/vikpg-water-alerts.json`. Dashboard requests read that cache only. `ENABLE_VIKPG=true` and `VIKPG_PROVIDER_MODE=live` are required to expose live cached data; no mock water notices are used. Tests use local fixtures and injected HTTP, never live VIK requests. See [ADR 0016](docs/adr/0016-vikpg-cached-water-notices.md).
 
 The default language is Montenegrin Latin, ijekavian (`/me`). English is available at `/en`; the root route redirects to `/me`.
+
+## Transport
+
+The BusTicket4.me card is an external station link only; Gradom does not collect or republish bus departures. The ŽPCG railway card reads a cache generated solely from the official [ŽPCG timetable](https://zpcg.me/red-voznje/ukupno). Run `pnpm run collect:zpcg-railway` to write `.runtime/cache/zpcg-railway-departures.json`; homepage requests never fetch ŽPCG directly. The bundled VPS scheduler refreshes it at approximately 06:45 and 18:45 host-local time.
 
 ## City-aware foundation
 
@@ -41,6 +45,7 @@ pnpm run collect:kic-events
 pnpm run collect:cnp-events
 pnpm run collect:glavni-grad-events
 pnpm run collect:tourism-events
+pnpm run collect:cineplexx-events
 ```
 
 CNP uses the official [CNP repertoire](https://cnp.me/repertoar/) and writes `.runtime/cache/cnp-events.json`. Its collector uses fixture-only automated tests; tests make no live network calls. See [ADR 0013](docs/adr/0013-cnp-event-provider.md).

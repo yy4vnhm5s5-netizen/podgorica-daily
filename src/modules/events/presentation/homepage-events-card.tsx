@@ -16,7 +16,12 @@ interface HomepageEventsCardProps {
   locale: Locale;
 }
 
-function HomepageEventsCard({ eventCount, events, isUnavailable, locale }: HomepageEventsCardProps) {
+function HomepageEventsCard({
+  eventCount,
+  events,
+  isUnavailable,
+  locale,
+}: HomepageEventsCardProps) {
   const translations = getEventsTranslations(locale);
 
   return (
@@ -41,7 +46,9 @@ function HomepageEventsCard({ eventCount, events, isUnavailable, locale }: Homep
             ))}
           </ul>
         ) : isUnavailable ? (
-          <p className="text-sm leading-6 text-muted-foreground">{translations.homepageUnavailable}</p>
+          <p className="text-sm leading-6 text-muted-foreground">
+            {translations.homepageUnavailable}
+          </p>
         ) : (
           <p className="text-sm leading-6 text-muted-foreground">{translations.homepageEmpty}</p>
         )}
@@ -76,7 +83,9 @@ function HomepageEvent({ event, locale }: { event: CityEvent; locale: Locale }) 
           />
         ) : null}
         <div className="min-w-0 flex-1">
-          <h3 className="text-sm font-semibold leading-5 group-hover:text-primary">{event.title}</h3>
+          <h3 className="text-sm font-semibold leading-5 group-hover:text-primary">
+            {event.title}
+          </h3>
           <p className="mt-1 text-sm leading-5 text-muted-foreground">
             <EventSchedule event={event} locale={locale} />
           </p>
@@ -94,10 +103,12 @@ function EventSchedule({ event, locale }: { event: CityEvent; locale: Locale }) 
     return (
       <span className="inline-flex items-center gap-1">
         <Clock3 aria-hidden="true" className="size-3.5" />
-        {formatDateTime(new Date(event.startsAt), {
-          formatOptions: { dateStyle: "medium", timeStyle: "short" },
-          locale: getLocaleTag(locale),
-        }).label}
+        {
+          formatDateTime(new Date(event.startsAt), {
+            formatOptions: { dateStyle: "medium", timeStyle: "short" },
+            locale: getLocaleTag(locale),
+          }).label
+        }
       </span>
     );
   }

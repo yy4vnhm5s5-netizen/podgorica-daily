@@ -1,10 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import {
-  emergencyNumbersStripLayout,
-  getEmergencyNumbers,
-} from "./emergency-numbers.ts";
+import { emergencyNumbersStripLayout, getEmergencyNumbers } from "./emergency-numbers.ts";
 
 test("provides exactly the three emergency telephone links", () => {
   const numbers = getEmergencyNumbers({

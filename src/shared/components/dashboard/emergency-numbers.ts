@@ -17,7 +17,9 @@ const emergencyNumbersStripLayout = {
   list: "grid grid-cols-3 divide-x divide-blue-200/80",
 } as const;
 
-function getEmergencyNumbers(translations: EmergencyNumbersTranslations): readonly EmergencyNumber[] {
+function getEmergencyNumbers(
+  translations: EmergencyNumbersTranslations,
+): readonly EmergencyNumber[] {
   return [
     { href: "tel:124", id: "ambulance", label: translations.ambulance, number: "124" },
     { href: "tel:122", id: "police", label: translations.police, number: "122" },

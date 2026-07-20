@@ -9,7 +9,7 @@ import {
   serializeStructuredData,
 } from "@/modules/events/presentation/event-structured-data";
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
-import { isLocale, type Locale } from "@/shared/config/locale";
+import { getLocaleAlternates, isLocale, type Locale } from "@/shared/config/locale";
 import { getTranslations } from "@/shared/lib/translations";
 
 interface EventDetailPageProps {
@@ -25,7 +25,10 @@ async function generateMetadata({ params }: EventDetailPageProps): Promise<Metad
   if (!event) return {};
 
   return {
-    alternates: { canonical: `/${localeParam}/events/${encodeURIComponent(event.id)}` },
+    alternates: {
+      canonical: `/${localeParam}/events/${encodeURIComponent(event.id)}`,
+      languages: getLocaleAlternates(`/events/${encodeURIComponent(event.id)}`),
+    },
     description: event.description,
     openGraph: {
       description: event.description,

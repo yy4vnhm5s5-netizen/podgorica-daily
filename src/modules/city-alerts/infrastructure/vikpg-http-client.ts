@@ -32,8 +32,7 @@ class VikpgFetchError extends Error {
   }
 }
 
-const defaultUserAgent =
-  "PodgoricaDaily/0.1 (+https://github.com/yy4vnhm5s5-netizen/podgorica-daily)";
+const defaultUserAgent = "Gradom/0.1 (+https://gradom.me)";
 
 function createVikpgHttpClient({
   fetchImplementation = fetch,
@@ -55,7 +54,10 @@ function createVikpgHttpClient({
           if (response.ok) {
             const body = await response.text();
             if (body.trim()) return body;
-            latestError = new VikpgFetchError("vikpg-request-failed", "VIK returned an empty page.");
+            latestError = new VikpgFetchError(
+              "vikpg-request-failed",
+              "VIK returned an empty page.",
+            );
           } else {
             latestError = new VikpgFetchError(
               "vikpg-request-failed",

@@ -27,7 +27,10 @@ test("summarizes successful CEDIS and retained VIK refreshes", async () => {
   });
 
   assert.equal(result.state, "partial");
-  assert.deepEqual(result.providers.map(({ state }) => state), ["success", "retained"]);
+  assert.deepEqual(
+    result.providers.map(({ state }) => state),
+    ["success", "retained"],
+  );
   assert.deepEqual(result.providers[1], {
     alertCount: 2,
     attempted: true,
@@ -61,7 +64,10 @@ test("keeps provider failures isolated and reports a partial refresh", async () 
   });
 
   assert.equal(result.state, "partial");
-  assert.deepEqual(result.providers.map(({ state }) => state), ["failed", "success"]);
+  assert.deepEqual(
+    result.providers.map(({ state }) => state),
+    ["failed", "success"],
+  );
   assert.equal(result.providers[0]?.cacheStatus, "unavailable");
 });
 

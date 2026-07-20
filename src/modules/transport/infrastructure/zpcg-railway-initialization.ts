@@ -1,9 +1,6 @@
 import { ensureCacheDirectory, readJsonCache } from "../../../shared/lib/cache.ts";
 
-import {
-  runZpcgRailwayCollector,
-  type ZpcgCollectorResult,
-} from "./collect-zpcg-railway.ts";
+import { runZpcgRailwayCollector, type ZpcgCollectorResult } from "./collect-zpcg-railway.ts";
 import type { ZpcgRailwayCacheSnapshot } from "./zpcg-railway.ts";
 
 interface InitializeZpcgRailwayCacheDependencies {
@@ -39,7 +36,9 @@ async function initializeZpcgRailwayCache({
     }
 
     if (result.refresh?.success) {
-      log(`ŽPCG: refresh completed successfully with ${result.refresh.acceptedDepartures} departure(s).`);
+      log(
+        `ŽPCG: refresh completed successfully with ${result.refresh.acceptedDepartures} departure(s).`,
+      );
       return "refreshed";
     }
 
@@ -54,10 +53,10 @@ async function initializeZpcgRailwayCache({
 function isUsableSnapshot(snapshot: ZpcgRailwayCacheSnapshot | null): boolean {
   return Boolean(
     snapshot &&
-      Array.isArray(snapshot.departures) &&
-      typeof snapshot.lastSuccessfulRefreshAt === "string" &&
-      !Number.isNaN(Date.parse(snapshot.lastSuccessfulRefreshAt)) &&
-      typeof snapshot.timetableDate === "string",
+    Array.isArray(snapshot.departures) &&
+    typeof snapshot.lastSuccessfulRefreshAt === "string" &&
+    !Number.isNaN(Date.parse(snapshot.lastSuccessfulRefreshAt)) &&
+    typeof snapshot.timetableDate === "string",
   );
 }
 
@@ -65,7 +64,4 @@ function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "unknown error";
 }
 
-export {
-  initializeZpcgRailwayCache,
-  type InitializeZpcgRailwayCacheDependencies,
-};
+export { initializeZpcgRailwayCache, type InitializeZpcgRailwayCacheDependencies };

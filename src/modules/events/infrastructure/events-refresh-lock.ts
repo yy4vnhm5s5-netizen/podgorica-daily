@@ -1,7 +1,4 @@
-import {
-  acquireRefreshLock,
-  type RefreshLockResult,
-} from "../../../shared/lib/refresh-lock.ts";
+import { acquireRefreshLock, type RefreshLockResult } from "../../../shared/lib/refresh-lock.ts";
 
 const lockFileName = ".events-refresh.lock";
 const staleLockMs = 30 * 60_000;

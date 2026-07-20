@@ -10,10 +10,15 @@ import {
 } from "./cineplexx-browser-renderer.ts";
 import { cineplexxProgrammeUrl, parseCineplexxProgramme } from "./cineplexx-programme-parser.ts";
 import { emitError, emitInfo } from "./event-refresh-logger.ts";
-import { logEventRefreshObservability, logEventRefreshParsedSample } from "./event-refresh-observability.ts";
+import {
+  logEventRefreshObservability,
+  logEventRefreshParsedSample,
+} from "./event-refresh-observability.ts";
+import { env } from "../../../config/env.ts";
 import type { CityContext } from "@/shared/types/city";
 
-type CineplexxRefreshPhase = CineplexxBrowserFailurePhase | "cache-write" | "normalization" | "parser";
+type CineplexxRefreshPhase =
+  CineplexxBrowserFailurePhase | "cache-write" | "normalization" | "parser";
 
 interface CineplexxRefreshResult {
   lastRefreshError?: string;
@@ -144,7 +149,7 @@ function logCineplexxRefreshFailure({
     error: {
       class: exception.name,
       message: exception.message,
-      ...(process.env.NODE_ENV === "development" ? { stack: exception.stack ?? "" } : {}),
+      ...(env.NODE_ENV === "development" ? { stack: exception.stack ?? "" } : {}),
     },
     event: "cineplexx-refresh-failed",
     phase: browserError?.phase ?? phase,

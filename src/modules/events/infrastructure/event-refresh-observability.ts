@@ -51,7 +51,9 @@ function logEventRefreshParsedSample({
     sample: candidate
       ? {
           endsAt: candidate.endsAt,
-          parserWarnings: candidate.parserWarnings.slice(0, 3).map((warning) => compactText(warning)),
+          parserWarnings: candidate.parserWarnings
+            .slice(0, 3)
+            .map((warning) => compactText(warning)),
           rawDateText: compactText(candidate.rawDateText),
           rawDescription: compactText(candidate.rawDescription, 240),
           rawTimeText: compactText(candidate.rawTimeText),
@@ -135,7 +137,10 @@ function mapQualityRejectionReason(code: string): EventRefreshRejectionReason {
   return "failed-quality-validation";
 }
 
-function findSourceUrl(eventId: string | undefined, normalized: readonly EventNormalizationResult[]) {
+function findSourceUrl(
+  eventId: string | undefined,
+  normalized: readonly EventNormalizationResult[],
+) {
   return normalized.find(({ event }) => event?.id === eventId)?.event?.sourceUrl;
 }
 

@@ -2,11 +2,7 @@ import { ensureCacheDirectory } from "../../../shared/lib/cache.ts";
 import type { CityAlertCollectorSummary } from "./city-alerts-collector.ts";
 
 type ProviderInitializationState =
-  | "already-running"
-  | "cache-found"
-  | "failed"
-  | "refreshed"
-  | "skipped";
+  "already-running" | "cache-found" | "failed" | "refreshed" | "skipped";
 
 interface CityAlertCacheProvider {
   cachePath: string;
@@ -91,7 +87,9 @@ async function initializeProvider({
       return { alertCount: summary.alertCount, id: provider.id, state: "refreshed" } as const;
     }
     if (summary.status === "retained") {
-      log(`${provider.id}: refresh retained the previous cache with ${summary.alertCount} alert(s).`);
+      log(
+        `${provider.id}: refresh retained the previous cache with ${summary.alertCount} alert(s).`,
+      );
       return { alertCount: summary.alertCount, id: provider.id, state: "refreshed" } as const;
     }
 

@@ -67,9 +67,10 @@ function createReadableMessage(event: string, payload: EventRefreshLogPayload): 
       ["cache", "cacheOutcome"],
     ]);
   if (event === "events-refresh-provider-failed") {
-    const error = isRecord(payload.error) && typeof payload.error.name === "string"
-      ? payload.error.name
-      : undefined;
+    const error =
+      isRecord(payload.error) && typeof payload.error.name === "string"
+        ? payload.error.name
+        : undefined;
     return appendDetails(event, { ...payload, error }, [
       ["provider", "provider"],
       ["error", "error"],
@@ -82,7 +83,9 @@ function createReadableMessage(event: string, payload: EventRefreshLogPayload): 
     ]);
   if (event === "events-refresh-started") {
     const providers = Array.isArray(payload.providers)
-      ? payload.providers.filter((provider): provider is string => typeof provider === "string").join(",")
+      ? payload.providers
+          .filter((provider): provider is string => typeof provider === "string")
+          .join(",")
       : undefined;
     return appendDetails(event, { ...payload, providers }, [["providers", "providers"]]);
   }
@@ -155,11 +158,15 @@ function createParsedSampleMessage(event: string, payload: EventRefreshLogPayloa
 }
 
 function readMessageValue(value: unknown): string {
-  return typeof value === "number" || typeof value === "string" ? compactMessageValue(String(value)) : "";
+  return typeof value === "number" || typeof value === "string"
+    ? compactMessageValue(String(value))
+    : "";
 }
 
 function quoteMessageValue(value: unknown): string {
-  return `"${compactMessageValue(typeof value === "string" ? value : "").replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+  return `"${compactMessageValue(typeof value === "string" ? value : "")
+    .replace(/\\/g, "\\\\")
+    .replace(/"/g, '\\"')}"`;
 }
 
 function compactMessageValue(value: string): string {
@@ -174,7 +181,9 @@ function appendDetails(
 ): string {
   const details = fields.flatMap(([label, key]) => {
     const value = payload[key];
-    return typeof value === "number" || typeof value === "boolean" || (typeof value === "string" && value.trim())
+    return typeof value === "number" ||
+      typeof value === "boolean" ||
+      (typeof value === "string" && value.trim())
       ? [`${label}=${compactMessageValue(String(value))}`]
       : [];
   });
