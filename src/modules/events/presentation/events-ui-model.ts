@@ -106,6 +106,20 @@ function getHomepageEvents(events: readonly CityEvent[], context: CityContext, n
     .filter((event) => isCurrentOrFutureEvent(event, now, context.timezone));
 }
 
+function getHomepageEventsTodayCount(
+  events: readonly CityEvent[],
+  timeZone: string,
+  now = new Date(),
+) {
+  const today = getLocalDate(now, timeZone);
+  return events.filter((event) => {
+    const eventDate =
+      event.startDate ??
+      (event.startsAt ? getLocalDate(new Date(event.startsAt), timeZone) : undefined);
+    return eventDate === today;
+  }).length;
+}
+
 function selectHomepageEvents(events: readonly CityEvent[], context: CityContext, now = new Date()) {
   return getHomepageEvents(events, context, now).slice(0, 3);
 }
@@ -163,6 +177,7 @@ function isEventSort(value: unknown): value is EventSort {
 export {
   filterEventsForUi,
   getHomepageEvents,
+  getHomepageEventsTodayCount,
   getHomepageVenueName,
   groupEventsByDay,
   isHomepageEventsUnavailable,

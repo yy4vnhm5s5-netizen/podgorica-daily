@@ -1,5 +1,4 @@
 import type {
-  AirQualityCategory,
   CityDataSnapshot,
   DailyOverview,
   OverviewAlert,
