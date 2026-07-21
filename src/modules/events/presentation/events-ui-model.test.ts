@@ -160,7 +160,18 @@ test("supports tomorrow and aggregates provider categories for the public UI", (
 test("keeps cinema programme entries out of the public Events listing", () => {
   const events = [
     podgoricaEvent({ category: "movie", id: "movie", title: "Film u bioskopu" }),
-    podgoricaEvent({ id: "cinema", sourceId: "cineplexx-podgorica", title: "Cineplexx" }),
+    podgoricaEvent({
+      id: "cinema",
+      sourceId: "glavni-grad-podgorica",
+      sourceReferences: [
+        {
+          sourceId: "cineplexx-podgorica",
+          sourceName: "Cineplexx Podgorica",
+          sourceUrl: "https://www.cineplexx.me/film/example",
+        },
+      ],
+      title: "Cineplexx",
+    }),
     podgoricaEvent({ category: "theatre", id: "theatre", title: "Predstava" }),
   ];
 

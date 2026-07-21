@@ -160,8 +160,10 @@ function extractArticleContent(html: string) {
   const main = /<main\b[^>]*>([\s\S]*?)<\/main>/i.exec(html)?.[1];
   const afterHeading = /<h1\b[^>]*>[\s\S]*?<\/h1>([\s\S]*)/i.exec(html)?.[1] ?? html;
   const fallbackContent = truncateAfterArticleContent(article ?? main ?? afterHeading);
-  const candidate =
-    extractArticleBody(html) ?? extractArticleParagraphs(fallbackContent) ?? fallbackContent;
+  const articleBody = extractArticleBody(html);
+  const candidate = articleBody
+    ? (extractArticleParagraphs(articleBody) ?? articleBody)
+    : (extractArticleParagraphs(fallbackContent) ?? fallbackContent);
 
   return normalizeArticleContent(candidate).replace(
     /^(?:\d{1,2}[.\-/]\d{1,2}[.\-/]\d{2,4}|\d{1,2}\s+\p{L}+\s+\d{4})\s*/iu,
@@ -171,21 +173,33 @@ function extractArticleContent(html: string) {
 
 function extractArticleBody(html: string) {
   const openingTag = /<(article|div|section)\b([^>]*)>/gi;
+  let selected: { content: string; score: number } | undefined;
 
   for (const match of html.matchAll(openingTag)) {
-    if (
-      !/\b(?:article-body|article-content|ba-item-content|content-body|entry-content|item-page|page-content|post-body|post-content|single-post-content)\b/i.test(
-        match[2],
-      )
-    ) {
-      continue;
-    }
+    const score = getArticleBodyScore(match[2]);
+    if (score === 0) continue;
 
     const content = extractElementContent(html, match.index ?? 0, match[1]);
-    if (content) return content;
+    if (content && (!selected || score > selected.score)) selected = { content, score };
   }
 
-  return undefined;
+  return selected?.content;
+}
+
+function getArticleBodyScore(attributes: string) {
+  if (
+    /\b(?:article-body|ba-blog-post-body|ba-item-text-content|content-body|entry-content|post-body)\b/i.test(
+      attributes,
+    )
+  ) {
+    return 3;
+  }
+  if (/\b(?:article-content|ba-item-text|post-content|single-post-content)\b/i.test(attributes)) {
+    return 2;
+  }
+  return /\b(?:ba-blog-post-content|ba-item-content|item-page|page-content)\b/i.test(attributes)
+    ? 1
+    : 0;
 }
 
 function extractArticleParagraphs(html: string) {

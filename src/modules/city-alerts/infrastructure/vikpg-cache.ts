@@ -104,7 +104,7 @@ function deserializeVikpgCacheSnapshot(value: unknown): VikpgCacheSnapshot | und
   }
 
   return {
-    alerts,
+    alerts: alerts.map(cleanLegacyVikpgAlert),
     fetchedAt: value.fetchedAt,
     freshnessStatus: value.freshnessStatus,
     ...(value.lastRefreshError ? { lastRefreshError: value.lastRefreshError } : {}),
@@ -114,6 +114,27 @@ function deserializeVikpgCacheSnapshot(value: unknown): VikpgCacheSnapshot | und
     source: "Vodovod i kanalizacija Podgorica",
     sourceUrl: value.sourceUrl,
   };
+}
+
+function cleanLegacyVikpgAlert(alert: CityAlert): CityAlert {
+  return {
+    ...alert,
+    description:
+      alert.description.kind === "source"
+        ? { kind: "source", value: removeVikpgPageMetadata(alert.description.value) }
+        : alert.description,
+    ...(alert.rawSourceText ? { rawSourceText: removeVikpgPageMetadata(alert.rawSourceText) } : {}),
+  };
+}
+
+function removeVikpgPageMetadata(value: string) {
+  return value
+    .replace(/\bLeave a comment\b/gi, "")
+    .replace(/\bLeave review\b/gi, "")
+    .replace(/\b\d+\s+(?:Views?|Likes?)\b/gi, "")
+    .replace(/\b(?:Share|Social metadata)\b/gi, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
 }
 
 async function readVikpgCache(

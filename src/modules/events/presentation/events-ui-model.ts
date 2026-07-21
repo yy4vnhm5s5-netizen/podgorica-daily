@@ -26,9 +26,26 @@ interface EventDayGroup {
 }
 
 function getCityEventsForPublicListing(events: readonly CityEvent[]) {
-  return events.filter(
-    (event) => event.category !== "movie" && event.sourceId !== "cineplexx-podgorica",
+  return events.filter((event) => event.category !== "movie" && !isCineplexxProgrammeEvent(event));
+}
+
+function isCineplexxProgrammeEvent(event: CityEvent) {
+  return (
+    event.sourceId === "cineplexx-podgorica" ||
+    event.sourceReferences.some(
+      ({ sourceId, sourceUrl }) => sourceId === "cineplexx-podgorica" || isCineplexxUrl(sourceUrl),
+    ) ||
+    isCineplexxUrl(event.sourceUrl)
   );
+}
+
+function isCineplexxUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return url.hostname === "cineplexx.me" || url.hostname === "www.cineplexx.me";
+  } catch {
+    return false;
+  }
 }
 
 function parseEventsUiFilters(

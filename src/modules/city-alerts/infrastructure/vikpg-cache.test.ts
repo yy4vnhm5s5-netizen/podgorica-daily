@@ -53,3 +53,36 @@ test("reports invalid VIK cache JSON without throwing", async () => {
   assert.equal(result.snapshot, null);
   assert.equal(result.error?.code, "cache-invalid-json");
 });
+
+test("removes legacy page metadata when reading a persistent VIK cache", async () => {
+  const cachedSnapshot = snapshot();
+  cachedSnapshot.alerts = [
+    {
+      affectedArea: { kind: "source", value: "Zabjelo" },
+      cityIds: ["podgorica"],
+      dataMode: "live",
+      description: {
+        kind: "source",
+        value:
+          "Leave a comment 82 Views Leave review Obavještavamo potrošače u naselju Zabjelo. Share",
+      },
+      id: "vikpg-legacy",
+      rawSourceText:
+        "Leave a comment 82 Views Leave review Obavještavamo potrošače u naselju Zabjelo. Share",
+      severity: "warning",
+      source: { kind: "source", value: "Vodovod i kanalizacija Podgorica" },
+      sourceUrl: "https://vikpg.me/notice",
+      status: "active",
+      title: { kind: "source", value: "Informacija o kvaru" },
+      type: "waterOutage",
+    },
+  ];
+
+  const result = await readVikpgCacheResult(
+    "runtime/vikpg.json",
+    memoryFileSystem({ readFile: async () => JSON.stringify(cachedSnapshot) }),
+  );
+  const description = result.snapshot?.alerts[0]?.description;
+  assert.ok(description?.kind === "source");
+  assert.equal(description.value, "Obavještavamo potrošače u naselju Zabjelo.");
+});
