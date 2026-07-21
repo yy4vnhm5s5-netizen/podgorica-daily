@@ -25,7 +25,7 @@ function HomepageEventsCard({
   const translations = getEventsTranslations(locale);
 
   return (
-    <Card className="card-fog card-fog--warning border-primary/15 bg-amber-50/45 transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-[0_12px_24px_-20px_rgb(15_23_42_/_0.32)]">
+    <Card className="card-fog card-fog--events border-amber-200/70 bg-amber-50/30 transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-amber-300/80 hover:shadow-[0_12px_24px_-20px_rgb(15_23_42_/_0.32)] dark:border-amber-800/55 dark:bg-amber-950/30 dark:hover:border-amber-700/70">
       <CardHeader className="flex-row items-center gap-3 space-y-0 p-4 sm:p-5">
         <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
           <CalendarDays aria-hidden="true" className="size-[1.125rem]" strokeWidth={1.8} />

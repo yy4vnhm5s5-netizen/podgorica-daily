@@ -60,12 +60,11 @@
     top: -6rem;
   }
 
-  .card-fog--warning,
-  .card-fog--success {
-    --card-fog-color: 251 191 36;
+  .card-fog--events {
+    --card-fog-color: 217 170 79;
   }
 
-  .card-fog--warning::before,
+  .card-fog--events::before,
   .card-fog--success::before {
     left: -5rem;
     top: -6rem;
