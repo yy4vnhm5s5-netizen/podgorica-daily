@@ -16,6 +16,7 @@ import {
   getActiveCityAlerts,
   type CityAlertsMetadata,
 } from "@/modules/city-alerts/application/get-active-city-alerts";
+import { selectNextPowerOutage } from "@/modules/city-alerts/application/select-next-power-outage";
 import type { AlertSeverity, AlertType, CityAlert } from "@/modules/city-alerts/domain/city-alert";
 import {
   getCityAlertContent,
@@ -132,7 +133,7 @@ function getCityServices(
   metadata: CityAlertsMetadata,
 ): Record<"power" | "water", CityServiceInfo> {
   const alerts = result.status === "success" ? result.data : [];
-  const powerAlert = alerts.find(({ type }) => type === "powerOutage");
+  const powerAlert = selectNextPowerOutage(alerts);
   const waterAlert = alerts.find(({ type }) => type === "waterOutage");
   const cedisSource = metadata.sources.find(({ id }) => id === "cedis");
   const vikpgSource = metadata.sources.find(({ id }) => id === "vikpg");

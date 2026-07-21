@@ -22,6 +22,7 @@ interface CedisCityAlertsProviderDependencies {
   context: CityContext;
   getMockAlerts?: () => Promise<CityAlert[] | null>;
   mode: CityAlertsProviderMode;
+  now?: () => Date;
   readCache?: () => Promise<CedisCacheSnapshot | null>;
 }
 
@@ -29,6 +30,7 @@ async function getCedisCityAlerts({
   context,
   getMockAlerts = () => mockCityAlertsProvider.getCityAlerts(),
   mode,
+  now = () => new Date(),
   readCache = readCedisCache,
 }: CedisCityAlertsProviderDependencies): Promise<CityAlertsSourceData> {
   void context;
@@ -46,11 +48,25 @@ async function getCedisCityAlerts({
   }
 
   return {
-    alerts: cache.alerts,
+    alerts: cache.alerts.map((alert) => refreshCedisAlertStatus(alert, now())),
     freshnessStatus: cache.freshnessStatus,
     lastSuccessfulUpdate: new Date(cache.lastSuccessfulRefreshAt),
     mode,
   };
+}
+
+function refreshCedisAlertStatus(alert: CityAlert, now: Date): CityAlert {
+  if (alert.expectedEndAt && alert.expectedEndAt <= now) {
+    return { ...alert, status: "expired" };
+  }
+
+  if (alert.startsAt && alert.startsAt > now) {
+    return { ...alert, status: "scheduled" };
+  }
+
+  if (alert.status === "expired") return alert;
+
+  return { ...alert, status: "active" };
 }
 
 const cedisProviderMetadata: ProviderMetadata = {
