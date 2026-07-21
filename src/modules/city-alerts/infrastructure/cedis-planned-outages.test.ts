@@ -64,6 +64,31 @@ test("parses a bare Podgorica heading from the current CEDIS article structure",
   );
 });
 
+test("extracts only the article content and ignores embedded asset payloads", async () => {
+  const alerts = parseCedisArticle(
+    {
+      title: "Planirani radovi na mreži za 22. jul",
+      url: "https://cedis.me/servisne-informacije/planirani-radovi-na-mrezi-za-22-jul/",
+    },
+    await fixture("cedis-entry-content-with-embedded-assets.html"),
+    new Date("2026-07-21T12:00:00Z"),
+  );
+
+  assert.deepEqual(
+    alerts.map((alert) => alert.affectedArea.kind === "source" && alert.affectedArea.value),
+    ["Ulica stvarnog sadržaja."],
+  );
+  assert.ok(
+    alerts.every(
+      (alert) =>
+        alert.affectedArea.kind !== "source" ||
+        !/lazySizesConfig|JavaScript sadržaj|CSS sadržaj|JSON-LD|Noscript|SVG/i.test(
+          alert.affectedArea.value,
+        ),
+    ),
+  );
+});
+
 test("parses multiple time formats and DST-aware timestamps", () => {
   assert.deepEqual(parseTimeRange("od 08 do 15 sati")?.start, { hour: 8, minute: 0 });
   assert.deepEqual(parseTimeRange("08.30 do 13 sati")?.end, { hour: 13, minute: 0 });

@@ -277,7 +277,10 @@ function stripHtml(value: string) {
   return value.replace(/<[^>]+>/g, " ").replace(/&nbsp;/gi, " ");
 }
 function toArticleText(value: string) {
-  return value
+  const articleContent = extractArticleContent(removeEmbeddedNonContent(value));
+  if (!articleContent) return "";
+
+  return articleContent
     .replace(/<\/?(?:article|div|h[1-6]|li|ol|p|section|ul)[^>]*>/gi, "\n")
     .replace(/<br\s*\/?\s*>/gi, "\n")
     .replace(/<[^>]+>/g, " ")
@@ -286,6 +289,74 @@ function toArticleText(value: string) {
     .replace(/ *\n */g, "\n")
     .replace(/\n{2,}/g, "\n")
     .trim();
+}
+function extractArticleContent(value: string) {
+  const article = extractFirstElementContent(value, "article");
+  if (article) return article;
+
+  for (const className of [
+    "entry-content",
+    "post-content",
+    "article-content",
+    "single-post-content",
+    "td-post-content",
+    "the-content",
+  ]) {
+    const content = extractFirstElementByClass(value, className);
+    if (content) return content;
+  }
+
+  return null;
+}
+function extractFirstElementByClass(value: string, className: string) {
+  const openingTag = /<div\b[^>]*>/gi;
+  for (const match of value.matchAll(openingTag)) {
+    if (!hasClass(match[0], className)) continue;
+    const content = extractElementContent(value, match.index ?? 0, "div");
+    if (content) return content;
+  }
+  return null;
+}
+function extractFirstElementContent(value: string, tagName: string) {
+  const openingTag = new RegExp(`<${tagName}\\b[^>]*>`, "gi");
+  for (const match of value.matchAll(openingTag)) {
+    const content = extractElementContent(value, match.index ?? 0, tagName);
+    if (content) return content;
+  }
+  return null;
+}
+function extractElementContent(value: string, openingIndex: number, tagName: string) {
+  const openingEnd = value.indexOf(">", openingIndex);
+  if (openingEnd < 0) return null;
+
+  const tag = new RegExp(`<\\/?${tagName}\\b[^>]*>`, "gi");
+  tag.lastIndex = openingIndex;
+  let depth = 0;
+  for (let match = tag.exec(value); match; match = tag.exec(value)) {
+    const isClosingTag = /^<\//.test(match[0]);
+    const isSelfClosingTag = /\/$/.test(match[0].slice(0, -1));
+    if (isClosingTag) {
+      depth -= 1;
+      if (depth === 0) return value.slice(openingEnd + 1, match.index);
+    } else if (!isSelfClosingTag) {
+      depth += 1;
+    }
+  }
+
+  return null;
+}
+function hasClass(tag: string, className: string) {
+  const match = /\bclass\s*=\s*(?:["']([^"']*)["']|([^\s>]+))/i.exec(tag);
+  return (match?.[1] ?? match?.[2] ?? "").split(/\s+/).includes(className);
+}
+function removeEmbeddedNonContent(value: string) {
+  return value
+    .replace(/<!--([\s\S]*?)-->/g, " ")
+    .replace(
+      /<(script|style|noscript|svg|template|iframe|object|embed)\b[^>]*>[\s\S]*?<\/\1\s*>/gi,
+      " ",
+    )
+    .replace(/<(?:script|style|noscript|svg|template|iframe|object|embed)\b[^>]*\/?\s*>/gi, " ");
 }
 function addDays(value: Date, days: number) {
   const next = new Date(value);
