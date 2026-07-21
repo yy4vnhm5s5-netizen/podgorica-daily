@@ -1,5 +1,6 @@
 import type { CityAlert } from "@/modules/city-alerts/domain/city-alert";
 import { deserializeCityAlerts } from "./city-alert-cache-deserialization.ts";
+import { removeLeadingVikpgCategoryLabel } from "./vikpg-water-notices.ts";
 import { env } from "../../../config/env.ts";
 import {
   calculateCacheFreshness,
@@ -121,9 +122,20 @@ function cleanLegacyVikpgAlert(alert: CityAlert): CityAlert {
     ...alert,
     description:
       alert.description.kind === "source"
-        ? { kind: "source", value: removeVikpgPageMetadata(alert.description.value) }
+        ? {
+            kind: "source",
+            value: removeLeadingVikpgCategoryLabel(
+              removeVikpgPageMetadata(alert.description.value),
+            ),
+          }
         : alert.description,
-    ...(alert.rawSourceText ? { rawSourceText: removeVikpgPageMetadata(alert.rawSourceText) } : {}),
+    ...(alert.rawSourceText
+      ? {
+          rawSourceText: removeLeadingVikpgCategoryLabel(
+            removeVikpgPageMetadata(alert.rawSourceText),
+          ),
+        }
+      : {}),
   };
 }
 

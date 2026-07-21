@@ -165,9 +165,11 @@ function extractArticleContent(html: string) {
     ? (extractArticleParagraphs(articleBody) ?? articleBody)
     : (extractArticleParagraphs(fallbackContent) ?? fallbackContent);
 
-  return normalizeArticleContent(candidate).replace(
-    /^(?:\d{1,2}[.\-/]\d{1,2}[.\-/]\d{2,4}|\d{1,2}\s+\p{L}+\s+\d{4})\s*/iu,
-    "",
+  return removeLeadingVikpgCategoryLabel(
+    normalizeArticleContent(candidate).replace(
+      /^(?:\d{1,2}[.\-/]\d{1,2}[.\-/]\d{2,4}|\d{1,2}\s+\p{L}+\s+\d{4})\s*/iu,
+      "",
+    ),
   );
 }
 
@@ -253,6 +255,10 @@ function normalizeArticleContent(value: string) {
     .filter(Boolean);
 
   return paragraphs.join("\n\n");
+}
+
+function removeLeadingVikpgCategoryLabel(value: string) {
+  return value.replace(/^Kvarovi(?:\s*\n\s*|\s+)(?=Obavještavamo\b)/i, "");
 }
 
 function extractAffectedArea(value: string) {
@@ -403,6 +409,7 @@ function addDays(value: Date, days: number) {
 export {
   discoverVikpgNotices,
   parseVikpgNotice,
+  removeLeadingVikpgCategoryLabel,
   toVikpgUrl,
   vikpgOrigin,
   vikpgWaterNoticesUrl,

@@ -64,11 +64,11 @@ test("removes legacy page metadata when reading a persistent VIK cache", async (
       description: {
         kind: "source",
         value:
-          "Leave a comment 82 Views Leave review Obavještavamo potrošače u naselju Zabjelo. Share",
+          "Leave a comment 82 Views Leave review Kvarovi Obavještavamo potrošače u naselju Zabjelo. Share",
       },
       id: "vikpg-legacy",
       rawSourceText:
-        "Leave a comment 82 Views Leave review Obavještavamo potrošače u naselju Zabjelo. Share",
+        "Leave a comment 82 Views Leave review Kvarovi Obavještavamo potrošače u naselju Zabjelo. Share",
       severity: "warning",
       source: { kind: "source", value: "Vodovod i kanalizacija Podgorica" },
       sourceUrl: "https://vikpg.me/notice",
