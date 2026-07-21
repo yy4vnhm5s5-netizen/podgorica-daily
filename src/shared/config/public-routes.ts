@@ -12,4 +12,12 @@ function getContactLocaleAlternates() {
   };
 }
 
-export { getContactLocaleAlternates, getContactPath };
+function getPrivacyPolicyPath() {
+  return "/me/politika-privatnosti";
+}
+
+function getTermsOfUsePath() {
+  return "/me/uslovi-koriscenja";
+}
+
+export { getContactLocaleAlternates, getContactPath, getPrivacyPolicyPath, getTermsOfUsePath };

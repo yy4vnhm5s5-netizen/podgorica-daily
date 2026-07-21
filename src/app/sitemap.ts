@@ -3,7 +3,11 @@ import type { MetadataRoute } from "next";
 import { getDefaultCityContext } from "@/config/city-context";
 import { getCityEvents } from "@/modules/events/application/get-city-events";
 import { locales } from "@/shared/config/locale";
-import { getContactPath } from "@/shared/config/public-routes";
+import {
+  getContactPath,
+  getPrivacyPolicyPath,
+  getTermsOfUsePath,
+} from "@/shared/config/public-routes";
 import { siteConfig } from "@/shared/config/site";
 
 const stablePaths = ["", "/events"] as const;
@@ -22,6 +26,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.5,
     url: new URL(getContactPath(locale), siteConfig.url).toString(),
   }));
+  const legalEntries: MetadataRoute.Sitemap = [getTermsOfUsePath(), getPrivacyPolicyPath()].map(
+    (path) => ({
+      changeFrequency: "yearly",
+      priority: 0.3,
+      url: new URL(path, siteConfig.url).toString(),
+    }),
+  );
 
   const eventEntries = await Promise.all(
     locales.map(async (locale) => {
@@ -42,5 +53,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }),
   );
 
-  return [...stableEntries, ...contactEntries, ...eventEntries.flat()];
+  return [...stableEntries, ...contactEntries, ...legalEntries, ...eventEntries.flat()];
 }

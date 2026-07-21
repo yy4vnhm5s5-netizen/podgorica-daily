@@ -31,6 +31,11 @@ const translations = {
       },
       languageSwitcherLabel: "Language",
       mobileNavigationLabel: "Mobile navigation",
+      footer: {
+        legalNavigation: "Legal information",
+        privacy: "Privacy policy",
+        terms: "Terms of use",
+      },
       navigation: {
         contact: "Contact",
         dashboard: "Dashboard",
@@ -71,6 +76,11 @@ const translations = {
       },
       languageSwitcherLabel: "Jezik",
       mobileNavigationLabel: "Mobilna navigacija",
+      footer: {
+        legalNavigation: "Pravne informacije",
+        privacy: "Politika privatnosti",
+        terms: "Uslovi korišćenja",
+      },
       navigation: {
         contact: "Kontakt",
         dashboard: "Pregled",
