@@ -88,6 +88,46 @@ test("returns a normalized read error for a permission failure", async () => {
   assert.equal(result.error?.code, "cache-read-failed");
 });
 
+test("restores alert timestamps from JSON before homepage date mapping", async () => {
+  const cachedSnapshot: CedisCacheSnapshot = {
+    ...snapshot(),
+    alerts: [
+      {
+        affectedArea: { kind: "source", value: "Centar" },
+        cityIds: ["podgorica"],
+        dataMode: "live",
+        description: { kind: "source", value: "Planirano isključenje." },
+        expectedEndAt: new Date("2026-07-21T11:00:00.000Z"),
+        id: "cedis-podgorica-1",
+        publishedAt: new Date("2026-07-20T18:00:00.000Z"),
+        severity: "information",
+        source: { kind: "source", value: "CEDIS" },
+        sourceUrl: "https://cedis.me/servisne-informacije/obavjestenje",
+        startsAt: new Date("2026-07-21T08:00:00.000Z"),
+        status: "scheduled",
+        title: { kind: "source", value: "Planirano isključenje struje" },
+        type: "powerOutage",
+      },
+    ],
+  };
+  const result = await readCedisCacheResult(
+    "cache.json",
+    fileSystem({ readFile: async () => JSON.stringify(cachedSnapshot) }),
+  );
+
+  const timestamps = result.snapshot?.alerts
+    .map((alert) => [alert.startsAt, alert.expectedEndAt, alert.publishedAt])
+    .flat()
+    .filter((value): value is Date => value !== undefined)
+    .map((value) => value.toISOString());
+
+  assert.deepEqual(timestamps, [
+    "2026-07-21T08:00:00.000Z",
+    "2026-07-21T11:00:00.000Z",
+    "2026-07-20T18:00:00.000Z",
+  ]);
+});
+
 for (const [name, failure] of [
   ["directory creation", "mkdir"],
   ["temporary file write", "writeFile"],

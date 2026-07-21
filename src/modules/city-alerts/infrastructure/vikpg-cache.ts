@@ -1,4 +1,5 @@
 import type { CityAlert } from "@/modules/city-alerts/domain/city-alert";
+import { deserializeCityAlerts } from "./city-alert-cache-deserialization.ts";
 import { env } from "../../../config/env.ts";
 import {
   calculateCacheFreshness,
@@ -54,8 +55,16 @@ async function readVikpgCacheResult(
   fileSystem: CacheFileSystem = nodeFileSystem,
 ): Promise<VikpgCacheReadResult> {
   try {
+    const parsed = JSON.parse(await fileSystem.readFile(cachePath, "utf8")) as unknown;
+    const snapshot = deserializeVikpgCacheSnapshot(parsed);
+    if (!snapshot) {
+      return {
+        error: new VikpgCacheError("cache-invalid-json", "VIK cache contains invalid data."),
+        snapshot: null,
+      };
+    }
     return {
-      snapshot: JSON.parse(await fileSystem.readFile(cachePath, "utf8")) as VikpgCacheSnapshot,
+      snapshot,
     };
   } catch (error) {
     if (isMissingFileError(error)) return { snapshot: null };
@@ -70,6 +79,41 @@ async function readVikpgCacheResult(
       snapshot: null,
     };
   }
+}
+
+function deserializeVikpgCacheSnapshot(value: unknown): VikpgCacheSnapshot | undefined {
+  if (
+    !isRecord(value) ||
+    value.schemaVersion !== 1 ||
+    value.source !== "Vodovod i kanalizacija Podgorica"
+  ) {
+    return undefined;
+  }
+
+  const alerts = deserializeCityAlerts(value.alerts);
+  if (
+    !alerts ||
+    !isString(value.fetchedAt) ||
+    !isFreshnessStatus(value.freshnessStatus) ||
+    !isString(value.lastSuccessfulRefreshAt) ||
+    !isStringArray(value.parserWarnings) ||
+    !isString(value.sourceUrl) ||
+    !isOptionalString(value.lastRefreshError)
+  ) {
+    return undefined;
+  }
+
+  return {
+    alerts,
+    fetchedAt: value.fetchedAt,
+    freshnessStatus: value.freshnessStatus,
+    ...(value.lastRefreshError ? { lastRefreshError: value.lastRefreshError } : {}),
+    lastSuccessfulRefreshAt: value.lastSuccessfulRefreshAt,
+    parserWarnings: value.parserWarnings,
+    schemaVersion: 1,
+    source: "Vodovod i kanalizacija Podgorica",
+    sourceUrl: value.sourceUrl,
+  };
 }
 
 async function readVikpgCache(
@@ -93,6 +137,26 @@ async function writeVikpgCache(
 
 function isMissingFileError(error: unknown) {
   return typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT";
+}
+
+function isFreshnessStatus(value: unknown): value is VikpgFreshnessStatus {
+  return value === "fresh" || value === "stale" || value === "unavailable";
+}
+
+function isOptionalString(value: unknown): value is string | undefined {
+  return value === undefined || isString(value);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function isString(value: unknown): value is string {
+  return typeof value === "string";
+}
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every(isString);
 }
 
 export {

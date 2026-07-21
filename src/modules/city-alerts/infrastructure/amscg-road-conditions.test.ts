@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import test from "node:test";
 
+import { readAmscgCache, writeAmscgCache } from "./amscg-cache.ts";
 import { assertAmscgUrl, createAmscgHttpClient, AmscgFetchError } from "./amscg-http-client.ts";
 import { parseAmscgRoadConditions } from "./amscg-road-conditions.ts";
 import { refreshAmscg } from "./amscg-refresh.ts";
@@ -43,6 +46,51 @@ test("refreshes fixture content through an injected HTTP client", async () => {
   assert.equal(result.success, true);
   assert.equal(result.snapshot?.alerts.length, 4);
   assert.equal(written, true);
+});
+
+test("restores cached road-alert timestamps before City Alerts maps them", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "amscg-cache-"));
+  const cachePath = join(directory, "amscg.json");
+
+  try {
+    await writeAmscgCache(
+      {
+        alerts: [
+          {
+            affectedRoad: "Podgorica - Kolašin",
+            cityIds: ["podgorica"],
+            description: "Alternativno odvijanje saobraćaja.",
+            id: "amscg-1",
+            source: "AMSCG",
+            sourceUrl: "https://amscg.org/stanje-na-putevima/",
+            title: "Radovi na putu",
+            type: "alternating",
+            validFrom: new Date("2026-07-21T08:00:00.000Z"),
+            validUntil: new Date("2026-07-21T12:00:00.000Z"),
+          },
+        ],
+        fetchedAt: "2026-07-21T07:00:00.000Z",
+        freshnessStatus: "fresh",
+        lastSuccessfulRefreshAt: "2026-07-21T07:00:00.000Z",
+        parserWarnings: [],
+        schemaVersion: 1,
+        source: "AMSCG",
+        sourceUrl: "https://amscg.org/stanje-na-putevima/",
+      },
+      cachePath,
+    );
+    const snapshot = await readAmscgCache(cachePath);
+
+    assert.deepEqual(
+      snapshot?.alerts
+        .flatMap(({ validFrom, validUntil }) => [validFrom, validUntil])
+        .filter((value): value is Date => value !== undefined)
+        .map((value) => value.toISOString()),
+      ["2026-07-21T08:00:00.000Z", "2026-07-21T12:00:00.000Z"],
+    );
+  } finally {
+    await rm(directory, { force: true, recursive: true });
+  }
 });
 
 test("uses the bounded retry policy for a failed request", async () => {

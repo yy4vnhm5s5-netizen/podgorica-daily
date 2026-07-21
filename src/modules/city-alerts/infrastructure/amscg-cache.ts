@@ -1,4 +1,5 @@
 import type { RoadAlert } from "../domain/road-alert.ts";
+import { deserializeRoadAlerts } from "./city-alert-cache-deserialization.ts";
 import { env } from "../../../config/env.ts";
 import {
   calculateCacheFreshness,
@@ -31,11 +32,61 @@ function calculateAmscgFreshness(
 }
 
 async function readAmscgCache(cachePath = env.AMSCG_CACHE_PATH) {
-  return readJsonCache<AmscgCacheSnapshot>(cachePath);
+  const snapshot = await readJsonCache<unknown>(cachePath);
+  return deserializeAmscgCacheSnapshot(snapshot);
 }
 
 async function writeAmscgCache(snapshot: AmscgCacheSnapshot, cachePath = env.AMSCG_CACHE_PATH) {
   await writeJsonCache(snapshot, cachePath);
+}
+
+function deserializeAmscgCacheSnapshot(value: unknown): AmscgCacheSnapshot | null {
+  if (!isRecord(value) || value.schemaVersion !== 1 || value.source !== "AMSCG") return null;
+
+  const alerts = deserializeRoadAlerts(value.alerts);
+  if (
+    !alerts ||
+    !isString(value.fetchedAt) ||
+    !isFreshnessStatus(value.freshnessStatus) ||
+    !isString(value.lastSuccessfulRefreshAt) ||
+    !isStringArray(value.parserWarnings) ||
+    !isString(value.sourceUrl) ||
+    !isOptionalString(value.lastRefreshError)
+  ) {
+    return null;
+  }
+
+  return {
+    alerts,
+    fetchedAt: value.fetchedAt,
+    freshnessStatus: value.freshnessStatus,
+    ...(value.lastRefreshError ? { lastRefreshError: value.lastRefreshError } : {}),
+    lastSuccessfulRefreshAt: value.lastSuccessfulRefreshAt,
+    parserWarnings: value.parserWarnings,
+    schemaVersion: 1,
+    source: "AMSCG",
+    sourceUrl: value.sourceUrl,
+  };
+}
+
+function isFreshnessStatus(value: unknown): value is AmscgFreshnessStatus {
+  return value === "fresh" || value === "stale" || value === "unavailable";
+}
+
+function isOptionalString(value: unknown): value is string | undefined {
+  return value === undefined || isString(value);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function isString(value: unknown): value is string {
+  return typeof value === "string";
+}
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every(isString);
 }
 
 export {
