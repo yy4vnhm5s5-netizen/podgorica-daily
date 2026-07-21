@@ -2,6 +2,14 @@ import { cedisOrigin } from "./cedis-planned-outages.ts";
 
 interface CedisHttpClient {
   get(url: string): Promise<string>;
+  getDocument?(url: string): Promise<CedisHttpDocument>;
+}
+
+interface CedisHttpDocument {
+  contentType?: string;
+  finalUrl: string;
+  html: string;
+  status: number;
 }
 
 interface CedisHttpClientOptions {
@@ -12,9 +20,13 @@ interface CedisHttpClientOptions {
 }
 
 interface FetchResponse {
+  headers?: {
+    get(name: string): string | null;
+  };
   ok: boolean;
   status: number;
   text(): Promise<string>;
+  url?: string;
 }
 
 type FetchImplementation = (url: string, init: RequestInit) => Promise<FetchResponse>;
@@ -40,36 +52,50 @@ function createCedisHttpClient({
   timeoutMs = 10_000,
   userAgent = defaultUserAgent,
 }: CedisHttpClientOptions = {}): CedisHttpClient {
+  async function getDocument(url: string): Promise<CedisHttpDocument> {
+    assertCedisUrl(url);
+    const attempts = Math.max(0, retries) + 1;
+    let latestError: CedisFetchError | undefined;
+
+    for (let attempt = 0; attempt < attempts; attempt += 1) {
+      try {
+        const response = await fetchImplementation(url, {
+          headers: { "User-Agent": userAgent },
+          signal: AbortSignal.timeout(timeoutMs),
+        });
+        if (!response.ok) {
+          latestError = new CedisFetchError(
+            "cedis-request-failed",
+            `CEDIS returned HTTP ${response.status}.`,
+          );
+          continue;
+        }
+
+        const contentType = response.headers?.get("content-type") ?? undefined;
+        const finalUrl = response.url || url;
+        assertCedisUrl(finalUrl);
+        return {
+          ...(contentType ? { contentType } : {}),
+          finalUrl,
+          html: await response.text(),
+          status: response.status,
+        };
+      } catch (error) {
+        latestError = new CedisFetchError(
+          isAbortError(error) ? "cedis-request-timeout" : "cedis-request-failed",
+          isAbortError(error) ? "CEDIS request timed out." : "CEDIS request failed.",
+        );
+      }
+    }
+
+    throw latestError ?? new CedisFetchError("cedis-request-failed", "CEDIS request failed.");
+  }
+
   return {
     async get(url: string) {
-      assertCedisUrl(url);
-      const attempts = Math.max(0, retries) + 1;
-      let latestError: CedisFetchError | undefined;
-
-      for (let attempt = 0; attempt < attempts; attempt += 1) {
-        try {
-          const response = await fetchImplementation(url, {
-            headers: { "User-Agent": userAgent },
-            signal: AbortSignal.timeout(timeoutMs),
-          });
-          if (!response.ok) {
-            latestError = new CedisFetchError(
-              "cedis-request-failed",
-              `CEDIS returned HTTP ${response.status}.`,
-            );
-            continue;
-          }
-          return await response.text();
-        } catch (error) {
-          latestError = new CedisFetchError(
-            isAbortError(error) ? "cedis-request-timeout" : "cedis-request-failed",
-            isAbortError(error) ? "CEDIS request timed out." : "CEDIS request failed.",
-          );
-        }
-      }
-
-      throw latestError ?? new CedisFetchError("cedis-request-failed", "CEDIS request failed.");
+      return (await getDocument(url)).html;
     },
+    getDocument,
   };
 }
 
@@ -96,6 +122,7 @@ export {
   CedisFetchError,
   defaultUserAgent,
   type CedisHttpClient,
+  type CedisHttpDocument,
   type CedisHttpClientOptions,
   type FetchImplementation,
   type FetchResponse,

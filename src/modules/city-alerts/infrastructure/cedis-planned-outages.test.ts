@@ -6,6 +6,7 @@ import {
   discoverCedisArticles,
   getPodgoricaSection,
   parseCedisArticle,
+  parseCedisArticleResult,
   parseTimeRange,
 } from "./cedis-planned-outages.ts";
 
@@ -61,6 +62,30 @@ test("parses a bare Podgorica heading from the current CEDIS article structure",
       (alert) =>
         alert.affectedArea.kind !== "source" || !alert.affectedArea.value.includes("Ponari"),
     ),
+  );
+});
+
+test("parses the current Elementor post-content container", async () => {
+  const result = parseCedisArticleResult(
+    {
+      title: "Planirani radovi na mreži za 23. jul",
+      url: "https://cedis.me/servisne-informacije/planirani-radovi-na-mrezi-za-23-jul/",
+    },
+    await fixture("cedis-elementor-theme-post-content.html"),
+    new Date("2026-07-21T12:00:00Z"),
+  );
+
+  assert.equal(result.contentSelector, ".elementor-widget-theme-post-content");
+  assert.equal(result.podgoricaHeadingFound, true);
+  assert.equal(result.zeroRecordsReason, undefined);
+  assert.deepEqual(
+    result.alerts.map((alert) => alert.affectedArea.kind === "source" && alert.affectedArea.value),
+    [
+      "hangari uz magistralu oko Kipsa-Cijevna.",
+      "Liješnje, Vrbica, IRD Šume, naselje oko Vinopodruma, dio Tološa, Tivatska ulica i Ulica Boška Buhe.",
+      "Ulica Raka Mugoše.",
+      "Ubli, Živkovići, Ubli Prisoja, Prelevići, Bezjovo, Cvilin, Orahovo, Lazorci, Građen, Toke, Korita i Ulica Pavla Mijovića.",
+    ],
   );
 });
 

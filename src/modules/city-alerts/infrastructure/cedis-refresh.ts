@@ -4,7 +4,7 @@ import {
   isSafeCedisCacheAlert,
   type CedisCacheSnapshot,
 } from "./cedis-cache.ts";
-import type { CedisHttpClient } from "./cedis-http-client.ts";
+import type { CedisHttpClient, CedisHttpDocument } from "./cedis-http-client.ts";
 import {
   cedisOrigin,
   discoverCedisArticles,
@@ -29,9 +29,12 @@ interface RefreshCache {
 
 interface CedisRefreshDependencies {
   cache: RefreshCache;
+  diagnostic?: CedisDiagnosticEmitter;
   httpClient: CedisHttpClient;
   now?: () => Date;
 }
+
+type CedisDiagnosticEmitter = (payload: Record<string, unknown>) => void;
 
 interface RefreshResult {
   classification: RefreshClassification;
@@ -93,13 +96,20 @@ function createRefreshResult(
 
 async function refreshCedis({
   cache,
+  diagnostic = emitCedisDiagnostic,
   httpClient,
   now = () => new Date(),
 }: CedisRefreshDependencies) {
+  let phase = "cache-read";
   let previous: CedisCacheSnapshot | null;
   try {
     previous = await cache.read();
   } catch {
+    diagnostic({
+      event: "cedis-refresh-failed",
+      phase,
+      reason: "cache-read-failed",
+    });
     return retainPrevious(
       null,
       "failed",
@@ -110,9 +120,28 @@ async function refreshCedis({
   }
   const sourceUrl = `${cedisOrigin}/servisne-informacije/`;
   try {
-    const listing = await httpClient.get(sourceUrl);
-    const articles = discoverCedisArticles(listing, now()).slice(0, 7);
-    if (articles.length === 0 && containsPlannedWorkReference(listing)) {
+    phase = "listing-fetch";
+    const listing = await getCedisDocument(httpClient, sourceUrl);
+    diagnostic({
+      contentType: listing.contentType ?? "",
+      event: "cedis-refresh-listing-fetched",
+      finalUrl: listing.finalUrl,
+      htmlLength: listing.html.length,
+      httpStatus: listing.status,
+      requestedUrl: sourceUrl,
+    });
+
+    phase = "listing-discovery";
+    const articles = discoverCedisArticles(listing.html, now()).slice(0, 7);
+    diagnostic({
+      event: "cedis-refresh-article-discovery",
+      plannedWorkArticleCount: articles.length,
+    });
+    if (articles.length === 0 && containsPlannedWorkReference(listing.html)) {
+      diagnostic({
+        event: "cedis-refresh-listing-rejected",
+        reason: "listing-links-unrecognized",
+      });
       return retainPrevious(
         previous,
         "structurally-suspicious",
@@ -122,10 +151,55 @@ async function refreshCedis({
       );
     }
 
+    phase = "article-processing";
     const parsedArticles = await Promise.all(
-      articles.map(async (article) =>
-        parseCedisArticleResult(article, await httpClient.get(article.url), now()),
-      ),
+      articles.map(async (article) => {
+        let articleDocument: CedisHttpDocument;
+        try {
+          articleDocument = await getCedisDocument(httpClient, article.url);
+          diagnostic({
+            articleUrl: article.url,
+            contentType: articleDocument.contentType ?? "",
+            event: "cedis-refresh-article-fetched",
+            finalUrl: articleDocument.finalUrl,
+            htmlLength: articleDocument.html.length,
+            httpStatus: articleDocument.status,
+            requestedUrl: article.url,
+          });
+        } catch (error) {
+          diagnostic({
+            articleUrl: article.url,
+            errorCode: getErrorCode(error),
+            errorMessage: getErrorMessage(error),
+            event: "cedis-refresh-article-failed",
+            phase: "article-fetch",
+          });
+          throw error;
+        }
+
+        let parsed: ReturnType<typeof parseCedisArticleResult>;
+        try {
+          parsed = parseCedisArticleResult(article, articleDocument.html, now());
+        } catch (error) {
+          diagnostic({
+            articleUrl: article.url,
+            errorCode: getErrorCode(error),
+            errorMessage: getErrorMessage(error),
+            event: "cedis-refresh-article-failed",
+            phase: "article-parser",
+          });
+          throw error;
+        }
+        diagnostic({
+          articleUrl: article.url,
+          contentSelector: parsed.contentSelector ?? "",
+          event: "cedis-refresh-article-parsed",
+          parsedRecordCount: parsed.alerts.length,
+          podgoricaHeadingFound: parsed.podgoricaHeadingFound,
+          ...(parsed.zeroRecordsReason ? { zeroRecordsReason: parsed.zeroRecordsReason } : {}),
+        });
+        return parsed;
+      }),
     );
     const parserWarnings = parsedArticles.flatMap((result) => result.warnings);
     if (parsedArticles.some((result) => !result.contentRecognized)) {
@@ -142,12 +216,34 @@ async function refreshCedis({
       previous,
       now(),
     );
+    diagnostic({
+      classification: result.classification,
+      event: "cedis-refresh-result",
+      freshAlertCount: result.freshAlertCount,
+      retainedPreviousSnapshot: result.retainedPreviousSnapshot,
+      ...(result.errorCode ? { errorCode: result.errorCode } : {}),
+      warnings: result.warnings,
+    });
     if (!result.success || !result.snapshot) return result;
 
     try {
+      phase = "cache-write";
       await cache.write(result.snapshot);
+      diagnostic({
+        cacheWriteResult: "written",
+        event: "cedis-refresh-cache-write",
+        freshAlertCount: result.freshAlertCount,
+        retainedPreviousSnapshot: false,
+      });
       return result;
-    } catch {
+    } catch (error) {
+      diagnostic({
+        errorCode: getErrorCode(error),
+        errorMessage: getErrorMessage(error),
+        event: "cedis-refresh-cache-write",
+        phase,
+        result: "failed",
+      });
       return retainPrevious(
         previous,
         "failed",
@@ -157,6 +253,12 @@ async function refreshCedis({
       );
     }
   } catch (error) {
+    diagnostic({
+      errorCode: getErrorCode(error),
+      errorMessage: getErrorMessage(error),
+      event: "cedis-refresh-failed",
+      phase,
+    });
     return retainPrevious(
       previous,
       "failed",
@@ -165,6 +267,23 @@ async function refreshCedis({
       [],
     );
   }
+}
+
+async function getCedisDocument(
+  httpClient: CedisHttpClient,
+  url: string,
+): Promise<CedisHttpDocument> {
+  if (httpClient.getDocument) return httpClient.getDocument(url);
+
+  return {
+    finalUrl: url,
+    html: await httpClient.get(url),
+    status: 200,
+  };
+}
+
+function emitCedisDiagnostic(payload: Record<string, unknown>) {
+  console.info(JSON.stringify(payload));
 }
 
 function retainPrevious(
@@ -206,10 +325,15 @@ function getErrorCode(error: unknown) {
     : "cedis-refresh-failed";
 }
 
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Unknown CEDIS refresh error.";
+}
+
 export {
   createRefreshResult,
   refreshCedis,
   type CedisRefreshDependencies,
+  type CedisDiagnosticEmitter,
   type RefreshCache,
   type RefreshClassification,
   type RefreshInput,

@@ -112,6 +112,67 @@ test("refreshes listing, article, parser, and cache through injected HTTP", asyn
   assert.equal(memory.getSnapshot()?.alerts.length, result.snapshot?.alerts.length);
 });
 
+test("emits CEDIS-only diagnostics for the real Elementor article-content shape", async () => {
+  const diagnostics: Record<string, unknown>[] = [];
+  const elementorArticleUrl =
+    "https://cedis.me/servisne-informacije/planirani-radovi-na-mrezi-za-23-jul/";
+  const pages = {
+    [elementorArticleUrl]: await fixture("cedis-elementor-theme-post-content.html"),
+    [listingUrl]: `<a href="${elementorArticleUrl}">Planirani radovi na mreži za 23. jul</a>`,
+  };
+  const result = await refreshCedis({
+    cache: createMemoryCache().cache,
+    diagnostic: (payload) => diagnostics.push(payload),
+    httpClient: {
+      get: async (url) => {
+        const html = pages[url as keyof typeof pages];
+        if (html) return html;
+        throw new CedisFetchError("cedis-request-failed", "Fixture request failed.");
+      },
+      getDocument: async (url) => {
+        const html = pages[url as keyof typeof pages];
+        if (!html) throw new CedisFetchError("cedis-request-failed", "Fixture request failed.");
+        return {
+          contentType: "text/html; charset=UTF-8",
+          finalUrl: url,
+          html,
+          status: 200,
+        };
+      },
+    },
+    now: () => new Date("2026-07-22T12:00:00.000Z"),
+  });
+
+  assert.equal(result.classification, "trustworthy-non-empty");
+  assert.equal(result.freshAlertCount, 4);
+  const listingDiagnostic = diagnostics[0];
+  assert.equal(listingDiagnostic.event, "cedis-refresh-listing-fetched");
+  assert.equal(listingDiagnostic.finalUrl, listingUrl);
+  assert.equal(listingDiagnostic.httpStatus, 200);
+  assert.equal(listingDiagnostic.contentType, "text/html; charset=UTF-8");
+  assert.equal(listingDiagnostic.htmlLength, pages[listingUrl].length);
+  assert.deepEqual(
+    diagnostics.find((payload) => payload.event === "cedis-refresh-article-discovery"),
+    { event: "cedis-refresh-article-discovery", plannedWorkArticleCount: 1 },
+  );
+  assert.deepEqual(
+    diagnostics.find((payload) => payload.event === "cedis-refresh-article-parsed"),
+    {
+      articleUrl: elementorArticleUrl,
+      contentSelector: ".elementor-widget-theme-post-content",
+      event: "cedis-refresh-article-parsed",
+      parsedRecordCount: 4,
+      podgoricaHeadingFound: true,
+    },
+  );
+  assert.deepEqual(diagnostics.at(-1), {
+    cacheWriteResult: "written",
+    event: "cedis-refresh-cache-write",
+    freshAlertCount: 4,
+    retainedPreviousSnapshot: false,
+  });
+});
+
 test("replaces, rather than merges, a prior cache with clean current CEDIS notices", async () => {
   const memory = createMemoryCache(previousSnapshot());
   const result = await refreshCedis({

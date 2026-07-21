@@ -44,8 +44,15 @@ interface CedisArticleLink {
 
 interface CedisArticleParseResult {
   alerts: CityAlert[];
+  contentSelector?: string;
   contentRecognized: boolean;
+  podgoricaHeadingFound: boolean;
   warnings: string[];
+  zeroRecordsReason?:
+    | "article-content-unrecognized"
+    | "no-parseable-podgorica-records"
+    | "podgorica-heading-not-found"
+    | "publication-date-unrecognized";
 }
 
 function discoverCedisArticles(html: string, now = new Date()): CedisArticleLink[] {
@@ -74,17 +81,33 @@ function parseCedisArticleResult(
     return {
       alerts: [],
       contentRecognized: false,
+      podgoricaHeadingFound: false,
       warnings: ["publication-date-unrecognized"],
+      zeroRecordsReason: "publication-date-unrecognized",
     };
   }
 
-  const text = toArticleText(html);
+  const articleContent = extractArticleContent(removeEmbeddedNonContent(html));
+  const text = articleContent ? toArticleText(articleContent.content) : "";
   if (!text) {
-    return { alerts: [], contentRecognized: false, warnings: ["article-content-unrecognized"] };
+    return {
+      alerts: [],
+      contentRecognized: false,
+      podgoricaHeadingFound: false,
+      warnings: ["article-content-unrecognized"],
+      zeroRecordsReason: "article-content-unrecognized",
+    };
   }
   const sections = getPodgoricaSections(text);
   if (sections.length === 0) {
-    return { alerts: [], contentRecognized: true, warnings: [] };
+    return {
+      alerts: [],
+      contentRecognized: true,
+      contentSelector: articleContent?.selector,
+      podgoricaHeadingFound: false,
+      warnings: [],
+      zeroRecordsReason: "podgorica-heading-not-found",
+    };
   }
 
   const alerts = sections.flatMap(({ section, startIndex }) => {
@@ -95,7 +118,17 @@ function parseCedisArticleResult(
     return lines.flatMap((line) => parseOutageLine(line, date, article));
   });
 
-  return { alerts: deduplicateAlerts(alerts), contentRecognized: true, warnings: [] };
+  const normalizedAlerts = deduplicateAlerts(alerts);
+  return {
+    alerts: normalizedAlerts,
+    contentRecognized: true,
+    contentSelector: articleContent?.selector,
+    podgoricaHeadingFound: true,
+    warnings: [],
+    ...(normalizedAlerts.length === 0
+      ? { zeroRecordsReason: "no-parseable-podgorica-records" as const }
+      : {}),
+  };
 }
 
 function parseOutageLine(line: string, date: Date, article: CedisArticleLink): CityAlert[] {
@@ -277,10 +310,7 @@ function stripHtml(value: string) {
   return value.replace(/<[^>]+>/g, " ").replace(/&nbsp;/gi, " ");
 }
 function toArticleText(value: string) {
-  const articleContent = extractArticleContent(removeEmbeddedNonContent(value));
-  if (!articleContent) return "";
-
-  return articleContent
+  return value
     .replace(/<\/?(?:article|div|h[1-6]|li|ol|p|section|ul)[^>]*>/gi, "\n")
     .replace(/<br\s*\/?\s*>/gi, "\n")
     .replace(/<[^>]+>/g, " ")
@@ -292,7 +322,7 @@ function toArticleText(value: string) {
 }
 function extractArticleContent(value: string) {
   const article = extractFirstElementContent(value, "article");
-  if (article) return article;
+  if (article) return { content: article, selector: "article" };
 
   for (const className of [
     "entry-content",
@@ -301,9 +331,10 @@ function extractArticleContent(value: string) {
     "single-post-content",
     "td-post-content",
     "the-content",
+    "elementor-widget-theme-post-content",
   ]) {
     const content = extractFirstElementByClass(value, className);
-    if (content) return content;
+    if (content) return { content, selector: `.${className}` };
   }
 
   return null;
