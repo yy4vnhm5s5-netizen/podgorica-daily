@@ -27,7 +27,7 @@ const contactTranslations = {
     heading: "Kontakt",
     honeypot: "Web stranica",
     intro:
-      "Zainteresovani ste za oglašavanje ili saradnju sa Gradom-om? Pošaljite nam upit putem forme i javićemo vam se u najkraćem roku.",
+      "Zainteresovani ste za oglašavanje ili saradnju sa Gradomom? Pošaljite nam upit putem forme i javićemo vam se u najkraćem roku.",
     loading: "Slanje…",
     message: "Poruka",
     optional: "opcionalno",

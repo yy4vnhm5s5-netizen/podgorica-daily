@@ -159,12 +159,86 @@ function extractArticleContent(html: string) {
   const article = /<article\b[^>]*>([\s\S]*?)<\/article>/i.exec(html)?.[1];
   const main = /<main\b[^>]*>([\s\S]*?)<\/main>/i.exec(html)?.[1];
   const afterHeading = /<h1\b[^>]*>[\s\S]*?<\/h1>([\s\S]*)/i.exec(html)?.[1] ?? html;
-  const candidate = article ?? main ?? afterHeading;
-  return normalize(
-    stripHtml(candidate)
-      .split(/\b(?:Dokumentacija|Korisni linkovi|Budi u toku)\b/i)[0]
-      .replace(/^\s*(?:\d{1,2}[.\-/]\d{1,2}[.\-/]\d{2,4}|\d{1,2}\s+\p{L}+\s+\d{4})\s*/iu, ""),
+  const fallbackContent = truncateAfterArticleContent(article ?? main ?? afterHeading);
+  const candidate =
+    extractArticleBody(html) ?? extractArticleParagraphs(fallbackContent) ?? fallbackContent;
+
+  return normalizeArticleContent(candidate).replace(
+    /^(?:\d{1,2}[.\-/]\d{1,2}[.\-/]\d{2,4}|\d{1,2}\s+\p{L}+\s+\d{4})\s*/iu,
+    "",
   );
+}
+
+function extractArticleBody(html: string) {
+  const openingTag = /<(article|div|section)\b([^>]*)>/gi;
+
+  for (const match of html.matchAll(openingTag)) {
+    if (
+      !/\b(?:article-body|article-content|ba-item-content|content-body|entry-content|item-page|page-content|post-body|post-content|single-post-content)\b/i.test(
+        match[2],
+      )
+    ) {
+      continue;
+    }
+
+    const content = extractElementContent(html, match.index ?? 0, match[1]);
+    if (content) return content;
+  }
+
+  return undefined;
+}
+
+function extractArticleParagraphs(html: string) {
+  const paragraphs = [...html.matchAll(/<p\b([^>]*)>([\s\S]*?)<\/p>/gi)]
+    .filter((match) => !/\b(?:comment|meta|review|share|social|view)\b/i.test(match[1]))
+    .map((match) => normalize(stripHtml(match[2])))
+    .filter((value) => value && !isArticleMetadata(value));
+
+  return paragraphs.length > 0 ? paragraphs.join("\n\n") : undefined;
+}
+
+function truncateAfterArticleContent(html: string) {
+  const section =
+    /<h[1-6]\b[^>]*>\s*(?:Dokumentacija|Korisni linkovi|Budi u toku)\s*<\/h[1-6]>/i.exec(html);
+  return section?.index === undefined ? html : html.slice(0, section.index);
+}
+
+function isArticleMetadata(value: string) {
+  return /\b(?:leave a comment|leave review|likes?|shares?|views?)\b/i.test(value);
+}
+
+function extractElementContent(html: string, startIndex: number, tagName: string) {
+  const tag = tagName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const token = new RegExp(`<\\/?${tag}\\b[^>]*>`, "gi");
+  token.lastIndex = startIndex;
+
+  let depth = 0;
+  let openingEnd = -1;
+  let match: RegExpExecArray | null;
+
+  while ((match = token.exec(html))) {
+    const isClosingTag = match[0].startsWith("</");
+
+    if (!isClosingTag) {
+      depth += 1;
+      if (depth === 1) openingEnd = token.lastIndex;
+      continue;
+    }
+
+    depth -= 1;
+    if (depth === 0 && openingEnd >= 0) return html.slice(openingEnd, match.index);
+  }
+
+  return undefined;
+}
+
+function normalizeArticleContent(value: string) {
+  const paragraphs = stripHtml(value)
+    .split(/\n{2,}/)
+    .map(normalize)
+    .filter(Boolean);
+
+  return paragraphs.join("\n\n");
 }
 
 function extractAffectedArea(value: string) {
@@ -288,7 +362,8 @@ function toVikpgUrl(value: string) {
 
 function stripHtml(value: string) {
   return value
-    .replace(/<\/(?:p|li|div|h[1-6]|br)\s*>/gi, " ")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/(?:p|li|div|h[1-6]|section|article)\s*>/gi, "\n\n")
     .replace(/<[^>]+>/g, " ")
     .replace(/&nbsp;/gi, " ")
     .replace(/&amp;/gi, "&");

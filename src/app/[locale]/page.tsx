@@ -27,6 +27,7 @@ import { EmergencyNumbersStrip } from "@/shared/components/dashboard/emergency-n
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
 import { isLocale, type Locale } from "@/shared/config/locale";
 import { isFeatureEnabled } from "@/shared/config/features";
+import { getContactPath } from "@/shared/config/public-routes";
 import { getTranslations } from "@/shared/lib/translations";
 
 interface LocalePageProps {
@@ -87,7 +88,11 @@ async function DashboardPage({ locale }: { locale: Locale }) {
               <CityAlertsSection locale={locale} />
             </Suspense>
           ) : null}
-          <AdvertisingCard subtitle={advertising.subtitle} title={advertising.title} />
+          <AdvertisingCard
+            href={getContactPath(locale)}
+            subtitle={advertising.subtitle}
+            title={advertising.title}
+          />
         </div>
         <div className="grid items-start gap-5 sm:grid-cols-2">
           <HomepageEventsCard

@@ -7,6 +7,7 @@ import { EventsList } from "@/modules/events/presentation/events-list";
 import { getEventsTranslations } from "@/modules/events/presentation/events-translations";
 import {
   filterEventsForUi,
+  getCityEventsForPublicListing,
   parseEventsUiFilters,
 } from "@/modules/events/presentation/events-ui-model";
 import { ErrorState } from "@/shared/components/error-state";
@@ -52,11 +53,15 @@ async function EventsPage({ params, searchParams }: EventsPageProps) {
 
   try {
     const eventsReadModel = await getCityEvents(context);
-    const events = filterEventsForUi(eventsReadModel.events, context, filters);
+    const cityEvents = getCityEventsForPublicListing(eventsReadModel.events);
+    const cityEventProviders = eventsReadModel.providers.filter(
+      (provider) => provider.id !== "cineplexx-podgorica",
+    );
+    const events = filterEventsForUi(cityEvents, context, filters);
     const allUnavailable =
-      eventsReadModel.providers.length > 0 &&
-      eventsReadModel.providers.every(({ state }) => state === "unavailable");
-    const hasUnavailableProvider = eventsReadModel.providers.some(
+      cityEventProviders.length > 0 &&
+      cityEventProviders.every(({ state }) => state === "unavailable");
+    const hasUnavailableProvider = cityEventProviders.some(
       ({ state }) => state === "unavailable" || state === "stale",
     );
 
@@ -79,7 +84,7 @@ async function EventsPage({ params, searchParams }: EventsPageProps) {
             </p>
           ) : null}
           <EventsList
-            allEvents={eventsReadModel.events}
+            allEvents={cityEvents}
             events={events}
             filters={filters}
             locale={locale}

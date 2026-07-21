@@ -156,7 +156,7 @@ function CityServicesPanel({ services, translations }: CityServicesPanelProps) {
                   <div>
                     <p className="text-sm font-semibold text-foreground">{service.title}</p>
                     {service.description ? (
-                      <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                      <p className="mt-1 whitespace-pre-line text-sm leading-6 text-muted-foreground">
                         {service.description}
                       </p>
                     ) : null}

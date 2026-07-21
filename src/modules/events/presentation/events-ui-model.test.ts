@@ -12,6 +12,7 @@ import {
 } from "./events-translations.ts";
 import {
   filterEventsForUi,
+  getCityEventsForPublicListing,
   getHomepageEvents,
   getHomepageEventsTodayCount,
   getHomepageVenueName,
@@ -154,6 +155,19 @@ test("supports tomorrow and aggregates provider categories for the public UI", (
   );
   assert.equal(getEventPresentationCategory("concert"), "music");
   assert.equal(getEventPresentationCategory("workshop"), "education");
+});
+
+test("keeps cinema programme entries out of the public Events listing", () => {
+  const events = [
+    podgoricaEvent({ category: "movie", id: "movie", title: "Film u bioskopu" }),
+    podgoricaEvent({ id: "cinema", sourceId: "cineplexx-podgorica", title: "Cineplexx" }),
+    podgoricaEvent({ category: "theatre", id: "theatre", title: "Predstava" }),
+  ];
+
+  assert.deepEqual(
+    getCityEventsForPublicListing(events).map((event) => event.id),
+    ["theatre"],
+  );
 });
 
 test("selects at most three upcoming events for the homepage cache read", () => {

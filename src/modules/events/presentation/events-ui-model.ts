@@ -25,6 +25,12 @@ interface EventDayGroup {
   events: readonly CityEvent[];
 }
 
+function getCityEventsForPublicListing(events: readonly CityEvent[]) {
+  return events.filter(
+    (event) => event.category !== "movie" && event.sourceId !== "cineplexx-podgorica",
+  );
+}
+
 function parseEventsUiFilters(
   searchParams: Record<string, string | string[] | undefined>,
 ): EventsUiFilters {
@@ -179,6 +185,7 @@ function isEventSort(value: unknown): value is EventSort {
 
 export {
   filterEventsForUi,
+  getCityEventsForPublicListing,
   getHomepageEvents,
   getHomepageEventsTodayCount,
   getHomepageVenueName,

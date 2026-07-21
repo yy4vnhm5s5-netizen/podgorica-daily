@@ -66,6 +66,26 @@ test("normalizes an active interruption with area and expected restoration time"
   assert.equal(result.alert?.dataMode, "live");
 });
 
+test("extracts only the article body and retains paragraph boundaries", async () => {
+  const result = parseVikpgNotice(
+    activeNotice,
+    await fixture("vikpg-notice-with-metadata.html"),
+    new Date("2026-07-20T10:00:00.000Z"),
+  );
+  const description = result.alert?.description;
+  assert.ok(description?.kind === "source");
+
+  assert.equal(
+    description.value,
+    "Obavještavamo potrošače u naselju Zabjelo da će vodosnabdijevanje biti obustavljeno.\n\nRadovi će trajati do 16.30 časova dana 20.07.2026. godine zbog sanacije kvara.",
+  );
+  assert.equal(description.value.includes("Leave a comment"), false);
+  assert.equal(description.value.includes("Leave review"), false);
+  assert.equal(description.value.includes("Views"), false);
+  assert.equal(description.value.includes("Likes"), false);
+  assert.equal(description.value.includes("Share"), false);
+});
+
 test("keeps future planned interruptions as scheduled", async () => {
   const result = parseVikpgNotice(
     {
