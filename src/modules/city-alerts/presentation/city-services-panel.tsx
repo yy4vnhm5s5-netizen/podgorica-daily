@@ -11,9 +11,13 @@ type CityServiceId = "power" | "water";
 type CityServiceState = "available" | "none" | "unavailable";
 
 interface CityServiceInfo {
+  additionalLocationCount?: number;
   area?: string;
+  detailsHref?: string;
+  detailsLabel?: string;
   description?: string;
   freshnessLabel?: string;
+  locations?: readonly string[];
   publicationContext?: string;
   state: CityServiceState;
   statusLabel?: string;
@@ -27,6 +31,7 @@ interface CityServicesTranslations {
   label: string;
   noPowerOutages: string;
   noWaterInterruptions: string;
+  moreLocations: string;
   officialSource: string;
   power: string;
   scheduled: string;
@@ -143,13 +148,33 @@ function CityServicesPanel({ services, translations }: CityServicesPanelProps) {
           </div>
           <div className="min-w-0 flex-1">
             {service.state === "none" ? (
-              <p className="pt-1 text-sm font-semibold text-foreground">
-                {selectedService === "power"
-                  ? translations.noPowerOutages
-                  : translations.noWaterInterruptions}
-              </p>
+              <div>
+                <p className="pt-1 text-sm font-semibold text-foreground">
+                  {selectedService === "power"
+                    ? translations.noPowerOutages
+                    : translations.noWaterInterruptions}
+                </p>
+                {service.detailsHref && service.detailsLabel ? (
+                  <a
+                    className="mt-2 inline-flex min-h-10 items-center text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    href={service.detailsHref}
+                  >
+                    {service.detailsLabel}
+                  </a>
+                ) : null}
+              </div>
             ) : service.state === "unavailable" ? (
-              <p className="pt-1 text-sm text-muted-foreground">{translations.unavailable}</p>
+              <div>
+                <p className="pt-1 text-sm text-muted-foreground">{translations.unavailable}</p>
+                {service.detailsHref && service.detailsLabel ? (
+                  <a
+                    className="mt-2 inline-flex min-h-10 items-center text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    href={service.detailsHref}
+                  >
+                    {service.detailsLabel}
+                  </a>
+                ) : null}
+              </div>
             ) : (
               <div className="space-y-3">
                 <div className="flex flex-wrap items-start justify-between gap-2">
@@ -166,13 +191,40 @@ function CityServicesPanel({ services, translations }: CityServicesPanelProps) {
                   </StatusBadge>
                 </div>
                 <dl className="grid gap-2 text-sm sm:grid-cols-2">
-                  {service.area ? (
+                  {service.locations && service.locations.length > 0 ? (
+                    <div className="sm:col-span-2">
+                      <dt className="text-xs text-muted-foreground">{translations.area}</dt>
+                      <dd className="mt-1 font-medium text-foreground">
+                        <ul className="space-y-0.5">
+                          {service.locations.map((location) => (
+                            <li key={location}>{location}</li>
+                          ))}
+                        </ul>
+                        {service.additionalLocationCount ? (
+                          <p className="mt-1 text-sm font-medium text-primary">
+                            {formatMoreLocations(
+                              translations.moreLocations,
+                              service.additionalLocationCount,
+                            )}
+                          </p>
+                        ) : null}
+                      </dd>
+                    </div>
+                  ) : service.area ? (
                     <ServiceDetail label={translations.area} value={service.area} />
                   ) : null}
                   {service.time ? (
                     <ServiceDetail label={translations.time} value={service.time} />
                   ) : null}
                 </dl>
+                {service.detailsHref && service.detailsLabel ? (
+                  <a
+                    className="inline-flex min-h-10 items-center text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    href={service.detailsHref}
+                  >
+                    {service.detailsLabel}
+                  </a>
+                ) : null}
                 {service.sourceUrl || service.publicationContext ? (
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t pt-3 text-xs text-muted-foreground">
                     {service.sourceUrl ? (
@@ -205,6 +257,10 @@ function ServiceDetail({ label, value }: { label: string; value: string }) {
       <dd className="mt-0.5 font-medium text-foreground">{value}</dd>
     </div>
   );
+}
+
+function formatMoreLocations(template: string, count: number) {
+  return template.replace("{count}", String(count));
 }
 
 export {

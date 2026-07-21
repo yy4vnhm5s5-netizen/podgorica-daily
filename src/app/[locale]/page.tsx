@@ -11,8 +11,8 @@ import {
   getHomepageEvents,
   getHomepageEventsTodayCount,
   isHomepageEventsUnavailable,
-  selectHomepageEvents,
 } from "@/modules/events/presentation/events-ui-model";
+import { selectHomepageCinemaProgramme } from "@/modules/events/presentation/cineplexx-programme-ui-model";
 import { getRailwayDepartures } from "@/modules/transport/application/get-railway-departures";
 import { BusStationCard } from "@/modules/transport/presentation/bus-station-card";
 import { RailwayStationCard } from "@/modules/transport/presentation/railway-station-card";
@@ -59,6 +59,10 @@ async function DashboardPage({ locale }: { locale: Locale }) {
     isFeatureEnabled("weather") ? getCurrentWeather(context) : null,
   ]);
   const cinemaEvents = events.events.filter((event) => event.sourceId === "cineplexx-podgorica");
+  const cinemaProgramme = selectHomepageCinemaProgramme(cinemaEvents, {
+    now: new Date(),
+    timeZone: context.timezone,
+  });
   const cityEvents = events.events.filter((event) => event.sourceId !== "cineplexx-podgorica");
   const cityEventProviders = events.providers.filter(
     (provider) => provider.id !== "cineplexx-podgorica",
@@ -102,7 +106,8 @@ async function DashboardPage({ locale }: { locale: Locale }) {
             locale={locale}
           />
           <CineplexxProgrammeCard
-            events={selectHomepageEvents(cinemaEvents, context)}
+            day={cinemaProgramme.day}
+            events={cinemaProgramme.events}
             locale={locale}
             state={
               events.providers.find((provider) => provider.id === "cineplexx-podgorica")?.state

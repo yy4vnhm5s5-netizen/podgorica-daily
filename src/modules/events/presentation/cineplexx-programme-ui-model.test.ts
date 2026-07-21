@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   getCineplexxProgrammeDisplayState,
   groupCineplexxProgramme,
+  selectHomepageCinemaProgramme,
 } from "./cineplexx-programme-ui-model.ts";
 
 test("distinguishes Cineplexx empty, unavailable, fresh, and stale programme states", () => {
@@ -39,6 +40,49 @@ test("groups same-day screenings of one Cineplexx movie without merging another 
       { count: 1, title: "Drugi film" },
     ],
   );
+});
+
+test("keeps remaining screenings today ahead of tomorrow's programme", () => {
+  const programme = selectHomepageCinemaProgramme(
+    [
+      cinemaEvent({ id: "today", startsAt: "2026-07-21T18:30:00.000Z", title: "Film danas" }),
+      cinemaEvent({ id: "tomorrow", startsAt: "2026-07-22T12:00:00.000Z", title: "Film sjutra" }),
+    ],
+    { now: new Date("2026-07-21T17:00:00.000Z"), timeZone: "Europe/Podgorica" },
+  );
+
+  assert.equal(programme.day, "today");
+  assert.deepEqual(
+    programme.events.map(({ id }) => id),
+    ["today"],
+  );
+});
+
+test("falls forward to tomorrow once today's final screening has ended", () => {
+  const programme = selectHomepageCinemaProgramme(
+    [
+      cinemaEvent({ id: "past", startsAt: "2026-07-21T15:00:00.000Z", title: "Raniji film" }),
+      cinemaEvent({ id: "tomorrow", startsAt: "2026-07-22T12:00:00.000Z", title: "Film sjutra" }),
+      cinemaEvent({ id: "later", startsAt: "2026-07-23T12:00:00.000Z", title: "Film kasnije" }),
+    ],
+    { now: new Date("2026-07-21T17:00:00.000Z"), timeZone: "Europe/Podgorica" },
+  );
+
+  assert.equal(programme.day, "tomorrow");
+  assert.deepEqual(
+    programme.events.map(({ id }) => id),
+    ["tomorrow"],
+  );
+});
+
+test("uses the empty state only when neither today nor tomorrow has a remaining screening", () => {
+  const programme = selectHomepageCinemaProgramme(
+    [cinemaEvent({ id: "later", startsAt: "2026-07-23T12:00:00.000Z", title: "Film kasnije" })],
+    { now: new Date("2026-07-21T17:00:00.000Z"), timeZone: "Europe/Podgorica" },
+  );
+
+  assert.equal(programme.day, "none");
+  assert.deepEqual(programme.events, []);
 });
 
 function cinemaEvent({ id, startsAt, title }: { id: string; startsAt: string; title: string }) {

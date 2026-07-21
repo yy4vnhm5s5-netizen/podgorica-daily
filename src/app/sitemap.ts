@@ -5,6 +5,7 @@ import { getCityEvents } from "@/modules/events/application/get-city-events";
 import { locales } from "@/shared/config/locale";
 import {
   getContactPath,
+  getElectricityPath,
   getPrivacyPolicyPath,
   getTermsOfUsePath,
 } from "@/shared/config/public-routes";
@@ -33,6 +34,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: new URL(path, siteConfig.url).toString(),
     }),
   );
+  const electricityEntry: MetadataRoute.Sitemap = [
+    {
+      changeFrequency: "daily",
+      priority: 0.7,
+      url: new URL(getElectricityPath(), siteConfig.url).toString(),
+    },
+  ];
 
   const eventEntries = await Promise.all(
     locales.map(async (locale) => {
@@ -53,5 +61,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }),
   );
 
-  return [...stableEntries, ...contactEntries, ...legalEntries, ...eventEntries.flat()];
+  return [
+    ...stableEntries,
+    ...contactEntries,
+    ...legalEntries,
+    ...electricityEntry,
+    ...eventEntries.flat(),
+  ];
 }

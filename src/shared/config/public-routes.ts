@@ -4,6 +4,10 @@ function getContactPath(locale: Locale) {
   return locale === "me" ? "/me/kontakt" : "/en/contact";
 }
 
+function getElectricityPath() {
+  return "/struja";
+}
+
 function getContactLocaleAlternates() {
   return {
     en: getContactPath("en"),
@@ -20,4 +24,10 @@ function getTermsOfUsePath() {
   return "/me/uslovi-koriscenja";
 }
 
-export { getContactLocaleAlternates, getContactPath, getPrivacyPolicyPath, getTermsOfUsePath };
+export {
+  getContactLocaleAlternates,
+  getContactPath,
+  getElectricityPath,
+  getPrivacyPolicyPath,
+  getTermsOfUsePath,
+};

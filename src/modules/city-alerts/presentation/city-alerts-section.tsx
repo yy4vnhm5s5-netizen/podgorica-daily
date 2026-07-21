@@ -16,6 +16,7 @@ import {
   getActiveCityAlerts,
   type CityAlertsMetadata,
 } from "@/modules/city-alerts/application/get-active-city-alerts";
+import { getHomepagePowerOutageLocations } from "@/modules/city-alerts/application/power-outage-selection";
 import { selectNextPowerOutage } from "@/modules/city-alerts/application/select-next-power-outage";
 import type { AlertSeverity, AlertType, CityAlert } from "@/modules/city-alerts/domain/city-alert";
 import {
@@ -35,6 +36,7 @@ import { Timestamp } from "@/shared/components/timestamp";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import type { Locale } from "@/shared/config/locale";
 import { getLocaleTag } from "@/shared/config/locale";
+import { getElectricityPath } from "@/shared/config/public-routes";
 import { formatDateTime } from "@/shared/lib/date";
 import { cn } from "@/shared/lib/utils";
 
@@ -141,7 +143,11 @@ function getCityServices(
   return {
     power: powerAlert
       ? toCityServiceInfo(powerAlert, cedisSource, locale, translations)
-      : toEmptyCityServiceInfo(cedisSource, locale, translations),
+      : {
+          ...toEmptyCityServiceInfo(cedisSource, locale, translations),
+          detailsHref: getElectricityPath(),
+          detailsLabel: locale === "me" ? "Pogledajte detalje" : "View details",
+        },
     water: waterAlert
       ? toCityServiceInfo(waterAlert, vikpgSource, locale, translations)
       : toEmptyCityServiceInfo(vikpgSource, locale, translations),
@@ -180,7 +186,13 @@ function toCityServiceInfo(
     .join(" – ");
 
   return {
-    area: getCityAlertContent(alert.affectedArea, translations),
+    ...(alert.type === "powerOutage"
+      ? {
+          ...getHomepagePowerOutageLocations(alert),
+          detailsHref: getElectricityPath(),
+          detailsLabel: locale === "me" ? "Pogledajte detalje" : "View details",
+        }
+      : { area: getCityAlertContent(alert.affectedArea, translations) }),
     description: getCityAlertContent(alert.description, translations),
     freshnessLabel: source
       ? getCityServiceFreshnessLabel({

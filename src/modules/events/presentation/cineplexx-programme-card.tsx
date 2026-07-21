@@ -15,12 +15,18 @@ import { formatDateTime } from "@/shared/lib/date";
 const cineplexxProgrammeUrl = "https://www.cineplexx.me/cinemas/CINEPLEXX-PODGORICA/";
 
 interface CineplexxProgrammeCardProps {
+  day?: "today" | "tomorrow" | "none";
   events: readonly CityEvent[];
   locale: Locale;
   state: EventProviderState | undefined;
 }
 
-function CineplexxProgrammeCard({ events, locale, state }: CineplexxProgrammeCardProps) {
+function CineplexxProgrammeCard({
+  day = "today",
+  events,
+  locale,
+  state,
+}: CineplexxProgrammeCardProps) {
   const translations = getCineplexxProgrammeTranslations(locale);
   const movies = groupCineplexxProgramme(events).slice(0, 3);
   const displayState = getCineplexxProgrammeDisplayState({
@@ -36,7 +42,9 @@ function CineplexxProgrammeCard({ events, locale, state }: CineplexxProgrammeCar
         </div>
         <div className="min-w-0">
           <h2 className="text-base font-semibold tracking-tight">{translations.title}</h2>
-          <p className="mt-0.5 text-sm text-muted-foreground">{translations.subtitle}</p>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            {day === "tomorrow" ? translations.tomorrow : translations.subtitle}
+          </p>
         </div>
       </CardHeader>
       <CardContent className="p-4 pt-0 sm:p-5 sm:pt-0">
