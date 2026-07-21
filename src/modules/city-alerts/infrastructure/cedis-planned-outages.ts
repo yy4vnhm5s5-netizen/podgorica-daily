@@ -3,8 +3,12 @@ import { createHash } from "node:crypto";
 import type { CityAlert } from "@/modules/city-alerts/domain/city-alert";
 
 const cedisOrigin = "https://cedis.me";
-const municipalityPattern =
-  /\b(Podgorica|Nikšić|Danilovgrad|Cetinje|Kolašin|Herceg Novi|Bar|Budva|Kotor|Tivat|Ulcinj|Pljevlja|Bijelo Polje|Berane|Rožaje|Plav|Gusinje|Mojkovac|Šavnik|Žabljak|Tuzi|Zeta)\s*[-–—:]/gi;
+const municipalityNames =
+  "Podgorica|Nikšić|Danilovgrad|Cetinje|Kolašin|Herceg Novi|Bar|Budva|Kotor|Tivat|Ulcinj|Pljevlja|Bijelo Polje|Berane|Rožaje|Plav|Gusinje|Mojkovac|Šavnik|Žabljak|Tuzi|Zeta";
+const municipalityPattern = new RegExp(
+  `\\b(${municipalityNames})\\s*(?:[-–—:]\\s*|(?=\\n|$))`,
+  "gi",
+);
 const monthNumbers: Record<string, number> = {
   april: 3,
   aprila: 3,
@@ -74,7 +78,7 @@ function parseCedisArticleResult(
     };
   }
 
-  const text = normalizeWhitespace(stripHtml(html));
+  const text = toArticleText(html);
   if (!text) {
     return { alerts: [], contentRecognized: false, warnings: ["article-content-unrecognized"] };
   }
@@ -143,7 +147,9 @@ function getPodgoricaSection(text: string) {
 
 function getPodgoricaSections(text: string) {
   const sections: Array<{ section: string; startIndex: number }> = [];
-  const matches = [...text.matchAll(/\bPodgorica\s*[-–—:]/gi)];
+  const matches = [
+    ...text.matchAll(new RegExp(`\\b(Podgorica)\\s*(?:[-–—:]\\s*|(?=\\n|$))`, "gi")),
+  ];
   for (const [index, match] of matches.entries()) {
     const startIndex = (match.index ?? 0) + match[0].length;
     const nextPodgoricaIndex = matches[index + 1]?.index ?? text.length;
@@ -269,6 +275,17 @@ function normalizeArea(value: string) {
 }
 function stripHtml(value: string) {
   return value.replace(/<[^>]+>/g, " ").replace(/&nbsp;/gi, " ");
+}
+function toArticleText(value: string) {
+  return value
+    .replace(/<\/?(?:article|div|h[1-6]|li|ol|p|section|ul)[^>]*>/gi, "\n")
+    .replace(/<br\s*\/?\s*>/gi, "\n")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/[\t\f\r ]+/g, " ")
+    .replace(/ *\n */g, "\n")
+    .replace(/\n{2,}/g, "\n")
+    .trim();
 }
 function addDays(value: Date, days: number) {
   const next = new Date(value);

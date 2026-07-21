@@ -50,6 +50,8 @@ const createFixtureClient = (pages: Record<string, string>): CedisHttpClient => 
 const fixedNow = () => new Date("2026-03-29T12:00:00.000Z");
 const listingUrl = "https://cedis.me/servisne-informacije/";
 const articleUrl = "https://cedis.me/planirani-radovi-za-30-mart/";
+const currentArticleUrl =
+  "https://cedis.me/servisne-informacije/planirani-radovi-na-mrezi-za-22-jul/";
 const collectorCachePath = join(tmpdir(), "podgorica-daily-cedis-collector-test.json");
 
 test("refreshes listing, article, parser, and cache through injected HTTP", async () => {
@@ -66,6 +68,28 @@ test("refreshes listing, article, parser, and cache through injected HTTP", asyn
   assert.equal(result.success, true);
   assert.ok(result.snapshot?.alerts.length);
   assert.equal(memory.getSnapshot()?.alerts.length, result.snapshot?.alerts.length);
+});
+
+test("writes Podgorica notices from the current bare-heading CEDIS structure", async () => {
+  const memory = createMemoryCache();
+  const result = await refreshCedis({
+    cache: memory.cache,
+    httpClient: createFixtureClient({
+      [currentArticleUrl]: await fixture("cedis-bare-municipality-heading.html"),
+      [listingUrl]: `<a href="${currentArticleUrl}">Planirani radovi na mreži za 22. jul</a>`,
+    }),
+    now: () => new Date("2026-07-21T12:00:00.000Z"),
+  });
+
+  assert.equal(result.classification, "trustworthy-non-empty");
+  assert.equal(result.freshAlertCount, 4);
+  assert.equal(result.snapshot?.alerts.length, 4);
+  assert.equal(memory.getSnapshot()?.alerts.length, 4);
+  assert.ok(
+    result.snapshot?.alerts.every(
+      (alert) => alert.status === "scheduled" && alert.type === "powerOutage",
+    ),
+  );
 });
 
 test("rejects external URLs before a fetch is attempted", () => {

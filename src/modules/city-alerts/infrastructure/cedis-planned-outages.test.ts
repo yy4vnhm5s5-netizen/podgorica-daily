@@ -28,6 +28,42 @@ test("isolates Podgorica and stops at the next municipality", async () => {
   assert.ok(!section?.includes("Nikšić"));
 });
 
+test("parses a bare Podgorica heading from the current CEDIS article structure", async () => {
+  const alerts = parseCedisArticle(
+    {
+      title: "Planirani radovi na mreži za 22. jul",
+      url: "https://cedis.me/servisne-informacije/planirani-radovi-na-mrezi-za-22-jul/",
+    },
+    await fixture("cedis-bare-municipality-heading.html"),
+    new Date("2026-07-21T12:00:00Z"),
+  );
+
+  assert.deepEqual(
+    alerts.map((alert) => alert.affectedArea.kind === "source" && alert.affectedArea.value),
+    [
+      "Ulica Pohorska i Pljevaljska.",
+      "Liješta, Dučići, Koći i Radan.",
+      "Ulica Raka Mugoše.",
+      "Ubli, Živkovići i Prelevići.",
+    ],
+  );
+  assert.deepEqual(
+    alerts.map((alert) => alert.startsAt?.toISOString()),
+    [
+      "2026-07-22T06:00:00.000Z",
+      "2026-07-22T06:00:00.000Z",
+      "2026-07-22T06:00:00.000Z",
+      "2026-07-22T07:00:00.000Z",
+    ],
+  );
+  assert.ok(
+    alerts.every(
+      (alert) =>
+        alert.affectedArea.kind !== "source" || !alert.affectedArea.value.includes("Ponari"),
+    ),
+  );
+});
+
 test("parses multiple time formats and DST-aware timestamps", () => {
   assert.deepEqual(parseTimeRange("od 08 do 15 sati")?.start, { hour: 8, minute: 0 });
   assert.deepEqual(parseTimeRange("08.30 do 13 sati")?.end, { hour: 13, minute: 0 });
