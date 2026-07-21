@@ -87,6 +87,7 @@ function deserializeCedisCacheSnapshot(value: unknown): CedisCacheSnapshot | und
   const alerts = deserializeCityAlerts(value.alerts);
   if (
     !alerts ||
+    !alerts.every(isSafeCedisCacheAlert) ||
     !isString(value.fetchedAt) ||
     !isFreshnessStatus(value.freshnessStatus) ||
     !isString(value.lastSuccessfulRefreshAt) ||
@@ -110,6 +111,26 @@ function deserializeCedisCacheSnapshot(value: unknown): CedisCacheSnapshot | und
     ...(value.sourceUpdatedAt ? { sourceUpdatedAt: value.sourceUpdatedAt } : {}),
     sourceUrl: value.sourceUrl,
   };
+}
+
+function isSafeCedisCacheAlert(alert: CityAlert) {
+  return getSourceValues(alert).every((value) => !containsEmbeddedCodeArtifact(value));
+}
+
+function getSourceValues(alert: CityAlert) {
+  return [
+    alert.affectedArea,
+    alert.description,
+    alert.source,
+    alert.title,
+    ...(alert.rawSourceText ? [{ kind: "source" as const, value: alert.rawSourceText }] : []),
+  ].flatMap((content) => (content.kind === "source" ? [content.value] : []));
+}
+
+function containsEmbeddedCodeArtifact(value: string) {
+  return /(?:\bwindow\s*\.|\blazysizesconfig\b|<\/?(?:script|style)\b|[{}]|;\s*(?:window\b|[A-Za-z_$][\w$]*\s*=))/i.test(
+    value,
+  );
 }
 
 async function readCedisCache(
@@ -160,6 +181,7 @@ export {
   defaultCachePath,
   readCedisCache,
   readCedisCacheResult,
+  isSafeCedisCacheAlert,
   writeCedisCache,
   CedisCacheError,
   type CacheFileSystem,

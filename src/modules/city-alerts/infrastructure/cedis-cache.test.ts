@@ -76,6 +76,40 @@ test("returns a normalized read error for invalid cache JSON", async () => {
   assert.equal(result.error?.code, "cache-invalid-json");
 });
 
+test("rejects legacy cached CEDIS alerts that contain embedded-code artifacts", async () => {
+  const pollutedSnapshot: CedisCacheSnapshot = {
+    ...snapshot(),
+    alerts: [
+      {
+        affectedArea: {
+          kind: "source",
+          value:
+            "none;} window.lazySizesConfig=window.lazySizesConfig||{};window.lazySizesConfig.loadMode=1;",
+        },
+        cityIds: ["podgorica"],
+        dataMode: "live",
+        description: { kind: "source", value: "Planirano isključenje." },
+        id: "polluted-legacy-alert",
+        publishedAt: new Date("2026-07-04T12:00:00.000Z"),
+        severity: "information",
+        source: { kind: "source", value: "CEDIS" },
+        startsAt: new Date("2026-07-04T12:00:00.000Z"),
+        status: "active",
+        title: { kind: "source", value: "Planirano isključenje struje" },
+        type: "powerOutage",
+      },
+    ],
+  };
+
+  const result = await readCedisCacheResult(
+    "cache.json",
+    fileSystem({ readFile: async () => JSON.stringify(pollutedSnapshot) }),
+  );
+
+  assert.equal(result.snapshot, null);
+  assert.equal(result.error?.code, "cache-invalid-json");
+});
+
 test("returns a normalized read error for a permission failure", async () => {
   const result = await readCedisCacheResult(
     "cache.json",

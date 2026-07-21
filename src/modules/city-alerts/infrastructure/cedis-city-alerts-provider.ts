@@ -64,6 +64,11 @@ function refreshCedisAlertStatus(alert: CityAlert, now: Date): CityAlert {
     return { ...alert, status: "scheduled" };
   }
 
+  const fallbackTimestamp = alert.startsAt ?? alert.publishedAt;
+  if (fallbackTimestamp && now.getTime() - fallbackTimestamp.getTime() >= 24 * 60 * 60 * 1000) {
+    return { ...alert, status: "expired" };
+  }
+
   if (alert.status === "expired") return alert;
 
   return { ...alert, status: "active" };

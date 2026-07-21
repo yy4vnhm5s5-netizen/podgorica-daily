@@ -1,5 +1,9 @@
 import type { CityAlert } from "../domain/city-alert.ts";
-import { calculateFreshness, type CedisCacheSnapshot } from "./cedis-cache.ts";
+import {
+  calculateFreshness,
+  isSafeCedisCacheAlert,
+  type CedisCacheSnapshot,
+} from "./cedis-cache.ts";
 import type { CedisHttpClient } from "./cedis-http-client.ts";
 import {
   cedisOrigin,
@@ -45,11 +49,16 @@ function createRefreshResult(
   previous: CedisCacheSnapshot | null,
   now = new Date(),
 ): RefreshResult {
-  const alerts = deduplicateAlerts(input.alerts);
+  const malformedAlertCount = input.alerts.filter((alert) => !isSafeCedisCacheAlert(alert)).length;
+  const alerts = deduplicateAlerts(input.alerts.filter(isSafeCedisCacheAlert));
+  const parserWarnings = [
+    ...input.parserWarnings,
+    ...(malformedAlertCount > 0 ? ["embedded-code-artifact"] : []),
+  ];
   const suspiciousEmpty =
     alerts.length === 0 &&
     ((input.inspectedArticles === 0 && !input.listingConfidentlyEmpty) ||
-      input.parserWarnings.length > 0);
+      parserWarnings.length > 0);
 
   if (suspiciousEmpty) {
     return retainPrevious(
@@ -57,7 +66,7 @@ function createRefreshResult(
       "structurally-suspicious",
       "suspicious-empty-result",
       "CEDIS parser result is structurally suspicious.",
-      input.parserWarnings,
+      parserWarnings,
     );
   }
 
@@ -67,7 +76,7 @@ function createRefreshResult(
     fetchedAt: timestamp,
     freshnessStatus: calculateFreshness(now, now),
     lastSuccessfulRefreshAt: timestamp,
-    parserWarnings: input.parserWarnings,
+    parserWarnings,
     schemaVersion: 1,
     source: "CEDIS",
     sourceUrl: input.sourceUrl,
@@ -78,7 +87,7 @@ function createRefreshResult(
     retainedPreviousSnapshot: false,
     snapshot,
     success: true,
-    warnings: input.parserWarnings,
+    warnings: parserWarnings,
   };
 }
 

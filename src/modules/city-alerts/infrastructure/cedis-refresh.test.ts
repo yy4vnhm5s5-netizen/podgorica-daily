@@ -4,7 +4,11 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
-import type { CedisCacheSnapshot } from "./cedis-cache.ts";
+import {
+  readCedisCacheResult,
+  type CacheFileSystem,
+  type CedisCacheSnapshot,
+} from "./cedis-cache.ts";
 import {
   assertCedisUrl,
   createCedisHttpClient,
@@ -54,6 +58,44 @@ const currentArticleUrl =
   "https://cedis.me/servisne-informacije/planirani-radovi-na-mrezi-za-22-jul/";
 const collectorCachePath = join(tmpdir(), "podgorica-daily-cedis-collector-test.json");
 
+const pollutedLegacySnapshot = () => ({
+  alerts: [
+    {
+      affectedArea: {
+        kind: "source",
+        value:
+          "none;} window.lazySizesConfig=window.lazySizesConfig||{};window.lazySizesConfig.loadMode=1;",
+      },
+      cityIds: ["podgorica"],
+      dataMode: "live",
+      description: { kind: "source", value: "Planirano isključenje." },
+      id: "polluted-legacy-alert",
+      publishedAt: "2026-07-04T12:00:00.000Z",
+      severity: "information",
+      source: { kind: "source", value: "CEDIS" },
+      startsAt: "2026-07-04T12:00:00.000Z",
+      status: "active",
+      title: { kind: "source", value: "Planirano isključenje struje" },
+      type: "powerOutage",
+    },
+  ],
+  fetchedAt: "2026-07-04T12:00:00.000Z",
+  freshnessStatus: "fresh",
+  lastSuccessfulRefreshAt: "2026-07-04T12:00:00.000Z",
+  parserWarnings: [],
+  schemaVersion: 1,
+  source: "CEDIS",
+  sourceUrl: listingUrl,
+});
+
+const cacheFileSystem = (contents: string): CacheFileSystem => ({
+  mkdir: async () => undefined,
+  readFile: async () => contents,
+  rename: async () => undefined,
+  rm: async () => undefined,
+  writeFile: async () => undefined,
+});
+
 test("refreshes listing, article, parser, and cache through injected HTTP", async () => {
   const memory = createMemoryCache();
   const result = await refreshCedis({
@@ -70,8 +112,8 @@ test("refreshes listing, article, parser, and cache through injected HTTP", asyn
   assert.equal(memory.getSnapshot()?.alerts.length, result.snapshot?.alerts.length);
 });
 
-test("writes Podgorica notices from the current bare-heading CEDIS structure", async () => {
-  const memory = createMemoryCache();
+test("replaces, rather than merges, a prior cache with clean current CEDIS notices", async () => {
+  const memory = createMemoryCache(previousSnapshot());
   const result = await refreshCedis({
     cache: memory.cache,
     httpClient: createFixtureClient({
@@ -85,10 +127,41 @@ test("writes Podgorica notices from the current bare-heading CEDIS structure", a
   assert.equal(result.freshAlertCount, 4);
   assert.equal(result.snapshot?.alerts.length, 4);
   assert.equal(memory.getSnapshot()?.alerts.length, 4);
+  assert.ok(!memory.getSnapshot()?.alerts.some((alert) => alert.id === "previous"));
   assert.ok(
     result.snapshot?.alerts.every(
       (alert) => alert.status === "scheduled" && alert.type === "powerOutage",
     ),
+  );
+});
+
+test("replaces a rejected polluted legacy cache with clean fresh CEDIS notices", async () => {
+  const legacyCache = await readCedisCacheResult(
+    "cache.json",
+    cacheFileSystem(JSON.stringify(pollutedLegacySnapshot())),
+  );
+  assert.equal(legacyCache.snapshot, null);
+
+  const memory = createMemoryCache(legacyCache.snapshot);
+  const result = await refreshCedis({
+    cache: memory.cache,
+    httpClient: createFixtureClient({
+      [currentArticleUrl]: await fixture("cedis-bare-municipality-heading.html"),
+      [listingUrl]: `<a href="${currentArticleUrl}">Planirani radovi na mreži za 22. jul</a>`,
+    }),
+    now: () => new Date("2026-07-21T12:00:00.000Z"),
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(memory.getSnapshot()?.alerts.length, 4);
+  assert.ok(
+    memory
+      .getSnapshot()
+      ?.alerts.every(
+        (alert) =>
+          alert.affectedArea.kind !== "source" ||
+          !alert.affectedArea.value.includes("lazySizesConfig"),
+      ),
   );
 });
 
@@ -178,6 +251,25 @@ test("replaces a previous cache with a confidently empty listing", async () => {
     httpClient: createFixtureClient({ [listingUrl]: "<a href='/vijest/'>Obavještenje</a>" }),
     now: fixedNow,
   });
+  assert.equal(result.classification, "trustworthy-empty");
+  assert.equal(result.retainedPreviousSnapshot, false);
+  assert.equal(memory.getSnapshot()?.alerts.length, 0);
+});
+
+test("writes a confirmed empty snapshot after a polluted legacy cache was rejected", async () => {
+  const legacyCache = await readCedisCacheResult(
+    "cache.json",
+    cacheFileSystem(JSON.stringify(pollutedLegacySnapshot())),
+  );
+  assert.equal(legacyCache.snapshot, null);
+
+  const memory = createMemoryCache(legacyCache.snapshot);
+  const result = await refreshCedis({
+    cache: memory.cache,
+    httpClient: createFixtureClient({ [listingUrl]: "<a href='/vijest/'>Obavještenje</a>" }),
+    now: fixedNow,
+  });
+
   assert.equal(result.classification, "trustworthy-empty");
   assert.equal(result.retainedPreviousSnapshot, false);
   assert.equal(memory.getSnapshot()?.alerts.length, 0);

@@ -90,6 +90,27 @@ test("reclassifies cached future CEDIS outages as scheduled when the cache is re
   assert.equal(result.alerts[0]?.status, "scheduled");
 });
 
+test("does not expose a July 4 CEDIS outage as active on July 21", async () => {
+  const result = await getCedisCityAlerts({
+    context,
+    mode: "live",
+    now: () => new Date("2026-07-21T12:00:00.000Z"),
+    readCache: async () => ({
+      ...cache("fresh"),
+      alerts: [
+        {
+          ...liveAlert,
+          publishedAt: new Date("2026-07-04T12:00:00.000Z"),
+          startsAt: undefined,
+          status: "active",
+        },
+      ],
+    }),
+  });
+
+  assert.equal(result.alerts[0]?.status, "expired");
+});
+
 test("returns unavailable metadata when no live cache exists", async () => {
   const result = await getCedisCityAlerts({ context, mode: "live", readCache: async () => null });
   assert.equal(result.freshnessStatus, "unavailable");
