@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  getDistinctCineplexxMovieCount,
   getCineplexxProgrammeDisplayState,
   groupCineplexxProgramme,
   selectHomepageCinemaProgramme,
@@ -40,6 +41,25 @@ test("groups same-day screenings of one Cineplexx movie without merging another 
       { count: 1, title: "Drugi film" },
     ],
   );
+});
+
+test("counts distinct Cineplexx movies instead of individual screenings", () => {
+  const firstScreening = cinemaEvent({
+    id: "one",
+    startsAt: "2026-07-20T14:20:00.000Z",
+    title: "Film",
+  });
+  const secondScreening = {
+    ...cinemaEvent({ id: "two", startsAt: "2026-07-20T16:30:00.000Z", title: "Film" }),
+    tags: firstScreening.tags,
+  };
+  const otherMovie = cinemaEvent({
+    id: "three",
+    startsAt: "2026-07-20T16:30:00.000Z",
+    title: "Drugi film",
+  });
+
+  assert.equal(getDistinctCineplexxMovieCount([firstScreening, secondScreening, otherMovie]), 2);
 });
 
 test("keeps remaining screenings today ahead of tomorrow's programme", () => {

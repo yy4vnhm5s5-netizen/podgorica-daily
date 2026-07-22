@@ -1,53 +1,34 @@
-import { CalendarDays, CloudSun, Clock3, Wind } from "lucide-react";
+import { CalendarDays, Clapperboard, MicVocal, Thermometer } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import type { ReactNode } from "react";
+import Link from "next/link";
 
-import type { DailyOverviewResult } from "@/modules/daily-overview/application/get-daily-overview";
-import {
-  getDailyEventsSummary,
-  type DailyEventsSummaryInput,
-} from "@/modules/daily-overview/presentation/daily-summary-events";
-import {
-  getDailyOverviewTranslations,
-  type DailyOverviewTranslations,
-} from "@/modules/daily-overview/presentation/daily-overview-translations";
+import { getDailyOverviewTranslations } from "@/modules/daily-overview/presentation/daily-overview-translations";
 import type { CurrentWeatherResult } from "@/modules/weather/application/get-current-weather";
 import { getWeatherTemperature } from "@/modules/weather/presentation/weather-temperature";
-import { StatusBadge, type StatusTone } from "@/shared/components/status-badge";
-import { Timestamp } from "@/shared/components/timestamp";
 import { Card } from "@/shared/components/ui/card";
 import type { Locale } from "@/shared/config/locale";
-import { getLocaleTag } from "@/shared/config/locale";
+import { getCinemaPath, getEventsPath, getGoingOutPath } from "@/shared/config/public-routes";
+import type { City } from "@/shared/types/city";
 import { dailySummaryLayout } from "./daily-summary-layout";
 
 interface DailySummaryBarProps {
-  events: DailyEventsSummaryInput;
+  city: City;
+  eventsCount: number;
   locale: Locale;
-  result: DailyOverviewResult;
+  moviesCount: number;
+  performancesCount: number;
   weather: CurrentWeatherResult | null;
 }
 
-function DailySummaryBar({ events, locale, result, weather }: DailySummaryBarProps) {
+function DailySummaryBar({
+  city,
+  eventsCount,
+  locale,
+  moviesCount,
+  performancesCount,
+  weather,
+}: DailySummaryBarProps) {
   const translations = getDailyOverviewTranslations(locale);
-
-  if (result.status !== "success") {
-    return (
-      <section aria-labelledby="daily-summary-heading">
-        <h1
-          className="mb-2 text-sm font-semibold tracking-tight text-foreground sm:text-base"
-          id="daily-summary-heading"
-        >
-          {translations.summaryLabel}
-        </h1>
-        <Card className="card-fog card-fog--summary border-blue-200/90 bg-blue-50/60 px-4 py-3 text-sm text-muted-foreground">
-          {translations.unavailable}
-        </Card>
-      </section>
-    );
-  }
-
-  const { airQualityCategory, generatedAt } = result.data;
-  const eventsSummary = getDailyEventsSummary(events);
   const temperatureCelsius = getWeatherTemperature(weather);
 
   return (
@@ -60,69 +41,69 @@ function DailySummaryBar({ events, locale, result, weather }: DailySummaryBarPro
       </h1>
       <Card className="card-fog card-fog--summary border-blue-200/90 bg-blue-50/60 px-3 py-2 sm:px-4">
         <span aria-hidden="true" className="absolute inset-x-0 top-0 h-px bg-blue-300/80" />
-        <dl className={dailySummaryLayout.gridClassName}>
+        <div className={dailySummaryLayout.gridClassName}>
           <span aria-hidden="true" className={dailySummaryLayout.verticalDividerClassName} />
           <span aria-hidden="true" className={dailySummaryLayout.horizontalDividerClassName} />
-          <SummaryItem icon={CloudSun} label={translations.temperature}>
+          <SummaryItem icon={Thermometer} label={translations.temperature}>
             {temperatureCelsius === undefined ? "—" : `${temperatureCelsius.toFixed(0)}°C`}
           </SummaryItem>
-          <SummaryItem icon={Wind} label={translations.airQualityLabel}>
-            {airQualityCategory ? (
-              <StatusBadge tone={airQualityTones[airQualityCategory]}>
-                {translations.airQualityCategories[airQualityCategory]}
-              </StatusBadge>
-            ) : (
-              "—"
-            )}
+          <SummaryItem
+            href={getGoingOutPath(city)}
+            icon={MicVocal}
+            label={translations.performancesLabel}
+          >
+            {translations.performancesCount(performancesCount)}
           </SummaryItem>
-          <SummaryItem icon={CalendarDays} label={translations.eventsLabel}>
-            <EventsSummaryValue summary={eventsSummary} translations={translations} />
+          <SummaryItem
+            href={getEventsPath(city)}
+            icon={CalendarDays}
+            label={translations.eventsLabel}
+          >
+            {translations.eventsCount(eventsCount)}
           </SummaryItem>
-          <SummaryItem icon={Clock3} label={translations.lastUpdated}>
-            <Timestamp locale={getLocaleTag(locale)} value={generatedAt} />
+          <SummaryItem
+            href={getCinemaPath(city)}
+            icon={Clapperboard}
+            label={translations.moviesLabel}
+          >
+            {translations.moviesCount(moviesCount)}
           </SummaryItem>
-        </dl>
+        </div>
       </Card>
     </section>
   );
 }
 
-function EventsSummaryValue({
-  summary,
-  translations,
-}: {
-  summary: ReturnType<typeof getDailyEventsSummary>;
-  translations: DailyOverviewTranslations;
-}) {
-  if (summary.status === "unavailable") return translations.unavailable;
-  if (summary.status === "empty") return translations.eventsEmpty;
-  return summary.status === "today"
-    ? translations.eventsToday(summary.count)
-    : translations.eventsUpcoming(summary.count);
-}
-
 interface SummaryItemProps {
-  children: ReactNode;
+  children: string;
+  href?: string;
   icon: LucideIcon;
   label: string;
 }
 
-function SummaryItem({ children, icon: Icon, label }: SummaryItemProps) {
-  return (
-    <div className={dailySummaryLayout.itemClassName}>
+function SummaryItem({ children, href, icon: Icon, label }: SummaryItemProps) {
+  const content = (
+    <>
       <Icon aria-hidden="true" className="size-4 shrink-0 text-blue-700" strokeWidth={1.8} />
-      <div className="min-w-0">
-        <dt className="text-xs text-muted-foreground">{label}</dt>
-        <dd className="mt-0.5 text-sm font-semibold text-foreground">{children}</dd>
-      </div>
-    </div>
+      <span className="min-w-0">
+        <span className="block text-xs text-muted-foreground">{label}</span>
+        <span className="mt-0.5 block text-sm font-semibold text-foreground">{children}</span>
+      </span>
+    </>
   );
-}
 
-const airQualityTones: Record<"good" | "moderate" | "unhealthy", StatusTone> = {
-  good: "success",
-  moderate: "warning",
-  unhealthy: "error",
-};
+  if (href) {
+    return (
+      <Link
+        className={`${dailySummaryLayout.itemClassName} rounded-md transition-colors hover:bg-blue-100/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary`}
+        href={href}
+      >
+        {content}
+      </Link>
+    );
+  }
+
+  return <div className={dailySummaryLayout.itemClassName}>{content}</div>;
+}
 
 export { DailySummaryBar };

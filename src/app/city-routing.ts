@@ -14,6 +14,7 @@ import {
 } from "@/shared/config/cities";
 import {
   getCityPath,
+  getCinemaPath,
   getElectricityPath,
   getEventsPath,
   getFlightsPath,
@@ -65,6 +66,7 @@ function getCanonicalCitySitemapPaths() {
 function getCitySitemapPaths(city: City) {
   return [
     getCityPath(city),
+    ...(supportsCityCapability(city, "events") ? [getCinemaPath(city)] : []),
     ...(supportsCityCapability(city, "events") ? [getEventsPath(city)] : []),
     ...(supportsCityCapability(city, "electricity") ? [getElectricityPath(city)] : []),
     ...(supportsCityCapability(city, "flights") ? [getFlightsPath(city)] : []),

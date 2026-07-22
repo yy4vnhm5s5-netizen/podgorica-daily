@@ -59,6 +59,11 @@ function groupCineplexxProgramme(
   return [...groups.values()];
 }
 
+function getDistinctCineplexxMovieCount(events: readonly CityEvent[]) {
+  return new Set(events.map((event) => tagValue(event, "movie") ?? normalizeText(event.title)))
+    .size;
+}
+
 function selectHomepageCinemaProgramme(
   events: readonly CityEvent[],
   { now, timeZone }: { now: Date; timeZone: string },
@@ -117,6 +122,7 @@ function tagValue(event: CityEvent, name: string) {
 }
 
 export {
+  getDistinctCineplexxMovieCount,
   getCineplexxProgrammeDisplayState,
   groupCineplexxProgramme,
   selectHomepageCinemaProgramme,

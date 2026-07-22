@@ -101,6 +101,7 @@ test("sitemap emits only capability-supported routes for active cities", () => {
 
   assert.deepEqual(getActiveCitySitemapPaths([limited, inactive]), [
     "/limited",
+    "/limited/filmovi",
     "/limited/dogadjaji",
   ]);
   assert.equal(getActiveCitySitemapPaths([limited, inactive]).includes("/"), false);

@@ -32,7 +32,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     return paths.map((path) => {
       const priority = path === landingPath ? 1 : 0.7;
       const changeFrequency =
-        path.endsWith("/dogadjaji") || path.endsWith("/izlasci")
+        path.endsWith("/dogadjaji") || path.endsWith("/izlasci") || path.endsWith("/filmovi")
           ? "daily"
           : path.endsWith("/letovi") || path === landingPath
             ? "hourly"

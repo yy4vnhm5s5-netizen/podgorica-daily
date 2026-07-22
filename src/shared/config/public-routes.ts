@@ -11,6 +11,10 @@ function getContactPath() {
   return "/kontakt";
 }
 
+function getCinemaPath(city: CityRouteTarget) {
+  return `${getCityPath(city)}/filmovi`;
+}
+
 function getElectricityPath(city: CityRouteTarget) {
   return `${getCityPath(city)}/struja`;
 }
@@ -41,6 +45,7 @@ function getTermsOfUsePath() {
 
 export {
   getCityPath,
+  getCinemaPath,
   getContactPath,
   getElectricityPath,
   getEventDetailPath,

@@ -6,12 +6,15 @@ import { HomepageEventsCard } from "@/modules/events/presentation/homepage-event
 import {
   getCityEventsForPublicListing,
   getHomepageEvents,
-  getHomepageEventsTodayCount,
   isHomepageEventsUnavailable,
 } from "@/modules/events/presentation/events-ui-model";
-import { selectHomepageCinemaProgramme } from "@/modules/events/presentation/cineplexx-programme-ui-model";
+import {
+  getDistinctCineplexxMovieCount,
+  selectHomepageCinemaProgramme,
+} from "@/modules/events/presentation/cineplexx-programme-ui-model";
 import { AirportFlightsCard } from "@/modules/flights/presentation/airport-flights-card";
 import { GoingOutSection } from "@/modules/going-out/presentation/going-out-section";
+import { getAvailableGoingOutEvents } from "@/modules/going-out/presentation/going-out-ui-model";
 import { RailwayStationCard } from "@/modules/transport/presentation/railway-station-card";
 import {
   CityAlertsSection,
@@ -35,7 +38,7 @@ async function CityDashboard({ context }: CityDashboardProps) {
   const { city, locale } = context;
   const translations = getTranslations(locale);
   const { advertising, emergencyNumbers } = translations.dashboard;
-  const { capabilities, dailyOverview, events, flights, goingOut, railway, weather } =
+  const { capabilities, events, flights, goingOut, railway, weather } =
     await loadCityDashboardData(context);
   const cinemaEvents = events.events.filter((event) => event.sourceId === "cineplexx-podgorica");
   const cinemaProgramme = selectHomepageCinemaProgramme(cinemaEvents, {
@@ -48,24 +51,21 @@ async function CityDashboard({ context }: CityDashboardProps) {
   );
   const homepageCityEvents = getHomepageEvents(cityEvents, context);
   const cityEventsUnavailable = isHomepageEventsUnavailable(cityEventProviders);
-  const dailyEvents = {
-    isUnavailable: !capabilities.events || cityEventsUnavailable,
-    todayCount: getHomepageEventsTodayCount(homepageCityEvents, context.timezone),
-    upcomingCount: homepageCityEvents.length,
-  };
+  const goingOutCount = goingOut ? getAvailableGoingOutEvents(goingOut.events).length : 0;
+  const cinemaMovieCount = getDistinctCineplexxMovieCount(cinemaEvents);
 
   return (
     <DashboardLayout city={city} translations={translations}>
       <section className="space-y-10" id="dashboard">
         <div className="space-y-7">
-          {dailyOverview ? (
-            <DailySummaryBar
-              events={dailyEvents}
-              locale={locale}
-              result={dailyOverview}
-              weather={weather}
-            />
-          ) : null}
+          <DailySummaryBar
+            city={city}
+            eventsCount={homepageCityEvents.length}
+            locale={locale}
+            moviesCount={cinemaMovieCount}
+            performancesCount={goingOutCount}
+            weather={weather}
+          />
           {isFeatureEnabled("cityAlerts") && capabilities.cityAlerts ? (
             <Suspense fallback={<CityAlertsSectionLoading context={context} locale={locale} />}>
               <CityAlertsSection context={context} locale={locale} />

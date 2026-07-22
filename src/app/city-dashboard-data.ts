@@ -1,4 +1,3 @@
-import { getDailyOverview } from "@/modules/daily-overview/application/get-daily-overview";
 import {
   getCityEvents,
   getEmptyCityEventsReadModel,
@@ -15,7 +14,6 @@ import { getCityDashboardCapabilities } from "./city-routing.ts";
 interface CityDashboardDependencies {
   getCityEvents: typeof getCityEvents;
   getCurrentWeather: typeof getCurrentWeather;
-  getDailyOverview: typeof getDailyOverview;
   getGoingOutEvents: typeof getGoingOutEvents;
   getPodgoricaFlights: typeof getPodgoricaFlights;
   getRailwayDepartures: typeof getRailwayDepartures;
@@ -25,7 +23,6 @@ interface CityDashboardDependencies {
 const defaultDependencies: CityDashboardDependencies = {
   getCityEvents,
   getCurrentWeather,
-  getDailyOverview,
   getGoingOutEvents,
   getPodgoricaFlights,
   getRailwayDepartures,
@@ -39,13 +36,7 @@ async function loadCityDashboardData(
   const resolvedDependencies = { ...defaultDependencies, ...dependencies };
   const capabilities = getCityDashboardCapabilities(context);
 
-  const [dailyOverview, events, flights, goingOut, railway, weather] = await Promise.all([
-    resolvedDependencies.isFeatureEnabled("dailyOverview")
-      ? resolvedDependencies.getDailyOverview(context, {
-          includeCityAlerts:
-            resolvedDependencies.isFeatureEnabled("cityAlerts") && capabilities.cityAlerts,
-        })
-      : Promise.resolve(null),
+  const [events, flights, goingOut, railway, weather] = await Promise.all([
     capabilities.events
       ? resolvedDependencies.getCityEvents(context)
       : Promise.resolve(getEmptyCityEventsReadModel()),
@@ -63,7 +54,7 @@ async function loadCityDashboardData(
       : Promise.resolve(null),
   ]);
 
-  return { capabilities, dailyOverview, events, flights, goingOut, railway, weather };
+  return { capabilities, events, flights, goingOut, railway, weather };
 }
 
 export { loadCityDashboardData, type CityDashboardDependencies };

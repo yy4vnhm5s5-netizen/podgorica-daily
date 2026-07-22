@@ -19,7 +19,11 @@ function getGoingOutDisplayState({
 }
 
 function getHomepageGoingOutEvents(events: readonly GoingOutEvent[], now = new Date()) {
-  return selectUpcomingGoingOutEvents(events, now, 6);
+  return getAvailableGoingOutEvents(events, now).slice(0, 6);
+}
+
+function getAvailableGoingOutEvents(events: readonly GoingOutEvent[], now = new Date()) {
+  return selectUpcomingGoingOutEvents(events, now);
 }
 
 function getGoingOutPageEvents(events: readonly GoingOutEvent[], now = new Date()) {
@@ -41,6 +45,7 @@ function formatGoingOutSchedule(event: GoingOutEvent, locale: Locale) {
 
 export {
   formatGoingOutSchedule,
+  getAvailableGoingOutEvents,
   getGoingOutDisplayState,
   getGoingOutPageEvents,
   getHomepageGoingOutEvents,

@@ -4,6 +4,7 @@ import test from "node:test";
 import type { GoingOutEvent } from "../domain/going-out-event.ts";
 import {
   formatGoingOutSchedule,
+  getAvailableGoingOutEvents,
   getGoingOutDisplayState,
   getHomepageGoingOutEvents,
 } from "./going-out-ui-model.ts";
@@ -19,6 +20,12 @@ const events: GoingOutEvent[] = Array.from({ length: 7 }, (_, index) => ({
 
 test("limits homepage presentation to six cached upcoming events", () => {
   assert.equal(getHomepageGoingOutEvents(events, new Date("2026-07-22T10:00:00.000Z")).length, 6);
+});
+
+test("returns every available upcoming event for a dashboard count", () => {
+  const now = new Date("2026-07-22T10:00:00.000Z");
+
+  assert.equal(getAvailableGoingOutEvents(events, now).length, 7);
 });
 
 test("separates empty, unavailable and stale presentation states", () => {
