@@ -11,7 +11,7 @@ const cnpProviderMetadata = {
   id: "cnp",
   officialSource: "https://cnp.me/repertoar/",
   providerMode: "live",
-  refreshIntervalMinutes: 60,
+  refreshIntervalMinutes: 180,
   sourceUrl: "https://cnp.me/repertoar/",
   supportedCityIds: ["podgorica"] as readonly CityId[],
   supportsMultipleCities: false,

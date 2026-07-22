@@ -20,7 +20,7 @@ Each collector has a named owner, monitoring for failure and staleness, alert th
 
 CEDIS is the currently approved HTML collection source for planned Podgorica power outages. The collector uses only `https://cedis.me/servisne-informacije/` and validated official article URLs, with a clear product user agent, a 10-second timeout, one retry, and low request volume. It is manually invoked with `pnpm run collect:cedis`; pages only read its cache.
 
-The bundled VPS scheduler refreshes CEDIS every 30 minutes. It uses local fixtures for automated tests and preserves a valid cached snapshot when the source, network, or markup is suspicious. The local cache is appropriate for development and persistent servers, but not as durable shared storage in serverless deployments. See ADR 0007 for configuration, classification, and scheduling constraints.
+The bundled VPS scheduler refreshes CEDIS every six hours. It uses local fixtures for automated tests and preserves a valid cached snapshot when the source, network, or markup is suspicious. The local cache is appropriate for development and persistent servers, but not as durable shared storage in serverless deployments. See ADR 0007 for configuration, classification, and scheduling constraints.
 
 ## VIK Podgorica water-service notices
 
@@ -34,7 +34,7 @@ The parser uses local fixtures and injected HTTP in tests. It retains a valid sn
 
 ## Podgorica Airport flights
 
-Podgorica Airport flights are collected only from the public first-party feed used by the official Airports of Montenegro [Podgorica Airport status page](https://montenegroairports.com/en/podgorica-airport/): `https://montenegroairports.com/aerodromixs/cache-flights.php?airport=pg`. The browser frontend requests this endpoint with a public `GET` and renders its `value` array into the arrivals and departures tables. `pnpm run collect:podgorica-flights` requests only this validated HTTPS URL, applies a ten-second timeout, one transient retry, an explicit user agent, response-size validation, and Zod validation of the JSON payload before normalization. It writes `.runtime/cache/podgorica-flights.json` atomically and retains a valid snapshot if the source or parser fails. Homepage and `/podgorica/letovi` reads never request the airport source. The bundled VPS scheduler runs it every 30 minutes. Tests use saved public-feed fixtures and injected HTTP only. See ADR 0019.
+Podgorica Airport flights are collected only from the public first-party feed used by the official Airports of Montenegro [Podgorica Airport status page](https://montenegroairports.com/en/podgorica-airport/): `https://montenegroairports.com/aerodromixs/cache-flights.php?airport=pg`. The browser frontend requests this endpoint with a public `GET` and renders its `value` array into the arrivals and departures tables. `pnpm run collect:podgorica-flights` requests only this validated HTTPS URL, applies a ten-second timeout, one transient retry, an explicit user agent, response-size validation, and Zod validation of the JSON payload before normalization. It writes `.runtime/cache/podgorica-flights.json` atomically and retains a valid snapshot if the source or parser fails. Homepage and `/podgorica/letovi` reads never request the airport source. The bundled VPS scheduler runs it every 15 minutes. Tests use saved public-feed fixtures and injected HTTP only. See ADR 0019.
 
 ## MonteGigs going out
 

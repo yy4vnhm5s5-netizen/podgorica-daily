@@ -69,7 +69,7 @@ test("reads the atomically written cache without a live request", async () => {
     now: new Date("2026-07-22T10:00:00.000Z"),
   });
 
-  const cached = await getCachedMonteGigsGoingOut(cachePath, new Date("2026-07-22T12:01:00.000Z"));
+  const cached = await getCachedMonteGigsGoingOut(cachePath, new Date("2026-07-22T14:01:00.000Z"));
   assert.equal(cached.state, "stale");
   assert.equal(cached.events.length, 2);
 });

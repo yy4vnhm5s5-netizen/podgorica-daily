@@ -109,7 +109,7 @@ test("registers CNP only for enabled live events and preserves its official Podg
   assert.deepEqual(cnpProviderMetadata.supportedCityIds, ["podgorica"]);
   assert.equal(cnpProviderMetadata.officialSource, "https://cnp.me/repertoar/");
   assert.equal(cnpProviderMetadata.cachePath, ".runtime/cache/cnp-events.json");
-  assert.equal(cnpProviderMetadata.refreshIntervalMinutes, 60);
+  assert.equal(cnpProviderMetadata.refreshIntervalMinutes, 180);
 });
 
 test("reads the CNP cache without fetching and disables unsupported cities", async () => {

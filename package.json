@@ -21,6 +21,7 @@
     "collect:glavni-grad-events": "node --experimental-strip-types src/modules/events/infrastructure/collect-glavni-grad-events.ts",
     "collect:tourism-events": "node --experimental-strip-types src/modules/events/infrastructure/collect-tourism-events.ts",
     "collect:cineplexx-events": "node --experimental-strip-types src/modules/events/infrastructure/collect-cineplexx-events.ts",
+    "events:refresh-standard": "node --experimental-strip-types src/modules/events/infrastructure/collect-standard-events.ts",
     "events:refresh": "node --experimental-strip-types src/modules/events/infrastructure/collect-events.ts",
     "start": "next start",
     "lint": "eslint .",

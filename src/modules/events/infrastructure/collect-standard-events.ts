@@ -1,7 +1,7 @@
 import { getEventRefreshExitCode, serializeEventRefreshSummary } from "./events-refresh-cli.ts";
-import { refreshCineplexxEvents } from "./events-refresh.ts";
+import { refreshStandardEvents } from "./events-refresh.ts";
 
-void refreshCineplexxEvents()
+void refreshStandardEvents()
   .then((summary) => {
     process.stdout.write(`${serializeEventRefreshSummary(summary)}\n`);
     process.exitCode = getEventRefreshExitCode(summary);

@@ -83,7 +83,7 @@ const cedisProviderMetadata: ProviderMetadata = {
   enabled: true,
   id: "cedis",
   officialSource: "https://cedis.me/servisne-informacije/",
-  refreshIntervalMinutes: 60,
+  refreshIntervalMinutes: 360,
   supportedCityIds: ["podgorica"],
   supportsMultipleCities: false,
 };

@@ -46,7 +46,7 @@ const defaultVikpgCachePath = env.VIKPG_CACHE_PATH;
 function calculateVikpgFreshness(
   fetchedAt: Date | undefined,
   now = new Date(),
-  maxAgeMinutes = 90,
+  maxAgeMinutes = env.VIKPG_CACHE_FRESHNESS_MINUTES,
 ): VikpgFreshnessStatus {
   return calculateCacheFreshness(fetchedAt, now, maxAgeMinutes);
 }
@@ -65,7 +65,10 @@ async function readVikpgCacheResult(
       };
     }
     return {
-      snapshot,
+      snapshot: {
+        ...snapshot,
+        freshnessStatus: calculateVikpgFreshness(new Date(snapshot.fetchedAt)),
+      },
     };
   } catch (error) {
     if (isMissingFileError(error)) return { snapshot: null };

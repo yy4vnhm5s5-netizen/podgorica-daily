@@ -10,7 +10,7 @@ const kicProviderMetadata = {
   id: "kic-budo-tomovic",
   officialSource: "https://kic.podgorica.me/novosti",
   providerMode: "live",
-  refreshIntervalMinutes: 60,
+  refreshIntervalMinutes: 180,
   sourceUrl: "https://kic.podgorica.me/novosti",
   supportedCityIds: ["podgorica"],
   supportsMultipleCities: false,

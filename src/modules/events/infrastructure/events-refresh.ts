@@ -21,24 +21,24 @@ import { refreshTourismEvents } from "./tourism-refresh.ts";
 
 async function refreshAllEvents(): Promise<EventRefreshSummary> {
   const context = getDefaultCityContext();
-  const providers: EventRefreshProvider[] = [
-    {
-      id: "cineplexx-podgorica",
-      refresh: async () => {
-        const result = await refreshCineplexxProgramme({
-          cachePath: env.CINEPLEXX_EVENT_CACHE_PATH,
-          context,
-          previousSnapshot: await readEventCacheSnapshot(env.CINEPLEXX_EVENT_CACHE_PATH),
-          qualityPolicy: getEventQualityPolicy(),
-          renderer: createCineplexxBrowserRenderer({ chromiumPath: env.CHROMIUM_PATH }),
-        });
-        return {
-          acceptedCount: result.snapshot?.events.length ?? 0,
-          retainedPreviousSnapshot: result.retainedPreviousSnapshot,
-          success: result.success,
-        };
-      },
-    },
+  return refreshEventProviders([
+    createCineplexxRefreshProvider(context),
+    ...createStandardEventRefreshProviders(context),
+  ]);
+}
+
+async function refreshStandardEvents(): Promise<EventRefreshSummary> {
+  return refreshEventProviders(createStandardEventRefreshProviders(getDefaultCityContext()));
+}
+
+async function refreshCineplexxEvents(): Promise<EventRefreshSummary> {
+  return refreshEventProviders([createCineplexxRefreshProvider(getDefaultCityContext())]);
+}
+
+function createStandardEventRefreshProviders(
+  context: ReturnType<typeof getDefaultCityContext>,
+): EventRefreshProvider[] {
+  return [
     {
       id: "kic",
       refresh: async () => {
@@ -95,6 +95,33 @@ async function refreshAllEvents(): Promise<EventRefreshSummary> {
       },
     },
   ];
+}
+
+function createCineplexxRefreshProvider(
+  context: ReturnType<typeof getDefaultCityContext>,
+): EventRefreshProvider {
+  return {
+    id: "cineplexx-podgorica",
+    refresh: async () => {
+      const result = await refreshCineplexxProgramme({
+        cachePath: env.CINEPLEXX_EVENT_CACHE_PATH,
+        context,
+        previousSnapshot: await readEventCacheSnapshot(env.CINEPLEXX_EVENT_CACHE_PATH),
+        qualityPolicy: getEventQualityPolicy(),
+        renderer: createCineplexxBrowserRenderer({ chromiumPath: env.CHROMIUM_PATH }),
+      });
+      return {
+        acceptedCount: result.snapshot?.events.length ?? 0,
+        retainedPreviousSnapshot: result.retainedPreviousSnapshot,
+        success: result.success,
+      };
+    },
+  };
+}
+
+async function refreshEventProviders(
+  providers: EventRefreshProvider[],
+): Promise<EventRefreshSummary> {
   emitInfo({
     event: "events-refresh-started",
     providers: providers.map(({ id }) => id),
@@ -141,4 +168,11 @@ function logKicRefreshFailure(error: unknown) {
   });
 }
 
-export { refreshAllEvents, type EventRefreshSummary };
+export {
+  createCineplexxRefreshProvider,
+  createStandardEventRefreshProviders,
+  refreshAllEvents,
+  refreshCineplexxEvents,
+  refreshStandardEvents,
+  type EventRefreshSummary,
+};

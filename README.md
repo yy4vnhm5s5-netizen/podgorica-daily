@@ -12,7 +12,7 @@ CEDIS data is collected only by the cache-backed command below; dashboard reques
 pnpm run collect:cedis
 ```
 
-The bundled VPS scheduler refreshes CEDIS every 30 minutes. The file cache at `.runtime/cache/cedis-planned-outages.json` persists locally and on a VPS, but is not durable on serverless/Vercel filesystems. See [ADR 0007](docs/adr/0007-cedis-cached-planned-outages.md) for collection, cache, and exit-code behaviour.
+The bundled VPS scheduler refreshes CEDIS every six hours. The file cache at `.runtime/cache/cedis-planned-outages.json` persists locally and on a VPS, but is not durable on serverless/Vercel filesystems. See [ADR 0007](docs/adr/0007-cedis-cached-planned-outages.md) for collection, cache, and exit-code behaviour.
 
 ## VIK Podgorica water notices
 

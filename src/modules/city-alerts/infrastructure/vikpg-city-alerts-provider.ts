@@ -82,7 +82,7 @@ const vikpgProviderMetadata: ProviderMetadata = {
   enabled: true,
   id: "vikpg",
   officialSource: "https://vikpg.me/me/mediji/servisne-informacije/obavjestenja.html",
-  refreshIntervalMinutes: 60,
+  refreshIntervalMinutes: 120,
   supportedCityIds: ["podgorica"],
   supportsMultipleCities: false,
 };

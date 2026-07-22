@@ -10,7 +10,7 @@ const tourismEventProviderMetadata = {
   id: "tourism-podgorica",
   officialSource: "https://podgorica.travel/dogadjaji-kalendar/",
   providerMode: "live",
-  refreshIntervalMinutes: 60,
+  refreshIntervalMinutes: 180,
   sourceUrl: "https://podgorica.travel/dogadjaji-kalendar/",
   supportedCityIds: ["podgorica"],
   supportsMultipleCities: false,

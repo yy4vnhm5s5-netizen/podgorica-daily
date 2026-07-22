@@ -10,7 +10,7 @@ const glavniGradEventProviderMetadata = {
   id: "glavni-grad-podgorica",
   officialSource: "https://podgorica.me/category/aktuelni-dogadjaji/",
   providerMode: "live",
-  refreshIntervalMinutes: 60,
+  refreshIntervalMinutes: 180,
   sourceUrl: "https://podgorica.me/category/aktuelni-dogadjaji/",
   supportedCityIds: ["podgorica"],
   supportsMultipleCities: false,

@@ -4,7 +4,12 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
+import { getDefaultCityContext } from "@/config/city-context";
 import { lockFileName, staleLockMs } from "./events-refresh-lock.ts";
+import {
+  createCineplexxRefreshProvider,
+  createStandardEventRefreshProviders,
+} from "./events-refresh.ts";
 import { runEventRefresh, type EventRefreshProvider } from "./events-refresh-runner.ts";
 
 async function withCacheDirectory(run: (directory: string) => Promise<void>) {
@@ -19,6 +24,15 @@ async function withCacheDirectory(run: (directory: string) => Promise<void>) {
 function provider(id: string, refresh: EventRefreshProvider["refresh"]): EventRefreshProvider {
   return { id, refresh };
 }
+
+test("keeps standard event providers separate from the Cineplexx refresh plan", () => {
+  const context = getDefaultCityContext();
+  assert.deepEqual(
+    createStandardEventRefreshProviders(context).map(({ id }) => id),
+    ["kic", "cnp", "glavni-grad-podgorica", "tourism-podgorica"],
+  );
+  assert.equal(createCineplexxRefreshProvider(context).id, "cineplexx-podgorica");
+});
 
 test("runs every provider in order and preserves accepted counts and retained cache state", async () => {
   await withCacheDirectory(async (cacheDirectory) => {

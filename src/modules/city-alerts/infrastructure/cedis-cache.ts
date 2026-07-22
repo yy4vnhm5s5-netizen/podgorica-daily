@@ -45,7 +45,7 @@ const defaultCachePath = env.CEDIS_CACHE_PATH;
 function calculateFreshness(
   fetchedAt: Date | undefined,
   now = new Date(),
-  maxAgeMinutes = 90,
+  maxAgeMinutes = env.CEDIS_CACHE_FRESHNESS_MINUTES,
 ): FreshnessStatus {
   return calculateCacheFreshness(fetchedAt, now, maxAgeMinutes);
 }
@@ -64,7 +64,10 @@ async function readCedisCacheResult(
       };
     }
     return {
-      snapshot,
+      snapshot: {
+        ...snapshot,
+        freshnessStatus: calculateFreshness(new Date(snapshot.fetchedAt)),
+      },
     };
   } catch (error) {
     if (isMissingFileError(error)) return { snapshot: null };

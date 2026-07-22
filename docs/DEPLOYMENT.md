@@ -11,17 +11,17 @@ The repository has a Railway Docker web deployment configuration. CEDIS, VIK Pod
 - `NEXT_PUBLIC_APP_ENV=production`, `NODE_ENV=production`, and `DEFAULT_CITY=podgorica` are required operational values.
 - Events are public only from cache. Enable live event content with `ENABLE_EVENTS=true` and `EVENT_PROVIDER_MODE=live`; disabled mode safely shows no event data. Mock provider modes are rejected in production.
 - `RUNTIME_DATA_DIR` is the shared root for file-backed provider caches. It defaults to `.runtime` locally. Without an explicit per-provider override, CEDIS resolves to `<RUNTIME_DATA_DIR>/cache/cedis-planned-outages.json`, VIK to `<RUNTIME_DATA_DIR>/cache/vikpg-water-alerts.json`, and MonteGigs Going Out to `<RUNTIME_DATA_DIR>/cache/montegigs-going-out.json`. Set `ENABLE_GOING_OUT=false` to keep the MonteGigs module hidden and prevent boot initialization.
-- `CITY_ALERTS_REFRESH_SECRET` must be a server-only value of at least 32 characters before enabling scheduled City Alerts refreshes. It is intentionally separate from `EVENT_REFRESH_SECRET`.
+- Each protected refresh route has an independent server-only secret of at least 32 characters: `CEDIS_REFRESH_SECRET`, `VIKPG_REFRESH_SECRET`, `FLIGHTS_REFRESH_SECRET`, `STANDARD_EVENTS_REFRESH_SECRET`, `CINEPLEXX_REFRESH_SECRET`, `GOING_OUT_REFRESH_SECRET`, and `ZPCG_RAILWAY_REFRESH_SECRET`. The legacy aggregate `CITY_ALERTS_REFRESH_SECRET` and `EVENT_REFRESH_SECRET` remain available only for their aggregate endpoints.
 - The contact form delivers only through server-side SMTP. Set `CONTACT_EMAIL`, `SMTP_FROM`, `SMTP_HOST`, `SMTP_PORT`, and `SMTP_SECURE`; provide `SMTP_USERNAME` and `SMTP_PASSWORD` together when the relay requires authentication. Do not expose any of these values to the browser. Without a complete SMTP configuration, the form returns a safe delivery-unavailable state and does not claim that an inquiry was sent.
 - Weather may call Open-Meteo during server rendering and already has a safe failure state. It does not require an API key.
 
-`CITY_ALERTS_REFRESH_SECRET` and `EVENT_REFRESH_SECRET` are server-only secrets when configured. Do not commit a real `.env.production`, expose either value to the browser, or include it in logs.
+Every refresh secret is server-only. Do not commit a real `.env.production`, expose a refresh secret to the browser, or include one in logs.
 
 ## Cache and scheduling
 
 The shared JSON cache creates missing parent directories and writes by temporary file plus atomic rename. The Compose `event-cache` volume is initialized for UID/GID 1001 and mounted at `/var/lib/podgorica-daily/cache` in both app and scheduler containers. Container recreation therefore does not erase cache snapshots.
 
-The Compose scheduler invokes event collectors independently once per hour, staggered at minutes 07 (KIC), 17 (CNP), 27 (Glavni Grad), 37 (Tourism), and 47 (MonteGigs Going Out). It invokes the rendered Cineplexx collector at minutes 05 and 17, CEDIS and VIK together every 30 minutes at minutes 00 and 30, Podgorica Airport flights every 30 minutes at minutes 15 and 45, and ŽPCG at approximately 06:45 and 18:45 host-local time. The scheduler and web runtime images include system Chromium for the Cineplexx public-page renderer. Set `CINEPLEXX_CACHE_FRESHNESS_MINUTES=780` (the default) to match its twice-daily cadence; optionally set `CINEPLEXX_EVENT_CACHE_PATH` below the mounted runtime directory. A per-collector atomic directory lock prevents overlap. Collector JSON is available through container logs; a retained previous cache exits successfully, while an unrecoverable refresh exits non-zero. Visitor requests never invoke collection.
+The Compose scheduler uses `TZ=Europe/Podgorica` with Alpine `tzdata`, so schedules follow local civil time and daylight-saving changes. It refreshes Flights every 15 minutes; VIK every two hours; CEDIS every six hours; KIC, CNP, Glavni Grad, and Tourism together every three hours through one shared Events lock; MonteGigs every three hours; Cineplexx only at 05:00 and 17:00; and ŽPCG at 06:45 and 18:45. The scheduler and web runtime images include system Chromium for the Cineplexx public-page renderer. `EVENT_CACHE_FRESHNESS_MINUTES=240`, `GOING_OUT_CACHE_FRESHNESS_MINUTES=240`, `VIKPG_CACHE_FRESHNESS_MINUTES=150`, and `CEDIS_CACHE_FRESHNESS_MINUTES=420` are deliberately longer than their respective cadences. Flights remains 90 minutes, while Cineplexx and ŽPCG remain 780 minutes. A provider-specific atomic lock prevents overlap. Collector JSON is available through container logs; a retained previous cache exits successfully for CEDIS and VIK, while an unrecoverable refresh exits non-zero. Visitor requests never invoke collection.
 
 The file-cache architecture is suitable for one VPS or another single persistent host. It is not safe for serverless or horizontally scaled deployments: ephemeral instances do not share `.runtime/cache`, atomic writes are local only, and scheduled collectors have no durable shared target. A durable storage adapter is required before considering managed/serverless hosting.
 
@@ -41,20 +41,15 @@ The background initialization makes a first deployment useful, but it is not a d
 
 Run the web process and scheduled refresh logic in one Railway service, with one Railway Volume mounted at `/app/.runtime`. Set `RUNTIME_DATA_DIR=/app/.runtime`; do not set conflicting per-provider cache paths. CEDIS then writes `/app/.runtime/cache/cedis-planned-outages.json` and VIK writes `/app/.runtime/cache/vikpg-water-alerts.json`. The web process and refresh logic read and write that same service-local volume. Refresh locking prevents overlapping executions.
 
-For initial deployment, startup logs report `cache found` or `cache missing`, then the CEDIS/VIK refresh result and alert count. For subsequent refreshes, use the protected `POST /api/internal/city-alerts/refresh` endpoint every 30 minutes. It invokes both CEDIS and VIK collectors in one run, and their existing per-provider atomic locks prevent overlapping refreshes. The endpoint accepts no request-supplied URLs or configuration, returns only safe summaries, and must never be called from public client code.
+For initial deployment, startup logs report `cache found` or `cache missing`, then the provider refresh result and count. For subsequent Railway refreshes, use fixed protected endpoints on the Web service. They accept no request-supplied provider, URL, cache path, or configuration, return safe summaries only, and must never be called from public client code.
 
 ### Railway Cron trigger configuration
 
 Do not set `cronSchedule` on the web service: Railway Cron starts a service’s command and expects that command to exit, whereas the web service must continue serving requests. Instead, create one small Railway Cron trigger service that only invokes the web service’s protected endpoint; it must not mount the web service’s Volume and it never reads or writes provider cache files.
 
-1. Keep the web service on the repository `Dockerfile`, mount its Railway Volume at `/app/.runtime`, and set `RUNTIME_DATA_DIR=/app/.runtime` and the server-only `CITY_ALERTS_REFRESH_SECRET` (at least 32 characters).
-2. Create a separate trigger service from `curlimages/curl`. Set its **Cron Schedule** to `*/30 * * * *` (Railway schedules are UTC). Set its start command to:
-
-   ```sh
-   sh -c 'curl --fail-with-body --silent --show-error --request POST --header "Authorization: Bearer $CITY_ALERTS_REFRESH_SECRET" "$CITY_ALERTS_REFRESH_URL"'
-   ```
-
-3. In that trigger service, set `CITY_ALERTS_REFRESH_URL` to the web service’s internal or public HTTPS URL plus `/api/internal/city-alerts/refresh`, and configure the same secret through Railway’s secret-variable reference. Do not print either variable, put either in repository configuration, or mount a Volume on the trigger service.
+1. Keep the web service on the repository `Dockerfile`, mount its Railway Volume at `/app/.runtime`, and set `RUNTIME_DATA_DIR=/app/.runtime` plus the server-only refresh secrets required by the jobs below.
+2. Create a separate `curlimages/curl` trigger service for each fixed endpoint. A trigger service must not mount the Web service’s Volume; it only sends an authenticated request to the Web service, which owns the lock and atomic cache write.
+3. Use the complete endpoint, schedule, and daylight-saving-time instructions in [DEPLOYMENT_RAILWAY.md](DEPLOYMENT_RAILWAY.md#recurring-refresh-jobs). Do not put a secret in a URL or repository configuration.
 
 Expected endpoint responses are `200` when both latest refreshes succeed, `207` when any provider retained a previous valid snapshot, failed, or was locked while another provider completed, `409` when every provider is already running, and `500` when no provider completed or no secret is configured. Each response contains only `provider`, `attempted`, `success`, `alertCount`, `cacheStatus`, `retainedPreviousCache`, optional `errorCode`, and parser `warnings`; it excludes cache paths, alert payloads, HTML, and secrets. A retained cache is a partial refresh result, not a loss of the valid snapshot.
 

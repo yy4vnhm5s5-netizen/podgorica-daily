@@ -33,8 +33,8 @@ const fileSystem = (overrides: Partial<CacheFileSystem> = {}): CacheFileSystem =
 
 test("calculates fresh, stale, and unavailable cache states", () => {
   const now = new Date("2026-07-17T12:00:00Z");
-  assert.equal(calculateFreshness(new Date("2026-07-17T11:00:00Z"), now), "fresh");
-  assert.equal(calculateFreshness(new Date("2026-07-17T10:00:00Z"), now), "stale");
+  assert.equal(calculateFreshness(new Date("2026-07-17T11:00:00Z"), now, 90), "fresh");
+  assert.equal(calculateFreshness(new Date("2026-07-17T10:00:00Z"), now, 90), "stale");
   assert.equal(calculateFreshness(undefined, now), "unavailable");
 });
 
