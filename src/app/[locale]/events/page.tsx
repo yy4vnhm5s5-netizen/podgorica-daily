@@ -22,6 +22,10 @@ interface EventsPageProps {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
 
+// Events are collector-managed cache snapshots. Do not persist a separate Next.js
+// route snapshot, which could disagree with links rendered on the dashboard.
+export const revalidate = 0;
+
 async function generateMetadata({ params }: Pick<EventsPageProps, "params">): Promise<Metadata> {
   const { locale: localeParam } = await params;
   if (!isLocale(localeParam)) return {};

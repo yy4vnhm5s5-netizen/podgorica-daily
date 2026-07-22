@@ -13,6 +13,7 @@ import {
 import {
   filterEventsForUi,
   getCityEventsForPublicListing,
+  getPublicCityEventById,
   getHomepageEvents,
   getHomepageEventsTodayCount,
   getHomepageVenueName,
@@ -179,6 +180,33 @@ test("keeps cinema programme entries out of the public Events listing", () => {
     getCityEventsForPublicListing(events).map((event) => event.id),
     ["theatre"],
   );
+});
+
+test("uses one canonical public event set for homepage, listing, and detail links", () => {
+  const now = new Date("2026-07-17T10:00:00.000Z");
+  const events = [
+    podgoricaEvent({ id: "city-event", startsAt: "2026-07-17T13:00:00.000Z" }),
+    podgoricaEvent({ category: "movie", id: "movie", startsAt: "2026-07-17T14:00:00.000Z" }),
+    podgoricaEvent({
+      id: "cineplexx",
+      sourceId: "cineplexx-podgorica",
+      startsAt: "2026-07-17T15:00:00.000Z",
+    }),
+  ];
+  const publicEvents = getCityEventsForPublicListing(events);
+  const homepageEvents = getHomepageEvents(publicEvents, context, now);
+
+  assert.deepEqual(
+    publicEvents.map((event) => event.id),
+    ["city-event"],
+  );
+  assert.deepEqual(
+    homepageEvents.map((event) => event.id),
+    ["city-event"],
+  );
+  assert.equal(getPublicCityEventById(events, homepageEvents[0]?.id ?? "")?.id, "city-event");
+  assert.equal(getPublicCityEventById(events, "movie"), undefined);
+  assert.equal(getPublicCityEventById(events, "cineplexx"), undefined);
 });
 
 test("selects at most three upcoming events for the homepage cache read", () => {

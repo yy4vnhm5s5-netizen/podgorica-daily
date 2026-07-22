@@ -29,6 +29,10 @@ function getCityEventsForPublicListing(events: readonly CityEvent[]) {
   return events.filter((event) => event.category !== "movie" && !isCineplexxProgrammeEvent(event));
 }
 
+function getPublicCityEventById(events: readonly CityEvent[], eventId: string) {
+  return getCityEventsForPublicListing(events).find((event) => event.id === eventId);
+}
+
 function isCineplexxProgrammeEvent(event: CityEvent) {
   return (
     event.sourceId === "cineplexx-podgorica" ||
@@ -203,6 +207,7 @@ function isEventSort(value: unknown): value is EventSort {
 export {
   filterEventsForUi,
   getCityEventsForPublicListing,
+  getPublicCityEventById,
   getHomepageEvents,
   getHomepageEventsTodayCount,
   getHomepageVenueName,

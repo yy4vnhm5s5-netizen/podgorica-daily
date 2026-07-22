@@ -8,6 +8,7 @@ import { getCityEvents } from "@/modules/events/application/get-city-events";
 import { CineplexxProgrammeCard } from "@/modules/events/presentation/cineplexx-programme-card";
 import { HomepageEventsCard } from "@/modules/events/presentation/homepage-events-card";
 import {
+  getCityEventsForPublicListing,
   getHomepageEvents,
   getHomepageEventsTodayCount,
   isHomepageEventsUnavailable,
@@ -34,9 +35,11 @@ interface LocalePageProps {
   params: Promise<{ locale: string }>;
 }
 
-// Keep the route fresh enough to reflect newly collected cache snapshots without
-// opting every route in the application out of Next.js caching.
-export const revalidate = 60;
+// Event, alert, and transport data is read from collector-managed local snapshots.
+// Rendering this route dynamically keeps every public event link aligned with the
+// current snapshot instead of serving a stale Full Route Cache entry after a refresh.
+// External weather fetching retains its own explicit ten-minute Data Cache policy.
+export const revalidate = 0;
 
 async function LocalePage({ params }: LocalePageProps) {
   const { locale: localeParam } = await params;
@@ -63,7 +66,7 @@ async function DashboardPage({ locale }: { locale: Locale }) {
     now: new Date(),
     timeZone: context.timezone,
   });
-  const cityEvents = events.events.filter((event) => event.sourceId !== "cineplexx-podgorica");
+  const cityEvents = getCityEventsForPublicListing(events.events);
   const cityEventProviders = events.providers.filter(
     (provider) => provider.id !== "cineplexx-podgorica",
   );

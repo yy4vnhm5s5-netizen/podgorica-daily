@@ -8,6 +8,7 @@ import {
   createEventStructuredData,
   serializeStructuredData,
 } from "@/modules/events/presentation/event-structured-data";
+import { getPublicCityEventById } from "@/modules/events/presentation/events-ui-model";
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
 import { getLocaleAlternates, isLocale, type Locale } from "@/shared/config/locale";
 import { getPageTitle } from "@/shared/config/site";
@@ -17,11 +18,16 @@ interface EventDetailPageProps {
   params: Promise<{ eventId: string; locale: string }>;
 }
 
+// Use the current collector-managed snapshot for the same public event set used
+// by the dashboard and listing. This avoids a stale route-cache link resolving
+// against a newer cache snapshot after a refresh.
+export const revalidate = 0;
+
 async function generateMetadata({ params }: EventDetailPageProps): Promise<Metadata> {
   const { eventId, locale: localeParam } = await params;
   if (!isLocale(localeParam)) return {};
   const context = getDefaultCityContext(localeParam);
-  const event = (await getCityEvents(context)).events.find((candidate) => candidate.id === eventId);
+  const event = getPublicCityEventById((await getCityEvents(context)).events, eventId);
 
   if (!event) return {};
 
@@ -47,7 +53,7 @@ async function EventDetailPage({ params }: EventDetailPageProps) {
   const locale = localeParam as Locale;
   const context = getDefaultCityContext(locale);
   const eventsReadModel = await getCityEvents(context);
-  const event = eventsReadModel.events.find((candidate) => candidate.id === eventId);
+  const event = getPublicCityEventById(eventsReadModel.events, eventId);
 
   if (!event) notFound();
   const structuredData = createEventStructuredData(event);
