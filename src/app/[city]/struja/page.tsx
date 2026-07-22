@@ -2,11 +2,12 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { resolveActiveCityFeatureRoute } from "@/app/city-routing";
+import { createPublicRouteMetadata } from "@/app/public-route-metadata";
 import { getPowerOutages } from "@/modules/city-alerts/application/get-power-outages";
 import { PowerOutagesPage } from "@/modules/city-alerts/presentation/power-outages-page";
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
-import { siteConfig } from "@/shared/config/site";
 import { getElectricityPath } from "@/shared/config/public-routes";
+import { getPageTitle } from "@/shared/config/site";
 import { getTranslations } from "@/shared/lib/translations";
 
 interface ElectricityPageProps {
@@ -20,17 +21,11 @@ async function generateMetadata({ params }: ElectricityPageProps): Promise<Metad
   const title = `Planirana isključenja struje u ${context.city.name}`;
   const description = `Aktuelna i najavljena planirana isključenja struje u ${context.city.name} iz zvaničnih servisnih informacija.`;
 
-  return {
-    alternates: { canonical: getElectricityPath(context.city) },
+  return createPublicRouteMetadata({
+    canonical: getElectricityPath(context.city),
     description,
-    openGraph: {
-      description,
-      title: `${title} | ${siteConfig.name}`,
-      url: getElectricityPath(context.city),
-    },
-    title: { absolute: `${title} | ${siteConfig.name}` },
-    twitter: { description, title: `${title} | ${siteConfig.name}` },
-  };
+    title: getPageTitle(title),
+  });
 }
 
 export const revalidate = 60;

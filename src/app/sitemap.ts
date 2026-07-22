@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 
 import { createCityContext, getActiveCities, supportsCityCapability } from "@/shared/config/cities";
 import { getCityEvents } from "@/modules/events/application/get-city-events";
+import { getCityEventsForPublicListing } from "@/modules/events/presentation/events-ui-model";
 import {
   getContactPath,
   getEventDetailPath,
@@ -9,7 +10,7 @@ import {
   getTermsOfUsePath,
 } from "@/shared/config/public-routes";
 import { siteConfig } from "@/shared/config/site";
-import { getCitySitemapPaths } from "./city-routing";
+import { getCitySitemapPaths } from "./city-routing.ts";
 
 function createEntry(
   path: string,
@@ -51,7 +52,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .map(async (city) => {
         try {
           const { events } = await getCityEvents(createCityContext(city.id, "me"));
-          return events.map((event) => ({
+          return getCityEventsForPublicListing(events).map((event) => ({
             changeFrequency: "weekly" as const,
             lastModified: event.sourceUpdatedAt ? new Date(event.sourceUpdatedAt) : undefined,
             priority: 0.6,

@@ -14,9 +14,6 @@ export const metadata: Metadata = {
     title: siteConfig.name,
   },
   applicationName: siteConfig.name,
-  alternates: {
-    canonical: siteConfig.url,
-  },
   description: getTranslations("me").metadata.description,
   icons: {
     apple: [{ sizes: "180x180", type: "image/png", url: "/apple-touch-icon.png" }],
@@ -36,7 +33,6 @@ export const metadata: Metadata = {
     siteName: siteConfig.name,
     title: siteConfig.homepageTitle,
     type: "website",
-    url: siteConfig.url,
   },
   title: {
     default: siteConfig.homepageTitle,

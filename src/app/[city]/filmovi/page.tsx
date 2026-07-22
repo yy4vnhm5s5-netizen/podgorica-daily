@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { resolveActiveCityFeatureRoute } from "@/app/city-routing";
+import { createPublicRouteMetadata } from "@/app/public-route-metadata";
 import { getCityEvents } from "@/modules/events/application/get-city-events";
 import { CineplexxProgrammeCard } from "@/modules/events/presentation/cineplexx-programme-card";
 import { selectHomepageCinemaProgramme } from "@/modules/events/presentation/cineplexx-programme-ui-model";
@@ -26,13 +27,11 @@ async function generateMetadata({ params }: CinemaPageProps): Promise<Metadata> 
   const description = `Aktuelni program Cineplexx bioskopa u ${context.city.name}.`;
   const metadataTitle = getPageTitle(title);
 
-  return {
-    alternates: { canonical: getCinemaPath(context.city) },
+  return createPublicRouteMetadata({
+    canonical: getCinemaPath(context.city),
     description,
-    openGraph: { description, title: metadataTitle, url: getCinemaPath(context.city) },
-    title: { absolute: metadataTitle },
-    twitter: { description, title: metadataTitle },
-  };
+    title: metadataTitle,
+  });
 }
 
 async function CinemaPage({ params }: CinemaPageProps) {

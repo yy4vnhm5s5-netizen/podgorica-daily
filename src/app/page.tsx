@@ -1,17 +1,9 @@
-import type { Metadata } from "next";
+import { permanentRedirect } from "next/navigation";
 
-import { CityDashboard } from "@/app/city-dashboard";
-import { getCityLandingMetadata, getMainCityLandingContext } from "@/app/city-routing";
-
-export const revalidate = 0;
-
-function generateMetadata(): Metadata {
-  return getCityLandingMetadata(getMainCityLandingContext());
-}
+import { getCanonicalMainCityPath } from "@/app/root-redirect";
 
 function HomePage() {
-  return <CityDashboard context={getMainCityLandingContext()} />;
+  permanentRedirect(getCanonicalMainCityPath());
 }
 
-export { generateMetadata };
 export default HomePage;

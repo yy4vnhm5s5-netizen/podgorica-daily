@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { resolveActiveCityFeatureRoute } from "@/app/city-routing";
+import { createPublicRouteMetadata } from "@/app/public-route-metadata";
 import { getCityEvents } from "@/modules/events/application/get-city-events";
 import { EventDetail } from "@/modules/events/presentation/event-detail";
 import {
@@ -31,20 +32,15 @@ async function generateMetadata({ params }: EventDetailPageProps): Promise<Metad
 
   if (!event) return {};
 
-  return {
-    alternates: {
-      canonical: getEventDetailPath(context.city, event.id),
-    },
-    description: event.description,
-    openGraph: {
-      description: event.description,
-      images: event.imageUrl ? [{ url: event.imageUrl }] : undefined,
-      title: getPageTitle(event.title),
-      url: getEventDetailPath(context.city, event.id),
-    },
-    title: { absolute: getPageTitle(event.title) },
-    twitter: { description: event.description, title: getPageTitle(event.title) },
-  };
+  const description =
+    event.description ?? `Informacije o događaju ${event.title} u ${context.city.name}.`;
+
+  return createPublicRouteMetadata({
+    canonical: getEventDetailPath(context.city, event.id),
+    description,
+    ...(event.imageUrl ? { imageUrl: event.imageUrl } : {}),
+    title: getPageTitle(event.title),
+  });
 }
 
 async function EventDetailPage({ params }: EventDetailPageProps) {

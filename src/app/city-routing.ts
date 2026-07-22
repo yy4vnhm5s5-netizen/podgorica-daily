@@ -1,5 +1,3 @@
-import type { Metadata } from "next";
-
 import {
   getActiveCityContextBySlug,
   getActiveCityContextForCapability,
@@ -20,31 +18,19 @@ import {
   getFlightsPath,
   getGoingOutPath,
 } from "@/shared/config/public-routes";
+import { createPublicRouteMetadata } from "@/app/public-route-metadata";
 import { getPageTitle } from "@/shared/config/site";
 import type { City, CityCapability, CityContext } from "@/shared/types/city";
-
-const openGraphDescription = "Sve što se danas dešava. Na jednom mjestu.";
-const openGraphTitle = "Prošetajte svojim gradom.";
 
 function getCityLandingTitle(context: CityContext) {
   return getPageTitle(`${getCityName(context.city)} — događaji, izlasci i informacije`);
 }
 
-function getCityLandingMetadata(context: CityContext): Metadata {
+function getCityLandingMetadata(context: CityContext) {
   const canonical = getCityPath(context.city);
   const description = `Pouzdane lokalne informacije za grad ${getCityName(context.city)}.`;
 
-  return {
-    alternates: { canonical },
-    description,
-    openGraph: {
-      description: openGraphDescription,
-      title: openGraphTitle,
-      url: canonical,
-    },
-    title: { absolute: getCityLandingTitle(context) },
-    twitter: { description, title: getCityLandingTitle(context) },
-  };
+  return createPublicRouteMetadata({ canonical, description, title: getCityLandingTitle(context) });
 }
 
 function getMainCityLandingContext() {
@@ -96,8 +82,6 @@ export {
   getCityLandingTitle,
   getCitySitemapPaths,
   getMainCityLandingContext,
-  openGraphDescription,
-  openGraphTitle,
   resolveActiveCityFeatureRoute,
   resolveActiveCityRoute,
 };

@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+
+import { createPublicRouteMetadata } from "@/app/public-route-metadata";
 import { getCityEvents } from "@/modules/events/application/get-city-events";
 import { resolveActiveCityFeatureRoute } from "@/app/city-routing";
 import { EventsList } from "@/modules/events/presentation/events-list";
@@ -30,21 +32,13 @@ async function generateMetadata({ params }: EventsPageProps): Promise<Metadata> 
   const context = resolveActiveCityFeatureRoute(slug, "events");
   if (!context) return {};
   const translations = getEventsTranslations("me");
+  const title = getPageTitle(translations.heading);
 
-  return {
-    alternates: { canonical: getEventsPath(context.city) },
+  return createPublicRouteMetadata({
+    canonical: getEventsPath(context.city),
     description: translations.supportingText,
-    openGraph: {
-      description: translations.supportingText,
-      title: getPageTitle(translations.heading),
-      url: getEventsPath(context.city),
-    },
-    title: { absolute: getPageTitle(translations.heading) },
-    twitter: {
-      description: translations.supportingText,
-      title: getPageTitle(translations.heading),
-    },
-  };
+    title,
+  });
 }
 
 async function EventsPage({ params, searchParams }: EventsPageProps) {

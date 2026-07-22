@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { resolveActiveCityFeatureRoute } from "@/app/city-routing";
+import { createPublicRouteMetadata } from "@/app/public-route-metadata";
 import { getPodgoricaFlights } from "@/modules/flights/application/get-podgorica-flights";
 import { AirportFlightsPage } from "@/modules/flights/presentation/airport-flights-page";
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
@@ -24,13 +25,11 @@ async function generateMetadata({ params }: FlightsPageProps): Promise<Metadata>
   const description = `Dolasci i odlasci za ${context.city.name} iz zvaničnih podataka aerodroma.`;
   const metadataTitle = getPageTitle(title);
 
-  return {
-    alternates: { canonical: getFlightsPath(context.city) },
+  return createPublicRouteMetadata({
+    canonical: getFlightsPath(context.city),
     description,
-    openGraph: { description, title: metadataTitle, url: getFlightsPath(context.city) },
-    title: { absolute: metadataTitle },
-    twitter: { description, title: metadataTitle },
-  };
+    title: metadataTitle,
+  });
 }
 
 async function FlightsPage({ params }: FlightsPageProps) {

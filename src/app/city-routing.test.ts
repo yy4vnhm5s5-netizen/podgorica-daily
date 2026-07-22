@@ -8,8 +8,6 @@ import {
   getCityLandingMetadata,
   getCityLandingTitle,
   getMainCityLandingContext,
-  openGraphDescription,
-  openGraphTitle,
   resolveActiveCityFeatureRoute,
   resolveActiveCityRoute,
 } from "./city-routing.ts";
@@ -33,7 +31,7 @@ function city(overrides: Partial<City> = {}): City {
   };
 }
 
-test("root and the active city route share the main city canonical identity", () => {
+test("the active city route uses its own canonical metadata", () => {
   const rootContext = getMainCityLandingContext();
   const cityContext = resolveActiveCityRoute("podgorica");
 
@@ -47,9 +45,8 @@ test("root and the active city route share the main city canonical identity", ()
   const metadata = getCityLandingMetadata(rootContext);
   assert.equal(metadata.alternates?.canonical, "/podgorica");
   assert.equal(metadata.openGraph?.url, "/podgorica");
-  assert.equal(metadata.openGraph?.title, openGraphTitle);
-  assert.equal(metadata.openGraph?.description, openGraphDescription);
-  assert.notEqual(metadata.title, openGraphTitle);
+  assert.equal(metadata.openGraph?.title, getCityLandingTitle(rootContext));
+  assert.equal(metadata.openGraph?.description, metadata.description);
 });
 
 test("does not resolve inactive or unknown city routes", () => {

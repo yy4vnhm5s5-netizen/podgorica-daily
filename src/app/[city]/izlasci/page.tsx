@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { resolveActiveCityFeatureRoute } from "@/app/city-routing";
+import { createPublicRouteMetadata } from "@/app/public-route-metadata";
 import { getGoingOutEvents } from "@/modules/going-out/application/get-going-out-events";
 import { GoingOutPage } from "@/modules/going-out/presentation/going-out-page";
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
@@ -24,13 +25,11 @@ async function generateMetadata({ params }: GoingOutRouteProps): Promise<Metadat
   const description = `Pronađite koncerte, DJ večeri, svirke, žurke i druge izlaske u ${context.city.name} na jednom mjestu.`;
   const metadataTitle = getPageTitle(title);
 
-  return {
-    alternates: { canonical: getGoingOutPath(context.city) },
+  return createPublicRouteMetadata({
+    canonical: getGoingOutPath(context.city),
     description,
-    openGraph: { description, title: metadataTitle, url: getGoingOutPath(context.city) },
-    title: { absolute: metadataTitle },
-    twitter: { description, title: metadataTitle },
-  };
+    title: metadataTitle,
+  });
 }
 
 async function GoingOutRoute({ params }: GoingOutRouteProps) {
