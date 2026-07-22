@@ -5,6 +5,7 @@ import type {
   OverviewLocale,
 } from "./daily-overview.ts";
 import type { CityContext } from "@/shared/types/city";
+import { getCityName } from "@/shared/config/cities";
 
 interface OverviewCopy {
   criticalAlerts: (count: number) => string;
@@ -152,7 +153,7 @@ function createDailyOverview(snapshot: CityDataSnapshot, context: CityContext): 
     getWaterOutagesSentence(activeAlerts, copy),
     getTrafficDisruptionsSentence(activeAlerts, copy),
     getRoadWorksSentence(activeAlerts, copy),
-    getUnusualTemperatureSentence(snapshot, copy, context.city.displayName),
+    getUnusualTemperatureSentence(snapshot, copy, getCityName(context.city)),
     getEventsSentence(snapshot, copy),
   ].filter((sentence): sentence is string => sentence !== null);
 

@@ -9,17 +9,19 @@ import { Button } from "@/shared/components/ui/button";
 import type { Locale } from "@/shared/config/locale";
 import { getLocaleTag } from "@/shared/config/locale";
 import { getEventsPath } from "@/shared/config/public-routes";
+import type { City } from "@/shared/types/city";
 import { formatDateTime } from "@/shared/lib/date";
 
 interface EventsListProps {
   allEvents: readonly CityEvent[];
+  city: City;
   events: readonly CityEvent[];
   filters: EventsUiFilters;
   locale: Locale;
   timezone: string;
 }
 
-function EventsList({ allEvents, events, filters, locale, timezone }: EventsListProps) {
+function EventsList({ allEvents, city, events, filters, locale, timezone }: EventsListProps) {
   const translations = getEventsTranslations(locale);
   const { eventsCount, ...filterTranslations } = translations;
   const groups = groupEventsByDay(events, timezone);
@@ -39,13 +41,14 @@ function EventsList({ allEvents, events, filters, locale, timezone }: EventsList
           {eventsCount(events.length)}
         </p>
         <EventsFilterSheet
+          city={city}
           categories={categories}
           filters={filters}
           sources={sources}
           translations={filterTranslations}
         />
       </div>
-      <QuickFilters filters={filters} locale={locale} />
+      <QuickFilters city={city} filters={filters} locale={locale} />
       {groups.length > 0 ? (
         <div className="space-y-8">
           {groups.map((group) => (
@@ -62,7 +65,7 @@ function EventsList({ allEvents, events, filters, locale, timezone }: EventsList
               </h2>
               <div className="grid gap-3 lg:grid-cols-2">
                 {group.events.map((event) => (
-                  <EventCard event={event} key={event.id} locale={locale} />
+                  <EventCard city={city} event={event} key={event.id} locale={locale} />
                 ))}
               </div>
             </section>
@@ -82,7 +85,15 @@ function EventsList({ allEvents, events, filters, locale, timezone }: EventsList
   );
 }
 
-function QuickFilters({ filters, locale }: { filters: EventsUiFilters; locale: Locale }) {
+function QuickFilters({
+  city,
+  filters,
+  locale,
+}: {
+  city: City;
+  filters: EventsUiFilters;
+  locale: Locale;
+}) {
   const translations = getEventsTranslations(locale);
   const presets = ["today", "tomorrow", "weekend", "upcoming"] as const;
 
@@ -91,7 +102,7 @@ function QuickFilters({ filters, locale }: { filters: EventsUiFilters; locale: L
       <ul className="flex min-w-max gap-2">
         {presets.map((preset) => {
           const isCurrent = filters.datePreset === preset;
-          const href = createEventsHref({ ...filters, datePreset: preset });
+          const href = createEventsHref(city, { ...filters, datePreset: preset });
 
           return (
             <li key={preset}>
@@ -117,7 +128,7 @@ function getQuickFilterLabel(
   return translations.quickFilters[preset];
 }
 
-function createEventsHref(filters: EventsUiFilters) {
+function createEventsHref(city: City, filters: EventsUiFilters) {
   const params = new URLSearchParams();
   if (filters.datePreset !== "upcoming") params.set("period", filters.datePreset);
   if (filters.query) params.set("query", filters.query);
@@ -126,7 +137,7 @@ function createEventsHref(filters: EventsUiFilters) {
   if (filters.sort !== "soonest") params.set("sort", filters.sort);
   const query = params.toString();
 
-  return `${getEventsPath()}${query ? `?${query}` : ""}`;
+  return `${getEventsPath(city)}${query ? `?${query}` : ""}`;
 }
 
 function formatDayHeading(date: string, locale: Locale) {

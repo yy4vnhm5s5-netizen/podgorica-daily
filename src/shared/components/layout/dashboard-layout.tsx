@@ -4,13 +4,15 @@ import { AppFooter } from "@/shared/components/layout/app-footer";
 import { AppHeader } from "@/shared/components/layout/app-header";
 import { MobileNavigation } from "@/shared/components/layout/mobile-navigation";
 import { ResponsiveContainer } from "@/shared/components/layout/responsive-container";
+import type { City } from "@/shared/types/city";
 import type { Translations } from "@/shared/lib/translations";
 
 interface DashboardLayoutProps extends PropsWithChildren {
+  city: City;
   translations: Translations;
 }
 
-function DashboardLayout({ children, translations }: DashboardLayoutProps) {
+function DashboardLayout({ children, city, translations }: DashboardLayoutProps) {
   return (
     <div className="min-h-screen bg-background pb-[calc(5rem+env(safe-area-inset-bottom))] text-foreground md:pb-0">
       <a
@@ -19,12 +21,12 @@ function DashboardLayout({ children, translations }: DashboardLayoutProps) {
       >
         {translations.shell.skipToContent}
       </a>
-      <AppHeader translations={translations} />
+      <AppHeader city={city} translations={translations} />
       <main id="main-content">
         <ResponsiveContainer className="py-8 sm:py-14">{children}</ResponsiveContainer>
       </main>
       <AppFooter tagline={translations.shell.tagline} translations={translations} />
-      <MobileNavigation translations={translations} />
+      <MobileNavigation city={city} translations={translations} />
     </div>
   );
 }

@@ -6,6 +6,7 @@ import {
   type FreshnessStatus,
 } from "./cedis-cache.ts";
 import { mockCityAlertsProvider } from "./mock-city-alerts-provider.ts";
+import { isCitySupportedByProvider } from "@/shared/config/cities";
 import type { CityContext } from "@/shared/types/city";
 import type { ProviderMetadata } from "@/shared/types/provider";
 
@@ -33,8 +34,10 @@ async function getCedisCityAlerts({
   now = () => new Date(),
   readCache = readCedisCache,
 }: CedisCityAlertsProviderDependencies): Promise<CityAlertsSourceData> {
-  void context;
-  if (mode === "disabled") {
+  if (
+    mode === "disabled" ||
+    !isCitySupportedByProvider(context.city, cedisProviderMetadata.supportedCityIds)
+  ) {
     return { alerts: [], freshnessStatus: "unavailable", mode };
   }
 
@@ -81,6 +84,7 @@ const cedisProviderMetadata: ProviderMetadata = {
   id: "cedis",
   officialSource: "https://cedis.me/servisne-informacije/",
   refreshIntervalMinutes: 60,
+  supportedCityIds: ["podgorica"],
   supportsMultipleCities: false,
 };
 

@@ -88,6 +88,7 @@ test("uses the empty state only when neither today nor tomorrow has a remaining 
 function cinemaEvent({ id, startsAt, title }: { id: string; startsAt: string; title: string }) {
   return {
     category: "movie" as const,
+    cityId: "podgorica" as const,
     cityIds: ["podgorica" as const],
     id,
     language: "me" as const,

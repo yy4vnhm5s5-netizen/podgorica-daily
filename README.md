@@ -20,17 +20,17 @@ AMSCG road conditions use the same cache-first boundary and can be collected man
 
 VIK Podgorica water-service notices are collected only through `pnpm run collect:vikpg`. The collector fetches the official service-information page and validated first-party notice links, then atomically writes `.runtime/cache/vikpg-water-alerts.json`. Dashboard requests read that cache only. `ENABLE_VIKPG=true` and `VIKPG_PROVIDER_MODE=live` are required to expose live cached data; no mock water notices are used. Tests use local fixtures and injected HTTP, never live VIK requests. See [ADR 0016](docs/adr/0016-vikpg-cached-water-notices.md).
 
-The public interface uses Montenegrin Latin, ijekavian on root-level canonical URLs. English translations and locale infrastructure remain in the repository for a future rollout. Legacy `/me/*` and `/en/*` URLs receive permanent redirects to their primary equivalents.
+The public interface uses Montenegrin Latin, ijekavian. City content is published on city-prefixed canonical URLs; the root page renders the main city but is canonicalized to `/podgorica`. English translations and locale infrastructure remain in the repository for a future rollout.
 
 ## Transport
 
 The BusTicket4.me link remains external only; Gradom does not collect or republish bus departures. The ŽPCG railway card reads a cache generated solely from the official [ŽPCG timetable](https://zpcg.me/red-voznje/ukupno). Run `pnpm run collect:zpcg-railway` to write `.runtime/cache/zpcg-railway-departures.json`; homepage requests never fetch ŽPCG directly. The bundled VPS scheduler refreshes it at approximately 06:45 and 18:45 host-local time.
 
-The Aerodrom Podgorica card and `/letovi` read arrivals and departures only from `.runtime/cache/podgorica-flights.json`. `pnpm run collect:podgorica-flights` fetches the public first-party flight feed used by the official [Podgorica Airport status page](https://montenegroairports.com/en/podgorica-airport/). It uses bounded JSON collection and retains a valid cache if the source is unavailable; no page request fetches the airport website. See [ADR 0019](docs/adr/0019-podgorica-airport-public-flight-feed.md).
+The Aerodrom Podgorica card and `/podgorica/letovi` read arrivals and departures only from `.runtime/cache/podgorica-flights.json`. `pnpm run collect:podgorica-flights` fetches the public first-party flight feed used by the official [Podgorica Airport status page](https://montenegroairports.com/en/podgorica-airport/). It uses bounded JSON collection and retains a valid cache if the source is unavailable; no page request fetches the airport website. See [ADR 0019](docs/adr/0019-podgorica-airport-public-flight-feed.md).
 
 ## Izlasci
 
-`/izlasci` and the dashboard section read only `.runtime/cache/montegigs-going-out.json`. `pnpm run collect:montegigs-going-out` reads the public [MonteGigs Podgorica listing](https://staging.montegigs.me/me/events/podgorica), normalizes explicit future records, and retains a valid cache when the listing or parser fails. The listing can omit event times; Gradom displays only the date in that case. Automated tests use saved fixtures only. Review MonteGigs source policy before enabling production collection. See [ADR 0020](docs/adr/0020-montegigs-going-out-provider.md).
+`/podgorica/izlasci` and the dashboard section read only `.runtime/cache/montegigs-going-out.json`. `pnpm run collect:montegigs-going-out` reads the public [MonteGigs Podgorica listing](https://staging.montegigs.me/me/events/podgorica), normalizes explicit future records, and retains a valid cache when the listing or parser fails. The listing can omit event times; Gradom displays only the date in that case. Automated tests use saved fixtures only. Review MonteGigs source policy before enabling production collection. See [ADR 0020](docs/adr/0020-montegigs-going-out-provider.md).
 
 ## Contact
 
@@ -40,11 +40,11 @@ Configure `CONTACT_EMAIL`, `SMTP_FROM`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`,
 
 ## City-aware foundation
 
-Podgorica is the only enabled city and the public experience remains unchanged. Internally, providers receive a city context and normalized records carry `cityIds`, preparing future city-specific routes without exposing them today. `DEFAULT_CITY=podgorica` is validated against the central registry. See [ADR 0009](docs/adr/0009-multi-city-platform-foundation.md).
+Podgorica is the only active city. The root dashboard renders its content for convenience, while city content uses canonical `/podgorica/*` routes. Routes derive a `CityContext` from the central static city registry, and normalized events carry one stable `cityId`; legacy event cache snapshots are backfilled from their existing `cityIds` on read. `DEFAULT_CITY=podgorica` remains validated for collector compatibility. See [ADR 0022](docs/adr/0022-city-prefixed-public-routing.md).
 
 ## Event platform and official collectors
 
-The repository includes a city-aware Event Platform: normalized event and venue contracts, cache and provider boundaries, deterministic IDs and deduplication, recurrence limits, timezone-aware query rules, and a provider-agnostic Daily Overview contract. The mobile-first public Events experience is available at `/dogadjaji`; legacy `/events` and locale-prefixed paths redirect permanently. Live provider content remains available only when `ENABLE_EVENTS=true` and `EVENT_PROVIDER_MODE=live`. See [ADR 0010](docs/adr/0010-event-platform-foundation.md).
+The repository includes a city-aware Event Platform: normalized event and venue contracts, cache and provider boundaries, deterministic IDs and deduplication, recurrence limits, timezone-aware query rules, and a provider-agnostic Daily Overview contract. The mobile-first public Events experience is available at `/podgorica/dogadjaji`. Live provider content remains available only when `ENABLE_EVENTS=true` and `EVENT_PROVIDER_MODE=live`. See [ADR 0010](docs/adr/0010-event-platform-foundation.md).
 
 KIC Budo Tomović, Crnogorsko narodno pozorište (CNP), Glavni Grad Podgorica, Turistička organizacija Podgorice, and Cineplexx Podgorica are approved official event sources. Their collectors read only official source pages into separate caches; Cineplexx renders its public JavaScript programme page through a bounded server-side browser process because no public server-rendered repertoire is available. Application reads use caches only. Providers remain inactive until `ENABLE_EVENTS=true` and `EVENT_PROVIDER_MODE=live` are explicitly configured. Mock mode never enables live providers and is rejected in production.
 

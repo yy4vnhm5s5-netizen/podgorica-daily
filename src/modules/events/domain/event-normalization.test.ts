@@ -12,11 +12,12 @@ import type { CityEvent } from "./event.ts";
 const context = {
   city: {
     country: "Montenegro",
-    displayName: "Podgorica",
-    enabled: true,
     id: "podgorica" as const,
+    isActive: true,
+    isMain: true,
     latitude: 42.441,
     longitude: 19.263,
+    name: "Podgorica",
     slug: "podgorica",
     timezone: "Europe/Podgorica",
   },
@@ -27,6 +28,7 @@ const context = {
 function event(overrides: Partial<CityEvent> = {}): CityEvent {
   return {
     category: "concert",
+    cityId: "podgorica",
     cityIds: ["podgorica"],
     id: "event-one",
     language: "me",

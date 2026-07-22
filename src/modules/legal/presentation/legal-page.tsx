@@ -2,6 +2,7 @@ import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { getContactPath } from "@/shared/config/public-routes";
 import { getTranslations } from "@/shared/lib/translations";
+import type { City } from "@/shared/types/city";
 
 type LegalDocument = "privacy" | "terms";
 
@@ -94,12 +95,12 @@ const legalDocuments = {
   },
 } as const;
 
-function LegalPage({ document }: { document: LegalDocument }) {
+function LegalPage({ city, document }: { city: City; document: LegalDocument }) {
   const content = legalDocuments[document];
   const translations = getTranslations("me");
 
   return (
-    <DashboardLayout translations={translations}>
+    <DashboardLayout city={city} translations={translations}>
       <article aria-labelledby="legal-heading" className="mx-auto max-w-3xl space-y-8">
         <header className="space-y-3">
           <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl" id="legal-heading">

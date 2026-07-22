@@ -2,19 +2,21 @@ import { House, Mail } from "lucide-react";
 import Link from "next/link";
 
 import { isFeatureEnabled } from "@/shared/config/features";
-import { getContactPath } from "@/shared/config/public-routes";
+import { getCityPath, getContactPath } from "@/shared/config/public-routes";
+import type { City } from "@/shared/types/city";
 import type { Translations } from "@/shared/lib/translations";
 import { cn } from "@/shared/lib/utils";
 
 interface NavigationProps {
+  city: City;
   mobile?: boolean;
   translations: Translations;
 }
 
-function Navigation({ mobile = false, translations }: NavigationProps) {
+function Navigation({ city, mobile = false, translations }: NavigationProps) {
   const navigationItems = [
     {
-      href: "/",
+      href: getCityPath(city),
       icon: House,
       label: translations.shell.navigation.dashboard,
     },

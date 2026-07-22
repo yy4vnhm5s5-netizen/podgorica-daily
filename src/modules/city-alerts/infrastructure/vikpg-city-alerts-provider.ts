@@ -5,6 +5,7 @@ import {
   type VikpgCacheSnapshot,
   type VikpgFreshnessStatus,
 } from "./vikpg-cache.ts";
+import { isCitySupportedByProvider } from "@/shared/config/cities";
 import type { CityContext } from "@/shared/types/city";
 import type { ProviderMetadata } from "@/shared/types/provider";
 
@@ -28,7 +29,10 @@ async function getVikpgCityAlerts({
   now?: () => Date;
   readCache?: () => Promise<VikpgCacheSnapshot | null>;
 }): Promise<VikpgCityAlertsSourceData> {
-  if (mode === "disabled" || context.city.id !== "podgorica") {
+  if (
+    mode === "disabled" ||
+    !isCitySupportedByProvider(context.city, vikpgProviderMetadata.supportedCityIds)
+  ) {
     return { alerts: [], freshnessStatus: "unavailable", mode: "disabled" };
   }
   try {
@@ -79,6 +83,7 @@ const vikpgProviderMetadata: ProviderMetadata = {
   id: "vikpg",
   officialSource: "https://vikpg.me/me/mediji/servisne-informacije/obavjestenja.html",
   refreshIntervalMinutes: 60,
+  supportedCityIds: ["podgorica"],
   supportsMultipleCities: false,
 };
 

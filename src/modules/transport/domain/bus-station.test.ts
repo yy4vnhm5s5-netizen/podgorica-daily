@@ -9,7 +9,12 @@ import {
 import { getCity } from "../../../shared/config/cities.ts";
 
 test("configures the confirmed Podgorica BusTicket4.me station", () => {
-  assert.deepEqual(getBusStationConfig(getCity("podgorica")), {
+  const podgorica = getCity("podgorica");
+  const bar = getCity("bar");
+  assert.ok(podgorica);
+  assert.ok(bar);
+
+  assert.deepEqual(getBusStationConfig(podgorica), {
     cityName: "Podgorica",
     citySlug: "podgorica",
     provider: "busticket4me",
@@ -17,7 +22,7 @@ test("configures the confirmed Podgorica BusTicket4.me station", () => {
     stationUrl: "https://busticket4.me/mne/bus-station/details/podgorica?station_id=1121",
     timezone: "Europe/Podgorica",
   });
-  assert.equal(getBusStationConfig(getCity("bar")), undefined);
+  assert.equal(getBusStationConfig(bar), undefined);
 });
 
 test("normalizes a complete departure candidate without inventing fields", () => {

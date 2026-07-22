@@ -8,9 +8,11 @@ import { getHomepageVenueName } from "./events-ui-model";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { getLocaleTag, type Locale } from "@/shared/config/locale";
 import { getEventDetailPath, getEventsPath } from "@/shared/config/public-routes";
+import type { City } from "@/shared/types/city";
 import { formatDateTime } from "@/shared/lib/date";
 
 interface HomepageEventsCardProps {
+  city: City;
   eventCount: number;
   events: readonly CityEvent[];
   isUnavailable: boolean;
@@ -18,6 +20,7 @@ interface HomepageEventsCardProps {
 }
 
 function HomepageEventsCard({
+  city,
   eventCount,
   events,
   isUnavailable,
@@ -43,7 +46,7 @@ function HomepageEventsCard({
         {events.length > 0 ? (
           <ul className="divide-y divide-primary/10">
             {events.map((event) => (
-              <HomepageEvent event={event} key={event.id} locale={locale} />
+              <HomepageEvent city={city} event={event} key={event.id} locale={locale} />
             ))}
           </ul>
         ) : isUnavailable ? (
@@ -55,7 +58,7 @@ function HomepageEventsCard({
         )}
         <Link
           className="mt-4 inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-          href={getEventsPath()}
+          href={getEventsPath(city)}
         >
           {translations.viewAllEvents}
         </Link>
@@ -64,14 +67,14 @@ function HomepageEventsCard({
   );
 }
 
-function HomepageEvent({ event, locale }: { event: CityEvent; locale: Locale }) {
+function HomepageEvent({ city, event, locale }: { city: City; event: CityEvent; locale: Locale }) {
   const venueName = getHomepageVenueName(event.venueName);
 
   return (
     <li className="py-2.5 first:pt-0 last:pb-0">
       <Link
         className="group flex items-start gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-        href={getEventDetailPath(event.id)}
+        href={getEventDetailPath(city, event.id)}
       >
         {event.imageUrl ? (
           <Image

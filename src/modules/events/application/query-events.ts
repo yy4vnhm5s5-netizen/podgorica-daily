@@ -5,7 +5,6 @@ type EventSort = "category" | "newestSourceUpdate" | "soonest" | "venue";
 
 interface EventQuery {
   categories?: readonly EventCategory[];
-  cityId?: CityContext["city"]["id"];
   dateRange?: { end: string; start: string };
   free?: boolean;
   language?: CityEvent["language"];
@@ -22,14 +21,14 @@ function queryEvents(
   now = new Date(),
   sort: EventSort = "soonest",
 ) {
-  const cityId = query.cityId ?? context.city.id;
+  const cityId = context.city.id;
   const boundaries = getPeriodBoundaries(query.period, context.timezone, now);
   const requestedRange = query.dateRange
     ? { end: query.dateRange.end, start: query.dateRange.start }
     : boundaries;
 
   return events
-    .filter((event) => event.cityIds.includes(cityId))
+    .filter((event) => event.cityId === cityId)
     .filter((event) => (query.categories ? query.categories.includes(event.category) : true))
     .filter((event) => (query.free === undefined ? true : event.isFree === query.free))
     .filter((event) => (query.language ? event.language === query.language : true))

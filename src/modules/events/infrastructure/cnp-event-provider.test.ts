@@ -107,11 +107,12 @@ test("warns for incomplete details without preventing valid event normalization"
   const context = {
     city: {
       country: "Montenegro",
-      displayName: "Podgorica",
-      enabled: true,
       id: "podgorica" as const,
+      isActive: true,
+      isMain: true,
       latitude: 42.441,
       longitude: 19.263,
+      name: "Podgorica",
       slug: "podgorica",
       timezone: "Europe/Podgorica",
     },

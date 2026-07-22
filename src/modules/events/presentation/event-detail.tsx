@@ -13,14 +13,16 @@ import { Badge } from "@/shared/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { getLocaleTag, type Locale } from "@/shared/config/locale";
 import { getEventsPath } from "@/shared/config/public-routes";
+import type { City } from "@/shared/types/city";
 import { formatDateTime } from "@/shared/lib/date";
 
 interface EventDetailProps {
+  city: City;
   event: CityEvent;
   locale: Locale;
 }
 
-function EventDetail({ event, locale }: EventDetailProps) {
+function EventDetail({ city, event, locale }: EventDetailProps) {
   const translations = getEventsTranslations(locale);
   const statusLabel = getEventStatusLabel(locale, event.status);
   const summary = getEventSummary(event.description);
@@ -29,7 +31,7 @@ function EventDetail({ event, locale }: EventDetailProps) {
     <article className="mx-auto max-w-3xl space-y-6">
       <Link
         className="inline-flex min-h-11 items-center gap-2 rounded-md px-1 text-sm font-medium text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-        href={getEventsPath()}
+        href={getEventsPath(city)}
       >
         <ArrowLeft aria-hidden="true" className="size-4" />
         {translations.backToEvents}

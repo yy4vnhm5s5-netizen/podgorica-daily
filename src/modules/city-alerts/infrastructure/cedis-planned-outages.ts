@@ -115,7 +115,7 @@ function parseCedisArticleResult(
     const lines = section
       .split(/(?=\s*-?\s*(?:(?:u terminu\s+)?od\s+\d{1,2}))/i)
       .filter((line) => line.trim() && !/^u terminu$/i.test(line.trim()));
-    return lines.flatMap((line) => parseOutageLine(line, date, article));
+    return lines.flatMap((line) => parseOutageLine(line, date, article, now));
   });
 
   const normalizedAlerts = deduplicateAlerts(alerts);
@@ -131,7 +131,12 @@ function parseCedisArticleResult(
   };
 }
 
-function parseOutageLine(line: string, date: Date, article: CedisArticleLink): CityAlert[] {
+function parseOutageLine(
+  line: string,
+  date: Date,
+  article: CedisArticleLink,
+  now: Date,
+): CityAlert[] {
   const normalized = normalizeWhitespace(line).replace(/^[-–—]\s*/, "");
   const range = parseTimeRange(normalized);
   const area = extractAffectedArea(normalized, range);
@@ -142,7 +147,7 @@ function parseOutageLine(line: string, date: Date, article: CedisArticleLink): C
 
   const startsAt = range?.start ? withLocalTime(date, range.start) : undefined;
   const expectedEndAt = range?.end ? withLocalTime(date, range.end) : undefined;
-  const status = getOutageStatus(startsAt, expectedEndAt, new Date());
+  const status = getOutageStatus(startsAt, expectedEndAt, now);
   const rawSourceText = range ? undefined : normalized;
   const id = createHash("sha256")
     .update(`${article.url}|${date.toISOString()}|${range?.raw ?? ""}|${normalizeArea(area)}`)

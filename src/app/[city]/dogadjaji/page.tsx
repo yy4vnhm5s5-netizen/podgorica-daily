@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { getCityEvents } from "@/modules/events/application/get-city-events";
-import { getDefaultCityContext } from "@/config/city-context";
+import { resolveActiveCityFeatureRoute } from "@/app/city-routing";
 import { EventsList } from "@/modules/events/presentation/events-list";
 import { getEventsTranslations } from "@/modules/events/presentation/events-translations";
 import {
@@ -12,9 +13,11 @@ import { ErrorState } from "@/shared/components/error-state";
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
 import { SectionTitle } from "@/shared/components/section-title";
 import { getPageTitle } from "@/shared/config/site";
+import { getEventsPath } from "@/shared/config/public-routes";
 import { getTranslations } from "@/shared/lib/translations";
 
 interface EventsPageProps {
+  params: Promise<{ city: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
 
@@ -22,15 +25,19 @@ interface EventsPageProps {
 // route snapshot, which could disagree with links rendered on the dashboard.
 export const revalidate = 0;
 
-function generateMetadata(): Metadata {
+async function generateMetadata({ params }: EventsPageProps): Promise<Metadata> {
+  const { city: slug } = await params;
+  const context = resolveActiveCityFeatureRoute(slug, "events");
+  if (!context) return {};
   const translations = getEventsTranslations("me");
 
   return {
-    alternates: { canonical: "/dogadjaji" },
+    alternates: { canonical: getEventsPath(context.city) },
     description: translations.supportingText,
     openGraph: {
       description: translations.supportingText,
       title: getPageTitle(translations.heading),
+      url: getEventsPath(context.city),
     },
     title: { absolute: getPageTitle(translations.heading) },
     twitter: {
@@ -40,12 +47,14 @@ function generateMetadata(): Metadata {
   };
 }
 
-async function EventsPage({ searchParams }: EventsPageProps) {
+async function EventsPage({ params, searchParams }: EventsPageProps) {
+  const { city: slug } = await params;
   const locale = "me" as const;
   const translations = getTranslations(locale);
   const eventTranslations = getEventsTranslations(locale);
   const filters = parseEventsUiFilters(await searchParams);
-  const context = getDefaultCityContext(locale);
+  const context = resolveActiveCityFeatureRoute(slug, "events");
+  if (!context) notFound();
 
   try {
     const eventsReadModel = await getCityEvents(context);
@@ -62,7 +71,7 @@ async function EventsPage({ searchParams }: EventsPageProps) {
     );
 
     return (
-      <DashboardLayout translations={translations}>
+      <DashboardLayout city={context.city} translations={translations}>
         <section className="space-y-8" id="events">
           <SectionTitle title={eventTranslations.heading} />
           {allUnavailable ? (
@@ -81,6 +90,7 @@ async function EventsPage({ searchParams }: EventsPageProps) {
           ) : null}
           <EventsList
             allEvents={cityEvents}
+            city={context.city}
             events={events}
             filters={filters}
             locale={locale}
@@ -91,7 +101,7 @@ async function EventsPage({ searchParams }: EventsPageProps) {
     );
   } catch {
     return (
-      <DashboardLayout translations={translations}>
+      <DashboardLayout city={context.city} translations={translations}>
         <section className="space-y-8" id="events">
           <SectionTitle title={eventTranslations.heading} />
           <ErrorState

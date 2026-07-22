@@ -18,12 +18,14 @@ import { expandRecurrence, getEventStatus, toZonedIso } from "./domain/event-tim
 import { isValidCityEvent, normalizeEventCategory, type EventProvider } from "./domain/event.ts";
 
 const city = {
+  capabilities: ["events"] as const,
   country: "Montenegro",
-  displayName: "Podgorica",
-  enabled: true,
   id: "podgorica" as const,
+  isActive: true,
+  isMain: true,
   latitude: 42.441,
   longitude: 19.263,
+  name: "Podgorica",
   slug: "podgorica",
   timezone: "Europe/Podgorica",
 };
@@ -212,7 +214,7 @@ test("filters city-aware events across today, tomorrow, week, weekend, custom ra
     startDate: "2026-07-17",
     startsAt: undefined,
   });
-  const bar = podgoricaEvent({ cityIds: ["bar"], id: "bar-event" });
+  const bar = podgoricaEvent({ cityId: "bar", cityIds: ["bar"], id: "bar-event" });
   const events = [fridayEvening, saturday, fridayAllDay, bar];
   const now = new Date("2026-07-17T08:00:00.000Z");
   assert.equal(queryEvents(events, context, { period: "today" }, now).length, 2);
@@ -258,4 +260,26 @@ test("isolates unavailable event providers without inventing events", async () =
       { id: "failed", state: "unavailable" },
     ],
   );
+});
+
+test("does not expose an event through another city's public event query", async () => {
+  const provider: EventProvider = {
+    getCachedEvents: async () => ({
+      events: [podgoricaEvent({ cityId: "bar", cityIds: ["bar"], id: "bar-only" })],
+      parserWarnings: [],
+      state: "fresh",
+      venues: [],
+    }),
+    metadata: {
+      displayName: "Bar provider",
+      enabled: true,
+      id: "bar-provider",
+      officialSource: "test",
+      refreshIntervalMinutes: 60,
+      supportsMultipleCities: false,
+    },
+  };
+
+  const result = await getCityEvents(context, [provider]);
+  assert.deepEqual(result.events, []);
 });

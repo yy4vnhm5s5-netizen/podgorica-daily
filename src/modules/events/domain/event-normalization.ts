@@ -60,6 +60,7 @@ function normalizeEventCandidate(
   const event: CityEvent = {
     address,
     category: resolveEventCategory(candidate.categoryHint, `${title} ${description ?? ""}`),
+    cityId: context.city.id,
     cityIds: [context.city.id],
     description,
     currency: candidate.currency,

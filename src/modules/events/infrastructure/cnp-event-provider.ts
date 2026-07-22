@@ -1,6 +1,7 @@
 import { env } from "../../../config/env.ts";
 import type { EventProvider, EventProviderResult } from "../domain/event.ts";
 import { readEventCache } from "./events-cache.ts";
+import { isCitySupportedByProvider } from "@/shared/config/cities";
 import type { CityContext, CityId } from "@/shared/types/city";
 
 const cnpProviderMetadata = {
@@ -37,7 +38,7 @@ function createCnpEventProvider({
       if (
         !configuration.ENABLE_EVENTS ||
         configuration.EVENT_PROVIDER_MODE !== "live" ||
-        !cnpProviderMetadata.supportedCityIds.includes(context.city.id)
+        !isCitySupportedByProvider(context.city, cnpProviderMetadata.supportedCityIds)
       ) {
         return { events: [], parserWarnings: [], state: "disabled", venues: [] };
       }

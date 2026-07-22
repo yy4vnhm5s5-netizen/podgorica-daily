@@ -22,7 +22,7 @@ Cached AMSCG road-condition publications provide the first traffic source for ro
 
 ## Event platform foundation
 
-The Event Platform defines city-aware event and venue contracts, deterministic candidate normalization, cache-backed provider reads, IDs, deduplication, recurrence limits, query semantics, and Daily Overview event-summary input. KIC Budo Tomović, CNP, Glavni Grad Podgorica, and Turistička organizacija Podgorice collectors/providers are implemented internally. A mobile-first public Events UI exposes accepted cached records at `/dogadjaji`, with URL-backed filters and source-attributed detail pages; legacy locale and `/events` URLs are permanently redirected. Before broad production rollout, approve source operations, durable cache storage, monitoring, and operational freshness ownership.
+The Event Platform defines city-aware event and venue contracts, deterministic candidate normalization, cache-backed provider reads, IDs, deduplication, recurrence limits, query semantics, and Daily Overview event-summary input. KIC Budo Tomović, CNP, Glavni Grad Podgorica, and Turistička organizacija Podgorice collectors/providers are implemented internally. A mobile-first public Events UI exposes accepted cached records at `/podgorica/dogadjaji`, with URL-backed filters and source-attributed detail pages. Before broad production rollout, approve source operations, durable cache storage, monitoring, and operational freshness ownership.
 
 KIC Budo Tomović is the first approved event source. Its cache-backed provider and collector are implemented and remain feature-gated until live Events are explicitly enabled.
 
@@ -40,7 +40,7 @@ The Event Quality Layer is complete: policy is validated from environment config
 
 ## Platform expansion foundation
 
-The city registry, `CityContext`, provider registry, generic cache helpers, and future city-route helpers are in place. Podgorica remains the only enabled city and public experience. Before enabling another city, approve source coverage, cache durability, city-specific alert filtering, routing/selector UX, localized metadata, and operational ownership.
+The static city registry, route-derived `CityContext`, provider registry, generic cache helpers, and city-prefixed public routing are in place. Podgorica remains the only active city; `/` renders its dashboard and canonicalizes to `/podgorica`. Before activating another city, approve source coverage, cache durability, city-specific alert filtering, localized metadata, and operational ownership.
 
 ## Discovery and operations
 

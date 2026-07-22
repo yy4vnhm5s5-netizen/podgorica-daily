@@ -12,11 +12,12 @@ const fixturePath = new URL("./__fixtures__/", import.meta.url);
 const context = {
   city: {
     country: "Montenegro",
-    displayName: "Podgorica",
-    enabled: true,
     id: "podgorica" as const,
+    isActive: true,
+    isMain: true,
     latitude: 42.441,
     longitude: 19.263,
+    name: "Podgorica",
     slug: "podgorica",
     timezone: "Europe/Podgorica",
   },
@@ -120,6 +121,7 @@ test("collects fixtures atomically through injected KIC HTTP and writes a normal
         events: [
           {
             category: "concert",
+            cityId: "podgorica",
             cityIds: ["podgorica"],
             id: "kic-test",
             language: "me",

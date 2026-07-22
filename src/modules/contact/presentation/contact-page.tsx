@@ -5,13 +5,14 @@ import { getContactTranslations } from "@/modules/contact/presentation/contact-t
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
 import type { Locale } from "@/shared/config/locale";
+import type { City } from "@/shared/types/city";
 import { getTranslations } from "@/shared/lib/translations";
 
-function ContactPage({ locale }: { locale: Locale }) {
+function ContactPage({ city, locale }: { city: City; locale: Locale }) {
   const translations = getContactTranslations(locale);
 
   return (
-    <DashboardLayout translations={getTranslations(locale)}>
+    <DashboardLayout city={city} translations={getTranslations(locale)}>
       <section className="mx-auto max-w-5xl space-y-8" aria-labelledby="contact-heading">
         <div className="max-w-2xl">
           <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl" id="contact-heading">

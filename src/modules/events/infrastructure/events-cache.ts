@@ -6,6 +6,7 @@ import {
 import type { CityEvent, EventProviderResult, Venue } from "../domain/event.ts";
 import type { EventQualityDiagnostics } from "../domain/event-quality.ts";
 import type { CacheFreshnessStatus } from "@/shared/lib/cache";
+import { isCityId } from "@/shared/config/cities";
 
 interface EventCacheSnapshot {
   events: CityEvent[];
@@ -55,9 +56,25 @@ async function readEventCache(
 
 async function readEventCacheSnapshot(cachePath: string) {
   const snapshot = await readJsonCache<EventCacheSnapshot>(cachePath);
-  return snapshot && (snapshot.schemaVersion === 1 || snapshot.schemaVersion === 2)
-    ? snapshot
-    : null;
+  if (!snapshot || (snapshot.schemaVersion !== 1 && snapshot.schemaVersion !== 2)) return null;
+
+  return {
+    ...snapshot,
+    events: snapshot.events.flatMap((event) => {
+      const cityId = resolveCachedEventCityId(event);
+      return cityId && isCityId(cityId) ? [{ ...event, cityId }] : [];
+    }),
+  };
+}
+
+function resolveCachedEventCityId(event: CityEvent) {
+  if (isCityId(event.cityId)) return event.cityId;
+
+  const cityIds = Array.isArray(event.cityIds)
+    ? [...new Set(event.cityIds.filter((cityId) => isCityId(cityId)))]
+    : [];
+
+  return cityIds.length === 1 ? cityIds[0] : undefined;
 }
 
 async function writeEventCache(snapshot: EventCacheSnapshot, cachePath: string) {

@@ -22,12 +22,13 @@ async function getAmscgCityAlerts({
   mode: AmscgProviderMode;
   readCache?: () => Promise<AmscgCacheSnapshot | null>;
 }): Promise<AmscgCityAlertsSourceData> {
-  void context;
   if (mode === "disabled") return { alerts: [], freshnessStatus: "unavailable", mode };
   const cache = await readCache();
   if (!cache) return { alerts: [], freshnessStatus: "unavailable", mode };
   return {
-    alerts: cache.alerts.map(toCityAlert),
+    alerts: cache.alerts
+      .filter((alert) => alert.cityIds.includes(context.city.id))
+      .map(toCityAlert),
     freshnessStatus: cache.freshnessStatus,
     lastSuccessfulUpdate: new Date(cache.lastSuccessfulRefreshAt),
     mode,

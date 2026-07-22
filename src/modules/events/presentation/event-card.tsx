@@ -12,17 +12,19 @@ import { Badge } from "@/shared/components/ui/badge";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { getLocaleTag, type Locale } from "@/shared/config/locale";
 import { getEventDetailPath } from "@/shared/config/public-routes";
+import type { City } from "@/shared/types/city";
 import { formatDateTime } from "@/shared/lib/date";
 
 interface EventCardProps {
+  city: City;
   event: CityEvent;
   locale: Locale;
 }
 
-function EventCard({ event, locale }: EventCardProps) {
+function EventCard({ city, event, locale }: EventCardProps) {
   const translations = getEventsTranslations(locale);
   const statusLabel = getEventStatusLabel(locale, event.status);
-  const detailHref = getEventDetailPath(event.id);
+  const detailHref = getEventDetailPath(city, event.id);
 
   return (
     <Card className="overflow-hidden transition-colors hover:border-primary/40">

@@ -4,11 +4,12 @@ import { refreshTourismEvents } from "./tourism-refresh.ts";
 const context = {
   city: {
     country: "Montenegro",
-    displayName: "Podgorica",
-    enabled: true,
     id: "podgorica" as const,
+    isActive: true,
+    isMain: true,
     latitude: 42,
     longitude: 19,
+    name: "Podgorica",
     slug: "podgorica",
     timezone: "Europe/Podgorica",
   },

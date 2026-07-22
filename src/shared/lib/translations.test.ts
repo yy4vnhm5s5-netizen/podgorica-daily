@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  getCityPath,
   getContactPath,
   getEventDetailPath,
   getEventsPath,
@@ -38,8 +39,9 @@ test("provides localized legal-footer labels and stable legal paths", () => {
   assert.equal(getTermsOfUsePath(), "/uslovi-koriscenja");
   assert.equal(getPrivacyPolicyPath(), "/politika-privatnosti");
   assert.equal(getContactPath(), "/kontakt");
-  assert.equal(getEventsPath(), "/dogadjaji");
-  assert.equal(getEventDetailPath("event/a"), "/dogadjaji/event%2Fa");
-  assert.equal(getFlightsPath(), "/letovi");
-  assert.equal(getGoingOutPath(), "/izlasci");
+  assert.equal(getCityPath("podgorica"), "/podgorica");
+  assert.equal(getEventsPath("podgorica"), "/podgorica/dogadjaji");
+  assert.equal(getEventDetailPath("podgorica", "event/a"), "/podgorica/dogadjaji/event%2Fa");
+  assert.equal(getFlightsPath("podgorica"), "/podgorica/letovi");
+  assert.equal(getGoingOutPath("podgorica"), "/podgorica/izlasci");
 });

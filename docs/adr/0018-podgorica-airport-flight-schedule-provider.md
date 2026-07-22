@@ -13,7 +13,7 @@ Use the official Airports of Montenegro Podgorica schedule page at `https://mont
 
 The provider accepts only HTTPS URLs on `montenegroairports.com` and `www.montenegroairports.com`, uses a ten-second timeout, one transient retry, an explicit Gradom user agent, HTML/content-size validation, and a semantic table-header parser. It normalizes arrivals and departures into the module-owned `Flight` model, preserves missing optional fields, sorts by the timezone-aware scheduled instant, and deduplicates by direction, scheduled time, location, and flight number.
 
-`pnpm run collect:podgorica-flights` writes `.runtime/cache/podgorica-flights.json` atomically. The collector retains a prior valid snapshot if fetching or parsing fails. The homepage and `/letovi` read only that cache. The bundled scheduler refreshes it every 30 minutes; application requests never collect schedule data.
+`pnpm run collect:podgorica-flights` writes `.runtime/cache/podgorica-flights.json` atomically. The collector retains a prior valid snapshot if fetching or parsing fails. The homepage and `/podgorica/letovi` read only that cache. The bundled scheduler refreshes it every 30 minutes; application requests never collect schedule data.
 
 ## Consequences
 

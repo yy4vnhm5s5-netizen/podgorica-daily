@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { getDefaultCityContext } from "@/config/city-context";
+import { resolveActiveCityFeatureRoute } from "@/app/city-routing";
 import { getCityEvents } from "@/modules/events/application/get-city-events";
 import { EventDetail } from "@/modules/events/presentation/event-detail";
 import {
@@ -11,10 +11,11 @@ import {
 import { getPublicCityEventById } from "@/modules/events/presentation/events-ui-model";
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
 import { getPageTitle } from "@/shared/config/site";
+import { getEventDetailPath } from "@/shared/config/public-routes";
 import { getTranslations } from "@/shared/lib/translations";
 
 interface EventDetailPageProps {
-  params: Promise<{ eventId: string }>;
+  params: Promise<{ city: string; eventId: string }>;
 }
 
 // Use the current collector-managed snapshot for the same public event set used
@@ -23,21 +24,23 @@ interface EventDetailPageProps {
 export const revalidate = 0;
 
 async function generateMetadata({ params }: EventDetailPageProps): Promise<Metadata> {
-  const { eventId } = await params;
-  const context = getDefaultCityContext("me");
+  const { city: slug, eventId } = await params;
+  const context = resolveActiveCityFeatureRoute(slug, "events");
+  if (!context) return {};
   const event = getPublicCityEventById((await getCityEvents(context)).events, eventId);
 
   if (!event) return {};
 
   return {
     alternates: {
-      canonical: `/dogadjaji/${encodeURIComponent(event.id)}`,
+      canonical: getEventDetailPath(context.city, event.id),
     },
     description: event.description,
     openGraph: {
       description: event.description,
       images: event.imageUrl ? [{ url: event.imageUrl }] : undefined,
       title: getPageTitle(event.title),
+      url: getEventDetailPath(context.city, event.id),
     },
     title: { absolute: getPageTitle(event.title) },
     twitter: { description: event.description, title: getPageTitle(event.title) },
@@ -45,9 +48,10 @@ async function generateMetadata({ params }: EventDetailPageProps): Promise<Metad
 }
 
 async function EventDetailPage({ params }: EventDetailPageProps) {
-  const { eventId } = await params;
+  const { city: slug, eventId } = await params;
   const locale = "me" as const;
-  const context = getDefaultCityContext(locale);
+  const context = resolveActiveCityFeatureRoute(slug, "events");
+  if (!context) notFound();
   const eventsReadModel = await getCityEvents(context);
   const event = getPublicCityEventById(eventsReadModel.events, eventId);
 
@@ -55,14 +59,14 @@ async function EventDetailPage({ params }: EventDetailPageProps) {
   const structuredData = createEventStructuredData(event);
 
   return (
-    <DashboardLayout translations={getTranslations(locale)}>
+    <DashboardLayout city={context.city} translations={getTranslations(locale)}>
       {structuredData ? (
         <script
           dangerouslySetInnerHTML={{ __html: serializeStructuredData(structuredData) }}
           type="application/ld+json"
         />
       ) : null}
-      <EventDetail event={event} locale={locale} />
+      <EventDetail city={context.city} event={event} locale={locale} />
     </DashboardLayout>
   );
 }

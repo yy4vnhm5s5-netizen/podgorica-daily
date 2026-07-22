@@ -7,11 +7,12 @@ import { tourismEventProvider } from "./tourism-event-provider.ts";
 const context = {
   city: {
     country: "Montenegro",
-    displayName: "Podgorica",
-    enabled: true,
     id: "podgorica" as const,
+    isActive: true,
+    isMain: true,
     latitude: 42,
     longitude: 19,
+    name: "Podgorica",
     slug: "podgorica",
     timezone: "Europe/Podgorica",
   },
@@ -61,6 +62,7 @@ test("retains a usable Tourism snapshot for zero-valid and complete failures", a
     events: [
       {
         category: "concert" as const,
+        cityId: "podgorica" as const,
         cityIds: ["podgorica" as const],
         id: "old",
         language: "me" as const,

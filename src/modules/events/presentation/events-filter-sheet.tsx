@@ -9,8 +9,10 @@ import type { EventPresentationCategory } from "./event-presentation-category";
 import type { EventsUiFilters } from "./events-ui-model";
 import { Button } from "@/shared/components/ui/button";
 import { getEventsPath } from "@/shared/config/public-routes";
+import type { City } from "@/shared/types/city";
 
 interface EventsFilterSheetProps {
+  city: City;
   categories: readonly EventPresentationCategory[];
   filters: EventsUiFilters;
   sources: readonly { id: string; name: string }[];
@@ -19,7 +21,13 @@ interface EventsFilterSheetProps {
 
 type EventsFilterTranslations = Omit<EventsTranslations, "eventsCount">;
 
-function EventsFilterSheet({ categories, filters, sources, translations }: EventsFilterSheetProps) {
+function EventsFilterSheet({
+  city,
+  categories,
+  filters,
+  sources,
+  translations,
+}: EventsFilterSheetProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   return (
@@ -39,7 +47,7 @@ function EventsFilterSheet({ categories, filters, sources, translations }: Event
         className="m-0 ml-auto h-full w-full max-w-md border-0 bg-background p-0 text-foreground shadow-2xl backdrop:bg-foreground/30"
         ref={dialogRef}
       >
-        <form action={getEventsPath()} className="flex h-full flex-col" method="get">
+        <form action={getEventsPath(city)} className="flex h-full flex-col" method="get">
           <div className="flex items-center justify-between border-b p-5">
             <h2 className="text-lg font-semibold" id="events-filter-title">
               {translations.filters}
@@ -93,7 +101,7 @@ function EventsFilterSheet({ categories, filters, sources, translations }: Event
           <div className="grid grid-cols-2 gap-3 border-t p-5">
             <Link
               className="inline-flex h-10 items-center justify-center rounded-md border border-border text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              href={getEventsPath()}
+              href={getEventsPath(city)}
             >
               {translations.resetFilters}
             </Link>

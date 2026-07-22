@@ -2,6 +2,7 @@ import type { CityEvent } from "../domain/event.ts";
 
 const podgoricaEvent = (overrides: Partial<CityEvent> = {}): CityEvent => ({
   category: "concert",
+  cityId: "podgorica",
   cityIds: ["podgorica"],
   id: "event_fixture",
   language: "me",

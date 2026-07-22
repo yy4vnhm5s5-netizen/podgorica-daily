@@ -15,6 +15,7 @@ const sourceUrl = "https://example.test/event";
 function event(overrides: Partial<CityEvent> = {}): CityEvent {
   return {
     category: "concert",
+    cityId: "podgorica",
     cityIds: ["podgorica"],
     id: "event-one",
     language: "me",

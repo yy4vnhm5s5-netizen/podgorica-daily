@@ -1,3 +1,4 @@
+import { getDefaultCityContext, supportsCityAlerts } from "@/config/city-context";
 import { createDailyOverview } from "@/modules/daily-overview/domain/daily-overview-generator";
 import type { DailyOverview } from "@/modules/daily-overview/domain/daily-overview";
 import { mockCachedCityDataProvider } from "@/modules/daily-overview/infrastructure/mock-cached-city-data-provider";
@@ -7,14 +8,24 @@ import type { CityContext } from "@/shared/types/city";
 type DailyOverviewResult =
   { data: DailyOverview; status: "success" } | { status: "empty" } | { status: "error" };
 
+interface DailyOverviewOptions {
+  includeCityAlerts?: boolean;
+}
+
+function shouldIncludeCityAlerts(context: CityContext, requested = true) {
+  return requested && supportsCityAlerts(context.city);
+}
+
 async function getDailyOverview(
   context: CityContext = getDefaultCityContext(),
+  options: DailyOverviewOptions = {},
 ): Promise<DailyOverviewResult> {
   try {
-    const [snapshot, cityAlerts] = await Promise.all([
-      mockCachedCityDataProvider.getCachedCityData(context),
-      getCityAlertsOverviewData(context),
-    ]);
+    const snapshotPromise = mockCachedCityDataProvider.getCachedCityData(context);
+    const cityAlertsPromise = shouldIncludeCityAlerts(context, options.includeCityAlerts ?? true)
+      ? getCityAlertsOverviewData(context)
+      : Promise.resolve({ alerts: [], status: "unavailable" as const });
+    const [snapshot, cityAlerts] = await Promise.all([snapshotPromise, cityAlertsPromise]);
 
     if (!snapshot) {
       return { status: "empty" };
@@ -34,5 +45,9 @@ async function getDailyOverview(
   }
 }
 
-export { getDailyOverview, type DailyOverviewResult };
-import { getDefaultCityContext } from "@/config/city-context";
+export {
+  getDailyOverview,
+  type DailyOverviewOptions,
+  type DailyOverviewResult,
+  shouldIncludeCityAlerts,
+};

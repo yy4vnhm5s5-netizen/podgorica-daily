@@ -12,15 +12,17 @@ import {
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import type { Locale } from "@/shared/config/locale";
 import { getGoingOutPath } from "@/shared/config/public-routes";
+import type { City } from "@/shared/types/city";
 import { cn } from "@/shared/lib/utils";
 
 interface GoingOutSectionProps {
+  city: City;
   events: readonly GoingOutEvent[];
   locale: Locale;
   state: GoingOutCacheState;
 }
 
-function GoingOutSection({ events, locale, state }: GoingOutSectionProps) {
+function GoingOutSection({ city, events, locale, state }: GoingOutSectionProps) {
   const copy = locale === "me" ? montenegrinCopy : englishCopy;
   const upcoming = getHomepageGoingOutEvents(events);
   const displayState = getGoingOutDisplayState({ eventCount: upcoming.length, state });
@@ -60,7 +62,7 @@ function GoingOutSection({ events, locale, state }: GoingOutSectionProps) {
           )}
           <Link
             className="mt-3 inline-flex min-h-10 items-center gap-1 rounded-md text-sm font-medium text-violet-800 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-600 dark:text-violet-200"
-            href={getGoingOutPath()}
+            href={getGoingOutPath(city)}
           >
             {copy.all}
             <span aria-hidden="true">→</span>

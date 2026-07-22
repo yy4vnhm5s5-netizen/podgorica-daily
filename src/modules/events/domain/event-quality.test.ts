@@ -33,7 +33,12 @@ test("rejects core identity, chronology, city, and policy failures", () => {
     "rejected",
   );
   assert.equal(
-    assessEventQuality(podgoricaEvent({ cityIds: ["bar"] }), ["podgorica"], undefined, now).status,
+    assessEventQuality(
+      podgoricaEvent({ cityId: "bar", cityIds: ["bar"] }),
+      ["podgorica"],
+      undefined,
+      now,
+    ).status,
     "rejected",
   );
   assert.ok(

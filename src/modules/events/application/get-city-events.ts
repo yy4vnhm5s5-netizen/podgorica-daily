@@ -19,6 +19,10 @@ interface EventProviderReadState {
   status: ReturnType<typeof toEventProviderStatusReadModel>;
 }
 
+function getEmptyCityEventsReadModel(): CityEventsReadModel {
+  return { events: [], providers: [], venues: [] };
+}
+
 async function getCityEvents(
   context: CityContext,
   providers: readonly EventProvider[] = getEnabledEventProviders(),
@@ -37,7 +41,7 @@ async function getCityEvents(
   );
   const events = results
     .flatMap(({ result }) => result.events)
-    .filter((event) => event.cityIds.includes(context.city.id))
+    .filter((event) => event.cityId === context.city.id)
     .map((event) => ({ ...event, slug: event.slug ?? createEventSlug(event.title) }));
 
   return {
@@ -60,4 +64,9 @@ async function getCityEvents(
   };
 }
 
-export { getCityEvents, type CityEventsReadModel, type EventProviderReadState };
+export {
+  getCityEvents,
+  getEmptyCityEventsReadModel,
+  type CityEventsReadModel,
+  type EventProviderReadState,
+};

@@ -8,11 +8,12 @@ import { getCedisCityAlerts } from "./cedis-city-alerts-provider.ts";
 const context = {
   city: {
     country: "Montenegro",
-    displayName: "Podgorica",
-    enabled: true,
     id: "podgorica" as const,
+    isActive: true,
+    isMain: true,
     latitude: 42.441,
     longitude: 19.263,
+    name: "Podgorica",
     slug: "podgorica",
     timezone: "Europe/Podgorica",
   },
@@ -145,4 +146,23 @@ test("does not silently fall back to mock data in live or disabled modes", async
   assert.equal(live.freshnessStatus, "unavailable");
   assert.equal(disabled.freshnessStatus, "unavailable");
   assert.equal(mockReads, 0);
+});
+
+test("does not read Podgorica CEDIS cache for an unsupported city", async () => {
+  let cacheReads = 0;
+  const result = await getCedisCityAlerts({
+    context: {
+      ...context,
+      city: { ...context.city, id: "bar", name: "Bar", slug: "bar" },
+    },
+    mode: "live",
+    readCache: async () => {
+      cacheReads += 1;
+      return cache("fresh");
+    },
+  });
+
+  assert.equal(cacheReads, 0);
+  assert.deepEqual(result.alerts, []);
+  assert.equal(result.freshnessStatus, "unavailable");
 });

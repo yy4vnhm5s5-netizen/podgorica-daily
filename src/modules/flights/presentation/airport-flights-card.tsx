@@ -15,9 +15,11 @@ import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { StatusBadge } from "@/shared/components/status-badge";
 import type { Locale } from "@/shared/config/locale";
 import { getFlightsPath } from "@/shared/config/public-routes";
+import type { City } from "@/shared/types/city";
 import { cn } from "@/shared/lib/utils";
 
 interface AirportFlightsCardProps {
+  city: City;
   flights: readonly Flight[];
   lastSuccessfulRefreshAt?: string;
   locale: Locale;
@@ -25,6 +27,7 @@ interface AirportFlightsCardProps {
 }
 
 function AirportFlightsCard({
+  city,
   flights,
   lastSuccessfulRefreshAt,
   locale,
@@ -150,7 +153,7 @@ function AirportFlightsCard({
         ) : null}
         <a
           className="mt-4 inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-          href={getFlightsPath()}
+          href={getFlightsPath(city)}
         >
           {copy.cta}
           <span aria-hidden="true">→</span>

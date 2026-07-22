@@ -30,7 +30,7 @@ type EventProviderState = "disabled" | "fresh" | "mock" | "stale" | "unavailable
 
 interface Venue {
   address?: string;
-  cityId: CityId;
+  cityId?: CityId;
   id: string;
   latitude?: number;
   longitude?: number;
@@ -48,6 +48,7 @@ interface EventSourceReference {
 interface CityEvent {
   address?: string;
   category: EventCategory;
+  cityId: CityId;
   cityIds: CityId[];
   description?: string;
   endsAt?: string;
@@ -142,6 +143,7 @@ function isValidCityEvent(event: CityEvent) {
   return (
     event.id.length > 0 &&
     event.title.trim().length > 0 &&
+    Boolean(event.cityId) &&
     event.cityIds.length > 0 &&
     event.sourceUrl.length > 0 &&
     (isIsoTimestamp(event.startsAt) || isIsoDate(event.startDate)) &&

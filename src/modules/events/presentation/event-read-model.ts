@@ -1,5 +1,6 @@
 import type { CityEvent, EventProviderResult } from "../domain/event.ts";
 import type { CityContext } from "@/shared/types/city";
+import { getCityName } from "@/shared/config/cities";
 
 interface EventCardReadModel {
   address?: string;
@@ -29,7 +30,7 @@ function toEventCardReadModel(event: CityEvent, context: CityContext): EventCard
   return {
     address: event.address,
     category: event.category,
-    cityName: context.city.displayName,
+    cityName: getCityName(context.city),
     description: event.description,
     endsAt: event.endsAt,
     imageUrl: event.imageUrl,

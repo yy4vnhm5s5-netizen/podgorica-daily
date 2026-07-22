@@ -1,6 +1,6 @@
 # ADR 0021: Use root-level canonical public routes
 
-- Status: Accepted
+- Status: Superseded by ADR 0022
 - Date: 2026-07-22
 
 ## Context

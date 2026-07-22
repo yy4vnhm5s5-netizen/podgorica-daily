@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 
-import { getDefaultCityContext } from "@/config/city-context";
 import {
   getActiveCityAlerts,
   type CityAlertsMetadata,
@@ -38,6 +37,7 @@ import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import type { Locale } from "@/shared/config/locale";
 import { getLocaleTag } from "@/shared/config/locale";
 import { getElectricityPath } from "@/shared/config/public-routes";
+import type { CityContext } from "@/shared/types/city";
 import { formatDateTime } from "@/shared/lib/date";
 import { cn } from "@/shared/lib/utils";
 
@@ -74,6 +74,7 @@ const severityStyles: Record<AlertSeverity, { card: string; icon: string; tone: 
 };
 
 interface CityAlertsSectionProps {
+  context: CityContext;
   locale: Locale;
 }
 
@@ -92,11 +93,11 @@ function CityAlertsSectionLoading({ locale }: CityAlertsSectionProps) {
   );
 }
 
-async function CityAlertsSection({ locale }: CityAlertsSectionProps) {
-  const result = await getActiveCityAlerts(getDefaultCityContext(locale));
+async function CityAlertsSection({ context, locale }: CityAlertsSectionProps) {
+  const result = await getActiveCityAlerts(context);
   const translations = getCityAlertsTranslations(locale);
   const metadata: CityAlertsMetadata = "metadata" in result ? result.metadata : { sources: [] };
-  const services = getCityServices(result, locale, translations, metadata);
+  const services = getCityServices(result, context, locale, translations, metadata);
   const otherAlerts =
     result.status === "success"
       ? result.data.filter(({ type }) => type !== "powerOutage" && type !== "waterOutage")
@@ -132,6 +133,7 @@ async function CityAlertsSection({ locale }: CityAlertsSectionProps) {
 
 function getCityServices(
   result: Awaited<ReturnType<typeof getActiveCityAlerts>>,
+  context: CityContext,
   locale: Locale,
   translations: CityAlertsTranslations,
   metadata: CityAlertsMetadata,
@@ -144,14 +146,14 @@ function getCityServices(
 
   return {
     power: powerAlert
-      ? toCityServiceInfo(powerAlert, cedisSource, locale, translations)
+      ? toCityServiceInfo(powerAlert, context, cedisSource, locale, translations)
       : {
           ...toEmptyCityServiceInfo(cedisSource, locale, translations),
-          detailsHref: getElectricityPath(),
+          detailsHref: getElectricityPath(context.city),
           detailsLabel: getPowerOutageDetailsLabel(locale),
         },
     water: waterAlert
-      ? toCityServiceInfo(waterAlert, vikpgSource, locale, translations)
+      ? toCityServiceInfo(waterAlert, context, vikpgSource, locale, translations)
       : toEmptyCityServiceInfo(vikpgSource, locale, translations),
   };
 }
@@ -177,6 +179,7 @@ function toEmptyCityServiceInfo(
 
 function toCityServiceInfo(
   alert: CityAlert,
+  context: CityContext,
   source: CityAlertsMetadata["sources"][number] | undefined,
   locale: Locale,
   translations: CityAlertsTranslations,
@@ -191,7 +194,7 @@ function toCityServiceInfo(
     ...(alert.type === "powerOutage"
       ? {
           ...getHomepagePowerOutageLocations(alert),
-          detailsHref: getElectricityPath(),
+          detailsHref: getElectricityPath(context.city),
           detailsLabel: getPowerOutageDetailsLabel(locale),
         }
       : { area: getCityAlertContent(alert.affectedArea, translations) }),

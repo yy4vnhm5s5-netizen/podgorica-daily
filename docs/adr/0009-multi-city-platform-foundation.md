@@ -1,6 +1,6 @@
 # ADR 0009: Establish a city-aware platform foundation
 
-- Status: Accepted
+- Status: Superseded in part by ADR 0022
 - Date: 2026-07-17
 
 ## Context

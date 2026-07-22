@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { LegalPage } from "@/modules/legal/presentation/legal-page";
+import { getMainCity } from "@/shared/config/cities";
 import { getPrivacyPolicyPath } from "@/shared/config/public-routes";
 import { getPageTitle } from "@/shared/config/site";
 
@@ -16,7 +17,7 @@ function generateMetadata(): Metadata {
 }
 
 function PrivacyPolicyPage() {
-  return <LegalPage document="privacy" />;
+  return <LegalPage city={getMainCity()} document="privacy" />;
 }
 
 export { generateMetadata };

@@ -76,6 +76,7 @@ function mergeEvents(
 
   return {
     ...canonical,
+    cityId: canonical.cityId,
     cityIds: [...new Set([...left.cityIds, ...right.cityIds])],
     description:
       (left.description?.length ?? 0) >= (right.description?.length ?? 0)
@@ -114,7 +115,7 @@ function sameSourceReference(left: CityEvent, right: CityEvent) {
 }
 
 function hasCityOverlap(left: CityEvent, right: CityEvent) {
-  return left.cityIds.some((cityId) => right.cityIds.includes(cityId));
+  return left.cityId === right.cityId;
 }
 
 function getEventStart(event: CityEvent) {

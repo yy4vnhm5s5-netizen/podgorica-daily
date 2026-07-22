@@ -65,6 +65,24 @@ test("parses a bare Podgorica heading from the current CEDIS article structure",
   );
 });
 
+test("uses the supplied now value for deterministic outage status", async () => {
+  const article = {
+    title: "Planirani radovi na mreži za 22. jul",
+    url: "https://cedis.me/servisne-informacije/planirani-radovi-na-mrezi-za-22-jul/",
+  };
+  const html = await fixture("cedis-bare-municipality-heading.html");
+  const now = new Date("2026-07-21T12:00:00Z");
+
+  const first = parseCedisArticle(article, html, now);
+  const second = parseCedisArticle(article, html, now);
+
+  assert.deepEqual(
+    first.map((alert) => alert.status),
+    second.map((alert) => alert.status),
+  );
+  assert.ok(first.every((alert) => alert.status === "scheduled"));
+});
+
 test("parses the current Elementor post-content container", async () => {
   const result = parseCedisArticleResult(
     {

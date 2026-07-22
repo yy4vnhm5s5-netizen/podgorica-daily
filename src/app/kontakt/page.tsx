@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ContactPage } from "@/modules/contact/presentation/contact-page";
 import { getContactTranslations } from "@/modules/contact/presentation/contact-translations";
+import { getMainCity } from "@/shared/config/cities";
 import { getContactPath } from "@/shared/config/public-routes";
 import { getPageTitle } from "@/shared/config/site";
 
@@ -17,7 +18,7 @@ function generateMetadata(): Metadata {
 }
 
 function ContactRoute() {
-  return <ContactPage locale="me" />;
+  return <ContactPage city={getMainCity()} locale="me" />;
 }
 
 export { generateMetadata };

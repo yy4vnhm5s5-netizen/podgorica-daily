@@ -94,8 +94,7 @@ function assessEventQuality(
   if (!event.title.trim()) add("missing-title", "error");
   if (!event.sourceUrl) add("missing-source-url", "error");
   if (!event.sourceReferences.length) add("missing-provenance", "error");
-  if (!event.cityIds.length) add("no-city", "error");
-  if (event.cityIds.some((cityId) => !validCityIds.includes(cityId))) add("invalid-city", "error");
+  if (!validCityIds.includes(event.cityId)) add("invalid-city", "error");
   if (event.timezone !== "Europe/Podgorica") add("unsupported-timezone", "error");
   if (!event.startsAt && !event.startDate) add("invalid-date", "error");
   if (event.startsAt && !isIsoTimestamp(event.startsAt)) add("invalid-date", "error");

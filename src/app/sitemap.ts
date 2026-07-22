@@ -1,83 +1,67 @@
 import type { MetadataRoute } from "next";
 
-import { getDefaultCityContext } from "@/config/city-context";
+import { createCityContext, getActiveCities, supportsCityCapability } from "@/shared/config/cities";
 import { getCityEvents } from "@/modules/events/application/get-city-events";
 import {
   getContactPath,
-  getElectricityPath,
-  getFlightsPath,
-  getGoingOutPath,
+  getEventDetailPath,
   getPrivacyPolicyPath,
   getTermsOfUsePath,
 } from "@/shared/config/public-routes";
 import { siteConfig } from "@/shared/config/site";
+import { getCitySitemapPaths } from "./city-routing";
 
-const stablePaths = ["/", "/dogadjaji"] as const;
+function createEntry(
+  path: string,
+  changeFrequency: MetadataRoute.Sitemap[0]["changeFrequency"],
+  priority: number,
+) {
+  return {
+    changeFrequency,
+    lastModified: new Date(),
+    priority,
+    url: new URL(path, siteConfig.url).toString(),
+  };
+}
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const stableEntries: MetadataRoute.Sitemap = stablePaths.map((path) => ({
-    changeFrequency: path === "/" ? ("hourly" as const) : ("daily" as const),
-    lastModified: new Date(),
-    priority: path === "/" ? 1 : 0.8,
-    url: new URL(path, siteConfig.url).toString(),
-  }));
-  const contactEntries: MetadataRoute.Sitemap = [
-    {
-      changeFrequency: "monthly",
-      priority: 0.5,
-      url: new URL(getContactPath(), siteConfig.url).toString(),
-    },
+  const cities = getActiveCities();
+  const cityEntries = cities.flatMap((city) => {
+    const paths = getCitySitemapPaths(city);
+    const landingPath = paths[0];
+    return paths.map((path) => {
+      const priority = path === landingPath ? 1 : 0.7;
+      const changeFrequency =
+        path.endsWith("/dogadjaji") || path.endsWith("/izlasci")
+          ? "daily"
+          : path.endsWith("/letovi") || path === landingPath
+            ? "hourly"
+            : "daily";
+      return createEntry(path, changeFrequency, priority);
+    });
+  });
+  const globalEntries = [
+    createEntry(getContactPath(), "monthly", 0.5),
+    createEntry(getTermsOfUsePath(), "yearly", 0.3),
+    createEntry(getPrivacyPolicyPath(), "yearly", 0.3),
   ];
-  const legalEntries: MetadataRoute.Sitemap = [getTermsOfUsePath(), getPrivacyPolicyPath()].map(
-    (path) => ({
-      changeFrequency: "yearly",
-      priority: 0.3,
-      url: new URL(path, siteConfig.url).toString(),
-    }),
+  const eventEntries = await Promise.all(
+    cities
+      .filter((city) => supportsCityCapability(city, "events"))
+      .map(async (city) => {
+        try {
+          const { events } = await getCityEvents(createCityContext(city.id, "me"));
+          return events.map((event) => ({
+            changeFrequency: "weekly" as const,
+            lastModified: event.sourceUpdatedAt ? new Date(event.sourceUpdatedAt) : undefined,
+            priority: 0.6,
+            url: new URL(getEventDetailPath(city, event.id), siteConfig.url).toString(),
+          }));
+        } catch {
+          return [];
+        }
+      }),
   );
-  const electricityEntry: MetadataRoute.Sitemap = [
-    {
-      changeFrequency: "daily",
-      priority: 0.7,
-      url: new URL(getElectricityPath(), siteConfig.url).toString(),
-    },
-  ];
-  const flightsEntries: MetadataRoute.Sitemap = [
-    {
-      changeFrequency: "hourly",
-      priority: 0.7,
-      url: new URL(getFlightsPath(), siteConfig.url).toString(),
-    },
-  ];
-  const goingOutEntries: MetadataRoute.Sitemap = [
-    {
-      changeFrequency: "daily",
-      priority: 0.7,
-      url: new URL(getGoingOutPath(), siteConfig.url).toString(),
-    },
-  ];
 
-  const eventEntries = await (async () => {
-    try {
-      const { events } = await getCityEvents(getDefaultCityContext("me"));
-      return events.map((event) => ({
-        changeFrequency: "weekly" as const,
-        lastModified: event.sourceUpdatedAt ? new Date(event.sourceUpdatedAt) : undefined,
-        priority: 0.6,
-        url: new URL(`/dogadjaji/${encodeURIComponent(event.id)}`, siteConfig.url).toString(),
-      }));
-    } catch {
-      return [];
-    }
-  })();
-
-  return [
-    ...stableEntries,
-    ...contactEntries,
-    ...legalEntries,
-    ...electricityEntry,
-    ...flightsEntries,
-    ...goingOutEntries,
-    ...eventEntries,
-  ];
+  return [...cityEntries, ...globalEntries, ...eventEntries.flat()];
 }
