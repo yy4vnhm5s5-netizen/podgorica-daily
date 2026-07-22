@@ -32,6 +32,8 @@ const environmentSchema = z.object({
   CINEPLEXX_EVENT_CACHE_PATH: z.string().min(1).optional(),
   PODGORICA_FLIGHTS_CACHE_PATH: z.string().min(1).optional(),
   PODGORICA_FLIGHTS_CACHE_FRESHNESS_MINUTES: z.coerce.number().int().positive().default(90),
+  GOING_OUT_CACHE_PATH: z.string().min(1).optional(),
+  GOING_OUT_CACHE_FRESHNESS_MINUTES: z.coerce.number().int().positive().default(120),
   ZPCG_RAILWAY_CACHE_PATH: z.string().min(1).optional(),
   CEDIS_CACHE_PATH: z.string().min(1).optional(),
   AMSCG_CACHE_PATH: z.string().min(1).optional(),
@@ -57,6 +59,7 @@ const environmentSchema = z.object({
   ENABLE_VIKPG: z.enum(["false", "true"]).default("true"),
   ENABLE_EVENTS: z.enum(["false", "true"]).default("false"),
   ENABLE_FLIGHTS: z.enum(["false", "true"]).default("true"),
+  ENABLE_GOING_OUT: z.enum(["false", "true"]).default("true"),
   ENABLE_WEATHER: z.enum(["false", "true"]).default("true"),
   NEXT_PUBLIC_APP_ENV: z.string().min(1).default("development"),
   NEXT_PUBLIC_SITE_URL: z.string().url().optional(),
@@ -107,6 +110,8 @@ const parsedEnvironment = environmentSchema.safeParse({
   CINEPLEXX_EVENT_CACHE_PATH: process.env.CINEPLEXX_EVENT_CACHE_PATH,
   PODGORICA_FLIGHTS_CACHE_PATH: process.env.PODGORICA_FLIGHTS_CACHE_PATH,
   PODGORICA_FLIGHTS_CACHE_FRESHNESS_MINUTES: process.env.PODGORICA_FLIGHTS_CACHE_FRESHNESS_MINUTES,
+  GOING_OUT_CACHE_PATH: process.env.GOING_OUT_CACHE_PATH,
+  GOING_OUT_CACHE_FRESHNESS_MINUTES: process.env.GOING_OUT_CACHE_FRESHNESS_MINUTES,
   ZPCG_RAILWAY_CACHE_PATH: process.env.ZPCG_RAILWAY_CACHE_PATH,
   CEDIS_CACHE_PATH: process.env.CEDIS_CACHE_PATH,
   AMSCG_CACHE_PATH: process.env.AMSCG_CACHE_PATH,
@@ -126,6 +131,7 @@ const parsedEnvironment = environmentSchema.safeParse({
   ENABLE_VIKPG: process.env.ENABLE_VIKPG,
   ENABLE_EVENTS: process.env.ENABLE_EVENTS,
   ENABLE_FLIGHTS: process.env.ENABLE_FLIGHTS,
+  ENABLE_GOING_OUT: process.env.ENABLE_GOING_OUT,
   ENABLE_WEATHER: process.env.ENABLE_WEATHER,
   NEXT_PUBLIC_APP_ENV: process.env.NEXT_PUBLIC_APP_ENV,
   NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
@@ -176,6 +182,8 @@ const resolvedEnvironment = {
   PODGORICA_FLIGHTS_CACHE_PATH:
     parsedEnvironment.data.PODGORICA_FLIGHTS_CACHE_PATH ??
     `${cacheDirectory}/podgorica-flights.json`,
+  GOING_OUT_CACHE_PATH:
+    parsedEnvironment.data.GOING_OUT_CACHE_PATH ?? `${cacheDirectory}/montegigs-going-out.json`,
   ZPCG_RAILWAY_CACHE_PATH:
     parsedEnvironment.data.ZPCG_RAILWAY_CACHE_PATH ??
     `${cacheDirectory}/zpcg-railway-departures.json`,
@@ -197,6 +205,7 @@ export const env = {
   ENABLE_VIKPG: resolvedEnvironment.ENABLE_VIKPG === "true",
   ENABLE_EVENTS: resolvedEnvironment.ENABLE_EVENTS === "true",
   ENABLE_FLIGHTS: resolvedEnvironment.ENABLE_FLIGHTS === "true",
+  ENABLE_GOING_OUT: resolvedEnvironment.ENABLE_GOING_OUT === "true",
   ENABLE_WEATHER: resolvedEnvironment.ENABLE_WEATHER === "true",
   EVENT_QUALITY_WARN_MISSING_DESCRIPTION:
     resolvedEnvironment.EVENT_QUALITY_WARN_MISSING_DESCRIPTION === "true",

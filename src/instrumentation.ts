@@ -8,6 +8,7 @@ import { readEventCacheSnapshot } from "@/modules/events/infrastructure/events-c
 import { initializeEventCaches } from "@/modules/events/infrastructure/events-initialization";
 import { refreshAllEvents } from "@/modules/events/infrastructure/events-refresh";
 import { initializePodgoricaFlights } from "@/modules/flights/infrastructure/podgorica-flights-initialization";
+import { initializeMonteGigsGoingOut } from "@/modules/going-out/infrastructure/montegigs-going-out-initialization";
 import { initializeZpcgRailwayCache } from "@/modules/transport/infrastructure/zpcg-railway-initialization";
 
 export function register() {
@@ -40,6 +41,10 @@ export function register() {
     void initializePodgoricaFlights({
       cachePath: env.PODGORICA_FLIGHTS_CACHE_PATH,
     });
+  }
+
+  if (env.ENABLE_GOING_OUT) {
+    void initializeMonteGigsGoingOut({ cachePath: env.GOING_OUT_CACHE_PATH });
   }
 
   if (env.ENABLE_EVENTS && env.EVENT_PROVIDER_MODE === "live") {

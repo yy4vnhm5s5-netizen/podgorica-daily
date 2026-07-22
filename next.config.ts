@@ -23,6 +23,10 @@ const nextConfig: NextConfig = {
         hostname: "s3proxygw.cineplexx.at",
         protocol: "https",
       },
+      {
+        hostname: "staging.montegigs.me",
+        protocol: "https",
+      },
     ],
   },
   output: "standalone",

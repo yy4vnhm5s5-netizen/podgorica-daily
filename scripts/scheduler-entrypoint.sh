@@ -37,6 +37,7 @@ while true; do
       ;;
     27) run_collector "glavni-grad-events" "pnpm run collect:glavni-grad-events" ;;
     37) run_collector "tourism-events" "pnpm run collect:tourism-events" ;;
+    47) run_collector "montegigs-going-out" "pnpm run collect:montegigs-going-out" ;;
     00|30)
       run_collector "cedis" "pnpm run collect:cedis"
       run_collector "vikpg" "pnpm run collect:vikpg"

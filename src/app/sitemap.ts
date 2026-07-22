@@ -7,6 +7,7 @@ import {
   getContactPath,
   getElectricityPath,
   getFlightsPath,
+  getGoingOutPath,
   getPrivacyPolicyPath,
   getTermsOfUsePath,
 } from "@/shared/config/public-routes";
@@ -47,6 +48,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
     url: new URL(getFlightsPath(locale), siteConfig.url).toString(),
   }));
+  const goingOutEntries: MetadataRoute.Sitemap = publicLocales.map((locale) => ({
+    changeFrequency: "daily",
+    priority: 0.7,
+    url: new URL(getGoingOutPath(locale), siteConfig.url).toString(),
+  }));
 
   const eventEntries = await Promise.all(
     publicLocales.map(async (locale) => {
@@ -73,6 +79,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...legalEntries,
     ...electricityEntry,
     ...flightsEntries,
+    ...goingOutEntries,
     ...eventEntries.flat(),
   ];
 }

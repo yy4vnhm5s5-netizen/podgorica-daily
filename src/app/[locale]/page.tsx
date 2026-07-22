@@ -16,6 +16,8 @@ import {
 import { selectHomepageCinemaProgramme } from "@/modules/events/presentation/cineplexx-programme-ui-model";
 import { getPodgoricaFlights } from "@/modules/flights/application/get-podgorica-flights";
 import { AirportFlightsCard } from "@/modules/flights/presentation/airport-flights-card";
+import { getGoingOutEvents } from "@/modules/going-out/application/get-going-out-events";
+import { GoingOutSection } from "@/modules/going-out/presentation/going-out-section";
 import { getRailwayDepartures } from "@/modules/transport/application/get-railway-departures";
 import { RailwayStationCard } from "@/modules/transport/presentation/railway-station-card";
 import { getCurrentWeather } from "@/modules/weather/application/get-current-weather";
@@ -56,10 +58,11 @@ async function DashboardPage({ locale }: { locale: Locale }) {
   const translations = getTranslations(locale);
   const { advertising, emergencyNumbers } = translations.dashboard;
   const context = getDefaultCityContext(locale);
-  const [dailyOverview, events, flights, railway, weather] = await Promise.all([
+  const [dailyOverview, events, flights, goingOut, railway, weather] = await Promise.all([
     isFeatureEnabled("dailyOverview") ? getDailyOverview(context) : null,
     getCityEvents(context),
     isFeatureEnabled("flights") ? getPodgoricaFlights() : null,
+    isFeatureEnabled("goingOut") ? getGoingOutEvents() : null,
     getRailwayDepartures(),
     isFeatureEnabled("weather") ? getCurrentWeather(context) : null,
   ]);
@@ -102,6 +105,9 @@ async function DashboardPage({ locale }: { locale: Locale }) {
             subtitle={advertising.subtitle}
             title={advertising.title}
           />
+          {goingOut ? (
+            <GoingOutSection events={goingOut.events} locale={locale} state={goingOut.state} />
+          ) : null}
         </div>
         <div className="grid items-start gap-5 sm:grid-cols-2">
           <HomepageEventsCard

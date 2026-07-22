@@ -12,6 +12,10 @@ function getFlightsPath(locale: Locale) {
   return `/${locale}/letovi`;
 }
 
+function getGoingOutPath(locale: Locale) {
+  return `/${locale}/izlasci`;
+}
+
 function getPrivacyPolicyPath() {
   return "/me/politika-privatnosti";
 }
@@ -24,6 +28,7 @@ export {
   getContactPath,
   getElectricityPath,
   getFlightsPath,
+  getGoingOutPath,
   getPrivacyPolicyPath,
   getTermsOfUsePath,
 };

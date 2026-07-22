@@ -1,6 +1,6 @@
 # Gradom
 
-Gradom is a production-oriented local information platform for Podgorica. It provides current weather, a deterministic Daily Overview, City Alerts backed by cached official CEDIS planned power-outage, AMSCG road-condition, and VIK Podgorica water-service snapshots, a cache-backed public Events experience, a Cineplexx programme card, cache-backed Aerodrom Podgorica flights and ŽPCG railway departures, and a BusTicket4.me external link. Maps, unified search, accounts, and editorial workflows are not implemented.
+Gradom is a production-oriented local information platform for Podgorica. It provides current weather, a deterministic Daily Overview, City Alerts backed by cached official CEDIS planned power-outage, AMSCG road-condition, and VIK Podgorica water-service snapshots, a cache-backed public Events experience, a Cineplexx programme card, a separate cache-backed MonteGigs `Izlasci` section, cache-backed Aerodrom Podgorica flights and ŽPCG railway departures, and a BusTicket4.me external link. Maps, unified search, accounts, and editorial workflows are not implemented.
 
 Daily Overview is a zero-cost deterministic summary generated from normalized cached city data. It does not use generative services, language models, or visitor-triggered data collection.
 
@@ -27,6 +27,10 @@ The public interface currently exposes Montenegrin Latin, ijekavian (`/me`); the
 The BusTicket4.me link remains external only; Gradom does not collect or republish bus departures. The ŽPCG railway card reads a cache generated solely from the official [ŽPCG timetable](https://zpcg.me/red-voznje/ukupno). Run `pnpm run collect:zpcg-railway` to write `.runtime/cache/zpcg-railway-departures.json`; homepage requests never fetch ŽPCG directly. The bundled VPS scheduler refreshes it at approximately 06:45 and 18:45 host-local time.
 
 The Aerodrom Podgorica card and `/me/letovi` read arrivals and departures only from `.runtime/cache/podgorica-flights.json`. `pnpm run collect:podgorica-flights` fetches the public first-party flight feed used by the official [Podgorica Airport status page](https://montenegroairports.com/en/podgorica-airport/). It uses bounded JSON collection and retains a valid cache if the source is unavailable; no page request fetches the airport website. See [ADR 0019](docs/adr/0019-podgorica-airport-public-flight-feed.md).
+
+## Izlasci
+
+`/me/izlasci` and the dashboard section read only `.runtime/cache/montegigs-going-out.json`. `pnpm run collect:montegigs-going-out` reads the public [MonteGigs Podgorica listing](https://staging.montegigs.me/me/events/podgorica), normalizes explicit future records, and retains a valid cache when the listing or parser fails. The listing can omit event times; Gradom displays that absence instead of inventing a time. Automated tests use saved fixtures only. Review MonteGigs source policy before enabling production collection. See [ADR 0020](docs/adr/0020-montegigs-going-out-provider.md).
 
 ## Contact
 
