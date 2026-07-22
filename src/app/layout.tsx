@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import type { PropsWithChildren } from "react";
 
 import "@/app/globals.css";
@@ -52,7 +53,15 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<PropsWithChildren>) {
   return (
     <html lang={getLocaleTag("me")} data-app-environment={env.NEXT_PUBLIC_APP_ENV}>
-      <body>{children}</body>
+      <body>
+        {children}
+        <Script
+          data-website-id="3bcc8064-0d52-4b16-b79c-82256e9b3c57"
+          id="umami-analytics"
+          src="https://cloud.umami.is/script.js"
+          strategy="afterInteractive"
+        />
+      </body>
     </html>
   );
 }
