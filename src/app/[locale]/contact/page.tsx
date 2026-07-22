@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 
 import { ContactPage } from "@/modules/contact/presentation/contact-page";
 import { getContactTranslations } from "@/modules/contact/presentation/contact-translations";
-import { getContactLocaleAlternates, getContactPath } from "@/shared/config/public-routes";
+import { getContactPath } from "@/shared/config/public-routes";
 import { getPageTitle } from "@/shared/config/site";
 
 interface ContactRouteProps {
@@ -16,7 +16,7 @@ async function generateMetadata({ params }: ContactRouteProps): Promise<Metadata
   const translations = getContactTranslations("en");
 
   return {
-    alternates: { canonical: getContactPath("en"), languages: getContactLocaleAlternates() },
+    alternates: { canonical: getContactPath("en") },
     description: translations.description,
     openGraph: { description: translations.description, title: getPageTitle(translations.heading) },
     title: { absolute: getPageTitle(translations.heading) },

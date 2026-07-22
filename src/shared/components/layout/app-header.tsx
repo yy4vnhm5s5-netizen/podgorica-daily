@@ -1,6 +1,5 @@
 import Image from "next/image";
 
-import { LanguageSwitcher } from "@/shared/components/layout/language-switcher";
 import { Navigation } from "@/shared/components/layout/navigation";
 import { ResponsiveContainer } from "@/shared/components/layout/responsive-container";
 import type { Locale } from "@/shared/config/locale";
@@ -46,11 +45,6 @@ function AppHeader({ locale, translations }: AppHeaderProps) {
         <div className="hidden flex-1 justify-center md:flex">
           <Navigation locale={locale} translations={translations} />
         </div>
-        <LanguageSwitcher
-          label={translations.shell.languageSwitcherLabel}
-          locale={locale}
-          translations={translations}
-        />
       </ResponsiveContainer>
     </header>
   );

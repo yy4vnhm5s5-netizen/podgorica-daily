@@ -42,7 +42,7 @@ docs/adr/              accepted architecture decision records
 .github/               CI and contribution templates
 ```
 
-The root route in `src/app/page.tsx` redirects to the default locale. The locale dashboard route is `src/app/[locale]/page.tsx`, and the root layout is `src/app/layout.tsx`. Events routes are `src/app/[locale]/events/page.tsx` and `src/app/[locale]/events/[eventId]/page.tsx`; locale-less `/events` redirects to `/me/events`. Contact routes are `/me/kontakt` and `/en/contact`; locale-less `/kontakt` redirects to `/me/kontakt`. The dashboard combines Weather, Daily Overview, cache-backed City Alerts, cache-backed Events and Cineplexx programme data, the BusTicket4.me external link, and cache-backed ŽPCG departures. Search and command palette are not exposed.
+The root route in `src/app/page.tsx` redirects to the default locale. The locale dashboard route is `src/app/[locale]/page.tsx`, and the root layout is `src/app/layout.tsx`. The production interface currently exposes only Montenegrin (`/me`); English locale infrastructure and translations remain retained but every `/en/*` request receives a permanent redirect through `src/middleware.ts`. Events routes are `src/app/[locale]/events/page.tsx` and `src/app/[locale]/events/[eventId]/page.tsx`; locale-less `/events` redirects to `/me/events`. The public contact route is `/me/kontakt`; locale-less `/kontakt` redirects to `/me/kontakt`. The dashboard combines Weather, Daily Overview, cache-backed City Alerts, cache-backed Events and Cineplexx programme data, the BusTicket4.me external link, and cache-backed ŽPCG departures. Search and command palette are not exposed.
 
 ## 5. Architecture
 

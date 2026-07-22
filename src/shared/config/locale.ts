@@ -1,6 +1,8 @@
 const locales = ["me", "en"] as const;
+const publicLocales = ["me"] as const;
 
 type Locale = (typeof locales)[number];
+type PublicLocale = (typeof publicLocales)[number];
 
 const defaultLocale: Locale = "me";
 
@@ -19,12 +21,21 @@ function getLocaleTag(locale: Locale) {
 
 function getLocaleAlternates(pathname = "") {
   const suffix = pathname ? (pathname.startsWith("/") ? pathname : `/${pathname}`) : "";
+  const primaryPath = `/me${suffix}`;
 
   return {
-    en: `/en${suffix}`,
-    "sr-Latn-ME": `/me${suffix}`,
-    "x-default": `/me${suffix}`,
+    "sr-Latn-ME": primaryPath,
+    "x-default": primaryPath,
   };
 }
 
-export { defaultLocale, getLocaleAlternates, getLocaleTag, isLocale, locales, type Locale };
+export {
+  defaultLocale,
+  getLocaleAlternates,
+  getLocaleTag,
+  isLocale,
+  locales,
+  publicLocales,
+  type Locale,
+  type PublicLocale,
+};
