@@ -52,6 +52,23 @@ function formatAdditionalLocations(
   return template.replace("{count}", String(count));
 }
 
+function formatCompactPowerOutageLocations(
+  locations: readonly string[],
+  additionalLocationCount: number | undefined,
+  templates: AdditionalLocationsTemplates,
+  locale: "en" | "me",
+) {
+  const visibleLocations = locations.join(", ");
+
+  if (!visibleLocations || !additionalLocationCount) {
+    return visibleLocations;
+  }
+
+  const additionalLocations = formatAdditionalLocations(additionalLocationCount, templates, locale);
+
+  return `${visibleLocations} + ${additionalLocations.charAt(0).toLocaleLowerCase()}${additionalLocations.slice(1)}`;
+}
+
 function getPowerOutageDetailsLabel(locale: "en" | "me") {
   return powerOutageDetailsLabels[locale];
 }
@@ -151,6 +168,7 @@ function getGroupTime(value: Date | undefined) {
 
 export {
   formatAdditionalLocations,
+  formatCompactPowerOutageLocations,
   formatPowerOutageSummary,
   getPowerOutageDetailsLabel,
   getPowerOutageOfficialSourceUrl,

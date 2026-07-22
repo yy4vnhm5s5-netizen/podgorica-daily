@@ -3,7 +3,7 @@
 import { Droplets, Zap } from "lucide-react";
 import { useId, useState, type KeyboardEvent } from "react";
 
-import { formatAdditionalLocations } from "@/modules/city-alerts/presentation/power-outages-ui-model";
+import { formatCompactPowerOutageLocations } from "@/modules/city-alerts/presentation/power-outages-ui-model";
 import { StatusBadge } from "@/shared/components/status-badge";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import type { Locale } from "@/shared/config/locale";
@@ -201,21 +201,13 @@ function CityServicesPanel({ locale, services, translations }: CityServicesPanel
                   {service.locations && service.locations.length > 0 ? (
                     <div className="sm:col-span-2">
                       <dt className="text-xs text-muted-foreground">{translations.area}</dt>
-                      <dd className="mt-1 font-medium text-foreground">
-                        <ul className="grid gap-x-4 gap-y-1.5 sm:grid-cols-2">
-                          {service.locations.map((location) => (
-                            <li key={location}>{location}</li>
-                          ))}
-                        </ul>
-                        {service.additionalLocationCount ? (
-                          <p className="mt-1 text-sm text-muted-foreground">
-                            {formatAdditionalLocations(
-                              service.additionalLocationCount,
-                              translations.moreLocations,
-                              locale,
-                            )}
-                          </p>
-                        ) : null}
+                      <dd className="mt-1 text-sm font-medium leading-6 text-foreground">
+                        {formatCompactPowerOutageLocations(
+                          service.locations,
+                          service.additionalLocationCount,
+                          translations.moreLocations,
+                          locale,
+                        )}
                       </dd>
                     </div>
                   ) : service.area ? (

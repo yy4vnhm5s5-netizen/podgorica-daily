@@ -4,6 +4,7 @@ import test from "node:test";
 import type { CityAlert } from "../domain/city-alert.ts";
 import {
   formatAdditionalLocations,
+  formatCompactPowerOutageLocations,
   formatPowerOutageSummary,
   getPowerOutageDetailsLabel,
   getPowerOutageOfficialSourceUrl,
@@ -55,6 +56,28 @@ test("uses singular English copy only for one additional location", () => {
   assert.equal(formatAdditionalLocations(22, templates, "en"), "22 more locations");
   assert.equal(formatAdditionalLocations(24, templates, "en"), "24 more locations");
   assert.equal(formatAdditionalLocations(25, templates, "en"), "25 more locations");
+});
+
+test("formats homepage outage locations as one compact comma-separated line", () => {
+  const templates = {
+    few: "Još {count} lokacije",
+    many: "Još {count} lokacija",
+    one: "Još {count} lokacija",
+  };
+
+  assert.equal(
+    formatCompactPowerOutageLocations(
+      ["Liješta", "Koći", "Medun", "Dučići", "Radan", "Rašovići"],
+      19,
+      templates,
+      "me",
+    ),
+    "Liješta, Koći, Medun, Dučići, Radan, Rašovići + još 19 lokacija",
+  );
+  assert.equal(
+    formatCompactPowerOutageLocations(["Liješta", "Koći"], undefined, templates, "me"),
+    "Liješta, Koći",
+  );
 });
 
 test("formats the planned-outage summary with Montenegrin singular and plural forms", () => {
