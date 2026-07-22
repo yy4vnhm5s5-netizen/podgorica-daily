@@ -1,4 +1,5 @@
 import type { CityAlert } from "@/modules/city-alerts/domain/city-alert";
+import type { Locale } from "@/shared/config/locale";
 
 const powerOutageDetailsLabels = {
   en: "View details →",
@@ -15,6 +16,17 @@ interface AdditionalLocationsTemplates {
   few: string;
   many: string;
   one: string;
+}
+
+interface PowerOutageSummaryTemplates {
+  days: {
+    many: string;
+    one: string;
+  };
+  outages: {
+    many: string;
+    one: string;
+  };
 }
 
 function formatAdditionalLocations(
@@ -42,6 +54,39 @@ function formatAdditionalLocations(
 
 function getPowerOutageDetailsLabel(locale: "en" | "me") {
   return powerOutageDetailsLabels[locale];
+}
+
+function formatPowerOutageSummary(
+  outageCount: number,
+  dayCount: number,
+  templates: PowerOutageSummaryTemplates,
+  locale: Locale,
+) {
+  const outages = (
+    usesSingularOutageForm(outageCount, locale) ? templates.outages.one : templates.outages.many
+  ).replace("{count}", String(outageCount));
+
+  if (dayCount === 0) {
+    return outages;
+  }
+
+  const days = (dayCount === 1 ? templates.days.one : templates.days.many).replace(
+    "{count}",
+    String(dayCount),
+  );
+
+  return `${outages} ${days}`;
+}
+
+function usesSingularOutageForm(count: number, locale: Locale) {
+  if (locale === "en") {
+    return count === 1;
+  }
+
+  const modulo100 = count % 100;
+  const modulo10 = count % 10;
+
+  return modulo10 === 1 && !(modulo100 >= 11 && modulo100 <= 14);
 }
 
 function getPowerOutageOfficialSourceUrl(alert: CityAlert) {
@@ -106,6 +151,7 @@ function getGroupTime(value: Date | undefined) {
 
 export {
   formatAdditionalLocations,
+  formatPowerOutageSummary,
   getPowerOutageDetailsLabel,
   getPowerOutageOfficialSourceUrl,
   groupPowerOutagesByDate,

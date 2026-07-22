@@ -13,6 +13,10 @@ const powerOutagesTranslations = {
     source: "Source: CEDIS",
     stale: "The displayed information may be outdated.",
     status: { active: "Active", scheduled: "Scheduled" },
+    summary: {
+      days: { many: "over {count} days", one: "over 1 day" },
+      outages: { many: "{count} planned outages", one: "{count} planned outage" },
+    },
     title: "Planned power outages in Podgorica",
     unavailable: "Data is currently unavailable.",
   },
@@ -28,6 +32,10 @@ const powerOutagesTranslations = {
     source: "Izvor: CEDIS",
     stale: "Prikazani podaci mogu biti zastarjeli.",
     status: { active: "Aktivno", scheduled: "Planirano" },
+    summary: {
+      days: { many: "tokom {count} dana", one: "tokom jednog dana" },
+      outages: { many: "{count} planirana isključenja", one: "{count} planirano isključenje" },
+    },
     title: "Planirana isključenja struje u Podgorici",
     unavailable: "Podaci trenutno nijesu dostupni.",
   },

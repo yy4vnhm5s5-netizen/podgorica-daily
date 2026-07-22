@@ -4,6 +4,7 @@ import test from "node:test";
 import type { CityAlert } from "../domain/city-alert.ts";
 import {
   formatAdditionalLocations,
+  formatPowerOutageSummary,
   getPowerOutageDetailsLabel,
   getPowerOutageOfficialSourceUrl,
   groupPowerOutagesByDate,
@@ -54,6 +55,33 @@ test("uses singular English copy only for one additional location", () => {
   assert.equal(formatAdditionalLocations(22, templates, "en"), "22 more locations");
   assert.equal(formatAdditionalLocations(24, templates, "en"), "24 more locations");
   assert.equal(formatAdditionalLocations(25, templates, "en"), "25 more locations");
+});
+
+test("formats the planned-outage summary with Montenegrin singular and plural forms", () => {
+  const templates = {
+    days: { many: "tokom {count} dana", one: "tokom jednog dana" },
+    outages: {
+      many: "{count} planirana isključenja",
+      one: "{count} planirano isključenje",
+    },
+  };
+
+  assert.equal(
+    formatPowerOutageSummary(1, 1, templates, "me"),
+    "1 planirano isključenje tokom jednog dana",
+  );
+  assert.equal(
+    formatPowerOutageSummary(2, 2, templates, "me"),
+    "2 planirana isključenja tokom 2 dana",
+  );
+  assert.equal(
+    formatPowerOutageSummary(5, 5, templates, "me"),
+    "5 planirana isključenja tokom 5 dana",
+  );
+  assert.equal(
+    formatPowerOutageSummary(21, 2, templates, "me"),
+    "21 planirano isključenje tokom 2 dana",
+  );
 });
 
 test("groups power outages by their local Podgorica date and sorts cards by start time", () => {
