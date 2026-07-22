@@ -1,10 +1,11 @@
 import { ExternalLink, PlaneLanding, PlaneTakeoff } from "lucide-react";
 
-import { sortAndDeduplicateFlights, type Flight } from "../domain/flight";
+import type { Flight } from "../domain/flight";
 import type { FlightCacheState } from "../infrastructure/podgorica-flights";
 import {
   getPodgoricaFlightsDisplayState,
   getPodgoricaFlightsUpdatedLabel,
+  getPodgoricaFlightGroups,
 } from "./podgorica-flights-ui-model";
 import { EmptyState } from "@/shared/components/empty-state";
 import { ErrorState } from "@/shared/components/error-state";
@@ -28,13 +29,11 @@ function AirportFlightsPage({
   state,
 }: AirportFlightsPageProps) {
   const copy = locale === "me" ? montenegrinCopy : englishCopy;
-  const sortedFlights = sortAndDeduplicateFlights(flights);
+  const groups = getPodgoricaFlightGroups(flights);
   const displayState = getPodgoricaFlightsDisplayState({
-    flightCount: sortedFlights.length,
+    flightCount: groups.arrival.length + groups.departure.length,
     state,
   });
-  const departures = sortedFlights.filter((flight) => flight.direction === "departure");
-  const arrivals = sortedFlights.filter((flight) => flight.direction === "arrival");
   const updatedLabel = getPodgoricaFlightsUpdatedLabel({ lastSuccessfulRefreshAt, locale });
 
   return (
@@ -70,14 +69,14 @@ function AirportFlightsPage({
             <p className="text-xs leading-5 text-muted-foreground">{updatedLabel}</p>
           ) : null}
           <FlightGroup
-            flights={departures}
+            flights={groups.departure}
             icon={PlaneTakeoff}
             id="flight-departures"
             locale={locale}
             title={copy.departures}
           />
           <FlightGroup
-            flights={arrivals}
+            flights={groups.arrival}
             icon={PlaneLanding}
             id="flight-arrivals"
             locale={locale}
