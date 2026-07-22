@@ -1,5 +1,10 @@
 import { toZonedIso } from "../domain/event-time.ts";
 import type { EventCandidate, Venue } from "../domain/event.ts";
+import {
+  extractEventContentHtml,
+  extractEventContentText,
+  extractEventHeading,
+} from "./event-html-content.ts";
 
 const glavniGradEventsUrl = "https://podgorica.me/category/aktuelni-dogadjaji/";
 const glavniGradVenue: Venue = {
@@ -33,9 +38,9 @@ function discoverGlavniGradEventUrls(html: string) {
 }
 
 function parseGlavniGradEventArticle(html: string, sourceUrl: string) {
-  const articleHtml = html.match(/<article\b[\s\S]*?<\/article>/i)?.[0] ?? html;
-  const text = toPlainText(articleHtml);
-  const title = extractHeading(articleHtml) || extractHeading(html);
+  const articleHtml = extractEventContentHtml(html);
+  const text = extractEventContentText(html);
+  const title = extractEventHeading(html) ?? "";
   const numericDate = text.match(/(\d{1,2})\.(\d{1,2})\.(\d{4})/)?.slice(1);
   const namedDate = text.match(
     /\b(\d{1,2})\.\s*(januara|februara|marta|aprila|maja|juna|jula|avgusta|septembra|oktobra|novembra|decembra)\b/i,
@@ -106,24 +111,6 @@ function parseGlavniGradEventArticle(html: string, sourceUrl: string) {
     timezone: "Europe/Podgorica",
   };
   return { candidate, venue: rawVenue ? undefined : glavniGradVenue };
-}
-
-function extractHeading(html: string) {
-  return (
-    html
-      .match(/<h[1-3][^>]*>([\s\S]*?)<\/h[1-3]>/i)?.[1]
-      ?.replace(/<[^>]+>/g, " ")
-      .trim() ?? ""
-  );
-}
-
-function toPlainText(html: string) {
-  return html
-    .replace(/<head\b[\s\S]*?<\/head>/gi, " ")
-    .replace(/<(?:script|style|svg)\b[\s\S]*?<\/(?:script|style|svg)>/gi, " ")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
 }
 
 const montenegrinMonths: Record<string, number> = {

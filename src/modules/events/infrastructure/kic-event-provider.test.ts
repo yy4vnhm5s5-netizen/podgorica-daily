@@ -63,6 +63,23 @@ test("parses KIC concert, theatre, exhibition, price, cancellation, and missing 
   assert.ok(concert.venue?.id === "kic-budo-tomovic");
 });
 
+test("extracts KIC event content without document chrome or embedded assets", () => {
+  const parsed = parseKicEventArticle(
+    `<html><head><style>@font-face { font-family: Noise; }</style><script>window.tracker = true;</script><meta property="og:description" content="SEO copy"></head>
+      <body><nav>Početna Program Kontakt</nav><article><h1>Ljetnji koncert</h1><p>Koncert će biti održan 20.07.2026. u 20 sati u KIC-u.</p><div class="share-links">Podijeli na mrežama</div></article><footer>Cookie politika</footer></body></html>`,
+    "https://kic.podgorica.me/novosti/101/ljetnji-koncert",
+  ).candidate;
+
+  assert.equal(
+    parsed.rawDescription,
+    "Ljetnji koncert\n\nKoncert će biti održan 20.07.2026. u 20 sati u KIC-u.",
+  );
+  assert.equal(parsed.rawDescription?.includes("font-family"), false);
+  assert.equal(parsed.rawDescription?.includes("window.tracker"), false);
+  assert.equal(parsed.rawDescription?.includes("Podijeli"), false);
+  assert.equal(parsed.rawDescription?.includes("Cookie"), false);
+});
+
 test("collects fixtures atomically through injected KIC HTTP and writes a normalized snapshot", async () => {
   const listing = await fixture("kic-listing.html");
   const concert = await fixture("kic-concert.html");

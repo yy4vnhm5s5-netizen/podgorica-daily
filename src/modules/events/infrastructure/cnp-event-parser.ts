@@ -1,5 +1,6 @@
 import { toZonedIso } from "../domain/event-time.ts";
 import type { EventCandidate, Venue } from "../domain/event.ts";
+import { extractEventContentText, extractEventHeading } from "./event-html-content.ts";
 
 const cnpRepertoireUrl = "https://cnp.me/repertoar/";
 const cnpVenue: Venue = {
@@ -89,12 +90,8 @@ function parseCnpRepertoire(html: string): EventCandidate[] {
 }
 
 function parseCnpEventArticle(html: string, sourceUrl: string) {
-  const text = toPlainText(html);
-  const title =
-    html
-      .match(/<h1[^>]*>([\s\S]*?)<\/h1>/i)?.[1]
-      ?.replace(/<[^>]+>/g, " ")
-      .trim() ?? "";
+  const text = extractEventContentText(html);
+  const title = extractEventHeading(html) ?? "";
   const date = text.match(/(\d{1,2})\.(\d{1,2})\.(\d{4})/)?.slice(1);
   const time = text.match(/(?:u|od)\s*(\d{1,2})(?::(\d{2}))?\s*(?:h|sati)?/i);
   const price = text.match(

@@ -100,7 +100,7 @@ test("keeps future planned interruptions as scheduled", async () => {
   assert.equal(result.alert?.expectedEndAt?.toISOString(), "2026-07-21T12:00:00.000Z");
 });
 
-test("expires restoration notices and notices older than the one-day fallback window", async () => {
+test("expires restoration notices and notices outside their local publication day", async () => {
   const restored = parseVikpgNotice(
     {
       title: "Otklonjen kvar u naselju Konik, 18.07.2026.",
@@ -116,6 +116,16 @@ test("expires restoration notices and notices older than the one-day fallback wi
   );
   assert.equal(restored.alert?.status, "expired");
   assert.equal(missingEnd.alert?.status, "expired");
+});
+
+test("expires a yesterday notice without a restoration time in the Podgorica timezone", async () => {
+  const result = parseVikpgNotice(
+    activeNotice,
+    await fixture("vikpg-missing-end.html"),
+    new Date("2026-07-21T08:00:00.000Z"),
+  );
+
+  assert.equal(result.alert?.status, "expired");
 });
 
 test("keeps a current notice with a missing restoration time active and warns on unknown area", async () => {

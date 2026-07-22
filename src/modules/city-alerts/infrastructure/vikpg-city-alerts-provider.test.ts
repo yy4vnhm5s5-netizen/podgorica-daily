@@ -74,3 +74,20 @@ test("keeps a stale VIK cache readable and isolates corrupt cache reads", async 
   assert.equal(unavailable.lastSuccessfulUpdate, undefined);
   assert.deepEqual(unavailable.alerts, []);
 });
+
+test("does not expose yesterday's cached VIK notice as active", async () => {
+  const cached = snapshot("fresh");
+  cached.alerts[0] = {
+    ...cached.alerts[0],
+    publishedAt: new Date("2026-07-20T10:00:00.000Z"),
+  };
+
+  const result = await getVikpgCityAlerts({
+    context,
+    mode: "live",
+    now: () => new Date("2026-07-21T08:00:00.000Z"),
+    readCache: async () => cached,
+  });
+
+  assert.deepEqual(result.alerts, []);
+});

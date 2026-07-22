@@ -1,5 +1,10 @@
 import { toZonedIso } from "../domain/event-time.ts";
 import type { EventCandidate } from "../domain/event.ts";
+import {
+  extractEventContentText,
+  extractEventHeading,
+  toEventPlainText,
+} from "./event-html-content.ts";
 
 const tourismCalendarUrl = "https://podgorica.travel/dogadjaji-kalendar/";
 
@@ -23,15 +28,10 @@ function discoverTourismEventUrls(html: string) {
 }
 
 function parseTourismEventArticle(html: string, sourceUrl: string) {
-  const text = html
-    .replace(/<[^>]+>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-  const title =
-    html
-      .match(/<h1[^>]*>([\s\S]*?)<\/h1>/i)?.[1]
-      ?.replace(/<[^>]+>/g, " ")
-      .trim() ?? "";
+  const content = extractEventContentText(html);
+  const details = extractTourismEventDetails(html);
+  const text = [content, details].filter(Boolean).join(" ");
+  const title = extractEventHeading(html) ?? "";
   const numericDate = text.match(/(\d{1,2})\.(\d{1,2})\.(\d{4})/)?.slice(1);
   const namedDate = text.match(
     /\b(\d{1,2})\.\s*(januar(?:a)?|februar(?:a)?|mart(?:a)?|april(?:a)?|maj(?:a)?|jun(?:a)?|jul(?:a)?|avgust(?:a)?|septembar(?:a)?|oktobar(?:a)?|novembar(?:a)?|decembar(?:a)?)\s*(20\d{2})\b/i,
@@ -74,7 +74,7 @@ function parseTourismEventArticle(html: string, sourceUrl: string) {
       ...(startDate && !time ? ["Tourism event time was unavailable."] : []),
     ],
     rawDateText: numericDate?.join(".") ?? namedDate?.[0],
-    rawDescription: text,
+    rawDescription: content || undefined,
     rawTitle: title,
     rawTimeText: time?.[0],
     rawVenue: text.match(/Lokacija:\s*([^.|]+)/i)?.[1]?.trim(),
@@ -88,6 +88,13 @@ function parseTourismEventArticle(html: string, sourceUrl: string) {
     timezone: "Europe/Podgorica",
   };
   return { candidate };
+}
+
+function extractTourismEventDetails(html: string) {
+  const details = /<aside\b(?=[^>]*\bpe-single-sidebar\b)[^>]*>([\s\S]*?)<\/aside>/i.exec(
+    html,
+  )?.[1];
+  return details ? toEventPlainText(details) : "";
 }
 
 const tourismMonths: Record<string, number> = {

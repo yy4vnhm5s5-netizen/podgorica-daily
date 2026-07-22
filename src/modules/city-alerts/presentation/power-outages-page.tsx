@@ -70,12 +70,15 @@ function PowerOutagesPage({ locale, result }: PowerOutagesPageProps) {
                 }
                 key={group.key}
               >
-                <h2 className="text-lg font-semibold leading-7 tracking-tight text-foreground">
+                <h2 className="text-xl font-semibold leading-7 tracking-tight text-foreground">
                   {group.date
-                    ? formatDateTime(group.date, {
-                        formatOptions: { dateStyle: "full", timeStyle: undefined },
-                        locale: localeTag,
-                      }).label
+                    ? capitalizeDateHeading(
+                        formatDateTime(group.date, {
+                          formatOptions: { dateStyle: "full", timeStyle: undefined },
+                          locale: localeTag,
+                        }).label,
+                        localeTag,
+                      )
                     : translations.dateUnavailable}
                 </h2>
                 <div className="mt-4 grid items-start gap-4 lg:grid-cols-2">
@@ -170,6 +173,10 @@ function PowerOutageCard({ alert, locale }: { alert: CityAlert; locale: Locale }
 
 function getSourceContent(content: CityAlertContent) {
   return content.kind === "source" ? content.value : "";
+}
+
+function capitalizeDateHeading(value: string, locale: string) {
+  return value ? `${value[0].toLocaleUpperCase(locale)}${value.slice(1)}` : value;
 }
 
 export { PowerOutagesPage, type PowerOutagesPageProps };

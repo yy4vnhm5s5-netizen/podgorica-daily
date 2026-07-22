@@ -1,5 +1,6 @@
 import { toZonedIso } from "../domain/event-time.ts";
 import type { EventCandidate, Venue } from "../domain/event.ts";
+import { extractEventContentText, extractEventHeading } from "./event-html-content.ts";
 
 const kicVenue: Venue = {
   address: "Vaka Đurovića 12, Podgorica",
@@ -17,11 +18,10 @@ function discoverKicArticleUrls(html: string, baseUrl = "https://kic.podgorica.m
 
 function parseKicEventArticle(html: string, sourceUrl: string) {
   const warnings: string[] = [];
-  const title = getMeta(html, "og:title") ?? getTagText(html, "h1") ?? "";
-  const description =
-    getMeta(html, "og:description") ?? getTagText(html, "article") ?? getTagText(html, "main");
+  const title = extractEventHeading(html) ?? getMeta(html, "og:title") ?? "";
+  const description = extractEventContentText(html) || undefined;
   const imageUrl = getMeta(html, "og:image");
-  const text = stripHtml(html);
+  const text = description ?? "";
   const dateMatch = text.match(/(\d{1,2})[.\/]\s*(\d{1,2})[.\/]\s*(\d{4})/);
   const timeMatch = text.match(/(?:u|od)\s*(\d{1,2})(?::|\.)?(\d{2})?\s*(?:h|sati)?/i);
   const endMatch = text.match(/(?:do|-|–)\s*(\d{1,2})(?::|\.)?(\d{2})?\s*(?:h|sati)?/i);
@@ -104,18 +104,6 @@ function getMeta(html: string, property: string) {
     new RegExp(`<meta[^>]+(?:property|name)=["']${property}["'][^>]+content=["']([^"']+)["']`, "i"),
   );
   return match?.[1];
-}
-
-function getTagText(html: string, tag: string) {
-  const match = html.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, "i"));
-  return match ? stripHtml(match[1]) : undefined;
-}
-
-function stripHtml(value: string) {
-  return value
-    .replace(/<[^>]+>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
 }
 
 export { discoverKicArticleUrls, kicVenue, parseKicEventArticle };

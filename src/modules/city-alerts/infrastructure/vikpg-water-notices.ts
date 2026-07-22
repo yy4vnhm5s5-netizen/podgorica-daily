@@ -289,9 +289,9 @@ function parseStart(value: string, fallbackDate: Date) {
 }
 
 /**
- * A notice with no explicit restoration time remains active until the end of the
- * following local day. This avoids keeping old incident notices visible forever
- * while retaining same-day notices whose optional time could not be parsed.
+ * A notice with no explicit restoration time remains active only for its local
+ * publication day. This prevents yesterday's unresolved notices from appearing
+ * as current interruptions when the provider cache is read the next day.
  */
 function getNoticeStatus({
   content,
@@ -311,7 +311,7 @@ function getNoticeStatus({
   if (expectedEndAt && expectedEndAt < now) return "expired" as const;
   if (startsAt && startsAt > now) return "scheduled" as const;
   if (restorationPattern.test(`${title} ${content}`) && !expectedEndAt) return "expired" as const;
-  return now > addDays(endOfLocalDay(publishedAt), 1) ? ("expired" as const) : ("active" as const);
+  return now > endOfLocalDay(publishedAt) ? ("expired" as const) : ("active" as const);
 }
 
 function parseDate(value: string, defaultYear: number) {
@@ -405,7 +405,6 @@ function addDays(value: Date, days: number) {
   next.setUTCDate(next.getUTCDate() + days);
   return next;
 }
-
 export {
   discoverVikpgNotices,
   parseVikpgNotice,
