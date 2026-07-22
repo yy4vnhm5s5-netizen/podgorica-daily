@@ -4,8 +4,7 @@ type OverviewLocale = "en" | "me";
 
 type DataAvailability<T> = { data: T; status: "available" } | { status: "unavailable" };
 
-type OverviewAlertType =
-  "powerOutage" | "roadWorks" | "trafficDisruption" | "waterOutage" | "weatherWarning";
+type OverviewAlertType = "powerOutage" | "waterOutage" | "weatherWarning";
 
 type OverviewAlertSeverity = "critical" | "information" | "warning";
 

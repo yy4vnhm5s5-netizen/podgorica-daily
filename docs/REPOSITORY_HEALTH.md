@@ -34,7 +34,7 @@ Tests use fixtures and injected HTTP/browser dependencies; they must never make 
 ## Operational limits
 
 - The local JSON cache is suitable only for one persistent host or one Railway web service with its own Volume. It is not shared storage for horizontally scaled or independent scheduler services.
-- The bundled VPS scheduler refreshes CEDIS, VIK, Events, Cineplexx, and ŽPCG. AMSCG has a working collector but requires an explicit external schedule until it is added to the bundled scheduler by an approved operational change.
+- The bundled VPS scheduler refreshes CEDIS, VIK, Events, Cineplexx, and ŽPCG.
 - `EVENT_MAX_QUERY_RANGE_DAYS` and `EVENT_MAX_RECURRENCE_OCCURRENCES` remain validated compatibility settings but are not consumed by the current public query layer. Keep them stable until a versioned configuration cleanup is approved.
 - No database, user accounts, maps, unified search, editorial administration, or multi-city public routing is implemented.
 

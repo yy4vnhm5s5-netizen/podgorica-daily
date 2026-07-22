@@ -18,8 +18,6 @@ City Alerts reads cached official CEDIS planned power outages when a collector s
 
 Cached official VIK Podgorica water-service notices provide the first water interruption source. The Water tab reads VIK's cache only and exposes real notices, a verified empty state, or availability failure without mock fallback. Source markup remains a monitored parsing dependency; additional water sources require their own provider decision.
 
-Cached AMSCG road-condition publications provide the first traffic source for road works, closures, alternating traffic, restrictions, and important warnings. Real-time traffic, route planning, and transport remain separate future scopes.
-
 ## Event platform foundation
 
 The Event Platform defines city-aware event and venue contracts, deterministic candidate normalization, cache-backed provider reads, IDs, deduplication, recurrence limits, query semantics, and Daily Overview event-summary input. KIC Budo Tomović, CNP, Glavni Grad Podgorica, and Turistička organizacija Podgorice collectors/providers are implemented internally. A mobile-first public Events UI exposes accepted cached records at `/podgorica/dogadjaji`, with URL-backed filters and source-attributed detail pages. Before broad production rollout, approve source operations, durable cache storage, monitoring, and operational freshness ownership.

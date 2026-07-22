@@ -9,7 +9,7 @@ import {
 import { defaultLocale, type Locale } from "@/shared/config/locale";
 import type { City, CityCapability, CityContext } from "@/shared/types/city";
 
-const cityAlertCapabilities = ["electricity", "trafficAlerts", "water"] as const;
+const cityAlertCapabilities = ["electricity", "water"] as const;
 
 function getDefaultCityContext(locale: Locale = defaultLocale) {
   if (!isCityId(env.DEFAULT_CITY)) {

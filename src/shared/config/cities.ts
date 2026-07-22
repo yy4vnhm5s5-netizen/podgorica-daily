@@ -39,15 +39,7 @@ const cityRegistry: Record<string, City> = {
     timezone: "Europe/Podgorica",
   },
   podgorica: {
-    capabilities: [
-      "electricity",
-      "events",
-      "flights",
-      "goingOut",
-      "railway",
-      "trafficAlerts",
-      "water",
-    ],
+    capabilities: ["electricity", "events", "flights", "goingOut", "railway", "water"],
     country: "Montenegro",
     id: "podgorica",
     isActive: true,

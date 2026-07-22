@@ -9,6 +9,11 @@ function unsupportedContext() {
   return { ...podgorica, city: { ...podgorica.city, capabilities: [] } };
 }
 
+function contextWithAlertCapabilities(capabilities: "electricity"[] | "water"[]) {
+  const podgorica = createCityContext("podgorica");
+  return { ...podgorica, city: { ...podgorica.city, capabilities } };
+}
+
 test("does not request City Alerts when an unsupported city opts in", async () => {
   const context = unsupportedContext();
 
@@ -27,4 +32,9 @@ test("does not request City Alerts when a supported city opts out", async () => 
 test("requests City Alerts only when a supported city opts in", () => {
   const context = createCityContext("podgorica");
   assert.equal(shouldIncludeCityAlerts(context, true), true);
+});
+
+test("allows either supported City Alerts capability to opt in", () => {
+  assert.equal(shouldIncludeCityAlerts(contextWithAlertCapabilities(["electricity"]), true), true);
+  assert.equal(shouldIncludeCityAlerts(contextWithAlertCapabilities(["water"]), true), true);
 });

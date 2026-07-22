@@ -17,8 +17,6 @@ interface OverviewCopy {
   noData: readonly string[];
   powerOutages: (count: number) => string;
   upcomingPowerOutages: (count: number) => string;
-  roadWorks: (count: number) => string;
-  trafficDisruptions: (count: number) => string;
   unusualTemperature: (temperature: number, cityName: string) => string;
   waterOutages: (count: number) => string;
   weatherWarnings: (count: number) => string;
@@ -59,14 +57,6 @@ const overviewCopy: Record<OverviewLocale, OverviewCopy> = {
       count === 1
         ? "One planned power outage is upcoming."
         : `${count} planned power outages are upcoming.`,
-    roadWorks: (count) =>
-      count === 1
-        ? "Road works are affecting one area."
-        : `Road works are affecting ${count} areas.`,
-    trafficDisruptions: (count) =>
-      count === 1
-        ? "A major traffic disruption is active."
-        : `${count} major traffic disruptions are active.`,
     unusualTemperature: (temperature, cityName) =>
       `The temperature is unusually ${temperature.toFixed(1)}°C for ${cityName}.`,
     waterOutages: (count) =>
@@ -110,14 +100,6 @@ const overviewCopy: Record<OverviewLocale, OverviewCopy> = {
       count === 1
         ? "Planiran je jedan prekid napajanja električnom energijom."
         : `Planirana su ${count} prekida napajanja električnom energijom.`,
-    roadWorks: (count) =>
-      count === 1
-        ? "Radovi na putu utiču na jedno područje."
-        : `Radovi na putu utiču na ${count} područja.`,
-    trafficDisruptions: (count) =>
-      count === 1
-        ? "Aktivna je velika saobraćajna smetnja."
-        : `Aktivne su ${count} velike saobraćajne smetnje.`,
     unusualTemperature: (temperature, cityName) =>
       `Temperatura od ${temperature.toFixed(1)}°C neuobičajena je za ${cityName}.`,
     waterOutages: (count) =>
@@ -151,8 +133,6 @@ function createDailyOverview(snapshot: CityDataSnapshot, context: CityContext): 
     getWeatherWarningsSentence(activeAlerts, copy),
     getPowerOutagesSentence(snapshot, activeAlerts, copy),
     getWaterOutagesSentence(activeAlerts, copy),
-    getTrafficDisruptionsSentence(activeAlerts, copy),
-    getRoadWorksSentence(activeAlerts, copy),
     getUnusualTemperatureSentence(snapshot, copy, getCityName(context.city)),
     getEventsSentence(snapshot, copy),
   ].filter((sentence): sentence is string => sentence !== null);
@@ -227,18 +207,6 @@ function getPowerOutagesSentence(
 
 function getWaterOutagesSentence(alerts: readonly OverviewAlert[], copy: OverviewCopy) {
   return getAlertTypeSentence(alerts, "waterOutage", copy.waterOutages);
-}
-
-function getTrafficDisruptionsSentence(alerts: readonly OverviewAlert[], copy: OverviewCopy) {
-  const count = alerts.filter(
-    ({ isMajor, type }) => type === "trafficDisruption" && isMajor,
-  ).length;
-
-  return count > 0 ? copy.trafficDisruptions(count) : null;
-}
-
-function getRoadWorksSentence(alerts: readonly OverviewAlert[], copy: OverviewCopy) {
-  return getAlertTypeSentence(alerts, "roadWorks", copy.roadWorks);
 }
 
 function getAlertTypeSentence(

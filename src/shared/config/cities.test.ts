@@ -60,6 +60,14 @@ test("rejects prototype properties as city identifiers", () => {
 });
 
 test("keeps capabilities explicit per city", () => {
+  assert.deepEqual(getMainCity().capabilities, [
+    "electricity",
+    "events",
+    "flights",
+    "goingOut",
+    "railway",
+    "water",
+  ]);
   assert.equal(supportsCityCapability(getMainCity(), "events"), true);
   assert.equal(supportsCityCapability(city(), "events"), false);
 });

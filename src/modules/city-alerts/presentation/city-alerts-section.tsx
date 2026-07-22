@@ -2,10 +2,8 @@ import {
   AlertTriangle,
   CircleAlert,
   CloudLightning,
-  Construction,
   Droplets,
   Siren,
-  TrafficCone,
   Zap,
   type LucideIcon,
 } from "lucide-react";
@@ -44,8 +42,6 @@ import { cn } from "@/shared/lib/utils";
 const alertIcons: Record<AlertType, LucideIcon> = {
   emergency: Siren,
   powerOutage: Zap,
-  roadWorks: Construction,
-  trafficDisruption: TrafficCone,
   waterOutage: Droplets,
   weatherWarning: CloudLightning,
 };
@@ -329,7 +325,7 @@ function CityAlertCard({ alert, locale, metadata, translations }: CityAlertCardP
 
 function getSourceMetadata(alert: CityAlert, metadata: CityAlertsMetadata) {
   if (alert.source.kind !== "source") return undefined;
-  const id = alert.source.value.toLocaleLowerCase("en") as "amscg" | "cedis";
+  const id = alert.source.value.toLocaleLowerCase("en") as "cedis" | "vikpg";
   return metadata.sources.find((source) => source.id === id);
 }
 

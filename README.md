@@ -1,6 +1,6 @@
 # Gradom
 
-Gradom is a production-oriented local information platform for Podgorica. It provides current weather, a deterministic Daily Overview, City Alerts backed by cached official CEDIS planned power-outage, AMSCG road-condition, and VIK Podgorica water-service snapshots, a cache-backed public Events experience, a Cineplexx programme card, a separate cache-backed MonteGigs `Izlasci` section, cache-backed Aerodrom Podgorica flights and ŽPCG railway departures, and a BusTicket4.me external link. Maps, unified search, accounts, and editorial workflows are not implemented.
+Gradom is a production-oriented local information platform for Podgorica. It provides current weather, a deterministic Daily Overview, City Alerts backed by cached official CEDIS planned power-outage and VIK Podgorica water-service snapshots, a cache-backed public Events experience, a Cineplexx programme card, a separate cache-backed MonteGigs `Izlasci` section, cache-backed Aerodrom Podgorica flights and ŽPCG railway departures, and a BusTicket4.me external link. Maps, unified search, accounts, and editorial workflows are not implemented.
 
 Daily Overview is a zero-cost deterministic summary generated from normalized cached city data. It does not use generative services, language models, or visitor-triggered data collection.
 
@@ -13,8 +13,6 @@ pnpm run collect:cedis
 ```
 
 The bundled VPS scheduler refreshes CEDIS every 30 minutes. The file cache at `.runtime/cache/cedis-planned-outages.json` persists locally and on a VPS, but is not durable on serverless/Vercel filesystems. See [ADR 0007](docs/adr/0007-cedis-cached-planned-outages.md) for collection, cache, and exit-code behaviour.
-
-AMSCG road conditions use the same cache-first boundary and can be collected manually with `pnpm run collect:amscg`. Its source is the official [AMSCG road-conditions page](https://amscg.org/stanje-na-putevima/); see [ADR 0008](docs/adr/0008-amscg-cached-road-conditions.md).
 
 ## VIK Podgorica water notices
 

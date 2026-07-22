@@ -8,10 +8,7 @@ function createMockCachedCityData(now: Date, context: CityContext): CityDataSnap
   return {
     airQuality: { data: { category: "good" }, status: "available" },
     alerts: {
-      data: [
-        { isActive: true, isMajor: false, severity: "warning", type: "roadWorks" },
-        { isActive: true, isMajor: false, severity: "information", type: "waterOutage" },
-      ],
+      data: [{ isActive: true, isMajor: false, severity: "information", type: "waterOutage" }],
       status: "available",
     },
     cityIds: [context.city.id],

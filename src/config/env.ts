@@ -5,7 +5,6 @@ import { normalizeRuntimeDataDirectory, resolveRuntimeCachePath } from "./runtim
 
 const environmentSchema = z.object({
   CEDIS_PROVIDER_MODE: z.enum(["disabled", "live", "mock"]).default("live"),
-  AMSCG_PROVIDER_MODE: z.enum(["disabled", "live"]).default("live"),
   VIKPG_PROVIDER_MODE: z.enum(["disabled", "live"]).default("live"),
   EVENT_PROVIDER_MODE: z.enum(["disabled", "live", "mock"]).default("disabled"),
   EVENT_CACHE_PATH: z.string().min(1).optional(),
@@ -36,7 +35,6 @@ const environmentSchema = z.object({
   GOING_OUT_CACHE_FRESHNESS_MINUTES: z.coerce.number().int().positive().default(120),
   ZPCG_RAILWAY_CACHE_PATH: z.string().min(1).optional(),
   CEDIS_CACHE_PATH: z.string().min(1).optional(),
-  AMSCG_CACHE_PATH: z.string().min(1).optional(),
   VIKPG_CACHE_PATH: z.string().min(1).optional(),
   CITY_ALERTS_REFRESH_SECRET: z.string().min(32).optional(),
   CONTACT_EMAIL: z.string().email().optional(),
@@ -54,7 +52,6 @@ const environmentSchema = z.object({
   RUNTIME_DATA_DIR: z.string().min(1).default(".runtime"),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   DEFAULT_CITY: z.string().default("podgorica"),
-  ENABLE_AMSCG: z.enum(["false", "true"]).default("true"),
   ENABLE_CEDIS: z.enum(["false", "true"]).default("true"),
   ENABLE_VIKPG: z.enum(["false", "true"]).default("true"),
   ENABLE_EVENTS: z.enum(["false", "true"]).default("false"),
@@ -83,7 +80,6 @@ function parseEnvironment(values: Record<string, string | undefined>) {
 const parsedEnvironment = environmentSchema.safeParse({
   NODE_ENV: process.env.NODE_ENV,
   CEDIS_PROVIDER_MODE: process.env.CEDIS_PROVIDER_MODE,
-  AMSCG_PROVIDER_MODE: process.env.AMSCG_PROVIDER_MODE,
   VIKPG_PROVIDER_MODE: process.env.VIKPG_PROVIDER_MODE,
   EVENT_PROVIDER_MODE: process.env.EVENT_PROVIDER_MODE,
   EVENT_CACHE_PATH: process.env.EVENT_CACHE_PATH,
@@ -114,7 +110,6 @@ const parsedEnvironment = environmentSchema.safeParse({
   GOING_OUT_CACHE_FRESHNESS_MINUTES: process.env.GOING_OUT_CACHE_FRESHNESS_MINUTES,
   ZPCG_RAILWAY_CACHE_PATH: process.env.ZPCG_RAILWAY_CACHE_PATH,
   CEDIS_CACHE_PATH: process.env.CEDIS_CACHE_PATH,
-  AMSCG_CACHE_PATH: process.env.AMSCG_CACHE_PATH,
   VIKPG_CACHE_PATH: process.env.VIKPG_CACHE_PATH,
   CITY_ALERTS_REFRESH_SECRET: process.env.CITY_ALERTS_REFRESH_SECRET,
   CONTACT_EMAIL: process.env.CONTACT_EMAIL,
@@ -126,7 +121,6 @@ const parsedEnvironment = environmentSchema.safeParse({
   SMTP_USERNAME: process.env.SMTP_USERNAME,
   RUNTIME_DATA_DIR: process.env.RUNTIME_DATA_DIR,
   DEFAULT_CITY: process.env.DEFAULT_CITY,
-  ENABLE_AMSCG: process.env.ENABLE_AMSCG,
   ENABLE_CEDIS: process.env.ENABLE_CEDIS,
   ENABLE_VIKPG: process.env.ENABLE_VIKPG,
   ENABLE_EVENTS: process.env.ENABLE_EVENTS,
@@ -160,9 +154,6 @@ const cacheDirectory =
   parsedEnvironment.data.EVENT_CACHE_DIR?.replace(/\/+$/, "") || `${runtimeDataDirectory}/cache`;
 const resolvedEnvironment = {
   ...parsedEnvironment.data,
-  AMSCG_CACHE_PATH:
-    parsedEnvironment.data.AMSCG_CACHE_PATH ??
-    resolveRuntimeCachePath("amscg-road-conditions.json", runtimeDataDirectory),
   CEDIS_CACHE_PATH:
     parsedEnvironment.data.CEDIS_CACHE_PATH ??
     resolveRuntimeCachePath("cedis-planned-outages.json", runtimeDataDirectory),
@@ -200,7 +191,6 @@ if (!isCityId(resolvedEnvironment.DEFAULT_CITY)) {
 export const env = {
   ...resolvedEnvironment,
   DEFAULT_CITY: resolvedEnvironment.DEFAULT_CITY,
-  ENABLE_AMSCG: resolvedEnvironment.ENABLE_AMSCG === "true",
   ENABLE_CEDIS: resolvedEnvironment.ENABLE_CEDIS === "true",
   ENABLE_VIKPG: resolvedEnvironment.ENABLE_VIKPG === "true",
   ENABLE_EVENTS: resolvedEnvironment.ENABLE_EVENTS === "true",

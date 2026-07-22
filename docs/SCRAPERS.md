@@ -22,10 +22,6 @@ CEDIS is the currently approved HTML collection source for planned Podgorica pow
 
 The bundled VPS scheduler refreshes CEDIS every 30 minutes. It uses local fixtures for automated tests and preserves a valid cached snapshot when the source, network, or markup is suspicious. The local cache is appropriate for development and persistent servers, but not as durable shared storage in serverless deployments. See ADR 0007 for configuration, classification, and scheduling constraints.
 
-## AMSCG road conditions
-
-AMSCG is the approved official source for road-condition notices at `https://amscg.org/stanje-na-putevima/`. `pnpm run collect:amscg` fetches only the allowed AMSCG host through the same timeout, retry, cache-first, and fixture-test policy as CEDIS. It normalizes road works, closures, alternating traffic, restrictions, and important warnings. Visitor requests read only `.runtime/cache/amscg-road-conditions.json`. See ADR 0008.
-
 ## VIK Podgorica water-service notices
 
 VIK Podgorica is the approved official water-service source at `https://vikpg.me/me/mediji/servisne-informacije/obavjestenja.html`. That legacy URL currently redirects to an official first-party page containing service entries and unrelated content. `pnpm run collect:vikpg` accepts only validated HTTPS VIK hosts, uses the established user agent, ten-second timeout, one transient retry, low request volume, and an on-disk refresh lock. It reads and atomically writes `.runtime/cache/vikpg-water-alerts.json`; visitor requests only read the cache.

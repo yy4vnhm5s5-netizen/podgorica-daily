@@ -51,7 +51,7 @@ test("prioritizes critical alerts", () => {
       alerts: {
         data: [
           { isActive: true, isMajor: true, severity: "critical", type: "powerOutage" },
-          { isActive: true, isMajor: true, severity: "warning", type: "roadWorks" },
+          { isActive: true, isMajor: true, severity: "warning", type: "waterOutage" },
         ],
         status: "available",
       },
@@ -63,7 +63,7 @@ test("prioritizes critical alerts", () => {
   assert.ok(overview.sentences.includes("One power outage is active."));
 });
 
-test("summarizes multiple alert types without exceeding five sentences", () => {
+test("summarizes supported alert types without exceeding five sentences", () => {
   const overview = createDailyOverview(
     createSnapshot({
       alerts: {
@@ -71,8 +71,6 @@ test("summarizes multiple alert types without exceeding five sentences", () => {
           { isActive: true, isMajor: true, severity: "warning", type: "weatherWarning" },
           { isActive: true, isMajor: true, severity: "warning", type: "powerOutage" },
           { isActive: true, isMajor: true, severity: "warning", type: "waterOutage" },
-          { isActive: true, isMajor: true, severity: "warning", type: "trafficDisruption" },
-          { isActive: true, isMajor: false, severity: "warning", type: "roadWorks" },
         ],
         status: "available",
       },
@@ -84,8 +82,7 @@ test("summarizes multiple alert types without exceeding five sentences", () => {
     "A weather warning is active.",
     "One power outage is active.",
     "One water outage is active.",
-    "A major traffic disruption is active.",
-    "Road works are affecting one area.",
+    "There are no events listed for today.",
   ]);
   assert.equal(overview.airQualityCategory, "good");
 });

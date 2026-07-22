@@ -1,9 +1,5 @@
 import { env } from "@/config/env";
 import {
-  amscgProviderMetadata,
-  getAmscgCityAlerts,
-} from "@/modules/city-alerts/infrastructure/amscg-city-alerts-provider";
-import {
   cedisProviderMetadata,
   getCedisCityAlerts,
 } from "@/modules/city-alerts/infrastructure/cedis-city-alerts-provider";
@@ -17,7 +13,6 @@ import type { ProviderMetadata } from "@/shared/types/provider";
 
 const providerRegistry: readonly ProviderMetadata[] = [
   { ...cedisProviderMetadata, enabled: env.ENABLE_CEDIS },
-  { ...amscgProviderMetadata, enabled: env.ENABLE_AMSCG },
   { ...vikpgProviderMetadata, enabled: env.ENABLE_VIKPG },
   { ...weatherProviderMetadata, enabled: env.ENABLE_WEATHER },
 ];
@@ -31,10 +26,6 @@ async function getCityAlertProviderData(context: CityContext) {
     getCedisCityAlerts({
       context,
       mode: env.ENABLE_CEDIS ? env.CEDIS_PROVIDER_MODE : "disabled",
-    }),
-    getAmscgCityAlerts({
-      context,
-      mode: env.ENABLE_AMSCG ? env.AMSCG_PROVIDER_MODE : "disabled",
     }),
     getVikpgCityAlerts({
       context,

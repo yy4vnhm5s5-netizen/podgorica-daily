@@ -3,7 +3,7 @@ import { getCityAlertProviderData } from "@/config/providers";
 import type { CityAlert } from "@/modules/city-alerts/domain/city-alert";
 import type { CityContext } from "@/shared/types/city";
 
-type CityAlertsSourceId = "amscg" | "cedis" | "vikpg";
+type CityAlertsSourceId = "cedis" | "vikpg";
 type CityAlertsProviderMode = "disabled" | "live" | "mock";
 
 interface CityAlertsSourceMetadata {
@@ -28,7 +28,7 @@ interface CityAlertsOverviewAlert {
   isMajor: boolean;
   isUpcoming: boolean;
   severity: "critical" | "information" | "warning";
-  type: "powerOutage" | "roadWorks" | "trafficDisruption" | "waterOutage" | "weatherWarning";
+  type: "powerOutage" | "waterOutage" | "weatherWarning";
 }
 
 interface CityAlertsOverviewData {
@@ -40,19 +40,13 @@ async function getActiveCityAlerts(
   context: CityContext = getDefaultCityContext(),
 ): Promise<CityAlertsResult> {
   try {
-    const [cedis, amscg, vikpg] = await getCityAlertProviderData(context);
+    const [cedis, vikpg] = await getCityAlertProviderData(context);
     const sources: CityAlertsSourceMetadata[] = [
       {
         freshnessStatus: cedis.freshnessStatus,
         id: "cedis",
         lastSuccessfulUpdate: cedis.lastSuccessfulUpdate,
         providerMode: cedis.mode,
-      },
-      {
-        freshnessStatus: amscg.freshnessStatus,
-        id: "amscg",
-        lastSuccessfulUpdate: amscg.lastSuccessfulUpdate,
-        providerMode: amscg.mode,
       },
       {
         freshnessStatus: vikpg.freshnessStatus,
@@ -62,7 +56,7 @@ async function getActiveCityAlerts(
       },
     ];
     const metadata = { sources };
-    const sourceAlerts = [...cedis.alerts, ...amscg.alerts, ...vikpg.alerts];
+    const sourceAlerts = [...cedis.alerts, ...vikpg.alerts];
     const activeAlerts = sourceAlerts.filter(
       ({ status }) => status === "active" || status === "scheduled",
     );

@@ -1,5 +1,4 @@
 import type { CityAlert, CityAlertContent } from "../domain/city-alert.ts";
-import type { RoadAlert, RoadAlertType } from "../domain/road-alert.ts";
 import { isCityId } from "../../../shared/config/cities.ts";
 import type { CityId } from "../../../shared/types/city.ts";
 
@@ -8,13 +7,6 @@ function deserializeCityAlerts(value: unknown): CityAlert[] | undefined {
 
   const alerts = value.map(deserializeCityAlert);
   return alerts.every((alert): alert is CityAlert => alert !== undefined) ? alerts : undefined;
-}
-
-function deserializeRoadAlerts(value: unknown): RoadAlert[] | undefined {
-  if (!Array.isArray(value)) return undefined;
-
-  const alerts = value.map(deserializeRoadAlert);
-  return alerts.every((alert): alert is RoadAlert => alert !== undefined) ? alerts : undefined;
 }
 
 function deserializeCityAlert(value: unknown): CityAlert | undefined {
@@ -68,46 +60,6 @@ function deserializeCityAlert(value: unknown): CityAlert | undefined {
   };
 }
 
-function deserializeRoadAlert(value: unknown): RoadAlert | undefined {
-  if (!isRecord(value)) return undefined;
-
-  const cityIds = deserializeCityIds(value.cityIds);
-  const validFrom = deserializeOptionalDate(value.validFrom);
-  const validUntil = deserializeOptionalDate(value.validUntil);
-
-  if (
-    !cityIds ||
-    validFrom === null ||
-    validUntil === null ||
-    !isRoadAlertType(value.type) ||
-    !isString(value.affectedRoad) ||
-    !isString(value.description) ||
-    !isString(value.id) ||
-    !isString(value.sourceUrl) ||
-    !isString(value.title) ||
-    !isOptionalString(value.municipality) ||
-    !isOptionalString(value.validity) ||
-    value.source !== "AMSCG"
-  ) {
-    return undefined;
-  }
-
-  return {
-    affectedRoad: value.affectedRoad,
-    cityIds,
-    description: value.description,
-    id: value.id,
-    ...(value.municipality ? { municipality: value.municipality } : {}),
-    source: "AMSCG",
-    sourceUrl: value.sourceUrl,
-    title: value.title,
-    type: value.type,
-    ...(validFrom ? { validFrom } : {}),
-    ...(validUntil ? { validUntil } : {}),
-    ...(value.validity ? { validity: value.validity } : {}),
-  };
-}
-
 function deserializeCityAlertContent(value: unknown): CityAlertContent | undefined {
   if (!isRecord(value) || !isString(value.kind)) return undefined;
   if (value.kind === "demo" && isString(value.key)) return { key: value.key, kind: "demo" };
@@ -153,20 +105,8 @@ function isAlertType(value: unknown): value is CityAlert["type"] {
   return (
     value === "emergency" ||
     value === "powerOutage" ||
-    value === "roadWorks" ||
-    value === "trafficDisruption" ||
     value === "waterOutage" ||
     value === "weatherWarning"
-  );
-}
-
-function isRoadAlertType(value: unknown): value is RoadAlertType {
-  return (
-    value === "alternating" ||
-    value === "closure" ||
-    value === "restriction" ||
-    value === "roadwork" ||
-    value === "warning"
   );
 }
 
@@ -182,4 +122,4 @@ function isString(value: unknown): value is string {
   return typeof value === "string";
 }
 
-export { deserializeCityAlerts, deserializeRoadAlerts };
+export { deserializeCityAlerts };

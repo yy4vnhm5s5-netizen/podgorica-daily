@@ -12,7 +12,6 @@
     "dev": "next dev",
     "build": "next build",
     "collect:cedis": "node --experimental-strip-types src/modules/city-alerts/infrastructure/collect-cedis.ts",
-    "collect:amscg": "node --experimental-strip-types src/modules/city-alerts/infrastructure/collect-amscg.ts",
     "collect:vikpg": "node --experimental-strip-types src/modules/city-alerts/infrastructure/collect-vikpg.ts",
     "collect:zpcg-railway": "node --experimental-strip-types src/modules/transport/infrastructure/collect-zpcg-railway.ts",
     "collect:podgorica-flights": "node --experimental-strip-types src/modules/flights/infrastructure/collect-podgorica-flights.ts",

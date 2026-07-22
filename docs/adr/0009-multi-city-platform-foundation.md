@@ -11,9 +11,9 @@ Podgorica Daily is currently deployed for one city, but its provider, cache, and
 
 Introduce a central city registry and `CityContext` containing the selected city, locale, and time zone. `DEFAULT_CITY` selects the current city and validates against the registry. Podgorica is the only enabled city; Bar and Nikšić are present only as disabled registry entries.
 
-City-aware models use `cityIds: CityId[]`, allowing one normalized record to be relevant to more than one city. Providers receive `CityContext`, while provider metadata is registered centrally with official source, refresh interval, cache path, enabled state, and multi-city capability. CEDIS, AMSCG, and Weather are registered today.
+City-aware models use `cityIds: CityId[]`, allowing one normalized record to be relevant to more than one city. Providers receive `CityContext`, while provider metadata is registered centrally with official source, refresh interval, cache path, enabled state, and multi-city capability. CEDIS and Weather are registered today.
 
-Use shared generic JSON-cache helpers for freshness calculation and atomic file writes. CEDIS and AMSCG retain module-owned snapshot contracts and collector boundaries while sharing this mechanism. Feature flags `ENABLE_CEDIS`, `ENABLE_AMSCG`, and `ENABLE_WEATHER` default to enabled to preserve behaviour. Future city URL helpers can construct `/{city-slug}`, but no city routes or selector are exposed yet.
+Use shared generic JSON-cache helpers for freshness calculation and atomic file writes. CEDIS retains its module-owned snapshot contract and collector boundary while sharing this mechanism. Feature flags `ENABLE_CEDIS` and `ENABLE_WEATHER` default to enabled to preserve behaviour. Future city URL helpers can construct `/{city-slug}`, but no city routes or selector are exposed yet.
 
 Daily Overview receives `CityContext`, generic city-aware snapshots, and generic alert read models. It derives city naming from context rather than assuming Podgorica.
 
