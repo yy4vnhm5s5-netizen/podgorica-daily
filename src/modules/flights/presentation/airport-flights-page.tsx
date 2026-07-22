@@ -1,11 +1,11 @@
-import { ExternalLink, PlaneLanding, PlaneTakeoff } from "lucide-react";
+import { PlaneLanding, PlaneTakeoff } from "lucide-react";
 
 import type { Flight } from "../domain/flight";
 import type { FlightCacheState } from "../infrastructure/podgorica-flights";
 import {
   getPodgoricaFlightsDisplayState,
   getPodgoricaFlightsUpdatedLabel,
-  getPodgoricaFlightGroups,
+  getUpcomingPodgoricaFlightGroups,
 } from "./podgorica-flights-ui-model";
 import { EmptyState } from "@/shared/components/empty-state";
 import { ErrorState } from "@/shared/components/error-state";
@@ -29,7 +29,7 @@ function AirportFlightsPage({
   state,
 }: AirportFlightsPageProps) {
   const copy = locale === "me" ? montenegrinCopy : englishCopy;
-  const groups = getPodgoricaFlightGroups(flights);
+  const groups = getUpcomingPodgoricaFlightGroups(flights, new Date(), 5);
   const displayState = getPodgoricaFlightsDisplayState({
     flightCount: groups.arrival.length + groups.departure.length,
     state,
@@ -41,15 +41,6 @@ function AirportFlightsPage({
       <div className="space-y-2">
         <SectionTitle id="flights-heading" title={copy.title} />
         <p className="max-w-2xl text-sm leading-6 text-muted-foreground">{copy.description}</p>
-        <a
-          className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-          href="https://montenegroairports.com/aerodrom-podgorica/destinacije/"
-          rel="noreferrer"
-          target="_blank"
-        >
-          {copy.source}
-          <ExternalLink aria-hidden="true" className="size-3.5" />
-        </a>
       </div>
       {displayState === "unavailable" ? (
         <ErrorState description={copy.unavailable} title={copy.title} />
@@ -84,6 +75,14 @@ function AirportFlightsPage({
           />
         </div>
       )}
+      <a
+        className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        href="https://montenegroairports.com/aerodrom-podgorica/destinacije/"
+        rel="noopener noreferrer"
+        target="_blank"
+      >
+        {copy.source}
+      </a>
     </section>
   );
 }
@@ -178,7 +177,7 @@ const montenegrinCopy = {
   flightNumber: "Broj leta",
   stale: "Prikazani podaci mogu biti zastarjeli.",
   status: "Status",
-  source: "Zvanični red letenja Aerodroma Crne Gore",
+  source: "Kompletan red letenja na sajtu Aerodroma Crne Gore ↗",
   title: "Aerodrom Podgorica",
   unavailable: "Podaci trenutno nijesu dostupni.",
 };
@@ -193,7 +192,7 @@ const englishCopy = {
   flightNumber: "Flight number",
   stale: "Displayed data may be outdated.",
   status: "Status",
-  source: "Official Airports of Montenegro schedule",
+  source: "Full flight schedule on the Airports of Montenegro website ↗",
   title: "Podgorica Airport",
   unavailable: "Data is temporarily unavailable.",
 };

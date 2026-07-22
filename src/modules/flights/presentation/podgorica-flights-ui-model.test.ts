@@ -19,12 +19,22 @@ test("distinguishes available, empty, stale, and unavailable flight card states"
   );
 });
 
-test("groups arrivals and departures consistently for the homepage and full schedule", () => {
+test("groups and limits upcoming arrivals and departures consistently for the homepage and full schedule", () => {
   const flights: Flight[] = [
     flight("arrival", "Istanbul", "2026-07-22T09:40:00.000Z"),
     flight("departure", "Beograd", "2026-07-22T08:25:00.000Z"),
     flight("arrival", "Beč", "2026-07-22T10:05:00.000Z"),
     flight("departure", "Rim", "2026-07-22T11:30:00.000Z"),
+    flight("arrival", "Pariz", "2026-07-22T12:00:00.000Z"),
+    flight("arrival", "London", "2026-07-22T13:00:00.000Z"),
+    flight("arrival", "Berlin", "2026-07-22T14:00:00.000Z"),
+    flight("arrival", "Madrid", "2026-07-22T15:00:00.000Z"),
+    flight("arrival", "Rim", "2026-07-22T16:00:00.000Z"),
+    flight("departure", "Beč", "2026-07-22T12:30:00.000Z"),
+    flight("departure", "Pariz", "2026-07-22T13:30:00.000Z"),
+    flight("departure", "London", "2026-07-22T14:30:00.000Z"),
+    flight("departure", "Berlin", "2026-07-22T15:30:00.000Z"),
+    flight("departure", "Madrid", "2026-07-22T16:30:00.000Z"),
   ];
 
   const allGroups = getPodgoricaFlightGroups(flights);
@@ -33,14 +43,24 @@ test("groups arrivals and departures consistently for the homepage and full sche
     new Date("2026-07-22T08:30:00.000Z"),
     1,
   );
+  const pageGroups = getUpcomingPodgoricaFlightGroups(
+    flights,
+    new Date("2026-07-22T08:30:00.000Z"),
+    5,
+  );
+  const homepageGroups = getUpcomingPodgoricaFlightGroups(
+    flights,
+    new Date("2026-07-22T08:30:00.000Z"),
+    3,
+  );
 
   assert.deepEqual(
     allGroups.arrival.map(({ location }) => location),
-    ["Istanbul", "Beč"],
+    ["Istanbul", "Beč", "Pariz", "London", "Berlin", "Madrid", "Rim"],
   );
   assert.deepEqual(
     allGroups.departure.map(({ location }) => location),
-    ["Beograd", "Rim"],
+    ["Beograd", "Rim", "Beč", "Pariz", "London", "Berlin", "Madrid"],
   );
   assert.deepEqual(
     upcomingGroups.arrival.map(({ location }) => location),
@@ -50,6 +70,10 @@ test("groups arrivals and departures consistently for the homepage and full sche
     upcomingGroups.departure.map(({ location }) => location),
     ["Rim"],
   );
+  assert.equal(pageGroups.arrival.length, 5);
+  assert.equal(pageGroups.departure.length, 5);
+  assert.equal(homepageGroups.arrival.length, 3);
+  assert.equal(homepageGroups.departure.length, 3);
 });
 
 function flight(direction: Flight["direction"], location: string, scheduledAt: string): Flight {
