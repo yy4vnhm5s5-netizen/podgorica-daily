@@ -82,12 +82,26 @@ interface SummaryItemProps {
 }
 
 function SummaryItem({ children, href, icon: Icon, label }: SummaryItemProps) {
+  const isInteractive = Boolean(href);
   const content = (
     <>
-      <Icon aria-hidden="true" className="size-4 shrink-0 text-blue-700" strokeWidth={1.8} />
+      <span
+        aria-hidden="true"
+        className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-blue-100/80 text-blue-800"
+      >
+        <Icon className="size-3.5" strokeWidth={1.8} />
+      </span>
       <span className="min-w-0">
-        <span className="block text-xs text-muted-foreground">{label}</span>
-        <span className="mt-0.5 block text-sm font-semibold text-foreground">{children}</span>
+        <span
+          className={`block text-xs text-muted-foreground ${isInteractive ? "group-hover:text-foreground" : ""}`}
+        >
+          {label}
+        </span>
+        <span
+          className={`mt-0.5 block text-sm font-semibold text-foreground ${isInteractive ? "group-hover:text-primary" : ""}`}
+        >
+          {children}
+        </span>
       </span>
     </>
   );
@@ -95,7 +109,7 @@ function SummaryItem({ children, href, icon: Icon, label }: SummaryItemProps) {
   if (href) {
     return (
       <Link
-        className={`${dailySummaryLayout.itemClassName} rounded-md transition-colors hover:bg-blue-100/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary`}
+        className={`${dailySummaryLayout.itemClassName} group cursor-pointer rounded-md transition-[background-color,box-shadow] hover:bg-blue-100/70 hover:shadow-[0_2px_8px_-6px_rgb(30_64_175_/_0.45)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary`}
         href={href}
       >
         {content}
