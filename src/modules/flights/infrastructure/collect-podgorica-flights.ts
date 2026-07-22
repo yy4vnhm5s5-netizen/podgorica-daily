@@ -57,6 +57,7 @@ async function runPodgoricaFlightsCollector({
       `accepted=${result.acceptedFlights}`,
       `cache=${cache}`,
       ...(result.errorCode ? [`error=${result.errorCode}`] : []),
+      ...(result.warnings[0] ? [`reason=${formatReason(result.warnings[0])}`] : []),
     ].join(" ");
     writeOutput(output);
 
@@ -64,6 +65,10 @@ async function runPodgoricaFlightsCollector({
   } finally {
     await lock.release();
   }
+}
+
+function formatReason(value: string) {
+  return value.replace(/\s+/g, "-").slice(0, 120);
 }
 
 if (process.argv[1]?.endsWith("collect-podgorica-flights.ts")) {

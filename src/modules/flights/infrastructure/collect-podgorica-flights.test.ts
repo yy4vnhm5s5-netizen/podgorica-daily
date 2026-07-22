@@ -40,6 +40,6 @@ test("returns a non-zero result when no cache can be retained", async () => {
   assert.equal(result.state, "failed");
   assert.equal(
     result.output,
-    "provider=podgorica-airport state=failed accepted=0 cache=unavailable error=podgorica-flights-parser-failed",
+    "provider=podgorica-airport state=failed accepted=0 cache=unavailable error=podgorica-flights-parser-failed reason=tables-unavailable",
   );
 });

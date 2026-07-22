@@ -27,7 +27,7 @@ Provider metadata is centrally registered for Weather, CEDIS, AMSCG, and VIK Pod
 
 `src/modules/transport` owns the external BusTicket4.me station-link configuration and the ŽPCG railway-departure domain, parser, cache, collector, application query, and homepage presentation. The bus link is external only and never collects departures. The ŽPCG collector fetches only the official timetable, writes `.runtime/cache/zpcg-railway-departures.json` atomically, and the homepage reads that cache only. The module exposes fresh, stale, empty, and unavailable read states without inventing schedules.
 
-`src/modules/flights` owns the Podgorica Airport `Flight` domain, official Airports of Montenegro HTML adapter, atomic cache, collector, cache-backed application query, and homepage/full-schedule presentation. The collector requests only the current and following Europe/Podgorica dates from the official schedule, writes `.runtime/cache/podgorica-flights.json`, retains the prior valid snapshot on failure, and is never called by a visitor request. See ADR 0018.
+`src/modules/flights` owns the Podgorica Airport `Flight` domain, official Airports of Montenegro public flight-feed adapter, atomic cache, collector, cache-backed application query, and homepage/full-schedule presentation. The collector requests only the JSON feed used by the official Podgorica Airport status page, writes `.runtime/cache/podgorica-flights.json`, retains the prior valid snapshot on failure, and is never called by a visitor request. See ADR 0019.
 
 ## Contact boundary
 

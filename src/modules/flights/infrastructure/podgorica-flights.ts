@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 import { env } from "../../../config/env.ts";
 import {
   calculateCacheFreshness,
@@ -12,9 +14,27 @@ import {
   type FlightDirection,
 } from "../domain/flight.ts";
 
-const podgoricaFlightsUrl = "https://montenegroairports.com/aerodrom-podgorica/destinacije/";
+const podgoricaFlightsUrl =
+  "https://montenegroairports.com/aerodromixs/cache-flights.php?airport=pg";
 const defaultPodgoricaFlightsCachePath = env.PODGORICA_FLIGHTS_CACHE_PATH;
 const maximumResponseLength = 2_000_000;
+
+const rawFlightSchema = z
+  .object({
+    Airport: z.string().nullable().optional(),
+    EstimatedDateTime: z.string().nullable().optional(),
+    FlightNumberIATA: z.string().nullable().optional(),
+    FlightType: z.string().nullable().optional(),
+    ScheduledDateTime: z.string().nullable().optional(),
+    StatusID: z.string().nullable().optional(),
+  })
+  .passthrough();
+
+const rawFlightsPayloadSchema = z
+  .object({
+    value: z.array(rawFlightSchema),
+  })
+  .passthrough();
 
 type FlightCacheState = "fresh" | "stale" | "unavailable";
 
@@ -31,9 +51,9 @@ interface PodgoricaFlightsCacheSnapshot {
 interface PodgoricaFlightsHttpResponse {
   contentType: string | null;
   finalUrl: string;
-  html: string;
   requestedUrl: string;
   status: number;
+  body: string;
 }
 
 interface PodgoricaFlightsHttpClient {
@@ -44,7 +64,7 @@ interface PodgoricaFlightsParseResult {
   flights: Flight[];
   recognized: boolean;
   rejected: number;
-  tables: number;
+  records: number;
   warnings: string[];
 }
 
@@ -114,7 +134,10 @@ function createPodgoricaFlightsHttpClient({
       for (let attempt = 0; attempt <= retries; attempt += 1) {
         try {
           const response = await fetchImplementation(requestedUrl, {
-            headers: { "User-Agent": "Gradom/0.1 (+https://gradom.me)" },
+            headers: {
+              Accept: "application/json, text/plain;q=0.9, text/html;q=0.5",
+              "User-Agent": "Gradom/0.1 (+https://gradom.me)",
+            },
             signal: AbortSignal.timeout(timeoutMs),
           });
           const finalUrl = response.url || requestedUrl;
@@ -130,28 +153,28 @@ function createPodgoricaFlightsHttpClient({
           }
 
           const contentType = response.headers?.get("content-type") ?? null;
-          if (!contentType?.toLocaleLowerCase().includes("text/html")) {
+          if (!isJsonLikeContentType(contentType)) {
             throw new PodgoricaFlightsFetchError(
               "podgorica-flights-invalid-content-type",
-              "Aerodrom Podgorica did not return an HTML flight schedule.",
+              "Aerodrom Podgorica did not return the public flight-feed format.",
             );
           }
 
-          const html = await response.text();
-          if (!html.trim()) {
+          const body = await response.text();
+          if (!body.trim()) {
             throw new PodgoricaFlightsFetchError(
               "podgorica-flights-request-failed",
-              "Aerodrom Podgorica returned an empty flight schedule.",
+              "Aerodrom Podgorica returned an empty flight feed.",
             );
           }
-          if (html.length > maximumResponseLength) {
+          if (body.length > maximumResponseLength) {
             throw new PodgoricaFlightsFetchError(
               "podgorica-flights-response-too-large",
               "Aerodrom Podgorica response exceeded the allowed size.",
             );
           }
 
-          return { contentType, finalUrl, html, requestedUrl, status: response.status };
+          return { body, contentType, finalUrl, requestedUrl, status: response.status };
         } catch (error) {
           if (error instanceof PodgoricaFlightsFetchError) {
             latestError = error;
@@ -179,60 +202,69 @@ function createPodgoricaFlightsHttpClient({
         latestError ??
         new PodgoricaFlightsFetchError(
           "podgorica-flights-request-failed",
-          "Flight schedule request failed.",
+          "Flight-feed request failed.",
         )
       );
     },
   };
 }
 
-function parsePodgoricaFlights(html: string, scheduledDate: string): PodgoricaFlightsParseResult {
-  const cleanedHtml = html.replace(
-    /<(?:script|style|noscript|svg)\b[^>]*>[\s\S]*?<\/(?:script|style|noscript|svg)>/gi,
-    "",
-  );
-  const tables = [...cleanedHtml.matchAll(/<table\b([^>]*)>([\s\S]*?)<\/table>/gi)];
+function parsePodgoricaFlights(payload: string): PodgoricaFlightsParseResult {
+  const parsedJson = parseJson(payload);
+  if (!parsedJson.success) return parserFailure("podgorica-flights-json-invalid");
+
+  const parsedPayload = rawFlightsPayloadSchema.safeParse(parsedJson.value);
+  if (!parsedPayload.success) return parserFailure("podgorica-flights-json-value-missing");
+
   const flights: Flight[] = [];
+  const warnings = new Set<string>();
   let rejected = 0;
-  let recognized = false;
 
-  for (const table of tables) {
-    const context = cleanedHtml.slice(Math.max(0, table.index! - 1_200), table.index);
-    const direction = getDirection(`${table[1]} ${context}`);
-    const rows = [...table[2].matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi)];
-    const headerIndex = rows.findIndex((row) => /<th\b/i.test(row[1]));
-    if (!direction || headerIndex < 0) continue;
-
-    const headers = getCells(rows[headerIndex][1]).map(normalizeHeading);
-    const indexes = getColumnIndexes(headers);
-    if (indexes.time === undefined || indexes.location === undefined) continue;
-    recognized = true;
-
-    for (const row of rows.slice(headerIndex + 1)) {
-      const cells = getCells(row[1]);
-      if (cells.length <= Math.max(indexes.time, indexes.location)) continue;
-      const flight = normalizeFlight({
-        ...(indexes.airline !== undefined ? { airline: cells[indexes.airline] ?? "" } : {}),
-        direction,
-        ...(indexes.flightNumber !== undefined
-          ? { flightNumber: cells[indexes.flightNumber] ?? "" }
-          : {}),
-        location: cells[indexes.location] ?? "",
-        scheduledDate,
-        scheduledTime: normalizeTime(cells[indexes.time] ?? ""),
-        ...(indexes.status !== undefined ? { status: cells[indexes.status] ?? "" } : {}),
-      });
-      if (flight) flights.push(flight);
-      else rejected += 1;
+  for (const record of parsedPayload.data.value) {
+    const direction = getFlightDirection(record.FlightType);
+    const scheduled = getAirportLocalDateTime(record.ScheduledDateTime);
+    if (!direction) {
+      rejected += 1;
+      warnings.add("podgorica-flights-record-direction-missing");
+      continue;
     }
+    if (!scheduled) {
+      rejected += 1;
+      warnings.add("podgorica-flights-record-scheduled-time-invalid");
+      continue;
+    }
+
+    const flight = normalizeFlight({
+      direction,
+      ...(record.FlightNumberIATA ? { flightNumber: record.FlightNumberIATA } : {}),
+      location: record.Airport ?? "",
+      scheduledDate: scheduled.date,
+      scheduledTime: scheduled.time,
+      ...(record.StatusID ? { status: record.StatusID } : {}),
+    });
+    if (flight) flights.push(flight);
+    else {
+      rejected += 1;
+      warnings.add("podgorica-flights-record-location-missing");
+    }
+  }
+
+  if (parsedPayload.data.value.length > 0 && flights.length === 0) {
+    return {
+      flights: [],
+      recognized: false,
+      records: parsedPayload.data.value.length,
+      rejected,
+      warnings: [...warnings, "podgorica-flights-no-valid-records"],
+    };
   }
 
   return {
     flights: sortAndDeduplicateFlights(flights),
-    recognized,
+    recognized: true,
+    records: parsedPayload.data.value.length,
     rejected,
-    tables: tables.length,
-    warnings: recognized ? [] : ["Aerodrom Podgorica flight tables were unavailable."],
+    warnings: [...warnings],
   };
 }
 
@@ -246,29 +278,20 @@ async function refreshPodgoricaFlights({
   now?: () => Date;
 }): Promise<PodgoricaFlightsRefreshResult> {
   const previous = await readJsonCache<PodgoricaFlightsCacheSnapshot>(cachePath);
-  const dates = [getLocalDate(now()), getLocalDate(addDays(now(), 1))];
 
   try {
-    const parsed = await Promise.all(
-      dates.map(async (date) => {
-        const response = await httpClient.get(createPodgoricaFlightsUrl(date));
-        return parsePodgoricaFlights(response.html, date);
-      }),
-    );
-    if (!parsed.every((result) => result.recognized)) {
-      return retainPrevious(
-        previous,
-        "podgorica-flights-parser-failed",
-        parsed.flatMap((result) => result.warnings),
-      );
+    const response = await httpClient.get(createPodgoricaFlightsUrl());
+    const parsed = parsePodgoricaFlights(response.body);
+    if (!parsed.recognized) {
+      return retainPrevious(previous, "podgorica-flights-parser-failed", parsed.warnings);
     }
 
     const timestamp = now().toISOString();
     const snapshot: PodgoricaFlightsCacheSnapshot = {
       fetchedAt: timestamp,
-      flights: sortAndDeduplicateFlights(parsed.flatMap((result) => result.flights)),
+      flights: parsed.flights,
       lastSuccessfulRefreshAt: timestamp,
-      parserWarnings: parsed.flatMap((result) => result.warnings),
+      parserWarnings: parsed.warnings,
       schemaVersion: 1,
       sourceUrl: podgoricaFlightsUrl,
     };
@@ -311,11 +334,8 @@ async function getCachedPodgoricaFlights(
   };
 }
 
-function createPodgoricaFlightsUrl(date: string) {
-  const url = new URL(podgoricaFlightsUrl);
-  url.searchParams.set("datum1", date);
-  url.searchParams.set("lang", "me");
-  return url.toString();
+function createPodgoricaFlightsUrl() {
+  return podgoricaFlightsUrl;
 }
 
 function assertPodgoricaFlightsUrl(value: string) {
@@ -323,84 +343,58 @@ function assertPodgoricaFlightsUrl(value: string) {
     const url = new URL(value);
     if (
       url.protocol !== "https:" ||
-      !["montenegroairports.com", "www.montenegroairports.com"].includes(url.hostname)
+      !["montenegroairports.com", "www.montenegroairports.com"].includes(url.hostname) ||
+      url.pathname !== "/aerodromixs/cache-flights.php" ||
+      url.searchParams.get("airport") !== "pg"
     ) {
-      throw new Error("unapproved host");
+      throw new Error("unapproved host or path");
     }
   } catch {
     throw new PodgoricaFlightsFetchError(
       "podgorica-flights-host-rejected",
-      "Podgorica Airport URL host is not allowed.",
+      "Podgorica Airport flight-feed URL is not allowed.",
     );
   }
 }
 
-function getDirection(value: string): FlightDirection | undefined {
-  const normalized = normalizeHeading(value);
-  if (/\b(dolaz|arrival)/.test(normalized)) return "arrival";
-  if (/\b(odlaz|departure)/.test(normalized)) return "departure";
+function getFlightDirection(value: string | null | undefined): FlightDirection | undefined {
+  const normalized = value?.trim().toLocaleLowerCase("en");
+  if (normalized === "arrival") return "arrival";
+  if (normalized === "departure") return "departure";
   return undefined;
 }
 
-function getCells(rowHtml: string) {
-  return [...rowHtml.matchAll(/<t[hd]\b[^>]*>([\s\S]*?)<\/t[hd]>/gi)].map((cell) =>
-    htmlText(cell[1]),
-  );
-}
+function getAirportLocalDateTime(value: string | null | undefined) {
+  const match = value?.trim().match(/^(\d{4}-\d{2}-\d{2})[T\s](\d{1,2}:\d{2})/);
+  if (!match) return undefined;
 
-function getColumnIndexes(headers: readonly string[]) {
-  return {
-    airline: findHeaderIndex(headers, /avio.*kompan|kompan|airline|company|prevoznik/),
-    flightNumber: findHeaderIndex(headers, /broj leta|flight(?: number)?|let\b/),
-    location: findHeaderIndex(headers, /destinacij|destination|odakle|from/),
-    status: findHeaderIndex(headers, /status/),
-    time: findHeaderIndex(headers, /vrijeme|time|planirano|scheduled/),
-  } as Record<"airline" | "flightNumber" | "location" | "status" | "time", number | undefined>;
-}
-
-function findHeaderIndex(headers: readonly string[], pattern: RegExp) {
-  const index = headers.findIndex((header) => pattern.test(header));
-  return index >= 0 ? index : undefined;
-}
-
-function normalizeHeading(value: string) {
-  return value
-    .toLocaleLowerCase("sr-Latn-ME")
-    .replace(/č/g, "c")
-    .replace(/š/g, "s")
-    .replace(/ž/g, "z")
-    .replace(/\s+/g, " ")
-    .trim();
+  return { date: match[1], time: normalizeTime(match[2]) };
 }
 
 function normalizeTime(value: string) {
-  const time = value.match(/\b(\d{1,2}):(\d{2})\b/)?.slice(1);
+  const time = value.match(/^(\d{1,2}):(\d{2})$/)?.slice(1);
   return time ? `${time[0].padStart(2, "0")}:${time[1]}` : "";
 }
 
-function htmlText(value: string) {
-  return value
-    .replace(/<br\s*\/?\s*>/gi, " ")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/gi, " ")
-    .replace(/&amp;/gi, "&")
-    .replace(/\s+/g, " ")
-    .trim();
+function isJsonLikeContentType(contentType: string | null) {
+  const normalized = contentType?.toLocaleLowerCase("en") ?? "";
+  return (
+    normalized.includes("application/json") ||
+    normalized.includes("text/plain") ||
+    normalized.includes("text/html")
+  );
 }
 
-function getLocalDate(value: Date) {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    day: "2-digit",
-    month: "2-digit",
-    timeZone: "Europe/Podgorica",
-    year: "numeric",
-  }).formatToParts(value);
-  const values = Object.fromEntries(parts.map(({ type, value: part }) => [type, part]));
-  return `${values.year}-${values.month}-${values.day}`;
+function parseJson(value: string): { success: true; value: unknown } | { success: false } {
+  try {
+    return { success: true, value: JSON.parse(value) };
+  } catch {
+    return { success: false };
+  }
 }
 
-function addDays(value: Date, days: number) {
-  return new Date(value.getTime() + days * 24 * 60 * 60 * 1_000);
+function parserFailure(warning: string): PodgoricaFlightsParseResult {
+  return { flights: [], recognized: false, records: 0, rejected: 0, warnings: [warning] };
 }
 
 function retainPrevious(

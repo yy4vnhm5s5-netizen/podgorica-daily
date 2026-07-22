@@ -1,0 +1,36 @@
+{
+  "value": [
+    {
+      "Airport": "Beograd",
+      "EstimatedDateTime": "2026-07-22T09:55:00",
+      "FlightNumberIATA": "JU 660",
+      "FlightType": "Arrival",
+      "ScheduledDateTime": "2026-07-22T09:40:00",
+      "StatusID": "Arrived"
+    },
+    {
+      "Airport": "Beograd",
+      "EstimatedDateTime": "2026-07-22T10:25:00",
+      "FlightNumberIATA": "JU 661",
+      "FlightType": "Departure",
+      "ScheduledDateTime": "2026-07-22T10:25:00",
+      "StatusID": "On Time"
+    },
+    {
+      "Airport": "Istanbul",
+      "EstimatedDateTime": "2026-07-22T11:55:00",
+      "FlightNumberIATA": "TK 1085",
+      "FlightType": "Arrival",
+      "ScheduledDateTime": "2026-07-22T11:40:00",
+      "StatusID": "Expected"
+    },
+    {
+      "Airport": "Beč",
+      "EstimatedDateTime": "2026-07-22T13:05:00",
+      "FlightNumberIATA": "OS 738",
+      "FlightType": "Departure",
+      "ScheduledDateTime": "2026-07-22T13:05:00",
+      "StatusID": "Gate Open"
+    }
+  ]
+}

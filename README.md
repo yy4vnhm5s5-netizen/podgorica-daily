@@ -26,7 +26,7 @@ The public interface currently exposes Montenegrin Latin, ijekavian (`/me`); the
 
 The BusTicket4.me link remains external only; Gradom does not collect or republish bus departures. The ŽPCG railway card reads a cache generated solely from the official [ŽPCG timetable](https://zpcg.me/red-voznje/ukupno). Run `pnpm run collect:zpcg-railway` to write `.runtime/cache/zpcg-railway-departures.json`; homepage requests never fetch ŽPCG directly. The bundled VPS scheduler refreshes it at approximately 06:45 and 18:45 host-local time.
 
-The Aerodrom Podgorica card and `/me/letovi` read arrivals and departures only from `.runtime/cache/podgorica-flights.json`. `pnpm run collect:podgorica-flights` fetches the official [Airports of Montenegro Podgorica schedule](https://montenegroairports.com/aerodrom-podgorica/destinacije/) for the current and following local date. It uses bounded HTML collection and retains a valid cache if the source is unavailable; no page request fetches the airport website. See [ADR 0018](docs/adr/0018-podgorica-airport-flight-schedule-provider.md).
+The Aerodrom Podgorica card and `/me/letovi` read arrivals and departures only from `.runtime/cache/podgorica-flights.json`. `pnpm run collect:podgorica-flights` fetches the public first-party flight feed used by the official [Podgorica Airport status page](https://montenegroairports.com/en/podgorica-airport/). It uses bounded JSON collection and retains a valid cache if the source is unavailable; no page request fetches the airport website. See [ADR 0019](docs/adr/0019-podgorica-airport-public-flight-feed.md).
 
 ## Contact
 
