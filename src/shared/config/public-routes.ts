@@ -8,6 +8,10 @@ function getElectricityPath() {
   return "/struja";
 }
 
+function getFlightsPath(locale: Locale) {
+  return `/${locale}/letovi`;
+}
+
 function getPrivacyPolicyPath() {
   return "/me/politika-privatnosti";
 }
@@ -16,4 +20,10 @@ function getTermsOfUsePath() {
   return "/me/uslovi-koriscenja";
 }
 
-export { getContactPath, getElectricityPath, getPrivacyPolicyPath, getTermsOfUsePath };
+export {
+  getContactPath,
+  getElectricityPath,
+  getFlightsPath,
+  getPrivacyPolicyPath,
+  getTermsOfUsePath,
+};

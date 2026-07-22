@@ -6,6 +6,7 @@ import { publicLocales } from "@/shared/config/locale";
 import {
   getContactPath,
   getElectricityPath,
+  getFlightsPath,
   getPrivacyPolicyPath,
   getTermsOfUsePath,
 } from "@/shared/config/public-routes";
@@ -41,6 +42,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: new URL(getElectricityPath(), siteConfig.url).toString(),
     },
   ];
+  const flightsEntries: MetadataRoute.Sitemap = publicLocales.map((locale) => ({
+    changeFrequency: "hourly",
+    priority: 0.7,
+    url: new URL(getFlightsPath(locale), siteConfig.url).toString(),
+  }));
 
   const eventEntries = await Promise.all(
     publicLocales.map(async (locale) => {
@@ -66,6 +72,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...contactEntries,
     ...legalEntries,
     ...electricityEntry,
+    ...flightsEntries,
     ...eventEntries.flat(),
   ];
 }

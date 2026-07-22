@@ -14,8 +14,9 @@ import {
   isHomepageEventsUnavailable,
 } from "@/modules/events/presentation/events-ui-model";
 import { selectHomepageCinemaProgramme } from "@/modules/events/presentation/cineplexx-programme-ui-model";
+import { getPodgoricaFlights } from "@/modules/flights/application/get-podgorica-flights";
+import { AirportFlightsCard } from "@/modules/flights/presentation/airport-flights-card";
 import { getRailwayDepartures } from "@/modules/transport/application/get-railway-departures";
-import { BusStationCard } from "@/modules/transport/presentation/bus-station-card";
 import { RailwayStationCard } from "@/modules/transport/presentation/railway-station-card";
 import { getCurrentWeather } from "@/modules/weather/application/get-current-weather";
 import {
@@ -55,9 +56,10 @@ async function DashboardPage({ locale }: { locale: Locale }) {
   const translations = getTranslations(locale);
   const { advertising, emergencyNumbers } = translations.dashboard;
   const context = getDefaultCityContext(locale);
-  const [dailyOverview, events, railway, weather] = await Promise.all([
+  const [dailyOverview, events, flights, railway, weather] = await Promise.all([
     isFeatureEnabled("dailyOverview") ? getDailyOverview(context) : null,
     getCityEvents(context),
+    isFeatureEnabled("flights") ? getPodgoricaFlights() : null,
     getRailwayDepartures(),
     isFeatureEnabled("weather") ? getCurrentWeather(context) : null,
   ]);
@@ -116,8 +118,13 @@ async function DashboardPage({ locale }: { locale: Locale }) {
               events.providers.find((provider) => provider.id === "cineplexx-podgorica")?.state
             }
           />
-          {isFeatureEnabled("busStation") ? (
-            <BusStationCard city={context.city} locale={locale} />
+          {flights ? (
+            <AirportFlightsCard
+              flights={flights.flights}
+              lastSuccessfulRefreshAt={flights.lastSuccessfulRefreshAt}
+              locale={locale}
+              state={flights.state}
+            />
           ) : null}
           {isFeatureEnabled("busStation") ? (
             <RailwayStationCard

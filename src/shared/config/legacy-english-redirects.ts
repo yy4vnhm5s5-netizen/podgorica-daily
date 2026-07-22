@@ -2,6 +2,7 @@ function getLegacyEnglishRedirectPath(pathname: string) {
   if (pathname === "/en" || pathname === "/en/") return "/";
   if (pathname === "/en/contact" || pathname === "/en/kontakt") return "/kontakt";
   if (pathname === "/en/electricity" || pathname === "/en/struja") return "/struja";
+  if (pathname === "/en/flights" || pathname === "/en/letovi") return "/me/letovi";
   if (pathname === "/en/privacy-policy" || pathname === "/en/politika-privatnosti") {
     return "/politika-privatnosti";
   }

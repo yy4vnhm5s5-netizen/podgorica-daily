@@ -30,6 +30,7 @@ while true; do
   case "$minute" in
     05) run_collector "cineplexx-events" "pnpm run collect:cineplexx-events" ;;
     07) run_collector "kic-events" "pnpm run collect:kic-events" ;;
+    15|45) run_collector "podgorica-flights" "pnpm run collect:podgorica-flights" ;;
     17)
       run_collector "cnp-events" "pnpm run collect:cnp-events"
       run_collector "cineplexx-events" "pnpm run collect:cineplexx-events"

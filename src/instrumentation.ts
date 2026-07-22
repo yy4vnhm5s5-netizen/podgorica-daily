@@ -7,6 +7,7 @@ import { readVikpgCacheResult } from "@/modules/city-alerts/infrastructure/vikpg
 import { readEventCacheSnapshot } from "@/modules/events/infrastructure/events-cache";
 import { initializeEventCaches } from "@/modules/events/infrastructure/events-initialization";
 import { refreshAllEvents } from "@/modules/events/infrastructure/events-refresh";
+import { initializePodgoricaFlights } from "@/modules/flights/infrastructure/podgorica-flights-initialization";
 import { initializeZpcgRailwayCache } from "@/modules/transport/infrastructure/zpcg-railway-initialization";
 
 export function register() {
@@ -34,6 +35,12 @@ export function register() {
   void initializeZpcgRailwayCache({
     cachePath: env.ZPCG_RAILWAY_CACHE_PATH,
   });
+
+  if (env.ENABLE_FLIGHTS) {
+    void initializePodgoricaFlights({
+      cachePath: env.PODGORICA_FLIGHTS_CACHE_PATH,
+    });
+  }
 
   if (env.ENABLE_EVENTS && env.EVENT_PROVIDER_MODE === "live") {
     void initializeEventCaches({

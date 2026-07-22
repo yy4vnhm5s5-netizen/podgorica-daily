@@ -36,6 +36,10 @@ The parser uses local fixtures and injected HTTP in tests. It retains a valid sn
 
 ŽPCG is the approved official source for departures from Podgorica at `https://zpcg.me/red-voznje/ukupno`. `pnpm run collect:zpcg-railway` requests only that HTTPS host, validates HTML and response size, finds the semantic “Polasci iz stanice Podgorica” section, normalizes departures, and atomically writes `.runtime/cache/zpcg-railway-departures.json`. Homepage reads never request ŽPCG. The bundled VPS scheduler runs the collector at approximately 06:45 and 18:45 host-local time. Tests use saved official-style HTML and injected HTTP only.
 
+## Podgorica Airport flights
+
+Podgorica Airport flights are collected only from the official Airports of Montenegro schedule at `https://montenegroairports.com/aerodrom-podgorica/destinacije/`. `pnpm run collect:podgorica-flights` requests the current and following Europe/Podgorica timetable dates through validated HTTPS URLs on `montenegroairports.com` or `www.montenegroairports.com`, applies a ten-second timeout, one transient retry, an explicit user agent, HTML/content-size validation, and parses recognizable arrivals/departures table headers. It writes `.runtime/cache/podgorica-flights.json` atomically and retains a valid snapshot if the source or parser fails. Homepage and `/me/letovi` reads never request the airport source. The bundled VPS scheduler runs it every 30 minutes. Tests use saved official-style HTML and injected HTTP only. See ADR 0018.
+
 ## Events
 
 KIC Budo Tomović is an approved event collector. It reads only the official `https://kic.podgorica.me/novosti` listing and validated same-host programme articles, using the established timeout, one-retry, user-agent, and cache-first policy. It is invoked by `pnpm run collect:kic-events`; pages read `.runtime/cache/kic-events.json` only. The initial cadence is 60 minutes. Parsing is fixture-tested and preserves missing fields rather than inferring them. See ADR 0011.

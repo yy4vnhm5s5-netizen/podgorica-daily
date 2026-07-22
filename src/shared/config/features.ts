@@ -10,6 +10,7 @@ const featureFlags = {
   cedis: env.ENABLE_CEDIS,
   dailyOverview: true,
   events: env.ENABLE_EVENTS && env.EVENT_PROVIDER_MODE !== "disabled",
+  flights: env.ENABLE_FLIGHTS,
   maps: false,
   search: false,
   weather: env.ENABLE_WEATHER,

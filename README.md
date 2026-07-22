@@ -1,6 +1,6 @@
 # Gradom
 
-Gradom is a production-oriented local information platform for Podgorica. It provides current weather, a deterministic Daily Overview, City Alerts backed by cached official CEDIS planned power-outage, AMSCG road-condition, and VIK Podgorica water-service snapshots, a cache-backed public Events experience, a Cineplexx programme card, a BusTicket4.me station link, and ŽPCG railway departures from Podgorica. Maps, unified search, accounts, and editorial workflows are not implemented.
+Gradom is a production-oriented local information platform for Podgorica. It provides current weather, a deterministic Daily Overview, City Alerts backed by cached official CEDIS planned power-outage, AMSCG road-condition, and VIK Podgorica water-service snapshots, a cache-backed public Events experience, a Cineplexx programme card, cache-backed Aerodrom Podgorica flights and ŽPCG railway departures, and a BusTicket4.me external link. Maps, unified search, accounts, and editorial workflows are not implemented.
 
 Daily Overview is a zero-cost deterministic summary generated from normalized cached city data. It does not use generative services, language models, or visitor-triggered data collection.
 
@@ -24,7 +24,9 @@ The public interface currently exposes Montenegrin Latin, ijekavian (`/me`); the
 
 ## Transport
 
-The BusTicket4.me card is an external station link only; Gradom does not collect or republish bus departures. The ŽPCG railway card reads a cache generated solely from the official [ŽPCG timetable](https://zpcg.me/red-voznje/ukupno). Run `pnpm run collect:zpcg-railway` to write `.runtime/cache/zpcg-railway-departures.json`; homepage requests never fetch ŽPCG directly. The bundled VPS scheduler refreshes it at approximately 06:45 and 18:45 host-local time.
+The BusTicket4.me link remains external only; Gradom does not collect or republish bus departures. The ŽPCG railway card reads a cache generated solely from the official [ŽPCG timetable](https://zpcg.me/red-voznje/ukupno). Run `pnpm run collect:zpcg-railway` to write `.runtime/cache/zpcg-railway-departures.json`; homepage requests never fetch ŽPCG directly. The bundled VPS scheduler refreshes it at approximately 06:45 and 18:45 host-local time.
+
+The Aerodrom Podgorica card and `/me/letovi` read arrivals and departures only from `.runtime/cache/podgorica-flights.json`. `pnpm run collect:podgorica-flights` fetches the official [Airports of Montenegro Podgorica schedule](https://montenegroairports.com/aerodrom-podgorica/destinacije/) for the current and following local date. It uses bounded HTML collection and retains a valid cache if the source is unavailable; no page request fetches the airport website. See [ADR 0018](docs/adr/0018-podgorica-airport-flight-schedule-provider.md).
 
 ## Contact
 

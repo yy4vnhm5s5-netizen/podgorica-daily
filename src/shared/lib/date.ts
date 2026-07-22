@@ -9,6 +9,11 @@ interface FormatDateTimeOptions {
   timeZone?: string;
 }
 
+interface LocalDateTime {
+  date: string;
+  time?: string;
+}
+
 function formatDateTime(value: Date, options: FormatDateTimeOptions = {}) {
   const { formatOptions, locale = defaultLocale, timeZone = defaultTimeZone } = options;
 
@@ -33,6 +38,46 @@ function getHourInTimeZone(value: Date, timeZone = defaultTimeZone) {
     .find(({ type }) => type === "hour")?.value;
 
   return hour ? Number.parseInt(hour, 10) : 0;
+}
+
+function toZonedIso(local: LocalDateTime, timeZone = defaultTimeZone): string | undefined {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(local.date) || !local.time || !/^\d{2}:\d{2}$/.test(local.time)) {
+    return undefined;
+  }
+
+  const [year, month, day] = local.date.split("-").map(Number);
+  const [hour, minute] = local.time.split(":").map(Number);
+  if (hour > 23 || minute > 59) return undefined;
+  const provisional = Date.UTC(year, month - 1, day, hour, minute);
+  const firstOffset = getTimeZoneOffset(provisional, timeZone);
+  const adjusted = provisional - firstOffset;
+  const finalOffset = getTimeZoneOffset(adjusted, timeZone);
+
+  return new Date(provisional - finalOffset).toISOString();
+}
+
+function getTimeZoneOffset(timestamp: number, timeZone: string) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    day: "2-digit",
+    hour: "2-digit",
+    hourCycle: "h23",
+    minute: "2-digit",
+    month: "2-digit",
+    second: "2-digit",
+    timeZone,
+    year: "numeric",
+  }).formatToParts(new Date(timestamp));
+  const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
+  const zonedTimestamp = Date.UTC(
+    Number(values.year),
+    Number(values.month) - 1,
+    Number(values.day),
+    Number(values.hour),
+    Number(values.minute),
+    Number(values.second),
+  );
+
+  return zonedTimestamp - timestamp;
 }
 
 function formatRelativeTime(value: Date, { locale, now }: { locale: Locale; now: Date }) {
@@ -75,5 +120,7 @@ export {
   formatDateTime,
   formatRelativeTime,
   getHourInTimeZone,
+  toZonedIso,
   type FormatDateTimeOptions,
+  type LocalDateTime,
 };
