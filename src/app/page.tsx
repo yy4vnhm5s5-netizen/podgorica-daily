@@ -111,6 +111,13 @@ async function HomePage() {
               }
             />
           </div>
+          <div className="sm:col-span-2">
+            <AdvertisingCard
+              href={getContactPath()}
+              subtitle={advertising.subtitle}
+              title={advertising.title}
+            />
+          </div>
           {flights ? (
             <AirportFlightsCard
               flights={flights.flights}

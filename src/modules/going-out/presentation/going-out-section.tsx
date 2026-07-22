@@ -12,6 +12,7 @@ import {
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import type { Locale } from "@/shared/config/locale";
 import { getGoingOutPath } from "@/shared/config/public-routes";
+import { cn } from "@/shared/lib/utils";
 
 interface GoingOutSectionProps {
   events: readonly GoingOutEvent[];
@@ -39,19 +40,17 @@ function GoingOutSection({ events, locale, state }: GoingOutSectionProps) {
               <p className="mt-0.5 text-sm text-muted-foreground">{copy.subtitle}</p>
             </div>
           </div>
-          <Link
-            className="inline-flex shrink-0 items-center gap-1 rounded-md text-sm font-medium text-violet-800 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-600 dark:text-violet-200"
-            href={getGoingOutPath()}
-          >
-            {copy.all}
-            <span aria-hidden="true">→</span>
-          </Link>
         </CardHeader>
         <CardContent className="p-4 pt-0 sm:p-5 sm:pt-0">
           {displayState === "events" || displayState === "stale" ? (
             <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {upcoming.map((event) => (
-                <GoingOutCard event={event} key={event.id} locale={locale} />
+              {upcoming.map((event, index) => (
+                <GoingOutCard
+                  className={getResponsiveCardVisibilityClass(index)}
+                  event={event}
+                  key={event.id}
+                  locale={locale}
+                />
               ))}
             </ul>
           ) : (
@@ -59,6 +58,13 @@ function GoingOutSection({ events, locale, state }: GoingOutSectionProps) {
               {displayState === "unavailable" ? copy.unavailable : copy.empty}
             </p>
           )}
+          <Link
+            className="mt-3 inline-flex min-h-10 items-center gap-1 rounded-md text-sm font-medium text-violet-800 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-600 dark:text-violet-200"
+            href={getGoingOutPath()}
+          >
+            {copy.all}
+            <span aria-hidden="true">→</span>
+          </Link>
           {displayState === "stale" ? (
             <p className="mt-3 text-xs leading-5 text-muted-foreground">{copy.stale}</p>
           ) : null}
@@ -68,9 +74,17 @@ function GoingOutSection({ events, locale, state }: GoingOutSectionProps) {
   );
 }
 
-function GoingOutCard({ event, locale }: { event: GoingOutEvent; locale: Locale }) {
+function GoingOutCard({
+  className,
+  event,
+  locale,
+}: {
+  className?: string;
+  event: GoingOutEvent;
+  locale: Locale;
+}) {
   return (
-    <li className="min-w-0">
+    <li className={cn("min-w-0", className)}>
       <a
         className="group flex min-h-full flex-col overflow-hidden rounded-xl border border-violet-200/60 bg-background/80 transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-violet-300 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-600 dark:border-violet-800/55 dark:bg-background/70 dark:hover:border-violet-700"
         href={event.sourceUrl}
@@ -104,8 +118,14 @@ function GoingOutCard({ event, locale }: { event: GoingOutEvent; locale: Locale 
   );
 }
 
+function getResponsiveCardVisibilityClass(index: number) {
+  if (index < 3) return undefined;
+  if (index === 3) return "hidden sm:block";
+  return "hidden lg:block";
+}
+
 const montenegrinCopy = {
-  all: "Svi izlasci",
+  all: "Pogledaj sve izlaske",
   empty: "Trenutno nema najavljenih izlazaka.",
   stale: "Prikazani su posljednji dostupni podaci.",
   subtitle: "Muzika, nastupi i noćni život",
