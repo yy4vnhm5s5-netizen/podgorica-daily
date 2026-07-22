@@ -60,7 +60,7 @@ function PowerOutagesPage({ locale, result }: PowerOutagesPageProps) {
               {translations.stale}
             </p>
           ) : null}
-          <div className="space-y-8">
+          <div className="space-y-10">
             {groups.map((group) => (
               <section
                 aria-label={
@@ -70,7 +70,7 @@ function PowerOutagesPage({ locale, result }: PowerOutagesPageProps) {
                 }
                 key={group.key}
               >
-                <h2 className="text-base font-semibold tracking-tight text-foreground">
+                <h2 className="text-lg font-semibold leading-7 tracking-tight text-foreground">
                   {group.date
                     ? formatDateTime(group.date, {
                         formatOptions: { dateStyle: "full", timeStyle: undefined },
@@ -78,7 +78,7 @@ function PowerOutagesPage({ locale, result }: PowerOutagesPageProps) {
                       }).label
                     : translations.dateUnavailable}
                 </h2>
-                <div className="mt-3 grid items-start gap-4 lg:grid-cols-2">
+                <div className="mt-4 grid items-start gap-4 lg:grid-cols-2">
                   {group.outages.map((outage) => (
                     <PowerOutageCard alert={outage} key={outage.id} locale={locale} />
                   ))}
