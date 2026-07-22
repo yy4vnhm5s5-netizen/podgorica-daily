@@ -101,12 +101,12 @@ function SummaryItem({ children, href, icon: Icon, iconClassName, label }: Summa
       </span>
       <span className="min-w-0">
         <span
-          className={`block text-xs text-muted-foreground ${isInteractive ? "group-hover:text-foreground" : ""}`}
+          className={`block text-xs text-muted-foreground ${isInteractive ? "md:group-hover:text-foreground" : ""}`}
         >
           {label}
         </span>
         <span
-          className={`mt-0.5 block text-sm font-semibold text-foreground ${isInteractive ? "group-hover:text-primary" : ""}`}
+          className={`mt-0.5 block text-sm font-semibold text-foreground ${isInteractive ? "md:group-hover:text-primary" : ""}`}
         >
           {children}
         </span>
@@ -117,13 +117,13 @@ function SummaryItem({ children, href, icon: Icon, iconClassName, label }: Summa
   if (href) {
     return (
       <Link
-        className={`${dailySummaryLayout.itemClassName} group cursor-pointer rounded-md transition-[background-color,box-shadow] hover:bg-blue-100/70 hover:shadow-[0_2px_8px_-6px_rgb(30_64_175_/_0.45)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary`}
+        className={`${dailySummaryLayout.itemClassName} group cursor-pointer rounded-md transition-[background-color,box-shadow] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary md:hover:bg-blue-100/70 md:hover:shadow-[0_2px_8px_-6px_rgb(30_64_175_/_0.45)]`}
         href={href}
       >
         {content}
         <ChevronRight
           aria-hidden="true"
-          className="ml-auto size-3.5 shrink-0 text-blue-700/45"
+          className="ml-auto size-3.5 shrink-0 text-blue-700/60 transition-transform duration-200 ease-out md:group-hover:translate-x-1"
           strokeWidth={1.8}
         />
       </Link>
