@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   openGraph: {
     description: getTranslations("me").metadata.description,
-    images: [{ height: 630, url: "/og-image.png", width: 1200 }],
+    images: [{ height: 675, url: "/og-image.png", width: 1200 }],
     locale: "sr_Latn_ME",
     siteName: siteConfig.name,
     title: siteConfig.homepageTitle,
