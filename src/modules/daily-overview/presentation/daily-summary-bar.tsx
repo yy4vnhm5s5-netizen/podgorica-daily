@@ -1,4 +1,4 @@
-import { CalendarDays, Clapperboard, MicVocal, Thermometer } from "lucide-react";
+import { CalendarDays, ChevronRight, Clapperboard, MicVocal, Thermometer } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 
@@ -44,12 +44,17 @@ function DailySummaryBar({
         <div className={dailySummaryLayout.gridClassName}>
           <span aria-hidden="true" className={dailySummaryLayout.verticalDividerClassName} />
           <span aria-hidden="true" className={dailySummaryLayout.horizontalDividerClassName} />
-          <SummaryItem icon={Thermometer} label={translations.temperature}>
+          <SummaryItem
+            icon={Thermometer}
+            iconClassName="bg-amber-50/90 text-amber-700/70"
+            label={translations.temperature}
+          >
             {temperatureCelsius === undefined ? "—" : `${temperatureCelsius.toFixed(0)}°C`}
           </SummaryItem>
           <SummaryItem
             href={getGoingOutPath(city)}
             icon={MicVocal}
+            iconClassName="bg-violet-50/90 text-violet-700/70"
             label={translations.performancesLabel}
           >
             {translations.performancesCount(performancesCount)}
@@ -57,6 +62,7 @@ function DailySummaryBar({
           <SummaryItem
             href={getEventsPath(city)}
             icon={CalendarDays}
+            iconClassName="bg-blue-50/90 text-blue-700/70"
             label={translations.eventsLabel}
           >
             {translations.eventsCount(eventsCount)}
@@ -64,6 +70,7 @@ function DailySummaryBar({
           <SummaryItem
             href={getCinemaPath(city)}
             icon={Clapperboard}
+            iconClassName="bg-rose-50/90 text-rose-700/70"
             label={translations.moviesLabel}
           >
             {translations.moviesCount(moviesCount)}
@@ -78,16 +85,17 @@ interface SummaryItemProps {
   children: string;
   href?: string;
   icon: LucideIcon;
+  iconClassName: string;
   label: string;
 }
 
-function SummaryItem({ children, href, icon: Icon, label }: SummaryItemProps) {
+function SummaryItem({ children, href, icon: Icon, iconClassName, label }: SummaryItemProps) {
   const isInteractive = Boolean(href);
   const content = (
     <>
       <span
         aria-hidden="true"
-        className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-blue-100/80 text-blue-800"
+        className={`flex size-7 shrink-0 items-center justify-center rounded-lg ${iconClassName}`}
       >
         <Icon className="size-3.5" strokeWidth={1.8} />
       </span>
@@ -113,6 +121,11 @@ function SummaryItem({ children, href, icon: Icon, label }: SummaryItemProps) {
         href={href}
       >
         {content}
+        <ChevronRight
+          aria-hidden="true"
+          className="ml-auto size-3.5 shrink-0 text-blue-700/45"
+          strokeWidth={1.8}
+        />
       </Link>
     );
   }
