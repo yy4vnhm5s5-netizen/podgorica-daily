@@ -1,32 +1,40 @@
-import type { Locale } from "@/shared/config/locale";
-
-function getContactPath(locale: Locale) {
-  return locale === "me" ? "/me/kontakt" : "/en/contact";
+function getContactPath() {
+  return "/kontakt";
 }
 
 function getElectricityPath() {
   return "/struja";
 }
 
-function getFlightsPath(locale: Locale) {
-  return `/${locale}/letovi`;
+function getEventsPath() {
+  return "/dogadjaji";
 }
 
-function getGoingOutPath(locale: Locale) {
-  return `/${locale}/izlasci`;
+function getEventDetailPath(eventId: string) {
+  return `${getEventsPath()}/${encodeURIComponent(eventId)}`;
+}
+
+function getFlightsPath() {
+  return "/letovi";
+}
+
+function getGoingOutPath() {
+  return "/izlasci";
 }
 
 function getPrivacyPolicyPath() {
-  return "/me/politika-privatnosti";
+  return "/politika-privatnosti";
 }
 
 function getTermsOfUsePath() {
-  return "/me/uslovi-koriscenja";
+  return "/uslovi-koriscenja";
 }
 
 export {
   getContactPath,
   getElectricityPath,
+  getEventDetailPath,
+  getEventsPath,
   getFlightsPath,
   getGoingOutPath,
   getPrivacyPolicyPath,

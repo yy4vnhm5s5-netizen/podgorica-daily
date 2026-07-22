@@ -4,15 +4,13 @@ import { AppFooter } from "@/shared/components/layout/app-footer";
 import { AppHeader } from "@/shared/components/layout/app-header";
 import { MobileNavigation } from "@/shared/components/layout/mobile-navigation";
 import { ResponsiveContainer } from "@/shared/components/layout/responsive-container";
-import type { Locale } from "@/shared/config/locale";
 import type { Translations } from "@/shared/lib/translations";
 
 interface DashboardLayoutProps extends PropsWithChildren {
-  locale: Locale;
   translations: Translations;
 }
 
-function DashboardLayout({ children, locale, translations }: DashboardLayoutProps) {
+function DashboardLayout({ children, translations }: DashboardLayoutProps) {
   return (
     <div className="min-h-screen bg-background pb-[calc(5rem+env(safe-area-inset-bottom))] text-foreground md:pb-0">
       <a
@@ -21,12 +19,12 @@ function DashboardLayout({ children, locale, translations }: DashboardLayoutProp
       >
         {translations.shell.skipToContent}
       </a>
-      <AppHeader locale={locale} translations={translations} />
+      <AppHeader translations={translations} />
       <main id="main-content">
         <ResponsiveContainer className="py-8 sm:py-14">{children}</ResponsiveContainer>
       </main>
-      <AppFooter locale={locale} tagline={translations.shell.tagline} translations={translations} />
-      <MobileNavigation locale={locale} translations={translations} />
+      <AppFooter tagline={translations.shell.tagline} translations={translations} />
+      <MobileNavigation translations={translations} />
     </div>
   );
 }

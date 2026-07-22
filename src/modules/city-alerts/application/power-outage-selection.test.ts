@@ -9,12 +9,11 @@ import {
 } from "./power-outage-selection.ts";
 
 test("limits homepage power-outage locations and reports the exact remaining count", () => {
-  const locations = getHomepagePowerOutageLocations(
-    powerOutage(
-      "scheduled",
-      "Liješnje, Vrbica, Tološi, Tivatska ulica, Ulica Boška Buhe, Ubli, Živkovići",
-    ),
+  const alert = powerOutage(
+    "scheduled",
+    "Liješnje, Vrbica, Tološi, Tivatska ulica, Ulica Boška Buhe, Ubli, Živkovići",
   );
+  const locations = getHomepagePowerOutageLocations(alert);
 
   assert.deepEqual(locations.locations, [
     "Liješnje",
@@ -22,8 +21,10 @@ test("limits homepage power-outage locations and reports the exact remaining cou
     "Tološi",
     "Tivatska ulica",
     "Ulica Boška Buhe",
+    "Ubli",
   ]);
-  assert.equal(locations.additionalLocationCount, 2);
+  assert.equal(locations.additionalLocationCount, 1);
+  assert.equal(getPowerOutageLocations(alert).length, 7);
 });
 
 test("keeps all parsed locations and sorts every currently relevant outage", () => {

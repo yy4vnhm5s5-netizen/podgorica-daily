@@ -1,10 +1,16 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-import { getLegacyEnglishRedirectPath } from "@/shared/config/legacy-english-redirects";
+import {
+  getLegacyEnglishRedirectPath,
+  getLegacyMontenegrinRedirectPath,
+} from "@/shared/config/legacy-english-redirects";
 
 function middleware(request: NextRequest) {
-  const destination = getLegacyEnglishRedirectPath(request.nextUrl.pathname);
+  const destination =
+    request.nextUrl.pathname === "/me" || request.nextUrl.pathname.startsWith("/me/")
+      ? getLegacyMontenegrinRedirectPath(request.nextUrl.pathname)
+      : getLegacyEnglishRedirectPath(request.nextUrl.pathname);
   const url = request.nextUrl.clone();
   url.pathname = destination;
 
@@ -12,7 +18,7 @@ function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/en", "/en/:path*"],
+  matcher: ["/en", "/en/:path*", "/me", "/me/:path*"],
   runtime: "nodejs",
 };
 

@@ -1,7 +1,15 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { getPrivacyPolicyPath, getTermsOfUsePath } from "../config/public-routes.ts";
+import {
+  getContactPath,
+  getEventDetailPath,
+  getEventsPath,
+  getFlightsPath,
+  getGoingOutPath,
+  getPrivacyPolicyPath,
+  getTermsOfUsePath,
+} from "../config/public-routes.ts";
 
 import { getTranslations } from "./translations.ts";
 
@@ -27,6 +35,11 @@ test("provides localized legal-footer labels and stable legal paths", () => {
     privacy: "Privacy policy",
     terms: "Terms of use",
   });
-  assert.equal(getTermsOfUsePath(), "/me/uslovi-koriscenja");
-  assert.equal(getPrivacyPolicyPath(), "/me/politika-privatnosti");
+  assert.equal(getTermsOfUsePath(), "/uslovi-koriscenja");
+  assert.equal(getPrivacyPolicyPath(), "/politika-privatnosti");
+  assert.equal(getContactPath(), "/kontakt");
+  assert.equal(getEventsPath(), "/dogadjaji");
+  assert.equal(getEventDetailPath("event/a"), "/dogadjaji/event%2Fa");
+  assert.equal(getFlightsPath(), "/letovi");
+  assert.equal(getGoingOutPath(), "/izlasci");
 });

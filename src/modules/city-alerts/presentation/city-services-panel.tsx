@@ -202,7 +202,7 @@ function CityServicesPanel({ locale, services, translations }: CityServicesPanel
                     <div className="sm:col-span-2">
                       <dt className="text-xs text-muted-foreground">{translations.area}</dt>
                       <dd className="mt-1 font-medium text-foreground">
-                        <ul className="space-y-0.5">
+                        <ul className="grid gap-x-4 gap-y-1.5 sm:grid-cols-2">
                           {service.locations.map((location) => (
                             <li key={location}>{location}</li>
                           ))}

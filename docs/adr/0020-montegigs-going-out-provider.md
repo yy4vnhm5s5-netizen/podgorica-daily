@@ -11,7 +11,7 @@ Gradom needs a compact nightlife and music surface that remains separate from th
 
 Create a module-owned `going-out` boundary. Its collector requests only `https://staging.montegigs.me/me/events/podgorica` with an allow-listed HTTPS client, ten-second timeout, one transient retry, response-size limit, and product user agent. It parses public Podgorica event URLs, normalizes only explicit fields, filters past local calendar days in `Europe/Podgorica`, and writes `.runtime/cache/montegigs-going-out.json` atomically.
 
-The dashboard and `/me/izlasci` read only the normalized cache. A failed request or unrecognized document retains the most recent valid snapshot; an explicitly recognized listing with no future events may write a confirmed empty snapshot. The bundled scheduler runs `pnpm run collect:montegigs-going-out` hourly. The feature is controlled by `ENABLE_GOING_OUT`.
+The dashboard and `/izlasci` read only the normalized cache. A failed request or unrecognized document retains the most recent valid snapshot; an explicitly recognized listing with no future events may write a confirmed empty snapshot. The bundled scheduler runs `pnpm run collect:montegigs-going-out` hourly. The feature is controlled by `ENABLE_GOING_OUT`.
 
 ## Consequences
 

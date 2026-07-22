@@ -27,7 +27,7 @@ async function ElectricityPage() {
   const result = await getPowerOutages(getDefaultCityContext(locale));
 
   return (
-    <DashboardLayout locale={locale} translations={translations}>
+    <DashboardLayout translations={translations}>
       <PowerOutagesPage locale={locale} result={result} />
     </DashboardLayout>
   );

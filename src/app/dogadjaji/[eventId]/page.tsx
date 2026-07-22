@@ -10,12 +10,11 @@ import {
 } from "@/modules/events/presentation/event-structured-data";
 import { getPublicCityEventById } from "@/modules/events/presentation/events-ui-model";
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
-import { getLocaleAlternates, isLocale, type Locale } from "@/shared/config/locale";
 import { getPageTitle } from "@/shared/config/site";
 import { getTranslations } from "@/shared/lib/translations";
 
 interface EventDetailPageProps {
-  params: Promise<{ eventId: string; locale: string }>;
+  params: Promise<{ eventId: string }>;
 }
 
 // Use the current collector-managed snapshot for the same public event set used
@@ -24,17 +23,15 @@ interface EventDetailPageProps {
 export const revalidate = 0;
 
 async function generateMetadata({ params }: EventDetailPageProps): Promise<Metadata> {
-  const { eventId, locale: localeParam } = await params;
-  if (!isLocale(localeParam)) return {};
-  const context = getDefaultCityContext(localeParam);
+  const { eventId } = await params;
+  const context = getDefaultCityContext("me");
   const event = getPublicCityEventById((await getCityEvents(context)).events, eventId);
 
   if (!event) return {};
 
   return {
     alternates: {
-      canonical: `/${localeParam}/events/${encodeURIComponent(event.id)}`,
-      languages: getLocaleAlternates(`/events/${encodeURIComponent(event.id)}`),
+      canonical: `/dogadjaji/${encodeURIComponent(event.id)}`,
     },
     description: event.description,
     openGraph: {
@@ -48,9 +45,8 @@ async function generateMetadata({ params }: EventDetailPageProps): Promise<Metad
 }
 
 async function EventDetailPage({ params }: EventDetailPageProps) {
-  const { eventId, locale: localeParam } = await params;
-  if (!isLocale(localeParam)) notFound();
-  const locale = localeParam as Locale;
+  const { eventId } = await params;
+  const locale = "me" as const;
   const context = getDefaultCityContext(locale);
   const eventsReadModel = await getCityEvents(context);
   const event = getPublicCityEventById(eventsReadModel.events, eventId);
@@ -59,7 +55,7 @@ async function EventDetailPage({ params }: EventDetailPageProps) {
   const structuredData = createEventStructuredData(event);
 
   return (
-    <DashboardLayout locale={locale} translations={getTranslations(locale)}>
+    <DashboardLayout translations={getTranslations(locale)}>
       {structuredData ? (
         <script
           dangerouslySetInnerHTML={{ __html: serializeStructuredData(structuredData) }}

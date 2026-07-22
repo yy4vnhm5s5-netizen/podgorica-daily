@@ -6,7 +6,7 @@ function EventsLoading() {
   const translations = getTranslations("me");
 
   return (
-    <DashboardLayout locale="me" translations={translations}>
+    <DashboardLayout translations={translations}>
       <section aria-busy="true" aria-label="Učitavanje događaja" className="space-y-6">
         <LoadingSkeleton className="h-20" label="Učitavanje događaja" lines={1} />
         <LoadingSkeleton className="h-36" label="Učitavanje događaja" lines={3} />

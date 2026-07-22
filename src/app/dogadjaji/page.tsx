@@ -1,6 +1,4 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-
 import { getCityEvents } from "@/modules/events/application/get-city-events";
 import { getDefaultCityContext } from "@/config/city-context";
 import { EventsList } from "@/modules/events/presentation/events-list";
@@ -13,12 +11,10 @@ import {
 import { ErrorState } from "@/shared/components/error-state";
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
 import { SectionTitle } from "@/shared/components/section-title";
-import { getLocaleAlternates, isLocale, type Locale } from "@/shared/config/locale";
 import { getPageTitle } from "@/shared/config/site";
 import { getTranslations } from "@/shared/lib/translations";
 
 interface EventsPageProps {
-  params: Promise<{ locale: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
 
@@ -26,13 +22,11 @@ interface EventsPageProps {
 // route snapshot, which could disagree with links rendered on the dashboard.
 export const revalidate = 0;
 
-async function generateMetadata({ params }: Pick<EventsPageProps, "params">): Promise<Metadata> {
-  const { locale: localeParam } = await params;
-  if (!isLocale(localeParam)) return {};
-  const translations = getEventsTranslations(localeParam);
+function generateMetadata(): Metadata {
+  const translations = getEventsTranslations("me");
 
   return {
-    alternates: { canonical: `/${localeParam}/events`, languages: getLocaleAlternates("/events") },
+    alternates: { canonical: "/dogadjaji" },
     description: translations.supportingText,
     openGraph: {
       description: translations.supportingText,
@@ -46,10 +40,8 @@ async function generateMetadata({ params }: Pick<EventsPageProps, "params">): Pr
   };
 }
 
-async function EventsPage({ params, searchParams }: EventsPageProps) {
-  const { locale: localeParam } = await params;
-  if (!isLocale(localeParam)) notFound();
-  const locale = localeParam as Locale;
+async function EventsPage({ searchParams }: EventsPageProps) {
+  const locale = "me" as const;
   const translations = getTranslations(locale);
   const eventTranslations = getEventsTranslations(locale);
   const filters = parseEventsUiFilters(await searchParams);
@@ -70,7 +62,7 @@ async function EventsPage({ params, searchParams }: EventsPageProps) {
     );
 
     return (
-      <DashboardLayout locale={locale} translations={translations}>
+      <DashboardLayout translations={translations}>
         <section className="space-y-8" id="events">
           <SectionTitle title={eventTranslations.heading} />
           {allUnavailable ? (
@@ -99,7 +91,7 @@ async function EventsPage({ params, searchParams }: EventsPageProps) {
     );
   } catch {
     return (
-      <DashboardLayout locale={locale} translations={translations}>
+      <DashboardLayout translations={translations}>
         <section className="space-y-8" id="events">
           <SectionTitle title={eventTranslations.heading} />
           <ErrorState

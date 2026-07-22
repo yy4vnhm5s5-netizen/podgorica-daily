@@ -8,6 +8,7 @@ import { EmptyState } from "@/shared/components/empty-state";
 import { Button } from "@/shared/components/ui/button";
 import type { Locale } from "@/shared/config/locale";
 import { getLocaleTag } from "@/shared/config/locale";
+import { getEventsPath } from "@/shared/config/public-routes";
 import { formatDateTime } from "@/shared/lib/date";
 
 interface EventsListProps {
@@ -40,7 +41,6 @@ function EventsList({ allEvents, events, filters, locale, timezone }: EventsList
         <EventsFilterSheet
           categories={categories}
           filters={filters}
-          locale={locale}
           sources={sources}
           translations={filterTranslations}
         />
@@ -91,7 +91,7 @@ function QuickFilters({ filters, locale }: { filters: EventsUiFilters; locale: L
       <ul className="flex min-w-max gap-2">
         {presets.map((preset) => {
           const isCurrent = filters.datePreset === preset;
-          const href = createEventsHref(locale, { ...filters, datePreset: preset });
+          const href = createEventsHref({ ...filters, datePreset: preset });
 
           return (
             <li key={preset}>
@@ -117,7 +117,7 @@ function getQuickFilterLabel(
   return translations.quickFilters[preset];
 }
 
-function createEventsHref(locale: Locale, filters: EventsUiFilters) {
+function createEventsHref(filters: EventsUiFilters) {
   const params = new URLSearchParams();
   if (filters.datePreset !== "upcoming") params.set("period", filters.datePreset);
   if (filters.query) params.set("query", filters.query);
@@ -126,7 +126,7 @@ function createEventsHref(locale: Locale, filters: EventsUiFilters) {
   if (filters.sort !== "soonest") params.set("sort", filters.sort);
   const query = params.toString();
 
-  return `/${locale}/events${query ? `?${query}` : ""}`;
+  return `${getEventsPath()}${query ? `?${query}` : ""}`;
 }
 
 function formatDayHeading(date: string, locale: Locale) {

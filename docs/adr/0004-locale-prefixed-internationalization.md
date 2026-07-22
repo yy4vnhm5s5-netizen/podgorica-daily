@@ -1,6 +1,6 @@
 # ADR 0004: Use locale-prefixed routes for Montenegrin and English
 
-- Status: Accepted
+- Status: Superseded by ADR 0021
 - Date: 2026-07-17
 
 ## Context

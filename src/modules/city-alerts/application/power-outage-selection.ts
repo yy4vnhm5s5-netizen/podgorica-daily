@@ -1,6 +1,6 @@
 import type { CityAlert } from "../domain/city-alert.ts";
 
-const homepageLocationLimit = 5;
+const homepageLocationLimit = 6;
 
 function getRelevantPowerOutages(alerts: readonly CityAlert[]) {
   return alerts

@@ -16,6 +16,5 @@ test("provides localized contact labels and navigation destinations", () => {
   assert.equal(getContactTranslations("en").submit, "Send inquiry");
   assert.equal(getTranslations("me").shell.navigation.contact, "Kontakt");
   assert.equal(getTranslations("en").shell.navigation.contact, "Contact");
-  assert.equal(getContactPath("me"), "/me/kontakt");
-  assert.equal(getContactPath("en"), "/en/contact");
+  assert.equal(getContactPath(), "/kontakt");
 });

@@ -7,6 +7,7 @@ import { getEventsTranslations } from "./events-translations";
 import { getHomepageVenueName } from "./events-ui-model";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { getLocaleTag, type Locale } from "@/shared/config/locale";
+import { getEventDetailPath, getEventsPath } from "@/shared/config/public-routes";
 import { formatDateTime } from "@/shared/lib/date";
 
 interface HomepageEventsCardProps {
@@ -54,7 +55,7 @@ function HomepageEventsCard({
         )}
         <Link
           className="mt-4 inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-          href={`/${locale}/events`}
+          href={getEventsPath()}
         >
           {translations.viewAllEvents}
         </Link>
@@ -70,7 +71,7 @@ function HomepageEvent({ event, locale }: { event: CityEvent; locale: Locale }) 
     <li className="py-2.5 first:pt-0 last:pb-0">
       <Link
         className="group flex items-start gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-        href={`/${locale}/events/${encodeURIComponent(event.id)}`}
+        href={getEventDetailPath(event.id)}
       >
         {event.imageUrl ? (
           <Image

@@ -41,7 +41,7 @@ function GoingOutSection({ events, locale, state }: GoingOutSectionProps) {
           </div>
           <Link
             className="inline-flex shrink-0 items-center gap-1 rounded-md text-sm font-medium text-violet-800 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-600 dark:text-violet-200"
-            href={getGoingOutPath(locale)}
+            href={getGoingOutPath()}
           >
             {copy.all}
             <span aria-hidden="true">→</span>

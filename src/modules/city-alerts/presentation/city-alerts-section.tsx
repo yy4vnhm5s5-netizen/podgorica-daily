@@ -29,10 +29,7 @@ import {
   type CityServiceInfo,
 } from "@/modules/city-alerts/presentation/city-services-panel";
 import { getCityServiceFreshnessLabel } from "@/modules/city-alerts/presentation/city-service-freshness";
-import {
-  getPowerOutageDetailsLabel,
-  normalizePowerOutageDescription,
-} from "@/modules/city-alerts/presentation/power-outages-ui-model";
+import { getPowerOutageDetailsLabel } from "@/modules/city-alerts/presentation/power-outages-ui-model";
 import { LoadingSkeleton } from "@/shared/components/loading-skeleton";
 import { SectionTitle } from "@/shared/components/section-title";
 import { StatusBadge, type StatusTone } from "@/shared/components/status-badge";
@@ -200,7 +197,7 @@ function toCityServiceInfo(
       : { area: getCityAlertContent(alert.affectedArea, translations) }),
     description:
       alert.type === "powerOutage"
-        ? normalizePowerOutageDescription(getCityAlertContent(alert.description, translations))
+        ? undefined
         : getCityAlertContent(alert.description, translations),
     freshnessLabel: source
       ? getCityServiceFreshnessLabel({

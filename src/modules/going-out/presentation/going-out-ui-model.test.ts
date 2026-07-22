@@ -27,6 +27,18 @@ test("separates empty, unavailable and stale presentation states", () => {
   assert.equal(getGoingOutDisplayState({ eventCount: 1, state: "stale" }), "stale");
 });
 
-test("does not invent an event time when MonteGigs omits it", () => {
-  assert.match(formatGoingOutSchedule(events[0]!, "me"), /Vrijeme nije navedeno$/);
+test("renders only the date when MonteGigs omits an event time", () => {
+  const schedule = formatGoingOutSchedule(events[0]!, "me");
+
+  assert.doesNotMatch(schedule, /Vrijeme nije navedeno/u);
+  assert.doesNotMatch(schedule, /·/u);
+});
+
+test("renders an explicit source time when MonteGigs provides one", () => {
+  const schedule = formatGoingOutSchedule(
+    { ...events[0]!, startsAt: "2026-07-22T18:30:00.000Z" },
+    "me",
+  );
+
+  assert.match(schedule, /20:30/u);
 });

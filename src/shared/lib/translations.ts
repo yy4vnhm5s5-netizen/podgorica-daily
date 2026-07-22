@@ -38,8 +38,7 @@ const translations = {
       },
       navigation: {
         contact: "Contact",
-        dashboard: "Dashboard",
-        events: "Events",
+        dashboard: "Home",
       },
       primaryNavigationLabel: "Primary navigation",
       skipToContent: "Skip to content",
@@ -83,8 +82,7 @@ const translations = {
       },
       navigation: {
         contact: "Kontakt",
-        dashboard: "Pregled",
-        events: "Događaji",
+        dashboard: "Početna",
       },
       primaryNavigationLabel: "Glavna navigacija",
       skipToContent: "Preskoči na sadržaj",

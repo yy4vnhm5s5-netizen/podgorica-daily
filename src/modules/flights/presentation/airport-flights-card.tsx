@@ -150,7 +150,7 @@ function AirportFlightsCard({
         ) : null}
         <a
           className="mt-4 inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-          href={getFlightsPath(locale)}
+          href={getFlightsPath()}
         >
           {copy.cta}
           <span aria-hidden="true">→</span>

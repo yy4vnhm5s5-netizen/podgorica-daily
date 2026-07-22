@@ -31,10 +31,9 @@ function formatGoingOutSchedule(event: GoingOutEvent, locale: Locale) {
     formatOptions: { dateStyle: "medium", timeStyle: undefined },
     locale: getLocaleTag(locale),
   }).label;
-  if (!event.startsAt)
-    return `${date} · ${locale === "me" ? "Vrijeme nije navedeno" : "Time not specified"}`;
+  if (!event.startsAt) return date;
   const time = formatDateTime(new Date(event.startsAt), {
-    formatOptions: { timeStyle: "short" },
+    formatOptions: { dateStyle: undefined, timeStyle: "short" },
     locale: getLocaleTag(locale),
   }).label;
   return `${date} · ${time}`;

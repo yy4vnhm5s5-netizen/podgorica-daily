@@ -92,11 +92,12 @@ function GoingOutPageCard({ event, locale }: { event: GoingOutEvent; locale: Loc
 }
 
 const montenegrinCopy = {
-  description: "Predstojeći muzički nastupi, žurke i drugi izlazci u Podgorici.",
+  description:
+    "Pronađite koncerte, DJ večeri, svirke, žurke i druge izlaske u Podgorici na jednom mjestu.",
   empty: "Trenutno nema najavljenih izlazaka.",
   source: "Pogledajte na MonteGigs-u",
   stale: "Prikazani su posljednji dostupni podaci.",
-  title: "Izlasci u Podgorici",
+  title: "Izlasci u Podgorici – koncerti, žurke i noćni život",
   unavailable: "Podaci trenutno nijesu dostupni.",
 } as const;
 

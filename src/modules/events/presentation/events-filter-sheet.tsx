@@ -1,31 +1,25 @@
 "use client";
 
 import { SlidersHorizontal, X } from "lucide-react";
+import Link from "next/link";
 import { useRef, type ReactNode } from "react";
 
 import type { EventsTranslations } from "./events-translations";
 import type { EventPresentationCategory } from "./event-presentation-category";
 import type { EventsUiFilters } from "./events-ui-model";
 import { Button } from "@/shared/components/ui/button";
-import type { Locale } from "@/shared/config/locale";
+import { getEventsPath } from "@/shared/config/public-routes";
 
 interface EventsFilterSheetProps {
   categories: readonly EventPresentationCategory[];
   filters: EventsUiFilters;
-  locale: Locale;
   sources: readonly { id: string; name: string }[];
   translations: EventsFilterTranslations;
 }
 
 type EventsFilterTranslations = Omit<EventsTranslations, "eventsCount">;
 
-function EventsFilterSheet({
-  categories,
-  filters,
-  locale,
-  sources,
-  translations,
-}: EventsFilterSheetProps) {
+function EventsFilterSheet({ categories, filters, sources, translations }: EventsFilterSheetProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   return (
@@ -45,7 +39,7 @@ function EventsFilterSheet({
         className="m-0 ml-auto h-full w-full max-w-md border-0 bg-background p-0 text-foreground shadow-2xl backdrop:bg-foreground/30"
         ref={dialogRef}
       >
-        <form action={`/${locale}/events`} className="flex h-full flex-col" method="get">
+        <form action={getEventsPath()} className="flex h-full flex-col" method="get">
           <div className="flex items-center justify-between border-b p-5">
             <h2 className="text-lg font-semibold" id="events-filter-title">
               {translations.filters}
@@ -97,12 +91,12 @@ function EventsFilterSheet({
             </FilterField>
           </div>
           <div className="grid grid-cols-2 gap-3 border-t p-5">
-            <a
+            <Link
               className="inline-flex h-10 items-center justify-center rounded-md border border-border text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              href={`/${locale}/events`}
+              href={getEventsPath()}
             >
               {translations.resetFilters}
-            </a>
+            </Link>
             <Button type="submit">{translations.applyFilters}</Button>
           </div>
         </form>

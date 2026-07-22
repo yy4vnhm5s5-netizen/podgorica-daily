@@ -1,24 +1,23 @@
 import Image from "next/image";
+import Link from "next/link";
 
 import { Navigation } from "@/shared/components/layout/navigation";
 import { ResponsiveContainer } from "@/shared/components/layout/responsive-container";
-import type { Locale } from "@/shared/config/locale";
 import { siteConfig } from "@/shared/config/site";
 import type { Translations } from "@/shared/lib/translations";
 
 interface AppHeaderProps {
-  locale: Locale;
   translations: Translations;
 }
 
-function AppHeader({ locale, translations }: AppHeaderProps) {
+function AppHeader({ translations }: AppHeaderProps) {
   return (
     <header className="sticky top-0 z-40 border-b border-blue-100/80 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/85">
       <ResponsiveContainer className="flex h-16 items-center justify-between gap-4">
-        <a
+        <Link
           aria-label={siteConfig.name}
           className="focus-visible:ring-ring shrink-0 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
-          href={`/${locale}#dashboard`}
+          href="/"
         >
           <span aria-hidden="true" className="flex h-9 w-[136px] items-center overflow-hidden">
             <span className="relative h-9 w-8 shrink-0 overflow-hidden">
@@ -41,9 +40,9 @@ function AppHeader({ locale, translations }: AppHeaderProps) {
               />
             </span>
           </span>
-        </a>
+        </Link>
         <div className="hidden flex-1 justify-center md:flex">
-          <Navigation locale={locale} translations={translations} />
+          <Navigation translations={translations} />
         </div>
       </ResponsiveContainer>
     </header>

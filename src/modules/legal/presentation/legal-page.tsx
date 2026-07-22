@@ -99,7 +99,7 @@ function LegalPage({ document }: { document: LegalDocument }) {
   const translations = getTranslations("me");
 
   return (
-    <DashboardLayout locale="me" translations={translations}>
+    <DashboardLayout translations={translations}>
       <article aria-labelledby="legal-heading" className="mx-auto max-w-3xl space-y-8">
         <header className="space-y-3">
           <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl" id="legal-heading">
@@ -127,7 +127,7 @@ function LegalPage({ document }: { document: LegalDocument }) {
                 Za pitanja u vezi sa ovim dokumentom koristite našu{" "}
                 <a
                   className="font-medium text-primary underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                  href={getContactPath("me")}
+                  href={getContactPath()}
                 >
                   kontakt formu
                 </a>

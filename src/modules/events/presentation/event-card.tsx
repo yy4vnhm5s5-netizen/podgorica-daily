@@ -11,6 +11,7 @@ import { getEventPresentationCategory } from "./event-presentation-category";
 import { Badge } from "@/shared/components/ui/badge";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { getLocaleTag, type Locale } from "@/shared/config/locale";
+import { getEventDetailPath } from "@/shared/config/public-routes";
 import { formatDateTime } from "@/shared/lib/date";
 
 interface EventCardProps {
@@ -21,7 +22,7 @@ interface EventCardProps {
 function EventCard({ event, locale }: EventCardProps) {
   const translations = getEventsTranslations(locale);
   const statusLabel = getEventStatusLabel(locale, event.status);
-  const detailHref = `/${locale}/events/${encodeURIComponent(event.id)}`;
+  const detailHref = getEventDetailPath(event.id);
 
   return (
     <Card className="overflow-hidden transition-colors hover:border-primary/40">

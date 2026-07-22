@@ -6,7 +6,7 @@ interface EventRedirectPageProps {
 
 async function EventRedirectPage({ params }: EventRedirectPageProps) {
   const { eventId } = await params;
-  permanentRedirect(`/me/events/${encodeURIComponent(eventId)}`);
+  permanentRedirect(`/dogadjaji/${encodeURIComponent(eventId)}`);
 }
 
 export default EventRedirectPage;
