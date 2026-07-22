@@ -3,8 +3,10 @@
 import { Droplets, Zap } from "lucide-react";
 import { useId, useState, type KeyboardEvent } from "react";
 
+import { formatAdditionalLocations } from "@/modules/city-alerts/presentation/power-outages-ui-model";
 import { StatusBadge } from "@/shared/components/status-badge";
 import { Card, CardContent } from "@/shared/components/ui/card";
+import type { Locale } from "@/shared/config/locale";
 import { cn } from "@/shared/lib/utils";
 
 type CityServiceId = "power" | "water";
@@ -31,7 +33,11 @@ interface CityServicesTranslations {
   label: string;
   noPowerOutages: string;
   noWaterInterruptions: string;
-  moreLocations: string;
+  moreLocations: {
+    few: string;
+    many: string;
+    one: string;
+  };
   officialSource: string;
   power: string;
   scheduled: string;
@@ -41,6 +47,7 @@ interface CityServicesTranslations {
 }
 
 interface CityServicesPanelProps {
+  locale: Locale;
   services: Record<CityServiceId, CityServiceInfo>;
   translations: CityServicesTranslations;
 }
@@ -48,7 +55,7 @@ interface CityServicesPanelProps {
 const serviceIcons = { power: Zap, water: Droplets };
 const serviceIds: readonly CityServiceId[] = ["power", "water"];
 
-function CityServicesPanel({ services, translations }: CityServicesPanelProps) {
+function CityServicesPanel({ locale, services, translations }: CityServicesPanelProps) {
   const [selectedService, setSelectedService] = useState<CityServiceId>("power");
   const panelId = useId();
   const service = services[selectedService];
@@ -201,10 +208,11 @@ function CityServicesPanel({ services, translations }: CityServicesPanelProps) {
                           ))}
                         </ul>
                         {service.additionalLocationCount ? (
-                          <p className="mt-1 text-sm font-medium text-primary">
-                            {formatMoreLocations(
-                              translations.moreLocations,
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            {formatAdditionalLocations(
                               service.additionalLocationCount,
+                              translations.moreLocations,
+                              locale,
                             )}
                           </p>
                         ) : null}
@@ -257,10 +265,6 @@ function ServiceDetail({ label, value }: { label: string; value: string }) {
       <dd className="mt-0.5 font-medium text-foreground">{value}</dd>
     </div>
   );
-}
-
-function formatMoreLocations(template: string, count: number) {
-  return template.replace("{count}", String(count));
 }
 
 export {

@@ -21,7 +21,11 @@ interface CityAlertsTranslations {
   officialSource: string;
   noPowerOutages: string;
   noWaterInterruptions: string;
-  moreLocations: string;
+  moreLocations: {
+    few: string;
+    many: string;
+    one: string;
+  };
   otherAlerts: string;
   power: string;
   publishedAt: string;
@@ -68,7 +72,11 @@ const cityAlertsTranslations: Record<Locale, CityAlertsTranslations> = {
     officialSource: "Official source",
     noPowerOutages: "No planned power outages.",
     noWaterInterruptions: "No water service interruptions",
-    moreLocations: "{count} more locations",
+    moreLocations: {
+      few: "{count} more locations",
+      many: "{count} more locations",
+      one: "{count} more location",
+    },
     otherAlerts: "Important city alerts",
     power: "Power",
     publishedAt: "Published",
@@ -125,7 +133,11 @@ const cityAlertsTranslations: Record<Locale, CityAlertsTranslations> = {
     officialSource: "Zvanični izvor",
     noPowerOutages: "Bez planiranih isključenja.",
     noWaterInterruptions: "Nema aktivnih obavještenja o prekidima u vodosnabdijevanju.",
-    moreLocations: "Još {count} lokacija",
+    moreLocations: {
+      few: "Još {count} lokacije",
+      many: "Još {count} lokacija",
+      one: "Još {count} lokacija",
+    },
     otherAlerts: "Važna gradska obavještenja",
     power: "Struja",
     publishedAt: "Objavljeno",

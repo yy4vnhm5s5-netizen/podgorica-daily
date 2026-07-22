@@ -29,6 +29,10 @@ import {
   type CityServiceInfo,
 } from "@/modules/city-alerts/presentation/city-services-panel";
 import { getCityServiceFreshnessLabel } from "@/modules/city-alerts/presentation/city-service-freshness";
+import {
+  getPowerOutageDetailsLabel,
+  normalizePowerOutageDescription,
+} from "@/modules/city-alerts/presentation/power-outages-ui-model";
 import { LoadingSkeleton } from "@/shared/components/loading-skeleton";
 import { SectionTitle } from "@/shared/components/section-title";
 import { StatusBadge, type StatusTone } from "@/shared/components/status-badge";
@@ -105,6 +109,7 @@ async function CityAlertsSection({ locale }: CityAlertsSectionProps) {
     <section aria-labelledby="city-alerts-heading" className="space-y-4">
       <SectionTitle id="city-alerts-heading" title={translations.cityServices} />
       <CityServicesPanel
+        locale={locale}
         services={services}
         translations={{ ...translations, label: translations.cityServices }}
       />
@@ -146,7 +151,7 @@ function getCityServices(
       : {
           ...toEmptyCityServiceInfo(cedisSource, locale, translations),
           detailsHref: getElectricityPath(),
-          detailsLabel: locale === "me" ? "Pogledajte detalje" : "View details",
+          detailsLabel: getPowerOutageDetailsLabel(locale),
         },
     water: waterAlert
       ? toCityServiceInfo(waterAlert, vikpgSource, locale, translations)
@@ -190,10 +195,13 @@ function toCityServiceInfo(
       ? {
           ...getHomepagePowerOutageLocations(alert),
           detailsHref: getElectricityPath(),
-          detailsLabel: locale === "me" ? "Pogledajte detalje" : "View details",
+          detailsLabel: getPowerOutageDetailsLabel(locale),
         }
       : { area: getCityAlertContent(alert.affectedArea, translations) }),
-    description: getCityAlertContent(alert.description, translations),
+    description:
+      alert.type === "powerOutage"
+        ? normalizePowerOutageDescription(getCityAlertContent(alert.description, translations))
+        : getCityAlertContent(alert.description, translations),
     freshnessLabel: source
       ? getCityServiceFreshnessLabel({
           freshnessStatus: source.freshnessStatus,
@@ -206,7 +214,7 @@ function toCityServiceInfo(
     publicationContext: alert.publishedAt
       ? `${translations.publishedAt}: ${formatDateTime(alert.publishedAt, { locale: localeTag }).label}`
       : undefined,
-    sourceUrl: alert.sourceUrl,
+    sourceUrl: alert.type === "powerOutage" ? undefined : alert.sourceUrl,
     state: "available",
     statusLabel:
       alert.status === "scheduled" ? translations.statuses.scheduled : translations.statuses.active,

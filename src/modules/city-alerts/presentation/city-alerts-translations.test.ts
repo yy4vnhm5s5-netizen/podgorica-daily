@@ -31,7 +31,9 @@ test("provides localized provider freshness prefixes", () => {
 
 test("uses the successful empty-state copy for planned power outages", () => {
   assert.equal(getCityAlertsTranslations("me").noPowerOutages, "Bez planiranih isključenja.");
-  assert.equal(getCityAlertsTranslations("me").moreLocations, "Još {count} lokacija");
+  assert.equal(getCityAlertsTranslations("me").moreLocations.one, "Još {count} lokacija");
+  assert.equal(getCityAlertsTranslations("me").moreLocations.few, "Još {count} lokacije");
+  assert.equal(getCityAlertsTranslations("me").moreLocations.many, "Još {count} lokacija");
 });
 
 test("uses the specific successful empty-state copy for water interruptions", () => {

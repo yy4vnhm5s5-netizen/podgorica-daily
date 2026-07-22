@@ -5,6 +5,7 @@ const powerOutagesTranslations = {
     affectedLocations: "Affected locations",
     description:
       "Current and upcoming planned power outages in Podgorica, based on official CEDIS service notices.",
+    dateUnavailable: "Date unavailable",
     empty: "There are no planned power outages in Podgorica.",
     officialSource: "View official CEDIS notice",
     publicationTime: "Published",
@@ -19,6 +20,7 @@ const powerOutagesTranslations = {
     affectedLocations: "Pogođene lokacije",
     description:
       "Aktuelna i najavljena planirana isključenja struje u Podgorici, na osnovu zvaničnih servisnih informacija CEDIS-a.",
+    dateUnavailable: "Datum nije dostupan",
     empty: "Bez planiranih isključenja struje u Podgorici.",
     officialSource: "Pogledajte zvanično obavještenje CEDIS-a",
     publicationTime: "Objavljeno",

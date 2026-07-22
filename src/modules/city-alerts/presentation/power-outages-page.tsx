@@ -1,9 +1,13 @@
-import { Zap } from "lucide-react";
+import { ExternalLink, Zap } from "lucide-react";
 
 import { getPowerOutageLocations } from "@/modules/city-alerts/application/power-outage-selection";
 import type { PowerOutagesReadResult } from "@/modules/city-alerts/application/get-power-outages";
 import type { CityAlert, CityAlertContent } from "@/modules/city-alerts/domain/city-alert";
 import { getPowerOutagesTranslations } from "@/modules/city-alerts/presentation/power-outages-translations";
+import {
+  getPowerOutageOfficialSourceUrl,
+  groupPowerOutagesByDate,
+} from "@/modules/city-alerts/presentation/power-outages-ui-model";
 import { ErrorState } from "@/shared/components/error-state";
 import { SectionTitle } from "@/shared/components/section-title";
 import { StatusBadge } from "@/shared/components/status-badge";
@@ -20,6 +24,7 @@ interface PowerOutagesPageProps {
 
 function PowerOutagesPage({ locale, result }: PowerOutagesPageProps) {
   const translations = getPowerOutagesTranslations(locale);
+  const localeTag = getLocaleTag(locale);
 
   return (
     <section aria-labelledby="power-outages-heading" className="space-y-6" id="power-outages">
@@ -43,9 +48,30 @@ function PowerOutagesPage({ locale, result }: PowerOutagesPageProps) {
               {translations.stale}
             </p>
           ) : null}
-          <div className="grid gap-4">
-            {result.outages.map((outage) => (
-              <PowerOutageCard alert={outage} key={outage.id} locale={locale} />
+          <div className="space-y-8">
+            {groupPowerOutagesByDate(result.outages).map((group) => (
+              <section
+                aria-label={
+                  group.date
+                    ? formatDateTime(group.date, { locale: localeTag }).label
+                    : translations.dateUnavailable
+                }
+                key={group.key}
+              >
+                <h2 className="text-base font-semibold tracking-tight text-foreground">
+                  {group.date
+                    ? formatDateTime(group.date, {
+                        formatOptions: { dateStyle: "full", timeStyle: undefined },
+                        locale: localeTag,
+                      }).label
+                    : translations.dateUnavailable}
+                </h2>
+                <div className="mt-3 grid gap-4 lg:grid-cols-2">
+                  {group.outages.map((outage) => (
+                    <PowerOutageCard alert={outage} key={outage.id} locale={locale} />
+                  ))}
+                </div>
+              </section>
             ))}
           </div>
         </div>
@@ -73,7 +99,7 @@ function PowerOutageCard({ alert, locale }: { alert: CityAlert; locale: Locale }
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-start justify-between gap-2">
-            <h2 className="text-base font-semibold tracking-tight">{title}</h2>
+            <h3 className="break-words text-base font-semibold tracking-tight">{title}</h3>
             <StatusBadge tone="warning">
               {alert.status === "scheduled"
                 ? translations.status.scheduled
@@ -90,17 +116,17 @@ function PowerOutageCard({ alert, locale }: { alert: CityAlert; locale: Locale }
       <CardContent className="space-y-4 p-4 pt-0 sm:p-5 sm:pt-0">
         {locations.length > 0 ? (
           <div>
-            <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               {translations.affectedLocations}
-            </h3>
-            <ul className="mt-2 grid gap-1.5 text-sm leading-6 text-foreground sm:grid-cols-2">
+            </p>
+            <ul className="mt-2 grid gap-1.5 break-words text-sm leading-6 text-foreground sm:grid-cols-2">
               {locations.map((location) => (
                 <li key={location}>{location}</li>
               ))}
             </ul>
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">{affectedArea}</p>
+          <p className="break-words text-sm text-muted-foreground">{affectedArea}</p>
         )}
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-amber-200/80 pt-3 text-sm text-muted-foreground">
           {alert.publishedAt ? (
@@ -110,14 +136,16 @@ function PowerOutageCard({ alert, locale }: { alert: CityAlert; locale: Locale }
             </span>
           ) : null}
           <span>{translations.source}</span>
-          {alert.sourceUrl ? (
+          {getPowerOutageOfficialSourceUrl(alert) ? (
             <a
-              className="font-medium text-primary underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              href={alert.sourceUrl}
+              aria-label={`${translations.officialSource}: ${title}`}
+              className="inline-flex min-h-10 items-center gap-1.5 rounded-md border border-amber-300/80 bg-background/70 px-3 font-medium text-primary transition-colors hover:border-amber-400 hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              href={getPowerOutageOfficialSourceUrl(alert)}
               rel="noreferrer"
               target="_blank"
             >
               {translations.officialSource}
+              <ExternalLink aria-hidden="true" className="size-3.5" strokeWidth={1.8} />
             </a>
           ) : null}
         </div>
