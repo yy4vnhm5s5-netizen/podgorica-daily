@@ -101,7 +101,15 @@ test("returns field errors and rate-limit responses without delivery", async () 
   });
   const invalid = await validationPost(request({ locale: "me" }));
   assert.equal(invalid.status, 422);
-  assert.equal((await invalid.json()).code, "VALIDATION_ERROR");
+  assert.deepEqual(await invalid.json(), {
+    code: "VALIDATION_ERROR",
+    fields: {
+      email: "Unesite ispravnu e-mail adresu.",
+      fullName: "Unesite ime i prezime.",
+      message: "Poruka mora sadržati najmanje 10 znakova.",
+    },
+    status: "error",
+  });
 });
 
 const allowRequests = { consume: () => ({ allowed: true }) };

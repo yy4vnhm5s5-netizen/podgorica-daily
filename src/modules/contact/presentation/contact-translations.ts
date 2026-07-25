@@ -17,6 +17,7 @@ const contactTranslations = {
     phone: "Phone",
     submit: "Send inquiry",
     success: "Thank you for your inquiry. We’ll get back to you as soon as possible.",
+    validationSummary: "Please correct the highlighted fields before sending your inquiry.",
   },
   me: {
     company: "Kompanija",
@@ -34,6 +35,7 @@ const contactTranslations = {
     phone: "Telefon",
     submit: "Pošalji upit",
     success: "Hvala na upitu. Javićemo vam se u najkraćem roku.",
+    validationSummary: "Ispravite označena polja prije slanja upita.",
   },
 } as const;
 

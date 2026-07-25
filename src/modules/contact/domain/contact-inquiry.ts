@@ -17,6 +17,14 @@ interface ContactInquiry {
 
 type ContactInquiryFieldErrors = Partial<Record<ContactInquiryField, string>>;
 
+const contactInquiryValidationMessages: Record<ContactInquiryField, string> = {
+  company: "Naziv kompanije može sadržati najviše 120 znakova.",
+  email: "Unesite ispravnu e-mail adresu.",
+  fullName: "Unesite ime i prezime.",
+  message: "Poruka mora sadržati najmanje 10 znakova.",
+  phone: "Telefon može sadržati najviše 40 znakova.",
+};
+
 const optionalText = (maximumLength: number) =>
   z
     .string()
@@ -52,13 +60,36 @@ function parseContactInquiry(
     };
   }
 
+  return { fieldErrors: getContactInquiryFieldErrors(parsed.error.issues), success: false };
+}
+
+function getContactInquiryFieldErrors(issues: readonly z.ZodIssue[]): ContactInquiryFieldErrors {
   const fieldErrors: ContactInquiryFieldErrors = {};
-  for (const field of contactInquiryFieldNames) {
-    const message = parsed.error.flatten().fieldErrors[field]?.[0];
-    if (message) fieldErrors[field] = message;
+
+  for (const issue of issues) {
+    const field = issue.path[0];
+    if (!isContactInquiryField(field) || fieldErrors[field]) continue;
+
+    fieldErrors[field] = getContactInquiryValidationMessage(field, issue);
   }
 
-  return { fieldErrors, success: false };
+  return fieldErrors;
+}
+
+function getContactInquiryValidationMessage(field: ContactInquiryField, issue: z.ZodIssue) {
+  if (issue.code === "too_big") {
+    if (field === "email") return "E-mail adresa može sadržati najviše 254 znaka.";
+    if (field === "fullName") return "Ime i prezime može sadržati najviše 100 znakova.";
+    if (field === "message") return "Poruka može sadržati najviše 4000 znakova.";
+  }
+
+  return contactInquiryValidationMessages[field];
+}
+
+function isContactInquiryField(value: unknown): value is ContactInquiryField {
+  return (
+    typeof value === "string" && contactInquiryFieldNames.includes(value as ContactInquiryField)
+  );
 }
 
 function hasCompletedContactHoneypot(value: unknown) {

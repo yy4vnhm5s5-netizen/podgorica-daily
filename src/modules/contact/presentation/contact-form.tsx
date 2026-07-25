@@ -1,7 +1,7 @@
 "use client";
 
 import type { FormEvent } from "react";
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 import type {
   ContactInquiryField,
@@ -10,6 +10,7 @@ import type {
 import { Button } from "@/shared/components/ui/button";
 import type { Locale } from "@/shared/config/locale";
 
+import { getContactFormErrorSummaryItems, type ContactFormFieldIds } from "./contact-form-errors";
 import { getContactTranslations } from "./contact-translations";
 
 type ContactFormStatus = "idle" | "loading" | "success" | "error";
@@ -17,8 +18,25 @@ type ContactFormStatus = "idle" | "loading" | "success" | "error";
 function ContactForm({ locale }: { locale: Locale }) {
   const translations = getContactTranslations(locale);
   const formId = useId();
+  const errorSummaryRef = useRef<HTMLDivElement>(null);
+  const shouldFocusErrorSummary = useRef(false);
   const [fieldErrors, setFieldErrors] = useState<ContactInquiryFieldErrors>({});
   const [status, setStatus] = useState<ContactFormStatus>("idle");
+  const fieldIds: ContactFormFieldIds = {
+    company: `${formId}-company`,
+    email: `${formId}-email`,
+    fullName: `${formId}-full-name`,
+    message: `${formId}-message`,
+    phone: `${formId}-phone`,
+  };
+  const errorSummaryItems = getContactFormErrorSummaryItems(fieldErrors, fieldIds);
+
+  useEffect(() => {
+    if (!shouldFocusErrorSummary.current || errorSummaryItems.length === 0) return;
+
+    errorSummaryRef.current?.focus();
+    shouldFocusErrorSummary.current = false;
+  }, [errorSummaryItems.length]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -51,7 +69,10 @@ function ContactForm({ locale }: { locale: Locale }) {
         return;
       }
 
-      if (response.status === 422 && body?.fields) setFieldErrors(body.fields);
+      if (response.status === 422 && body?.fields) {
+        shouldFocusErrorSummary.current = true;
+        setFieldErrors(body.fields);
+      }
       setStatus("error");
     } catch {
       setStatus("error");
@@ -60,10 +81,36 @@ function ContactForm({ locale }: { locale: Locale }) {
 
   return (
     <form className="space-y-5" onSubmit={handleSubmit}>
+      {errorSummaryItems.length > 0 ? (
+        <div
+          aria-labelledby={`${formId}-error-summary-heading`}
+          className="rounded-md border border-red-200 bg-red-50 p-4 text-red-950"
+          id={`${formId}-error-summary`}
+          ref={errorSummaryRef}
+          role="alert"
+          tabIndex={-1}
+        >
+          <h2 className="font-semibold" id={`${formId}-error-summary-heading`}>
+            {translations.validationSummary}
+          </h2>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
+            {errorSummaryItems.map(({ field, href, message }) => (
+              <li key={field}>
+                <a
+                  className="rounded-sm underline underline-offset-4 hover:no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  href={href}
+                >
+                  {message}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
       <FormField
         autoComplete="name"
         error={fieldErrors.fullName}
-        id={`${formId}-full-name`}
+        id={fieldIds.fullName}
         label={translations.fullName}
         name="fullName"
         required
@@ -71,7 +118,7 @@ function ContactForm({ locale }: { locale: Locale }) {
       <FormField
         autoComplete="email"
         error={fieldErrors.email}
-        id={`${formId}-email`}
+        id={fieldIds.email}
         label={translations.email}
         name="email"
         required
@@ -81,7 +128,7 @@ function ContactForm({ locale }: { locale: Locale }) {
         <FormField
           autoComplete="organization"
           error={fieldErrors.company}
-          id={`${formId}-company`}
+          id={fieldIds.company}
           label={translations.company}
           name="company"
           optionalLabel={translations.optional}
@@ -89,7 +136,7 @@ function ContactForm({ locale }: { locale: Locale }) {
         <FormField
           autoComplete="tel"
           error={fieldErrors.phone}
-          id={`${formId}-phone`}
+          id={fieldIds.phone}
           label={translations.phone}
           name="phone"
           optionalLabel={translations.optional}
@@ -98,7 +145,7 @@ function ContactForm({ locale }: { locale: Locale }) {
       </div>
       <FormField
         error={fieldErrors.message}
-        id={`${formId}-message`}
+        id={fieldIds.message}
         label={translations.message}
         name="message"
         required
@@ -167,7 +214,7 @@ function FormField({
       {textarea ? (
         <textarea
           aria-describedby={error ? errorId : undefined}
-          aria-invalid={Boolean(error)}
+          aria-invalid={error ? true : undefined}
           className={`${className} min-h-32 resize-y`}
           id={id}
           name={name}
@@ -176,7 +223,7 @@ function FormField({
       ) : (
         <input
           aria-describedby={error ? errorId : undefined}
-          aria-invalid={Boolean(error)}
+          aria-invalid={error ? true : undefined}
           autoComplete={autoComplete}
           className={className}
           id={id}

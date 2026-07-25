@@ -33,7 +33,23 @@ test("returns required field validation errors without accepting an incomplete i
 
   assert.equal(result.success, false);
   if (result.success) return;
-  assert.ok(result.fieldErrors.fullName);
-  assert.ok(result.fieldErrors.email);
-  assert.ok(result.fieldErrors.message);
+  assert.deepEqual(result.fieldErrors, {
+    email: "Unesite ispravnu e-mail adresu.",
+    fullName: "Unesite ime i prezime.",
+    message: "Poruka mora sadržati najmanje 10 znakova.",
+  });
+  assert.doesNotMatch(JSON.stringify(result.fieldErrors), /Invalid|String must|Expected/u);
+});
+
+test("returns a stable localized message when the message exceeds its limit", () => {
+  const result = parseContactInquiry({
+    email: "ana@example.com",
+    fullName: "Ana Petrović",
+    locale: "me",
+    message: "a".repeat(4_001),
+  });
+
+  assert.equal(result.success, false);
+  if (result.success) return;
+  assert.equal(result.fieldErrors.message, "Poruka može sadržati najviše 4000 znakova.");
 });
