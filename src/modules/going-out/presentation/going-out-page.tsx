@@ -26,7 +26,7 @@ function GoingOutPage({ events, locale, state }: GoingOutPageProps) {
   return (
     <section aria-labelledby="going-out-page-heading" className="space-y-6" id="izlasci">
       <div className="space-y-2">
-        <SectionTitle id="going-out-page-heading" title={copy.title} />
+        <SectionTitle as="h1" id="going-out-page-heading" title={copy.title} />
         <p className="max-w-2xl text-sm leading-6 text-muted-foreground">{copy.description}</p>
       </div>
       {displayState === "events" || displayState === "stale" ? (

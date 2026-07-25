@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { resolveActiveCityFeatureRoute } from "@/app/city-routing";
+import {
+  isCityPublicFeatureRouteAvailable,
+  resolveActiveCityFeatureRoute,
+} from "@/app/city-routing";
 import { createPublicRouteMetadata } from "@/app/public-route-metadata";
 import { getGoingOutEvents } from "@/modules/going-out/application/get-going-out-events";
 import { GoingOutPage } from "@/modules/going-out/presentation/going-out-page";
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
-import { isFeatureEnabled } from "@/shared/config/features";
 import { getGoingOutPath } from "@/shared/config/public-routes";
 import { getPageTitle } from "@/shared/config/site";
 import { getTranslations } from "@/shared/lib/translations";
@@ -20,7 +22,7 @@ interface GoingOutRouteProps {
 async function generateMetadata({ params }: GoingOutRouteProps): Promise<Metadata> {
   const { city: slug } = await params;
   const context = resolveActiveCityFeatureRoute(slug, "goingOut");
-  if (!context) return {};
+  if (!context || !isCityPublicFeatureRouteAvailable(context.city, "goingOut")) return {};
   const title = `Izlasci u ${context.city.name} – koncerti, žurke i noćni život`;
   const description = `Pronađite koncerte, DJ večeri, svirke, žurke i druge izlaske u ${context.city.name} na jednom mjestu.`;
   const metadataTitle = getPageTitle(title);
@@ -37,7 +39,7 @@ async function GoingOutRoute({ params }: GoingOutRouteProps) {
   const locale = "me" as const;
   const context = resolveActiveCityFeatureRoute(slug, "goingOut");
   if (!context) notFound();
-  if (!isFeatureEnabled("goingOut")) notFound();
+  if (!isCityPublicFeatureRouteAvailable(context.city, "goingOut")) notFound();
   const result = await getGoingOutEvents(context);
 
   return (

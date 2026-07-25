@@ -53,7 +53,7 @@ async function CinemaPage({ params }: CinemaPageProps) {
   return (
     <DashboardLayout city={context.city} translations={getTranslations(locale)}>
       <section aria-labelledby="cinema-heading" className="space-y-6" id="filmovi">
-        <SectionTitle id="cinema-heading" title="Filmovi" />
+        <SectionTitle as="h1" id="cinema-heading" title="Filmovi" />
         <CineplexxProgrammeCard
           day={programme.day}
           events={programme.events}

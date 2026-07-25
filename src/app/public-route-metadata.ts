@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 
+import { siteConfig } from "@/shared/config/site";
+
 interface PublicRouteMetadataInput {
   canonical: string;
   description?: string;
@@ -13,19 +15,28 @@ function createPublicRouteMetadata({
   imageUrl,
   title,
 }: PublicRouteMetadataInput): Metadata {
+  const openGraphImages = imageUrl
+    ? [{ url: imageUrl }]
+    : [{ height: 675, url: "/og-image.png", width: 1200 }];
+  const twitterImages = imageUrl ? [imageUrl] : ["/og-image.png"];
+
   return {
     alternates: { canonical },
     ...(description ? { description } : {}),
     openGraph: {
       ...(description ? { description } : {}),
-      ...(imageUrl ? { images: [{ url: imageUrl }] } : {}),
+      images: openGraphImages,
+      locale: "sr_Latn_ME",
+      siteName: siteConfig.name,
       title,
+      type: "website",
       url: canonical,
     },
     title: { absolute: title },
     twitter: {
       ...(description ? { description } : {}),
-      ...(imageUrl ? { images: [imageUrl] } : {}),
+      card: "summary_large_image",
+      images: twitterImages,
       title,
     },
   };

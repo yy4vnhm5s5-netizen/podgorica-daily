@@ -19,8 +19,18 @@ import {
   getGoingOutPath,
 } from "@/shared/config/public-routes";
 import { createPublicRouteMetadata } from "@/app/public-route-metadata";
+import { isFeatureEnabled, type Feature } from "@/shared/config/features";
 import { getPageTitle } from "@/shared/config/site";
 import type { City, CityCapability, CityContext } from "@/shared/types/city";
+
+interface CityRouteAvailabilityOptions {
+  isFeatureEnabled?: typeof isFeatureEnabled;
+}
+
+const publicFeatureByCityCapability: Partial<Record<CityCapability, Feature>> = {
+  flights: "flights",
+  goingOut: "goingOut",
+};
 
 function getCityLandingTitle(context: CityContext) {
   return getPageTitle(`${getCityName(context.city)} — događaji, izlasci i informacije`);
@@ -49,19 +59,37 @@ function getCanonicalCitySitemapPaths() {
   return getActiveCities().map((city) => getCityPath(city));
 }
 
-function getCitySitemapPaths(city: City) {
+function isCityPublicFeatureRouteAvailable(
+  city: City,
+  capability: CityCapability,
+  { isFeatureEnabled: checkFeature = isFeatureEnabled }: CityRouteAvailabilityOptions = {},
+) {
+  if (!supportsCityCapability(city, capability)) return false;
+
+  const feature = publicFeatureByCityCapability[capability];
+  return feature ? checkFeature(feature) : true;
+}
+
+function getCitySitemapPaths(city: City, options: CityRouteAvailabilityOptions = {}) {
   return [
     getCityPath(city),
-    ...(supportsCityCapability(city, "events") ? [getCinemaPath(city)] : []),
-    ...(supportsCityCapability(city, "events") ? [getEventsPath(city)] : []),
-    ...(supportsCityCapability(city, "electricity") ? [getElectricityPath(city)] : []),
-    ...(supportsCityCapability(city, "flights") ? [getFlightsPath(city)] : []),
-    ...(supportsCityCapability(city, "goingOut") ? [getGoingOutPath(city)] : []),
+    ...(isCityPublicFeatureRouteAvailable(city, "events", options) ? [getCinemaPath(city)] : []),
+    ...(isCityPublicFeatureRouteAvailable(city, "events", options) ? [getEventsPath(city)] : []),
+    ...(isCityPublicFeatureRouteAvailable(city, "electricity", options)
+      ? [getElectricityPath(city)]
+      : []),
+    ...(isCityPublicFeatureRouteAvailable(city, "flights", options) ? [getFlightsPath(city)] : []),
+    ...(isCityPublicFeatureRouteAvailable(city, "goingOut", options)
+      ? [getGoingOutPath(city)]
+      : []),
   ];
 }
 
-function getActiveCitySitemapPaths(cities: readonly City[] = getActiveCities()) {
-  return cities.filter(isActiveCity).flatMap(getCitySitemapPaths);
+function getActiveCitySitemapPaths(
+  cities: readonly City[] = getActiveCities(),
+  options: CityRouteAvailabilityOptions = {},
+) {
+  return cities.filter(isActiveCity).flatMap((city) => getCitySitemapPaths(city, options));
 }
 
 function getCityDashboardCapabilities(context: CityContext) {
@@ -80,6 +108,7 @@ export {
   getCityDashboardCapabilities,
   getCityLandingMetadata,
   getCityLandingTitle,
+  isCityPublicFeatureRouteAvailable,
   getCitySitemapPaths,
   getMainCityLandingContext,
   resolveActiveCityFeatureRoute,

@@ -39,7 +39,7 @@ function AirportFlightsPage({
   return (
     <section aria-labelledby="flights-heading" className="space-y-6" id="flights">
       <div className="space-y-2">
-        <SectionTitle id="flights-heading" title={copy.title} />
+        <SectionTitle as="h1" id="flights-heading" title={copy.title} />
         <p className="max-w-2xl text-sm leading-6 text-muted-foreground">{copy.description}</p>
       </div>
       {displayState === "unavailable" ? (

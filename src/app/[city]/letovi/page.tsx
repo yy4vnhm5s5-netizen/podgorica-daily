@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { resolveActiveCityFeatureRoute } from "@/app/city-routing";
+import {
+  isCityPublicFeatureRouteAvailable,
+  resolveActiveCityFeatureRoute,
+} from "@/app/city-routing";
 import { createPublicRouteMetadata } from "@/app/public-route-metadata";
 import { getPodgoricaFlights } from "@/modules/flights/application/get-podgorica-flights";
 import { AirportFlightsPage } from "@/modules/flights/presentation/airport-flights-page";
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
-import { isFeatureEnabled } from "@/shared/config/features";
 import { getFlightsPath } from "@/shared/config/public-routes";
 import { getPageTitle } from "@/shared/config/site";
 import { getTranslations } from "@/shared/lib/translations";
@@ -20,7 +22,7 @@ interface FlightsPageProps {
 async function generateMetadata({ params }: FlightsPageProps): Promise<Metadata> {
   const { city: slug } = await params;
   const context = resolveActiveCityFeatureRoute(slug, "flights");
-  if (!context) return {};
+  if (!context || !isCityPublicFeatureRouteAvailable(context.city, "flights")) return {};
   const title = `Letovi za ${context.city.name}`;
   const description = `Dolasci i odlasci za ${context.city.name} iz zvaničnih podataka aerodroma.`;
   const metadataTitle = getPageTitle(title);
@@ -37,7 +39,7 @@ async function FlightsPage({ params }: FlightsPageProps) {
   const locale = "me" as const;
   const context = resolveActiveCityFeatureRoute(slug, "flights");
   if (!context) notFound();
-  if (!isFeatureEnabled("flights")) notFound();
+  if (!isCityPublicFeatureRouteAvailable(context.city, "flights")) notFound();
   const result = await getPodgoricaFlights(context);
 
   return (

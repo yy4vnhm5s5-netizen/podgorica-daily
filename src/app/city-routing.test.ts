@@ -7,7 +7,9 @@ import {
   getCityDashboardCapabilities,
   getCityLandingMetadata,
   getCityLandingTitle,
+  getCitySitemapPaths,
   getMainCityLandingContext,
+  isCityPublicFeatureRouteAvailable,
   resolveActiveCityFeatureRoute,
   resolveActiveCityRoute,
 } from "./city-routing.ts";
@@ -106,4 +108,23 @@ test("sitemap emits only capability-supported routes for active cities", () => {
     getActiveCitySitemapPaths([limited, inactive]).some((path) => path.includes("inactive")),
     false,
   );
+});
+
+test("does not publish feature-flagged routes when their public feature is disabled", () => {
+  const full = city({
+    capabilities: ["events", "electricity", "flights", "goingOut"],
+    id: "full",
+    slug: "full",
+  });
+  const isFeatureEnabled = () => false;
+
+  assert.equal(isCityPublicFeatureRouteAvailable(full, "flights", { isFeatureEnabled }), false);
+  assert.equal(isCityPublicFeatureRouteAvailable(full, "goingOut", { isFeatureEnabled }), false);
+  assert.equal(isCityPublicFeatureRouteAvailable(full, "events", { isFeatureEnabled }), true);
+  assert.deepEqual(getCitySitemapPaths(full, { isFeatureEnabled }), [
+    "/full",
+    "/full/filmovi",
+    "/full/dogadjaji",
+    "/full/struja",
+  ]);
 });

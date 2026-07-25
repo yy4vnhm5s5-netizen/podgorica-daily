@@ -67,7 +67,7 @@ async function EventsPage({ params, searchParams }: EventsPageProps) {
     return (
       <DashboardLayout city={context.city} translations={translations}>
         <section className="space-y-8" id="events">
-          <SectionTitle title={eventTranslations.heading} />
+          <SectionTitle as="h1" title={eventTranslations.heading} />
           {allUnavailable ? (
             <ErrorState
               description={eventTranslations.allEventsUnavailableDescription}
@@ -97,7 +97,7 @@ async function EventsPage({ params, searchParams }: EventsPageProps) {
     return (
       <DashboardLayout city={context.city} translations={translations}>
         <section className="space-y-8" id="events">
-          <SectionTitle title={eventTranslations.heading} />
+          <SectionTitle as="h1" title={eventTranslations.heading} />
           <ErrorState
             description={eventTranslations.allEventsUnavailableDescription}
             title={eventTranslations.allEventsUnavailable}

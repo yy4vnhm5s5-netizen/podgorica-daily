@@ -40,7 +40,7 @@ function PowerOutagesPage({ locale, result }: PowerOutagesPageProps) {
   return (
     <section aria-labelledby="power-outages-heading" className="space-y-6" id="power-outages">
       <div className="space-y-2">
-        <SectionTitle id="power-outages-heading" title={translations.title} />
+        <SectionTitle as="h1" id="power-outages-heading" title={translations.title} />
         <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
           {translations.description}
         </p>
