@@ -3,6 +3,7 @@ import test from "node:test";
 
 import { createPublicRouteMetadata } from "./public-route-metadata.ts";
 import {
+  getAboutPlatformPath,
   getCinemaPath,
   getContactPath,
   getElectricityPath,
@@ -21,6 +22,7 @@ test("uses self-referencing canonical and Open Graph URLs for every public route
     getCinemaPath("podgorica"),
     getFlightsPath("podgorica"),
     getElectricityPath("podgorica"),
+    getAboutPlatformPath(),
     getContactPath(),
     getTermsOfUsePath(),
     getPrivacyPolicyPath(),

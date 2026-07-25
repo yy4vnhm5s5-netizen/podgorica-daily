@@ -15,14 +15,18 @@ test("provides the page heading and only currently public information categories
   assert.deepEqual(
     aboutPlatformContent.sections.map(({ heading }) => heading),
     [
-      "Lokalne informacije na jednom mjestu",
+      "Lokalne informacije za Podgoricu",
       "Šta možete pronaći",
       "Kako platforma radi",
       "Svježina i dostupnost podataka",
       "Nezavisnost i ispravke",
     ],
   );
-  assert.match(aboutPlatformContent.sections[1].body[0] ?? "", /vremenska prognoza/i);
+  assert.match(aboutPlatformContent.sections[1].body[0] ?? "", /vremensku prognozu/i);
+  assert.match(aboutPlatformContent.sections[1].body[0] ?? "", /letove/i);
+  assert.match(aboutPlatformContent.sections[1].body[0] ?? "", /bioskopske projekcije/i);
+  assert.match(aboutPlatformContent.description, /Gradom\.me/i);
+  assert.match(aboutPlatformContent.description, /Podgoricu/i);
   assert.doesNotMatch(aboutPlatformContent.sections[1].body[0] ?? "", /saobraćaj/i);
 });
 

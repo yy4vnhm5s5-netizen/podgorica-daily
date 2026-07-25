@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  getAboutPlatformPath,
   getCityPath,
   getCinemaPath,
   getContactPath,
@@ -28,18 +29,21 @@ test("localizes emergency-number labels in English", () => {
 
 test("provides localized legal-footer labels and stable legal paths", () => {
   assert.deepEqual(getTranslations("me").shell.footer, {
-    legalNavigation: "Pravne informacije",
+    aboutPlatform: "O platformi",
+    legalNavigation: "Informacije o sajtu",
     privacy: "Politika privatnosti",
     terms: "Uslovi korišćenja",
   });
   assert.deepEqual(getTranslations("en").shell.footer, {
-    legalNavigation: "Legal information",
+    aboutPlatform: "About the platform",
+    legalNavigation: "Site information",
     privacy: "Privacy policy",
     terms: "Terms of use",
   });
   assert.equal(getTermsOfUsePath(), "/uslovi-koriscenja");
   assert.equal(getPrivacyPolicyPath(), "/politika-privatnosti");
   assert.equal(getContactPath(), "/kontakt");
+  assert.equal(getAboutPlatformPath(), "/o-platformi");
   assert.equal(getCityPath("podgorica"), "/podgorica");
   assert.equal(getEventsPath("podgorica"), "/podgorica/dogadjaji");
   assert.equal(getCinemaPath("podgorica"), "/podgorica/filmovi");

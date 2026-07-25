@@ -18,6 +18,7 @@ test("publishes only canonical indexable public routes", async () => {
     true,
   );
   assert.equal(urls.includes("/"), false);
+  assert.equal(urls.includes("/o-platformi"), true);
   assert.equal(
     urls.some((path) => path.startsWith("/api/")),
     false,
