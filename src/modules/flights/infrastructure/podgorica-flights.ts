@@ -60,6 +60,18 @@ interface PodgoricaFlightsHttpClient {
   get(url: string): Promise<PodgoricaFlightsHttpResponse>;
 }
 
+type PodgoricaFlightsRequestFailureCategory =
+  | "connection-reset"
+  | "dns"
+  | "http-status"
+  | "invalid-url"
+  | "redirect"
+  | "timeout"
+  | "tls"
+  | "unknown";
+
+type PodgoricaFlightsDiagnosticEmitter = (payload: Record<string, unknown>) => void;
+
 interface PodgoricaFlightsParseResult {
   flights: Flight[];
   recognized: boolean;
@@ -101,6 +113,11 @@ class PodgoricaFlightsFetchError extends Error {
     | "podgorica-flights-request-failed"
     | "podgorica-flights-response-too-large"
     | "podgorica-flights-timeout";
+  readonly elapsedMs?: number;
+  readonly failureCategory: PodgoricaFlightsRequestFailureCategory;
+  readonly finalHostname?: string;
+  readonly httpStatus?: number;
+  readonly upstreamHostname: string;
 
   constructor(
     code:
@@ -110,10 +127,28 @@ class PodgoricaFlightsFetchError extends Error {
       | "podgorica-flights-response-too-large"
       | "podgorica-flights-timeout",
     message: string,
+    {
+      elapsedMs,
+      failureCategory = "unknown",
+      finalHostname,
+      httpStatus,
+      upstreamHostname = "montenegroairports.com",
+    }: {
+      elapsedMs?: number;
+      failureCategory?: PodgoricaFlightsRequestFailureCategory;
+      finalHostname?: string;
+      httpStatus?: number;
+      upstreamHostname?: string;
+    } = {},
   ) {
     super(message);
     this.name = "PodgoricaFlightsFetchError";
     this.code = code;
+    this.elapsedMs = elapsedMs;
+    this.failureCategory = failureCategory;
+    this.finalHostname = finalHostname;
+    this.httpStatus = httpStatus;
+    this.upstreamHostname = upstreamHostname;
   }
 }
 
@@ -128,8 +163,18 @@ function createPodgoricaFlightsHttpClient({
 } = {}): PodgoricaFlightsHttpClient {
   return {
     async get(requestedUrl) {
-      assertPodgoricaFlightsUrl(requestedUrl);
+      const upstreamHostname = getUrlHostname(requestedUrl) ?? "unknown";
+      try {
+        assertPodgoricaFlightsUrl(requestedUrl);
+      } catch (error) {
+        throw toRequestFailure(error, {
+          elapsedMs: 0,
+          failureCategory: "invalid-url",
+          upstreamHostname,
+        });
+      }
       let latestError: PodgoricaFlightsFetchError | undefined;
+      const requestStartedAt = Date.now();
 
       for (let attempt = 0; attempt <= retries; attempt += 1) {
         try {
@@ -138,15 +183,34 @@ function createPodgoricaFlightsHttpClient({
               Accept: "application/json, text/plain;q=0.9, text/html;q=0.5",
               "User-Agent": "Gradom/0.1 (+https://gradom.me)",
             },
+            method: "GET",
+            redirect: "follow",
             signal: AbortSignal.timeout(timeoutMs),
           });
           const finalUrl = response.url || requestedUrl;
-          assertPodgoricaFlightsUrl(finalUrl);
+          const finalHostname = getUrlHostname(finalUrl);
+          try {
+            assertPodgoricaFlightsUrl(finalUrl);
+          } catch (error) {
+            throw toRequestFailure(error, {
+              elapsedMs: Date.now() - requestStartedAt,
+              failureCategory: "redirect",
+              finalHostname,
+              upstreamHostname,
+            });
+          }
 
           if (!response.ok) {
             latestError = new PodgoricaFlightsFetchError(
               "podgorica-flights-request-failed",
               `Aerodrom Podgorica returned HTTP ${response.status}.`,
+              {
+                elapsedMs: Date.now() - requestStartedAt,
+                failureCategory: "http-status",
+                finalHostname,
+                httpStatus: response.status,
+                upstreamHostname,
+              },
             );
             if (response.status < 429) break;
             continue;
@@ -177,7 +241,7 @@ function createPodgoricaFlightsHttpClient({
           return { body, contentType, finalUrl, requestedUrl, status: response.status };
         } catch (error) {
           if (error instanceof PodgoricaFlightsFetchError) {
-            latestError = error;
+            latestError = withRequestElapsedTime(error, Date.now() - requestStartedAt);
             if (
               error.code === "podgorica-flights-host-rejected" ||
               error.code === "podgorica-flights-invalid-content-type" ||
@@ -187,12 +251,17 @@ function createPodgoricaFlightsHttpClient({
             }
           } else {
             latestError = new PodgoricaFlightsFetchError(
-              error instanceof Error && error.name === "AbortError"
+              isTimeoutError(error)
                 ? "podgorica-flights-timeout"
                 : "podgorica-flights-request-failed",
-              error instanceof Error && error.name === "AbortError"
+              isTimeoutError(error)
                 ? "Aerodrom Podgorica request timed out."
                 : "Aerodrom Podgorica request failed.",
+              {
+                elapsedMs: Date.now() - requestStartedAt,
+                failureCategory: classifyRequestFailure(error),
+                upstreamHostname,
+              },
             );
           }
         }
@@ -203,6 +272,11 @@ function createPodgoricaFlightsHttpClient({
         new PodgoricaFlightsFetchError(
           "podgorica-flights-request-failed",
           "Flight-feed request failed.",
+          {
+            elapsedMs: Date.now() - requestStartedAt,
+            failureCategory: "unknown",
+            upstreamHostname,
+          },
         )
       );
     },
@@ -271,11 +345,13 @@ function parsePodgoricaFlights(payload: string): PodgoricaFlightsParseResult {
 async function refreshPodgoricaFlights({
   cachePath = defaultPodgoricaFlightsCachePath,
   cacheWriter = writeJsonCache,
+  diagnostic = emitPodgoricaFlightsDiagnostic,
   httpClient,
   now = () => new Date(),
 }: {
   cachePath?: string;
   cacheWriter?: (snapshot: PodgoricaFlightsCacheSnapshot, destination: string) => Promise<void>;
+  diagnostic?: PodgoricaFlightsDiagnosticEmitter;
   httpClient: PodgoricaFlightsHttpClient;
   now?: () => Date;
 }): Promise<PodgoricaFlightsRefreshResult> {
@@ -311,6 +387,18 @@ async function refreshPodgoricaFlights({
       warnings: snapshot.parserWarnings,
     };
   } catch (error) {
+    if (error instanceof PodgoricaFlightsFetchError) {
+      diagnostic({
+        elapsedMs: error.elapsedMs ?? 0,
+        errorCode: error.code,
+        event: "podgorica-flights-request-failed",
+        failureCategory: error.failureCategory,
+        ...(error.finalHostname ? { finalHostname: error.finalHostname } : {}),
+        ...(error.httpStatus ? { httpStatus: error.httpStatus } : {}),
+        provider: "podgorica-airport",
+        upstreamHostname: error.upstreamHostname,
+      });
+    }
     return retainPrevious(
       previous,
       error instanceof PodgoricaFlightsFetchError ? error.code : "podgorica-flights-refresh-failed",
@@ -361,6 +449,93 @@ function assertPodgoricaFlightsUrl(value: string) {
       "Podgorica Airport flight-feed URL is not allowed.",
     );
   }
+}
+
+function emitPodgoricaFlightsDiagnostic(payload: Record<string, unknown>) {
+  console.error(JSON.stringify(payload));
+}
+
+function getUrlHostname(value: string) {
+  try {
+    return new URL(value).hostname;
+  } catch {
+    return undefined;
+  }
+}
+
+function toRequestFailure(
+  error: unknown,
+  metadata: {
+    elapsedMs: number;
+    failureCategory: PodgoricaFlightsRequestFailureCategory;
+    finalHostname?: string;
+    upstreamHostname: string;
+  },
+) {
+  if (error instanceof PodgoricaFlightsFetchError) {
+    return new PodgoricaFlightsFetchError(error.code, error.message, {
+      ...metadata,
+      httpStatus: error.httpStatus,
+    });
+  }
+
+  return new PodgoricaFlightsFetchError(
+    "podgorica-flights-request-failed",
+    "Podgorica Airport request URL is not allowed.",
+    metadata,
+  );
+}
+
+function withRequestElapsedTime(error: PodgoricaFlightsFetchError, elapsedMs: number) {
+  return new PodgoricaFlightsFetchError(error.code, error.message, {
+    elapsedMs,
+    failureCategory: error.failureCategory,
+    finalHostname: error.finalHostname,
+    httpStatus: error.httpStatus,
+    upstreamHostname: error.upstreamHostname,
+  });
+}
+
+function classifyRequestFailure(error: unknown): PodgoricaFlightsRequestFailureCategory {
+  if (isTimeoutError(error)) return "timeout";
+
+  const code = getNestedErrorCode(error);
+  if (code === "ENOTFOUND" || code === "EAI_AGAIN" || code === "ENODATA") return "dns";
+  if (
+    code === "CERT_HAS_EXPIRED" ||
+    code === "DEPTH_ZERO_SELF_SIGNED_CERT" ||
+    code === "ERR_TLS_CERT_ALTNAME_INVALID" ||
+    code === "EPROTO" ||
+    code === "UNABLE_TO_VERIFY_LEAF_SIGNATURE"
+  ) {
+    return "tls";
+  }
+  if (code === "ECONNRESET" || code === "EPIPE" || code === "UND_ERR_SOCKET") {
+    return "connection-reset";
+  }
+  return "unknown";
+}
+
+function isTimeoutError(error: unknown) {
+  const code = getNestedErrorCode(error);
+  return (
+    (error instanceof Error && (error.name === "AbortError" || error.name === "TimeoutError")) ||
+    code === "ETIMEDOUT" ||
+    code === "UND_ERR_CONNECT_TIMEOUT" ||
+    code === "UND_ERR_HEADERS_TIMEOUT" ||
+    code === "UND_ERR_BODY_TIMEOUT"
+  );
+}
+
+function getNestedErrorCode(error: unknown): string | undefined {
+  let current = error;
+  for (let depth = 0; depth < 3; depth += 1) {
+    if (typeof current !== "object" || current === null) return undefined;
+    if ("code" in current && typeof current.code === "string") return current.code;
+    if (!("cause" in current)) return undefined;
+    current = current.cause;
+  }
+  return undefined;
 }
 
 function getFlightDirection(value: string | null | undefined): FlightDirection | undefined {
@@ -423,6 +598,7 @@ export {
   createPodgoricaFlightsHttpClient,
   createPodgoricaFlightsUrl,
   defaultPodgoricaFlightsCachePath,
+  emitPodgoricaFlightsDiagnostic,
   getCachedPodgoricaFlights,
   parsePodgoricaFlights,
   podgoricaFlightsUrl,
@@ -431,6 +607,8 @@ export {
   type FlightCacheState,
   type PodgoricaFlightsCacheSnapshot,
   type PodgoricaFlightsCacheResult,
+  type PodgoricaFlightsDiagnosticEmitter,
   type PodgoricaFlightsHttpClient,
+  type PodgoricaFlightsRequestFailureCategory,
   type PodgoricaFlightsRefreshResult,
 };

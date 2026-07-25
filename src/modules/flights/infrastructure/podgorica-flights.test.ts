@@ -7,8 +7,10 @@ import test from "node:test";
 import {
   assertPodgoricaFlightsUrl,
   createPodgoricaFlightsHttpClient,
+  emitPodgoricaFlightsDiagnostic,
   getCachedPodgoricaFlights,
   parsePodgoricaFlights,
+  PodgoricaFlightsFetchError,
   refreshPodgoricaFlights,
   type PodgoricaFlightsHttpClient,
 } from "./podgorica-flights.ts";
@@ -210,6 +212,176 @@ test("accepts only the official public flight-feed endpoint and JSON-like respon
   await assert.rejects(() =>
     client.get("https://montenegroairports.com/aerodromixs/cache-flights.php?airport=pg"),
   );
+});
+
+test("uses the bounded public GET request contract and accepts an approved redirect", async () => {
+  let request: RequestInit | undefined;
+  const client = createPodgoricaFlightsHttpClient({
+    fetchImplementation: async (_url, init) => {
+      request = init;
+      return {
+        headers: { get: () => "application/json" },
+        ok: true,
+        status: 200,
+        text: async () => readFile(fixture, "utf8"),
+        url: "https://www.montenegroairports.com/aerodromixs/cache-flights.php?airport=pg",
+      };
+    },
+  });
+
+  const response = await client.get(
+    "https://montenegroairports.com/aerodromixs/cache-flights.php?airport=pg",
+  );
+
+  assert.equal(request?.method, "GET");
+  assert.equal(request?.redirect, "follow");
+  assert.equal(
+    (request?.headers as Record<string, string>).Accept,
+    "application/json, text/plain;q=0.9, text/html;q=0.5",
+  );
+  assert.equal(
+    (request?.headers as Record<string, string>)["User-Agent"],
+    "Gradom/0.1 (+https://gradom.me)",
+  );
+  assert.equal(
+    response.finalUrl,
+    "https://www.montenegroairports.com/aerodromixs/cache-flights.php?airport=pg",
+  );
+});
+
+test("classifies HTTP status, timeout, and redirect failures without exposing request contents", async () => {
+  const statusClient = createPodgoricaFlightsHttpClient({
+    fetchImplementation: async () => ({
+      headers: { get: () => "text/html" },
+      ok: false,
+      status: 503,
+      text: async () => "unavailable",
+      url: "https://montenegroairports.com/aerodromixs/cache-flights.php?airport=pg",
+    }),
+    retries: 0,
+  });
+  const timeoutClient = createPodgoricaFlightsHttpClient({
+    fetchImplementation: async () => {
+      const error = new Error("request timed out");
+      error.name = "TimeoutError";
+      throw error;
+    },
+    retries: 0,
+  });
+  const redirectClient = createPodgoricaFlightsHttpClient({
+    fetchImplementation: async () => ({
+      headers: { get: () => "application/json" },
+      ok: true,
+      status: 200,
+      text: async () => "{}",
+      url: "https://example.test/flight-feed",
+    }),
+    retries: 0,
+  });
+
+  await assert.rejects(
+    () =>
+      statusClient.get("https://montenegroairports.com/aerodromixs/cache-flights.php?airport=pg"),
+    (error: unknown) => {
+      assert.ok(error instanceof PodgoricaFlightsFetchError);
+      assert.equal(error.failureCategory, "http-status");
+      assert.equal(error.httpStatus, 503);
+      return true;
+    },
+  );
+  await assert.rejects(
+    () =>
+      timeoutClient.get("https://montenegroairports.com/aerodromixs/cache-flights.php?airport=pg"),
+    (error: unknown) => {
+      assert.ok(error instanceof PodgoricaFlightsFetchError);
+      assert.equal(error.code, "podgorica-flights-timeout");
+      assert.equal(error.failureCategory, "timeout");
+      return true;
+    },
+  );
+  await assert.rejects(
+    () =>
+      redirectClient.get("https://montenegroairports.com/aerodromixs/cache-flights.php?airport=pg"),
+    (error: unknown) => {
+      assert.ok(error instanceof PodgoricaFlightsFetchError);
+      assert.equal(error.failureCategory, "redirect");
+      assert.equal(error.finalHostname, "example.test");
+      return true;
+    },
+  );
+});
+
+test("retains a valid snapshot and emits safe diagnostics after a DNS request failure", async () => {
+  const cachePath = join(await mkdtemp(join(tmpdir(), "podgorica-flights-")), "flights.json");
+  const diagnostics: Record<string, unknown>[] = [];
+  await writeFile(
+    cachePath,
+    JSON.stringify({
+      fetchedAt: "2026-07-21T08:00:00.000Z",
+      flights: [],
+      lastSuccessfulRefreshAt: "2026-07-21T08:00:00.000Z",
+      parserWarnings: [],
+      schemaVersion: 1,
+      sourceUrl: "https://montenegroairports.com/aerodromixs/cache-flights.php?airport=pg",
+    }),
+  );
+  const client = createPodgoricaFlightsHttpClient({
+    fetchImplementation: async () => {
+      const error = Object.assign(new Error("fetch failed"), { code: "ENOTFOUND" });
+      throw error;
+    },
+    retries: 0,
+  });
+
+  const result = await refreshPodgoricaFlights({
+    cachePath,
+    diagnostic: (payload) => diagnostics.push(payload),
+    httpClient: client,
+  });
+
+  assert.equal(result.success, false);
+  assert.equal(result.errorCode, "podgorica-flights-request-failed");
+  assert.equal(result.retainedPreviousSnapshot, true);
+  assert.deepEqual(diagnostics, [
+    {
+      elapsedMs: diagnostics[0]?.elapsedMs,
+      errorCode: "podgorica-flights-request-failed",
+      event: "podgorica-flights-request-failed",
+      failureCategory: "dns",
+      provider: "podgorica-airport",
+      upstreamHostname: "montenegroairports.com",
+    },
+  ]);
+  assert.equal("body" in (diagnostics[0] ?? {}), false);
+  assert.equal("headers" in (diagnostics[0] ?? {}), false);
+});
+
+test("emits one parseable metadata-only request failure diagnostic", () => {
+  const messages: string[] = [];
+  const originalError = console.error;
+  console.error = (message: string) => messages.push(message);
+  try {
+    emitPodgoricaFlightsDiagnostic({
+      elapsedMs: 125,
+      errorCode: "podgorica-flights-request-failed",
+      event: "podgorica-flights-request-failed",
+      failureCategory: "dns",
+      provider: "podgorica-airport",
+      upstreamHostname: "montenegroairports.com",
+    });
+  } finally {
+    console.error = originalError;
+  }
+
+  assert.equal(messages.length, 1);
+  assert.deepEqual(JSON.parse(messages[0] ?? "{}"), {
+    elapsedMs: 125,
+    errorCode: "podgorica-flights-request-failed",
+    event: "podgorica-flights-request-failed",
+    failureCategory: "dns",
+    provider: "podgorica-airport",
+    upstreamHostname: "montenegroairports.com",
+  });
 });
 
 function responseClient(body: string): PodgoricaFlightsHttpClient {
