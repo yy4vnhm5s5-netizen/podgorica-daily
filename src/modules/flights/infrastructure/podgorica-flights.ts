@@ -388,6 +388,7 @@ async function refreshPodgoricaFlights({
     };
   } catch (error) {
     if (error instanceof PodgoricaFlightsFetchError) {
+      const retainedSnapshot = getRetainedSnapshotDiagnostic(previous, now());
       diagnostic({
         elapsedMs: error.elapsedMs ?? 0,
         errorCode: error.code,
@@ -396,6 +397,7 @@ async function refreshPodgoricaFlights({
         ...(error.finalHostname ? { finalHostname: error.finalHostname } : {}),
         ...(error.httpStatus ? { httpStatus: error.httpStatus } : {}),
         provider: "podgorica-airport",
+        ...retainedSnapshot,
         upstreamHostname: error.upstreamHostname,
       });
     }
@@ -590,6 +592,20 @@ function retainPrevious(
     snapshot: previous ? { ...previous, lastRefreshError: errorCode } : null,
     success: false,
     warnings,
+  };
+}
+
+function getRetainedSnapshotDiagnostic(previous: PodgoricaFlightsCacheSnapshot | null, now: Date) {
+  const fetchedAt = previous ? new Date(previous.fetchedAt) : undefined;
+  const retainedSnapshotAgeMs =
+    fetchedAt && !Number.isNaN(fetchedAt.getTime())
+      ? Math.max(0, now.getTime() - fetchedAt.getTime())
+      : undefined;
+
+  return {
+    retainedPreviousSnapshot: Boolean(previous),
+    retainedRecordCount: previous?.flights.length ?? 0,
+    retainedSnapshotAgeMs: retainedSnapshotAgeMs ?? null,
   };
 }
 

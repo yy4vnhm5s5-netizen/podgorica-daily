@@ -337,6 +337,7 @@ test("retains a valid snapshot and emits safe diagnostics after a DNS request fa
     cachePath,
     diagnostic: (payload) => diagnostics.push(payload),
     httpClient: client,
+    now: () => new Date("2026-07-21T08:05:00.000Z"),
   });
 
   assert.equal(result.success, false);
@@ -349,11 +350,71 @@ test("retains a valid snapshot and emits safe diagnostics after a DNS request fa
       event: "podgorica-flights-request-failed",
       failureCategory: "dns",
       provider: "podgorica-airport",
+      retainedPreviousSnapshot: true,
+      retainedRecordCount: 0,
+      retainedSnapshotAgeMs: 300_000,
       upstreamHostname: "montenegroairports.com",
     },
   ]);
   assert.equal("body" in (diagnostics[0] ?? {}), false);
   assert.equal("headers" in (diagnostics[0] ?? {}), false);
+});
+
+test("retains cache-backed flights after an HTTP 500 without exposing the refresh error to readers", async () => {
+  const cachePath = join(await mkdtemp(join(tmpdir(), "podgorica-flights-")), "flights.json");
+  const diagnostics: Record<string, unknown>[] = [];
+  const flights = parsePodgoricaFlights(await readFile(fixture, "utf8")).flights;
+  await writeFile(
+    cachePath,
+    JSON.stringify({
+      fetchedAt: "2026-07-22T08:00:00.000Z",
+      flights,
+      lastSuccessfulRefreshAt: "2026-07-22T08:00:00.000Z",
+      parserWarnings: [],
+      schemaVersion: 1,
+      sourceUrl: "https://montenegroairports.com/aerodromixs/cache-flights.php?airport=pg",
+    }),
+  );
+  const client = createPodgoricaFlightsHttpClient({
+    fetchImplementation: async () => ({
+      headers: { get: () => "text/html" },
+      ok: false,
+      status: 500,
+      text: async () => "upstream error",
+      url: "https://montenegroairports.com/aerodromixs/cache-flights.php?airport=pg",
+    }),
+    retries: 0,
+  });
+
+  const result = await refreshPodgoricaFlights({
+    cachePath,
+    diagnostic: (payload) => diagnostics.push(payload),
+    httpClient: client,
+    now: () => new Date("2026-07-22T08:05:00.000Z"),
+  });
+  const cached = await getCachedPodgoricaFlights(cachePath, new Date("2026-07-22T08:05:00.000Z"));
+
+  assert.equal(result.success, false);
+  assert.equal(result.retainedPreviousSnapshot, true);
+  assert.equal(cached.flights.length, flights.length);
+  assert.equal(cached.state, "fresh");
+  assert.equal("lastRefreshError" in cached, false);
+  assert.deepEqual(diagnostics, [
+    {
+      elapsedMs: diagnostics[0]?.elapsedMs,
+      errorCode: "podgorica-flights-request-failed",
+      event: "podgorica-flights-request-failed",
+      failureCategory: "http-status",
+      finalHostname: "montenegroairports.com",
+      httpStatus: 500,
+      provider: "podgorica-airport",
+      retainedPreviousSnapshot: true,
+      retainedRecordCount: flights.length,
+      retainedSnapshotAgeMs: 300_000,
+      upstreamHostname: "montenegroairports.com",
+    },
+  ]);
+  assert.equal("body" in (diagnostics[0] ?? {}), false);
 });
 
 test("emits one parseable metadata-only request failure diagnostic", () => {

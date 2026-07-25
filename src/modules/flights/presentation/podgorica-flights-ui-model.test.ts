@@ -13,6 +13,7 @@ test("distinguishes available, empty, stale, and unavailable flight card states"
   assert.equal(getPodgoricaFlightsDisplayState({ flightCount: 3, state: "fresh" }), "flights");
   assert.equal(getPodgoricaFlightsDisplayState({ flightCount: 3, state: "stale" }), "stale");
   assert.equal(getPodgoricaFlightsDisplayState({ flightCount: 0, state: "fresh" }), "empty");
+  assert.equal(getPodgoricaFlightsDisplayState({ flightCount: 0, state: "stale" }), "empty");
   assert.equal(
     getPodgoricaFlightsDisplayState({ flightCount: 0, state: "unavailable" }),
     "unavailable",
