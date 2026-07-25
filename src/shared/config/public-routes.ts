@@ -11,6 +11,10 @@ function getContactPath() {
   return "/kontakt";
 }
 
+function getAboutPlatformPath() {
+  return "/o-platformi";
+}
+
 function getCinemaPath(city: CityRouteTarget) {
   return `${getCityPath(city)}/filmovi`;
 }
@@ -44,6 +48,7 @@ function getTermsOfUsePath() {
 }
 
 export {
+  getAboutPlatformPath,
   getCityPath,
   getCinemaPath,
   getContactPath,

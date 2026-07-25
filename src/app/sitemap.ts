@@ -4,6 +4,7 @@ import { createCityContext, getActiveCities, supportsCityCapability } from "@/sh
 import { getCityEvents } from "@/modules/events/application/get-city-events";
 import { getCityEventsForPublicListing } from "@/modules/events/presentation/events-ui-model";
 import {
+  getAboutPlatformPath,
   getContactPath,
   getEventDetailPath,
   getPrivacyPolicyPath,
@@ -42,6 +43,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     });
   });
   const globalEntries = [
+    createEntry(getAboutPlatformPath(), "monthly", 0.5),
     createEntry(getContactPath(), "monthly", 0.5),
     createEntry(getTermsOfUsePath(), "yearly", 0.3),
     createEntry(getPrivacyPolicyPath(), "yearly", 0.3),

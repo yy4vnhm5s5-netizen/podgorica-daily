@@ -1,6 +1,7 @@
 import { ResponsiveContainer } from "@/shared/components/layout/responsive-container";
 import { isFeatureEnabled } from "@/shared/config/features";
 import {
+  getAboutPlatformPath,
   getContactPath,
   getPrivacyPolicyPath,
   getTermsOfUsePath,
@@ -24,6 +25,9 @@ function AppFooter({ tagline, translations }: AppFooterProps) {
           aria-label={translations.shell.footer.legalNavigation}
           className="flex flex-wrap items-center gap-x-4 gap-y-2"
         >
+          <FooterLink href={getAboutPlatformPath()}>
+            {translations.shell.footer.aboutPlatform}
+          </FooterLink>
           {isFeatureEnabled("contact") ? (
             <FooterLink href={getContactPath()}>{translations.shell.navigation.contact}</FooterLink>
           ) : null}
