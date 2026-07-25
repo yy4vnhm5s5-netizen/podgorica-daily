@@ -7,6 +7,7 @@ import { formatCompactPowerOutageLocations } from "@/modules/city-alerts/present
 import { StatusBadge } from "@/shared/components/status-badge";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import type { Locale } from "@/shared/config/locale";
+import { getRovingTabIndex } from "@/shared/lib/roving-tab-index";
 import { cn } from "@/shared/lib/utils";
 
 type CityServiceId = "power" | "water";
@@ -124,6 +125,7 @@ function CityServicesPanel({ locale, services, translations }: CityServicesPanel
               onClick={() => setSelectedService(serviceId)}
               onKeyDown={(event) => handleTabKeyDown(event, serviceId)}
               role="tab"
+              tabIndex={getRovingTabIndex(isSelected)}
               type="button"
             >
               <TabIcon

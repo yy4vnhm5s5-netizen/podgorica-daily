@@ -3,6 +3,7 @@ import { BusFront, ExternalLink } from "lucide-react";
 import { getBusStationConfig } from "@/modules/transport/domain/bus-station";
 import { getBusStationTranslations } from "@/modules/transport/presentation/bus-station-translations";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
+import { NewTabNotice } from "@/shared/components/new-tab-notice";
 import type { Locale } from "@/shared/config/locale";
 import type { City } from "@/shared/types/city";
 
@@ -37,6 +38,7 @@ function BusStationCard({ city, locale }: BusStationCardProps) {
           target="_blank"
         >
           {translations.openDepartures}
+          <NewTabNotice locale={locale} />
           <ExternalLink aria-hidden="true" className="size-3.5" />
         </a>
       </CardContent>

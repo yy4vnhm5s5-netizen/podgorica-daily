@@ -9,6 +9,7 @@ import {
   getGoingOutPageEvents,
 } from "./going-out-ui-model";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
+import { NewTabNotice } from "@/shared/components/new-tab-notice";
 import { SectionTitle } from "@/shared/components/section-title";
 import type { Locale } from "@/shared/config/locale";
 
@@ -83,6 +84,7 @@ function GoingOutPageCard({ event, locale }: { event: GoingOutEvent; locale: Loc
             target="_blank"
           >
             {copy.source}
+            <NewTabNotice locale={locale} />
             <ExternalLink aria-hidden="true" className="size-3.5" />
           </a>
         </CardContent>

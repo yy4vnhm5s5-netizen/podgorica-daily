@@ -6,6 +6,7 @@ import {
 } from "../domain/railway-departure";
 import { getRailwayStationDisplayState, type RailwayCacheState } from "./railway-station-ui-model";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
+import { NewTabNotice } from "@/shared/components/new-tab-notice";
 import type { Locale } from "@/shared/config/locale";
 
 const timetableUrl = "https://zpcg.me/red-voznje/ukupno";
@@ -62,6 +63,7 @@ function RailwayStationCard({ departures, locale, state }: RailwayStationCardPro
           target="_blank"
         >
           {copy.cta}
+          <NewTabNotice locale={locale} />
           <ExternalLink aria-hidden="true" className="size-3.5" />
         </a>
       </CardContent>

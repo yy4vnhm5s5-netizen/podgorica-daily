@@ -9,6 +9,7 @@ import {
 } from "./podgorica-flights-ui-model";
 import { EmptyState } from "@/shared/components/empty-state";
 import { ErrorState } from "@/shared/components/error-state";
+import { NewTabNotice } from "@/shared/components/new-tab-notice";
 import { SectionTitle } from "@/shared/components/section-title";
 import { StatusBadge } from "@/shared/components/status-badge";
 import { Card, CardContent } from "@/shared/components/ui/card";
@@ -82,6 +83,7 @@ function AirportFlightsPage({
         target="_blank"
       >
         {copy.source}
+        <NewTabNotice locale={locale} />
       </a>
     </section>
   );

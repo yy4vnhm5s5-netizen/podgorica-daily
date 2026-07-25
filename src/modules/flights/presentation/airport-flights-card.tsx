@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { StatusBadge } from "@/shared/components/status-badge";
 import type { Locale } from "@/shared/config/locale";
 import { getFlightsPath } from "@/shared/config/public-routes";
+import { getRovingTabIndex } from "@/shared/lib/roving-tab-index";
 import type { City } from "@/shared/types/city";
 import { cn } from "@/shared/lib/utils";
 
@@ -115,6 +116,7 @@ function AirportFlightsCard({
                 onClick={() => setSelectedDirection(direction)}
                 onKeyDown={(event) => handleTabKeyDown(event, direction)}
                 role="tab"
+                tabIndex={getRovingTabIndex(isSelected)}
                 type="button"
               >
                 <Icon aria-hidden="true" className="size-4 text-primary" strokeWidth={1.8} />

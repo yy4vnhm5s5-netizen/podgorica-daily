@@ -10,6 +10,7 @@ import {
   getHomepageGoingOutEvents,
 } from "./going-out-ui-model";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
+import { NewTabNotice } from "@/shared/components/new-tab-notice";
 import type { Locale } from "@/shared/config/locale";
 import { getGoingOutPath } from "@/shared/config/public-routes";
 import type { City } from "@/shared/types/city";
@@ -114,6 +115,7 @@ function GoingOutCard({
           <p className="mt-2 text-xs leading-5 text-muted-foreground">
             {formatGoingOutSchedule(event, locale)}
           </p>
+          <NewTabNotice locale={locale} />
         </div>
       </a>
     </li>

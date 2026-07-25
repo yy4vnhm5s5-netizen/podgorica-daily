@@ -11,6 +11,7 @@ import { getEventPresentationCategory } from "./event-presentation-category";
 import { getEventSummary } from "./event-summary";
 import { Badge } from "@/shared/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
+import { NewTabNotice } from "@/shared/components/new-tab-notice";
 import { getLocaleTag, type Locale } from "@/shared/config/locale";
 import { getEventsPath } from "@/shared/config/public-routes";
 import type { City } from "@/shared/types/city";
@@ -104,6 +105,7 @@ function EventDetail({ city, event, locale }: EventDetailProps) {
             target="_blank"
           >
             {translations.officialSource}
+            <NewTabNotice locale={locale} />
             <ExternalLink aria-hidden="true" className="size-4" />
           </a>
         </CardContent>

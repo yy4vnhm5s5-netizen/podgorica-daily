@@ -9,6 +9,7 @@ import {
   type CineplexxMovieGroup,
 } from "./cineplexx-programme-ui-model";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
+import { NewTabNotice } from "@/shared/components/new-tab-notice";
 import type { Locale } from "@/shared/config/locale";
 import { formatDateTime } from "@/shared/lib/date";
 
@@ -70,6 +71,7 @@ function CineplexxProgrammeCard({
             target="_blank"
           >
             {translations.cta}
+            <NewTabNotice locale={locale} />
             <ExternalLink aria-hidden="true" className="size-3.5" />
           </a>
         ) : null}

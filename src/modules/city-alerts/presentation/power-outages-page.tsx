@@ -14,6 +14,7 @@ import { SectionTitle } from "@/shared/components/section-title";
 import { StatusBadge } from "@/shared/components/status-badge";
 import { Timestamp } from "@/shared/components/timestamp";
 import { EmptyState } from "@/shared/components/empty-state";
+import { NewTabNotice } from "@/shared/components/new-tab-notice";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { getLocaleTag, type Locale } from "@/shared/config/locale";
 import { formatDateTime } from "@/shared/lib/date";
@@ -162,6 +163,7 @@ function PowerOutageCard({ alert, locale }: { alert: CityAlert; locale: Locale }
               target="_blank"
             >
               {translations.officialSource}
+              <NewTabNotice locale={locale} />
               <ExternalLink aria-hidden="true" className="size-3.5" strokeWidth={1.8} />
             </a>
           ) : null}
