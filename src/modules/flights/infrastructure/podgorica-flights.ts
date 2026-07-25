@@ -270,10 +270,12 @@ function parsePodgoricaFlights(payload: string): PodgoricaFlightsParseResult {
 
 async function refreshPodgoricaFlights({
   cachePath = defaultPodgoricaFlightsCachePath,
+  cacheWriter = writeJsonCache,
   httpClient,
   now = () => new Date(),
 }: {
   cachePath?: string;
+  cacheWriter?: (snapshot: PodgoricaFlightsCacheSnapshot, destination: string) => Promise<void>;
   httpClient: PodgoricaFlightsHttpClient;
   now?: () => Date;
 }): Promise<PodgoricaFlightsRefreshResult> {
@@ -295,7 +297,11 @@ async function refreshPodgoricaFlights({
       schemaVersion: 1,
       sourceUrl: podgoricaFlightsUrl,
     };
-    await writeJsonCache(snapshot, cachePath);
+    try {
+      await cacheWriter(snapshot, cachePath);
+    } catch {
+      return retainPrevious(previous, "podgorica-flights-cache-write-failed", []);
+    }
 
     return {
       acceptedFlights: snapshot.flights.length,

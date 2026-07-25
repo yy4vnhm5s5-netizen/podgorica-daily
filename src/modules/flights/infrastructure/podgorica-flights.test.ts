@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { access, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -137,6 +137,54 @@ test("uses the same atomically written cache for homepage and all-flights reads"
   assert.equal(cached.flights.length, 4);
   assert.equal(cached.state, "fresh");
   assert.equal(cached.lastSuccessfulRefreshAt, "2026-07-22T08:00:00.000Z");
+});
+
+test("preserves an explicitly configured absolute cache path", async () => {
+  const cachePath = join(
+    await mkdtemp(join(tmpdir(), "podgorica-flights-")),
+    "data",
+    "events",
+    "podgorica-flights.json",
+  );
+
+  const result = await refreshPodgoricaFlights({
+    cachePath,
+    httpClient: responseClient(await readFile(fixture, "utf8")),
+    now: () => new Date("2026-07-22T08:00:00.000Z"),
+  });
+
+  await access(cachePath);
+  assert.equal(result.success, true);
+  assert.equal(result.snapshot?.flights.length, 4);
+});
+
+test("surfaces a cache persistence failure and retains the earlier snapshot", async () => {
+  const cachePath = join(await mkdtemp(join(tmpdir(), "podgorica-flights-")), "flights.json");
+  await writeFile(
+    cachePath,
+    JSON.stringify({
+      fetchedAt: "2026-07-21T08:00:00.000Z",
+      flights: [],
+      lastSuccessfulRefreshAt: "2026-07-21T08:00:00.000Z",
+      parserWarnings: [],
+      schemaVersion: 1,
+      sourceUrl: "https://montenegroairports.com/aerodromixs/cache-flights.php?airport=pg",
+    }),
+  );
+
+  const result = await refreshPodgoricaFlights({
+    cachePath,
+    cacheWriter: async () => {
+      throw new Error("mounted volume is unavailable");
+    },
+    httpClient: responseClient(await readFile(fixture, "utf8")),
+    now: () => new Date("2026-07-22T08:00:00.000Z"),
+  });
+
+  assert.equal(result.success, false);
+  assert.equal(result.errorCode, "podgorica-flights-cache-write-failed");
+  assert.equal(result.retainedPreviousSnapshot, true);
+  assert.equal(result.snapshot?.lastRefreshError, "podgorica-flights-cache-write-failed");
 });
 
 test("accepts only the official public flight-feed endpoint and JSON-like responses", async () => {

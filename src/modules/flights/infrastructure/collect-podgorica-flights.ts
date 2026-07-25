@@ -31,7 +31,13 @@ async function runPodgoricaFlightsCollector({
     lockFileName: ".podgorica-flights-refresh.lock",
   });
   if (!("release" in lock)) {
-    const output = "provider=podgorica-airport state=already-running accepted=0 cache=not-run";
+    const output = [
+      "provider=podgorica-airport",
+      "state=already-running",
+      "accepted=0",
+      "cache=not-run",
+      `cache_path=${cachePath}`,
+    ].join(" ");
     writeOutput(output);
     return { exitCode: 0, output, refresh: null, state: "already-running" };
   }
@@ -56,6 +62,7 @@ async function runPodgoricaFlightsCollector({
       `state=${state}`,
       `accepted=${result.acceptedFlights}`,
       `cache=${cache}`,
+      `cache_path=${cachePath}`,
       ...(result.errorCode ? [`error=${result.errorCode}`] : []),
       ...(result.warnings[0] ? [`reason=${formatReason(result.warnings[0])}`] : []),
     ].join(" ");
