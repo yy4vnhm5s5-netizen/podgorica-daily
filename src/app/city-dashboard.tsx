@@ -9,7 +9,7 @@ import {
   isHomepageEventsUnavailable,
 } from "@/modules/events/presentation/events-ui-model";
 import {
-  getDistinctCineplexxMovieCount,
+  getDistinctCineplexxProgrammeMovieCount,
   selectHomepageCinemaProgramme,
 } from "@/modules/events/presentation/cineplexx-programme-ui-model";
 import { AirportFlightsCard } from "@/modules/flights/presentation/airport-flights-card";
@@ -52,7 +52,9 @@ async function CityDashboard({ context }: CityDashboardProps) {
   const homepageCityEvents = getHomepageEvents(cityEvents, context);
   const cityEventsUnavailable = isHomepageEventsUnavailable(cityEventProviders);
   const goingOutCount = goingOut ? getAvailableGoingOutEvents(goingOut.events).length : 0;
-  const cinemaMovieCount = getDistinctCineplexxMovieCount(cinemaEvents);
+  const displayableCinemaMovieCount = getDistinctCineplexxProgrammeMovieCount(
+    cinemaProgramme.events,
+  );
 
   return (
     <DashboardLayout city={city} translations={translations}>
@@ -62,7 +64,7 @@ async function CityDashboard({ context }: CityDashboardProps) {
             city={city}
             eventsCount={homepageCityEvents.length}
             locale={locale}
-            moviesCount={cinemaMovieCount}
+            moviesCount={displayableCinemaMovieCount}
             performancesCount={goingOutCount}
             weather={weather}
           />

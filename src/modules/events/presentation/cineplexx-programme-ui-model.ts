@@ -59,7 +59,7 @@ function groupCineplexxProgramme(
   return [...groups.values()];
 }
 
-function getDistinctCineplexxMovieCount(events: readonly CityEvent[]) {
+function getDistinctCineplexxProgrammeMovieCount(events: readonly CityEvent[]) {
   return new Set(events.map((event) => tagValue(event, "movie") ?? normalizeText(event.title)))
     .size;
 }
@@ -122,7 +122,7 @@ function tagValue(event: CityEvent, name: string) {
 }
 
 export {
-  getDistinctCineplexxMovieCount,
+  getDistinctCineplexxProgrammeMovieCount,
   getCineplexxProgrammeDisplayState,
   groupCineplexxProgramme,
   selectHomepageCinemaProgramme,

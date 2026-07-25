@@ -73,6 +73,30 @@ test("filters already departed trains using the Podgorica local clock", async ()
   );
 });
 
+test("uses the Podgorica local calendar day across a UTC day boundary", () => {
+  const departures = [
+    {
+      departureDate: "2026-07-25",
+      departureStation: "Podgorica" as const,
+      departureTime: "23:15",
+      destination: "Bar",
+    },
+    {
+      departureDate: "2026-07-26",
+      departureStation: "Podgorica" as const,
+      departureTime: "00:05",
+      destination: "Nikšić",
+    },
+  ];
+
+  assert.deepEqual(
+    selectUpcomingRailwayDepartures(departures, new Date("2026-07-25T21:30:00.000Z")).map(
+      ({ destination }) => destination,
+    ),
+    ["Nikšić"],
+  );
+});
+
 test("retains a valid cache for parser failures and unexpected HTML", async () => {
   const cachePath = await writePreviousSnapshot();
   const diagnostics: ZpcgRefreshDiagnostic[] = [];

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
-  getDistinctCineplexxMovieCount,
+  getDistinctCineplexxProgrammeMovieCount,
   getCineplexxProgrammeDisplayState,
   groupCineplexxProgramme,
   selectHomepageCinemaProgramme,
@@ -43,7 +43,7 @@ test("groups same-day screenings of one Cineplexx movie without merging another 
   );
 });
 
-test("counts distinct Cineplexx movies instead of individual screenings", () => {
+test("counts distinct movies in the selected Cineplexx programme instead of individual screenings", () => {
   const firstScreening = cinemaEvent({
     id: "one",
     startsAt: "2026-07-20T14:20:00.000Z",
@@ -59,7 +59,10 @@ test("counts distinct Cineplexx movies instead of individual screenings", () => 
     title: "Drugi film",
   });
 
-  assert.equal(getDistinctCineplexxMovieCount([firstScreening, secondScreening, otherMovie]), 2);
+  assert.equal(
+    getDistinctCineplexxProgrammeMovieCount([firstScreening, secondScreening, otherMovie]),
+    2,
+  );
 });
 
 test("keeps remaining screenings today ahead of tomorrow's programme", () => {
@@ -93,6 +96,43 @@ test("falls forward to tomorrow once today's final screening has ended", () => {
     programme.events.map(({ id }) => id),
     ["tomorrow"],
   );
+});
+
+test("counts no movies when all cached Cineplexx screenings have elapsed", () => {
+  const programme = selectHomepageCinemaProgramme(
+    [cinemaEvent({ id: "past", startsAt: "2026-07-21T15:00:00.000Z", title: "Raniji film" })],
+    { now: new Date("2026-07-21T17:00:00.000Z"), timeZone: "Europe/Podgorica" },
+  );
+
+  assert.equal(programme.day, "none");
+  assert.equal(getDistinctCineplexxProgrammeMovieCount(programme.events), 0);
+});
+
+test("counts only distinct movies in the currently displayable programme", () => {
+  const firstScreening = cinemaEvent({
+    id: "first",
+    startsAt: "2026-07-21T18:30:00.000Z",
+    title: "Film danas",
+  });
+  const programme = selectHomepageCinemaProgramme(
+    [
+      cinemaEvent({ id: "past", startsAt: "2026-07-21T15:00:00.000Z", title: "Prošli film" }),
+      firstScreening,
+      {
+        ...cinemaEvent({
+          id: "second",
+          startsAt: "2026-07-21T20:30:00.000Z",
+          title: "Film danas",
+        }),
+        tags: firstScreening.tags,
+      },
+      cinemaEvent({ id: "tomorrow", startsAt: "2026-07-22T12:00:00.000Z", title: "Film sjutra" }),
+    ],
+    { now: new Date("2026-07-21T17:00:00.000Z"), timeZone: "Europe/Podgorica" },
+  );
+
+  assert.equal(programme.day, "today");
+  assert.equal(getDistinctCineplexxProgrammeMovieCount(programme.events), 1);
 });
 
 test("uses the empty state only when neither today nor tomorrow has a remaining screening", () => {
