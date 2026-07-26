@@ -22,11 +22,13 @@ function SectionTitle({
 
   return (
     <div className={cn("flex items-start justify-between gap-4", className)} {...props}>
-      <div className="space-y-1">
-        <Heading className="text-xl font-semibold tracking-tight" id={id}>
+      <div className="space-y-1.5">
+        <Heading className="text-xl font-semibold leading-tight tracking-tight sm:text-2xl" id={id}>
           {title}
         </Heading>
-        {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
+        {description ? (
+          <p className="text-sm leading-6 text-muted-foreground">{description}</p>
+        ) : null}
       </div>
       {action ? <div className="shrink-0">{action}</div> : null}
     </div>

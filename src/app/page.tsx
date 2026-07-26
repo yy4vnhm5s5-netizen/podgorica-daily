@@ -12,7 +12,12 @@ async function HomePage() {
   const [cards, city] = await Promise.all([getPlatformCityCards(), Promise.resolve(getMainCity())]);
 
   return (
-    <DashboardLayout city={city} homeHref="/" translations={getTranslations("me")}>
+    <DashboardLayout
+      brandVariant="platform"
+      city={city}
+      homeHref="/"
+      translations={getTranslations("me")}
+    >
       <PlatformHomepage cards={cards} />
     </DashboardLayout>
   );

@@ -7,14 +7,21 @@ import { getCityPath } from "@/shared/config/public-routes";
 import { siteConfig } from "@/shared/config/site";
 import type { City } from "@/shared/types/city";
 import type { Translations } from "@/shared/lib/translations";
+import { cn } from "@/shared/lib/utils";
 
 interface AppHeaderProps {
+  brandVariant?: "default" | "platform";
   city: City;
   homeHref?: string;
   translations: Translations;
 }
 
-function AppHeader({ city, homeHref = getCityPath(city), translations }: AppHeaderProps) {
+function AppHeader({
+  brandVariant = "default",
+  city,
+  homeHref = getCityPath(city),
+  translations,
+}: AppHeaderProps) {
   return (
     <header className="sticky top-0 z-40 border-b border-blue-100/80 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/85">
       <ResponsiveContainer className="flex h-16 items-center justify-between gap-4">
@@ -34,7 +41,12 @@ function AppHeader({ city, homeHref = getCityPath(city), translations }: AppHead
                 width={530}
               />
             </span>
-            <span className="relative ml-0.5 h-9 w-[77px] shrink-0 overflow-hidden">
+            <span
+              className={cn(
+                "relative h-9 w-[77px] shrink-0 overflow-hidden",
+                brandVariant === "platform" ? "-ml-1" : "ml-0.5",
+              )}
+            >
               <Image
                 alt=""
                 className="absolute -left-[57px] top-0 h-9 w-auto max-w-none"

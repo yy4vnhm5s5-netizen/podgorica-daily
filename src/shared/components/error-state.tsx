@@ -12,14 +12,14 @@ function ErrorState({ action, className, description, title, ...props }: ErrorSt
   return (
     <div
       className={cn(
-        "rounded-lg border border-red-200 bg-red-50 p-6 text-red-950 dark:border-red-900 dark:bg-red-950 dark:text-red-50",
+        "rounded-2xl border border-red-200 bg-red-50 p-6 text-red-950 dark:border-red-900 dark:bg-red-950 dark:text-red-50",
         className,
       )}
       role="alert"
       {...props}
     >
       <h2 className="font-semibold">{title}</h2>
-      <p className="mt-1 text-sm text-red-800 dark:text-red-200">{description}</p>
+      <p className="mt-1 text-sm leading-6 text-red-800 dark:text-red-200">{description}</p>
       {action ? <div className="mt-4">{action}</div> : null}
     </div>
   );

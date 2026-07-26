@@ -28,42 +28,52 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
   const cityNames = formatCityNames(cards);
 
   return (
-    <div className="space-y-14 sm:space-y-20">
+    <div className="space-y-10 sm:space-y-12">
       <script
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
         type="application/ld+json"
       />
       <section
         aria-labelledby="platform-homepage-title"
-        className="rounded-3xl border border-blue-100 bg-gradient-to-br from-white via-blue-50/70 to-sky-100/70 px-5 py-10 shadow-sm shadow-blue-950/[0.04] sm:px-10 sm:py-14"
+        className="card-fog card-fog--info overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-br from-white via-blue-50/75 to-sky-100/65 px-5 py-7 shadow-sm shadow-blue-950/[0.04] sm:px-8 sm:py-9"
       >
-        <Image alt={siteConfig.name} height={52} priority src={siteConfig.logoPath} width={197} />
-        <div className="mt-8 max-w-3xl space-y-5">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
+        <Image alt={siteConfig.name} height={38} priority src={siteConfig.logoPath} width={144} />
+        <div className="mt-5 max-w-3xl space-y-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary sm:text-sm">
             Gradom.me
           </p>
           <h1
-            className="max-w-2xl text-3xl font-semibold tracking-tight text-slate-950 sm:text-5xl"
+            className="max-w-2xl text-3xl font-semibold leading-tight tracking-tight text-slate-950 sm:text-4xl"
             id="platform-homepage-title"
           >
             Lokalne informacije za gradove Crne Gore
           </h1>
-          <p className="max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">
-            Vrijeme, događaji, prekidi, prevoz i druge korisne informacije za vaš grad, na jednom
-            mjestu.
+          <p className="max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base sm:leading-7">
+            Provjereni lokalni podaci, gradske usluge i najvažnija dešavanja — jasno prikazani za
+            grad koji izaberete.
           </p>
         </div>
       </section>
 
-      <section aria-labelledby="cities-heading" className="space-y-6">
-        <div className="space-y-2">
-          <p className="text-sm font-medium text-primary">Izaberite grad</p>
-          <h2 className="text-2xl font-semibold tracking-tight text-slate-950" id="cities-heading">
-            Gradovi koje Gradom.me trenutno podržava
-          </h2>
+      <section aria-labelledby="cities-heading" className="space-y-5">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div className="space-y-1.5">
+            <p className="text-sm font-medium text-primary">Izaberite grad</p>
+            <h2
+              className="text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl"
+              id="cities-heading"
+            >
+              Vaš gradski pregled
+            </h2>
+          </div>
+          <p className="text-sm text-muted-foreground">Aktuelni podaci i provjereni izvori</p>
         </div>
+        <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
+          Svaki grad prikazuje samo usluge koje trenutno imaju pouzdane izvore i jasnu informaciju o
+          dostupnosti podataka.
+        </p>
         <LastCityContinuation cards={cards} />
-        <div className="grid gap-5 lg:grid-cols-2">
+        <div className="grid gap-4 lg:grid-cols-2">
           {cards.map((card) => (
             <CityCard card={card} key={card.city.id} />
           ))}
@@ -72,43 +82,44 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
 
       <section
         aria-labelledby="how-it-works-heading"
-        className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]"
+        className="grid gap-4 lg:grid-cols-[1.25fr_0.75fr]"
       >
-        <div className="space-y-4">
+        <div className="rounded-2xl border border-border bg-background px-5 py-5 sm:px-6">
           <p className="text-sm font-medium text-primary">Lokalno, po gradu</p>
           <h2
-            className="text-2xl font-semibold tracking-tight text-slate-950"
+            className="mt-2 text-xl font-semibold tracking-tight text-slate-950 sm:text-2xl"
             id="how-it-works-heading"
           >
-            Informacije koje odgovaraju svakodnevnom životu u gradu
+            Informacije za svakodnevni život
           </h2>
-          <p className="max-w-3xl leading-7 text-muted-foreground">
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-muted-foreground">
             Gradom.me objedinjuje javno dostupne podatke iz provjerenih izvora i prikazuje ih kroz
-            gradsku stranicu. Svaki grad ima svoj skup usluga, izvora i učestalost osvježavanja —
-            prikazujemo samo ono što je stvarno dostupno i korisno.
-          </p>
-          <p className="max-w-3xl leading-7 text-muted-foreground">
-            Trenutno je dostupna {cityNames}. Kako se gradovi dodaju, njihove stranice će zadržati
-            lokalni fokus, bez pretpostavke da svaki grad mora imati iste module.
+            gradsku stranicu. Svaki grad ima svoj skup usluga, izvora i učestalost osvježavanja.
           </p>
         </div>
         <aside
-          className="rounded-2xl border border-blue-100 bg-blue-50/60 p-6"
+          className="card-fog card-fog--neutral rounded-2xl border border-blue-100 bg-blue-50/55 px-5 py-5 sm:px-6"
           aria-label="Kako Gradom.me radi"
         >
           <h3 className="font-semibold text-slate-950">Podaci sa jasnim ograničenjima</h3>
-          <p className="mt-3 text-sm leading-6 text-muted-foreground">
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
             Podaci se osvježavaju periodično i uz svaki važan prikaz zadržavamo informaciju o
             izvoru, svježini i dostupnosti. Gradom.me ne prikazuje izmišljene rasporede niti pokreće
             prikupljanje podataka tokom vaše posjete.
           </p>
+          <p className="mt-3 text-sm leading-6 text-muted-foreground">
+            Trenutno su dostupne {cityNames}.
+          </p>
         </aside>
       </section>
 
-      <section aria-labelledby="faq-heading" className="space-y-6">
-        <div className="space-y-2">
+      <section aria-labelledby="faq-heading" className="space-y-4">
+        <div className="space-y-1.5">
           <p className="text-sm font-medium text-primary">Česta pitanja</p>
-          <h2 className="text-2xl font-semibold tracking-tight text-slate-950" id="faq-heading">
+          <h2
+            className="text-xl font-semibold tracking-tight text-slate-950 sm:text-2xl"
+            id="faq-heading"
+          >
             Gradom.me ukratko
           </h2>
         </div>
@@ -140,7 +151,7 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
 
 function CityCard({ card }: { card: PlatformCityCardData }) {
   return (
-    <article className="group relative overflow-hidden rounded-2xl border border-blue-100 bg-background p-6 shadow-sm shadow-blue-950/[0.03] transition-colors hover:border-blue-200 hover:bg-blue-50/40">
+    <article className="group relative overflow-hidden rounded-2xl border border-blue-100 bg-background p-5 shadow-sm shadow-blue-950/[0.03] transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50/40 hover:shadow-[0_12px_24px_-20px_rgb(15_23_42_/_0.32)] sm:p-6">
       <Link
         aria-label={`Otvori grad ${card.city.name}`}
         className="absolute inset-0 z-10 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
@@ -148,19 +159,21 @@ function CityCard({ card }: { card: PlatformCityCardData }) {
       >
         <span className="sr-only">Otvori grad {card.city.name}</span>
       </Link>
-      <div className="pointer-events-none relative z-20 space-y-6">
-        <div className="space-y-2">
-          <h3 className="text-2xl font-semibold tracking-tight text-slate-950">{card.city.name}</h3>
-          <p className="max-w-xl leading-6 text-muted-foreground">
+      <div className="pointer-events-none relative z-20 space-y-5">
+        <div className="space-y-1.5">
+          <h3 className="text-xl font-semibold tracking-tight text-slate-950 sm:text-2xl">
+            {card.city.name}
+          </h3>
+          <p className="max-w-xl text-sm leading-6 text-muted-foreground">
             {card.city.description ?? `Lokalne informacije za grad ${card.city.name}.`}
           </p>
         </div>
-        <ul className="grid gap-3 sm:grid-cols-2">
+        <ul className="grid gap-2.5 sm:grid-cols-2">
           {card.highlights.map((highlight) => {
             const Icon = highlightIcons[highlight.visual];
             const content = (
               <>
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-700">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
                   <Icon aria-hidden="true" className="size-4" />
                 </span>
                 <span className="min-w-0">
@@ -168,7 +181,7 @@ function CityCard({ card }: { card: PlatformCityCardData }) {
                     {highlight.label}
                   </span>
                   <span
-                    className={`mt-0.5 block font-medium text-slate-900 ${highlight.state === "unavailable" ? "text-sm text-muted-foreground" : "truncate"}`}
+                    className={`mt-0.5 block font-medium leading-5 text-slate-900 ${highlight.state === "unavailable" ? "text-sm text-muted-foreground" : "truncate"}`}
                   >
                     {highlight.value}
                   </span>
@@ -180,23 +193,23 @@ function CityCard({ card }: { card: PlatformCityCardData }) {
               <li key={highlight.key}>
                 <Link
                   aria-label={highlight.accessibilityLabel}
-                  className="pointer-events-auto flex min-w-0 items-center gap-3 rounded-xl border border-transparent px-2 py-1.5 transition-colors hover:border-blue-100 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  className="pointer-events-auto flex min-w-0 items-center gap-3 rounded-xl border border-transparent px-2.5 py-2 transition-colors hover:border-blue-100 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   href={highlight.href}
                 >
                   {content}
                 </Link>
               </li>
             ) : (
-              <li className="flex min-w-0 items-center gap-3 px-2 py-1.5" key={highlight.key}>
+              <li className="flex min-w-0 items-center gap-3 px-2.5 py-2" key={highlight.key}>
                 {content}
               </li>
             );
           })}
         </ul>
-        <div className="flex flex-wrap items-center gap-2 border-t border-blue-100 pt-4">
+        <div className="flex flex-wrap items-center gap-1.5 border-t border-blue-100 pt-3.5">
           {card.shortcuts.map((shortcut) => (
             <Link
-              className="pointer-events-auto rounded-md px-2 py-1 text-sm font-medium text-primary transition-colors hover:bg-blue-100/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="pointer-events-auto rounded-md px-2.5 py-1.5 text-sm font-medium text-primary transition-colors hover:bg-blue-100/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               href={shortcut.href}
               key={shortcut.key}
             >

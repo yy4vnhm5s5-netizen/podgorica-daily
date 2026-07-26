@@ -10,9 +10,12 @@ interface EmptyStateProps extends Omit<HTMLAttributes<HTMLDivElement>, "title"> 
 
 function EmptyState({ action, className, description, title, ...props }: EmptyStateProps) {
   return (
-    <div className={cn("rounded-lg border border-dashed p-8 text-center", className)} {...props}>
+    <div
+      className={cn("rounded-2xl border border-dashed p-6 text-center sm:p-8", className)}
+      {...props}
+    >
       <h2 className="font-semibold">{title}</h2>
-      <p className="mt-2 text-sm text-muted-foreground">{description}</p>
+      <p className="mt-2 text-sm leading-6 text-muted-foreground">{description}</p>
       {action ? <div className="mt-4">{action}</div> : null}
     </div>
   );

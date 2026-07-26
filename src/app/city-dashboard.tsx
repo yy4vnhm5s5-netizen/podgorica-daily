@@ -66,83 +66,75 @@ async function CityDashboard({ context }: CityDashboardProps) {
         activeCityIds={getActiveCities().map((activeCity) => activeCity.id)}
         cityId={city.id}
       />
-      <section className="space-y-10" id="dashboard">
-        <div className="space-y-7">
-          <DailySummaryBar
-            availability={summaryAvailability}
+      <section className="space-y-8 sm:space-y-10" id="dashboard">
+        <DailySummaryBar
+          availability={summaryAvailability}
+          city={city}
+          eventsCount={homepageCityEvents.length}
+          locale={locale}
+          moviesCount={displayableCinemaMovieCount}
+          performancesCount={goingOutCount}
+          weather={weather}
+        />
+        {isFeatureEnabled("cityAlerts") && capabilities.cityAlerts ? (
+          <Suspense fallback={<CityAlertsSectionLoading context={context} locale={locale} />}>
+            <CityAlertsSection context={context} locale={locale} />
+          </Suspense>
+        ) : null}
+        {goingOut ? (
+          <GoingOutSection
             city={city}
-            eventsCount={homepageCityEvents.length}
+            events={goingOut.events}
             locale={locale}
-            moviesCount={displayableCinemaMovieCount}
-            performancesCount={goingOutCount}
-            weather={weather}
+            state={goingOut.state}
           />
-          {isFeatureEnabled("cityAlerts") && capabilities.cityAlerts ? (
-            <Suspense fallback={<CityAlertsSectionLoading context={context} locale={locale} />}>
-              <CityAlertsSection context={context} locale={locale} />
-            </Suspense>
-          ) : null}
-          <AdvertisingCard
-            href={getContactPath()}
-            subtitle={advertising.subtitle}
-            title={advertising.title}
-          />
-          {goingOut ? (
-            <GoingOutSection
+        ) : null}
+        {capabilities.events ? (
+          <div className="grid items-start gap-5 lg:grid-cols-2">
+            <HomepageEventsCard
               city={city}
-              events={goingOut.events}
+              eventCount={homepageCityEvents.length}
+              events={homepageCityEvents.slice(0, 3)}
+              isUnavailable={cityEventsUnavailable}
               locale={locale}
-              state={goingOut.state}
             />
-          ) : null}
-        </div>
-        <div className="grid items-start gap-5 sm:grid-cols-2">
-          {capabilities.events ? (
-            <>
-              <HomepageEventsCard
-                city={city}
-                eventCount={homepageCityEvents.length}
-                events={homepageCityEvents.slice(0, 3)}
-                isUnavailable={cityEventsUnavailable}
+            <div id="bioskop">
+              <CineplexxProgrammeCard
+                day={cinemaProgramme.day}
+                events={cinemaProgramme.events}
                 locale={locale}
+                state={
+                  events.providers.find((provider) => provider.id === "cineplexx-podgorica")?.state
+                }
               />
-              <div id="bioskop">
-                <CineplexxProgrammeCard
-                  day={cinemaProgramme.day}
-                  events={cinemaProgramme.events}
-                  locale={locale}
-                  state={
-                    events.providers.find((provider) => provider.id === "cineplexx-podgorica")
-                      ?.state
-                  }
-                />
-              </div>
-            </>
-          ) : null}
-          <div className="sm:col-span-2">
-            <AdvertisingCard
-              href={getContactPath()}
-              subtitle={advertising.subtitle}
-              title={advertising.title}
-            />
+            </div>
           </div>
-          {flights ? (
-            <AirportFlightsCard
-              city={city}
-              flights={flights.flights}
-              lastSuccessfulRefreshAt={flights.lastSuccessfulRefreshAt}
-              locale={locale}
-              state={flights.state}
-            />
-          ) : null}
-          {isFeatureEnabled("busStation") && railway ? (
-            <RailwayStationCard
-              departures={railway.departures}
-              locale={locale}
-              state={railway.state}
-            />
-          ) : null}
-        </div>
+        ) : null}
+        <AdvertisingCard
+          href={getContactPath()}
+          subtitle={advertising.subtitle}
+          title={advertising.title}
+        />
+        {flights || (isFeatureEnabled("busStation") && railway) ? (
+          <div className="grid items-start gap-5 lg:grid-cols-2">
+            {flights ? (
+              <AirportFlightsCard
+                city={city}
+                flights={flights.flights}
+                lastSuccessfulRefreshAt={flights.lastSuccessfulRefreshAt}
+                locale={locale}
+                state={flights.state}
+              />
+            ) : null}
+            {isFeatureEnabled("busStation") && railway ? (
+              <RailwayStationCard
+                departures={railway.departures}
+                locale={locale}
+                state={railway.state}
+              />
+            ) : null}
+          </div>
+        ) : null}
         <EmergencyNumbersStrip
           items={getEmergencyNumbers(emergencyNumbers)}
           label={emergencyNumbers.label}

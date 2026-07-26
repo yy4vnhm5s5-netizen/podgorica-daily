@@ -6,6 +6,7 @@ test("renders the platform homepage rather than redirecting to the Podgorica das
   const source = await readFile(new URL("./page.tsx", import.meta.url), "utf8");
 
   assert.match(source, /<PlatformHomepage cards=\{cards\} \/>/u);
+  assert.match(source, /brandVariant="platform"/u);
   assert.doesNotMatch(source, /permanentRedirect|CityDashboard/u);
   assert.match(source, /homeHref="\/"/u);
   assert.match(source, /export const revalidate = 0/u);
