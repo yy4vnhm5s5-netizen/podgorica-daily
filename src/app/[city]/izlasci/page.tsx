@@ -9,6 +9,7 @@ import { createPublicRouteMetadata } from "@/app/public-route-metadata";
 import { getGoingOutEvents } from "@/modules/going-out/application/get-going-out-events";
 import { GoingOutPage } from "@/modules/going-out/presentation/going-out-page";
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
+import { getCityName } from "@/shared/config/cities";
 import { getGoingOutPath } from "@/shared/config/public-routes";
 import { getPageTitle } from "@/shared/config/site";
 import { getTranslations } from "@/shared/lib/translations";
@@ -23,8 +24,9 @@ async function generateMetadata({ params }: GoingOutRouteProps): Promise<Metadat
   const { city: slug } = await params;
   const context = resolveActiveCityFeatureRoute(slug, "goingOut");
   if (!context || !isCityPublicFeatureRouteAvailable(context.city, "goingOut")) return {};
-  const title = `Izlasci u ${context.city.name} – koncerti, žurke i noćni život`;
-  const description = `Pronađite koncerte, DJ večeri, svirke, žurke i druge izlaske u ${context.city.name} na jednom mjestu.`;
+  const cityName = getCityName(context.city, "locative");
+  const title = `Izlasci u ${cityName} – koncerti, žurke i noćni život`;
+  const description = `Pronađite koncerte, DJ večeri, svirke, žurke i druge izlaske u ${cityName} na jednom mjestu.`;
   const metadataTitle = getPageTitle(title);
 
   return createPublicRouteMetadata({

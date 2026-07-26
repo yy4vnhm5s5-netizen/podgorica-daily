@@ -1,11 +1,13 @@
 import type { Locale } from "@/shared/config/locale";
 
 type CityId = string;
+type CityNameForm = "accusative" | "locative" | "nominative";
 
 type CityCapability =
   "electricity" | "events" | "flights" | "goingOut" | "railway" | "water" | "weather";
 
 interface City {
+  accusativeName?: string;
   capabilities?: readonly CityCapability[];
   country: string;
   description?: string;
@@ -14,6 +16,7 @@ interface City {
   isMain: boolean;
   latitude: number;
   longitude: number;
+  locativeName?: string;
   name: string;
   slug: string;
   timezone: string;
@@ -25,4 +28,4 @@ interface CityContext {
   timezone: string;
 }
 
-export { type City, type CityCapability, type CityContext, type CityId };
+export { type City, type CityCapability, type CityContext, type CityId, type CityNameForm };

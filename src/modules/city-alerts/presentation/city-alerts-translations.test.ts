@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { getCityAlertsTranslations } from "./city-alerts-translations.ts";
+import { getCity } from "@/shared/config/cities";
 
 test("provides localized stale-data copy", () => {
   assert.equal(
@@ -41,4 +42,13 @@ test("uses the specific successful empty-state copy for water interruptions", ()
     getCityAlertsTranslations("me").noWaterInterruptions,
     "Nema aktivnih obavještenja o prekidima u vodosnabdijevanju.",
   );
+});
+
+test("uses the current city name in shared city-alert copy", () => {
+  const budva = getCity("budva");
+  assert.ok(budva);
+
+  const translations = getCityAlertsTranslations("en", budva);
+  assert.match(translations.emptyDescription, /Budva/u);
+  assert.doesNotMatch(translations.emptyDescription, /Podgorica/u);
 });

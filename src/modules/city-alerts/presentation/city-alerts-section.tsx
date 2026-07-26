@@ -74,8 +74,8 @@ interface CityAlertsSectionProps {
   locale: Locale;
 }
 
-function CityAlertsSectionLoading({ locale }: CityAlertsSectionProps) {
-  const translations = getCityAlertsTranslations(locale);
+function CityAlertsSectionLoading({ context, locale }: CityAlertsSectionProps) {
+  const translations = getCityAlertsTranslations(locale, context.city);
 
   return (
     <section aria-labelledby="city-alerts-heading" className="space-y-4">
@@ -91,7 +91,7 @@ function CityAlertsSectionLoading({ locale }: CityAlertsSectionProps) {
 
 async function CityAlertsSection({ context, locale }: CityAlertsSectionProps) {
   const result = await getActiveCityAlerts(context);
-  const translations = getCityAlertsTranslations(locale);
+  const translations = getCityAlertsTranslations(locale, context.city);
   const metadata: CityAlertsMetadata = "metadata" in result ? result.metadata : { sources: [] };
   const services = getCityServices(result, context, locale, translations, metadata);
   const otherAlerts =

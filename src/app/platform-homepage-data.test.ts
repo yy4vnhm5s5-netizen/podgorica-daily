@@ -4,12 +4,19 @@ import test from "node:test";
 import {
   createPlatformCityCardData,
   createPlatformHomepageStructuredData,
+  formatCount,
   getPlatformHomepageMetadata,
 } from "./platform-homepage-data.ts";
-import { getActiveCities, getCity } from "@/shared/config/cities";
+import { getEmptyCityEventsReadModel } from "@/modules/events/application/get-city-events";
+import type { CityEvent } from "@/modules/events/domain/event";
+import type { Flight } from "@/modules/flights/domain/flight";
+import type { GoingOutEvent } from "@/modules/going-out/domain/going-out-event";
+import { createCityContext, getActiveCities, getCity } from "@/shared/config/cities";
 
 test("derives generic city cards from every active registry city", () => {
-  const cards = getActiveCities().map((city) => createPlatformCityCardData(city, null));
+  const cards = getActiveCities().map((city) =>
+    createPlatformCityCardData(createCityContext(city.id), null),
+  );
 
   assert.deepEqual(
     cards.map((card) => card.city.id),
@@ -41,7 +48,7 @@ test("derives generic city cards from every active registry city", () => {
 test("creates platform metadata and structured data only from public city cards", () => {
   const cities = getActiveCities();
   const structuredData = createPlatformHomepageStructuredData([
-    ...cities.map((city) => createPlatformCityCardData(city, null)),
+    ...cities.map((city) => createPlatformCityCardData(createCityContext(city.id), null)),
   ]);
   const metadata = getPlatformHomepageMetadata();
   const graph = structuredData["@graph"];
@@ -66,4 +73,133 @@ test("creates platform metadata and structured data only from public city cards"
     },
   ]);
   assert.equal(JSON.stringify(structuredData).includes("budva"), true);
+});
+
+test("uses the same available Going Out result as the city page and does not turn unavailable data into zero", () => {
+  const context = createCityContext("budva");
+  const event: GoingOutEvent = {
+    city: "budva",
+    id: "budva-going-out",
+    sourceName: "MonteGigs",
+    sourceUrl: "https://staging.montegigs.me/me/events/budva/1-20991231-party",
+    startDate: "2099-12-31",
+    title: "Budva party",
+  };
+  const available = createPlatformCityCardData(context, {
+    capabilities: {
+      cityAlerts: true,
+      events: false,
+      flights: false,
+      goingOut: true,
+      railway: false,
+      weather: true,
+    },
+    events: getEmptyCityEventsReadModel(),
+    flights: null,
+    goingOut: { events: [event], state: "fresh" },
+    railway: null,
+    weather: null,
+  });
+  const unavailable = createPlatformCityCardData(context, null);
+  const staleWithoutEvents = createPlatformCityCardData(context, {
+    capabilities: {
+      cityAlerts: true,
+      events: false,
+      flights: false,
+      goingOut: true,
+      railway: false,
+      weather: true,
+    },
+    events: getEmptyCityEventsReadModel(),
+    flights: null,
+    goingOut: { events: [], state: "stale" },
+    railway: null,
+    weather: null,
+  });
+
+  assert.deepEqual(
+    available.highlights.find(({ key }) => key === "going-out"),
+    {
+      accessibilityLabel: "1 izlazak u Budva",
+      href: "/budva/izlasci",
+      key: "going-out",
+      label: "Izlasci",
+      priority: 3,
+      state: "available",
+      value: "1 izlazak",
+      visual: "music",
+    },
+  );
+  assert.equal(unavailable.highlights.find(({ key }) => key === "going-out")?.state, "unavailable");
+  assert.equal(
+    unavailable.highlights.find(({ key }) => key === "going-out")?.value,
+    "Podaci nijesu dostupni",
+  );
+  assert.equal(
+    staleWithoutEvents.highlights.find(({ key }) => key === "going-out")?.value,
+    "Podaci nijesu dostupni",
+  );
+});
+
+test("derives Podgorica event and flight totals from the same displayable read models as their pages", () => {
+  const context = createCityContext("podgorica");
+  const event: CityEvent = {
+    category: "concert",
+    cityId: "podgorica",
+    cityIds: ["podgorica"],
+    id: "future-event",
+    language: "me",
+    sourceId: "kic",
+    sourceName: "KIC",
+    sourceReferences: [],
+    sourceUrl: "https://example.test/future-event",
+    startDate: "2099-12-31",
+    status: "scheduled",
+    tags: [],
+    timezone: "Europe/Podgorica",
+    title: "Budući događaj",
+  };
+  const flights: Flight[] = Array.from({ length: 12 }, (_, index) => ({
+    direction: index % 2 === 0 ? "arrival" : "departure",
+    location: `Grad ${index + 1}`,
+    scheduledAt: `2099-12-31T${String(10 + index).padStart(2, "0")}:00:00.000Z`,
+    scheduledDate: "2099-12-31",
+    scheduledTime: `${String(10 + index).padStart(2, "0")}:00`,
+  }));
+
+  const card = createPlatformCityCardData(context, {
+    capabilities: {
+      cityAlerts: true,
+      events: true,
+      flights: true,
+      goingOut: true,
+      railway: true,
+      weather: true,
+    },
+    events: { ...getEmptyCityEventsReadModel(), events: [event] },
+    flights: { flights, state: "fresh" },
+    goingOut: { events: [], state: "fresh" },
+    railway: null,
+    weather: null,
+  });
+
+  assert.equal(card.highlights.find(({ key }) => key === "events")?.value, "1 događaj");
+  assert.equal(card.highlights.find(({ key }) => key === "flights")?.value, "10 letova");
+});
+
+test("uses Montenegrin count forms for platform summaries", () => {
+  const nouns = [
+    ["izlazak", "izlaska", "izlazaka"],
+    ["događaj", "događaja", "događaja"],
+    ["let", "leta", "letova"],
+  ] as const;
+
+  for (const [singular, paucal, plural] of nouns) {
+    assert.equal(formatCount(0, singular, paucal, plural), `0 ${plural}`);
+    assert.equal(formatCount(1, singular, paucal, plural), `1 ${singular}`);
+    assert.equal(formatCount(2, singular, paucal, plural), `2 ${paucal}`);
+    assert.equal(formatCount(4, singular, paucal, plural), `4 ${paucal}`);
+    assert.equal(formatCount(5, singular, paucal, plural), `5 ${plural}`);
+    assert.equal(formatCount(21, singular, paucal, plural), `21 ${singular}`);
+  }
 });

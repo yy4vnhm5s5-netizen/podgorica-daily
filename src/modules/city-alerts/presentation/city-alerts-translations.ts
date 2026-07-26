@@ -4,6 +4,8 @@ import type {
   CityAlertContent,
 } from "@/modules/city-alerts/domain/city-alert";
 import type { Locale } from "@/shared/config/locale";
+import { getCityName } from "@/shared/config/cities";
+import type { City } from "@/shared/types/city";
 
 interface CityAlertsTranslations {
   affectedArea: string;
@@ -51,13 +53,13 @@ const cityAlertsTranslations: Record<Locale, CityAlertsTranslations> = {
     cityServices: "City services",
     content: {
       centar: "City centre",
-      citywide: "Across Podgorica",
+      citywide: "Across the city",
       demoSource: "City services",
       masline: "Masline",
       waterOutageDescription: "Water service is temporarily interrupted.",
       waterOutageTitle: "Water service interruption",
     },
-    emptyDescription: "There are currently no active alerts affecting everyday life in Podgorica.",
+    emptyDescription: "There are currently no active alerts affecting everyday life in {city}.",
     emptyTitle: "No active alerts.",
     errorDescription: "Alerts could not be loaded. Please try again later.",
     errorTitle: "Alerts unavailable",
@@ -106,7 +108,7 @@ const cityAlertsTranslations: Record<Locale, CityAlertsTranslations> = {
     cityServices: "Gradske usluge",
     content: {
       centar: "Centar grada",
-      citywide: "Širom Podgorice",
+      citywide: "Širom grada",
       demoSource: "Gradske usluge",
       masline: "Masline",
       waterOutageDescription: "Vodosnabdijevanje je privremeno prekinuto.",
@@ -157,8 +159,17 @@ const cityAlertsTranslations: Record<Locale, CityAlertsTranslations> = {
   },
 };
 
-function getCityAlertsTranslations(locale: Locale) {
-  return cityAlertsTranslations[locale];
+function getCityAlertsTranslations(locale: Locale, city?: City) {
+  const translations = cityAlertsTranslations[locale];
+  if (!city) return translations;
+
+  const cityName = getCityName(city, locale === "me" ? "locative" : "nominative");
+  const replaceCity = (value: string) => value.replace("{city}", cityName);
+
+  return {
+    ...translations,
+    emptyDescription: replaceCity(translations.emptyDescription),
+  };
 }
 
 function getCityAlertContent(content: CityAlertContent, translations: CityAlertsTranslations) {

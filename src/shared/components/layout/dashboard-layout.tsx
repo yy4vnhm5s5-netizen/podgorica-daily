@@ -1,4 +1,5 @@
 import type { PropsWithChildren } from "react";
+import Link from "next/link";
 
 import { AppFooter } from "@/shared/components/layout/app-footer";
 import { AppHeader } from "@/shared/components/layout/app-header";
@@ -14,6 +15,8 @@ interface DashboardLayoutProps extends PropsWithChildren {
 }
 
 function DashboardLayout({ children, city, homeHref, translations }: DashboardLayoutProps) {
+  const isCityScoped = homeHref === undefined;
+
   return (
     <div className="min-h-screen bg-background pb-[calc(5rem+env(safe-area-inset-bottom))] text-foreground md:pb-0">
       <a
@@ -24,7 +27,17 @@ function DashboardLayout({ children, city, homeHref, translations }: DashboardLa
       </a>
       <AppHeader city={city} homeHref={homeHref} translations={translations} />
       <main id="main-content">
-        <ResponsiveContainer className="py-8 sm:py-14">{children}</ResponsiveContainer>
+        <ResponsiveContainer className="py-8 sm:py-14">
+          {isCityScoped ? (
+            <Link
+              className="mb-6 inline-flex rounded-md text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              href="/"
+            >
+              Povratak na izbor gradova
+            </Link>
+          ) : null}
+          {children}
+        </ResponsiveContainer>
       </main>
       <AppFooter tagline={translations.shell.tagline} translations={translations} />
       <MobileNavigation city={city} homeHref={homeHref} translations={translations} />

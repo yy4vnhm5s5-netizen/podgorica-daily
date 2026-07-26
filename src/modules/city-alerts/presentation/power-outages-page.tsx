@@ -18,14 +18,16 @@ import { NewTabNotice } from "@/shared/components/new-tab-notice";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { getLocaleTag, type Locale } from "@/shared/config/locale";
 import { formatDateTime } from "@/shared/lib/date";
+import type { City } from "@/shared/types/city";
 
 interface PowerOutagesPageProps {
+  city: City;
   locale: Locale;
   result: PowerOutagesReadResult;
 }
 
-function PowerOutagesPage({ locale, result }: PowerOutagesPageProps) {
-  const translations = getPowerOutagesTranslations(locale);
+function PowerOutagesPage({ city, locale, result }: PowerOutagesPageProps) {
+  const translations = getPowerOutagesTranslations(locale, city);
   const localeTag = getLocaleTag(locale);
   const groups = result.status === "available" ? groupPowerOutagesByDate(result.outages) : [];
   const summary =
@@ -84,7 +86,7 @@ function PowerOutagesPage({ locale, result }: PowerOutagesPageProps) {
                 </h2>
                 <div className="mt-4 grid items-start gap-4 lg:grid-cols-2">
                   {group.outages.map((outage) => (
-                    <PowerOutageCard alert={outage} key={outage.id} locale={locale} />
+                    <PowerOutageCard alert={outage} city={city} key={outage.id} locale={locale} />
                   ))}
                 </div>
               </section>
@@ -96,8 +98,16 @@ function PowerOutagesPage({ locale, result }: PowerOutagesPageProps) {
   );
 }
 
-function PowerOutageCard({ alert, locale }: { alert: CityAlert; locale: Locale }) {
-  const translations = getPowerOutagesTranslations(locale);
+function PowerOutageCard({
+  alert,
+  city,
+  locale,
+}: {
+  alert: CityAlert;
+  city: City;
+  locale: Locale;
+}) {
+  const translations = getPowerOutagesTranslations(locale, city);
   const localeTag = getLocaleTag(locale);
   const time = [alert.startsAt, alert.expectedEndAt]
     .filter((value): value is Date => value !== undefined)

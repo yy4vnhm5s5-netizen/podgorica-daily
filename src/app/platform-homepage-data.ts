@@ -1,11 +1,15 @@
-import { getCityEventsForPublicListing } from "@/modules/events/presentation/events-ui-model";
+import {
+  filterEventsForUi,
+  getCityEventsForPublicListing,
+  isHomepageEventsUnavailable,
+} from "@/modules/events/presentation/events-ui-model";
 import { getUpcomingPodgoricaFlightGroups } from "@/modules/flights/presentation/podgorica-flights-ui-model";
-import { getAvailableGoingOutEvents } from "@/modules/going-out/presentation/going-out-ui-model";
+import { getGoingOutPageEvents } from "@/modules/going-out/presentation/going-out-ui-model";
 import { getWeatherTemperature } from "@/modules/weather/presentation/weather-temperature";
 import { createPublicRouteMetadata } from "@/app/public-route-metadata";
 import { loadCityDashboardData } from "@/app/city-dashboard-data";
 import { isCityPublicFeatureRouteAvailable } from "@/app/city-routing";
-import { createCityContext, getActiveCities } from "@/shared/config/cities";
+import { createCityContext, getActiveCities, getCityName } from "@/shared/config/cities";
 import {
   getCityPath,
   getElectricityPath,
@@ -24,6 +28,7 @@ interface CityHighlight {
   key: string;
   label: string;
   priority: number;
+  state: "available" | "unavailable";
   value: string;
   visual: CityHighlightVisual;
 }
@@ -59,21 +64,21 @@ async function getPlatformCityCards(cities: readonly City[] = getActiveCities())
 }
 
 async function getPlatformCityCardData(context: CityContext): Promise<PlatformCityCardData> {
-  const { city } = context;
-  const fallback = createPlatformCityCardData(city, null);
+  const fallback = createPlatformCityCardData(context, null);
 
   try {
     const dashboardData = await loadCityDashboardData(context);
-    return createPlatformCityCardData(city, dashboardData);
+    return createPlatformCityCardData(context, dashboardData);
   } catch {
     return fallback;
   }
 }
 
 function createPlatformCityCardData(
-  city: City,
+  context: CityContext,
   dashboardData: Awaited<ReturnType<typeof loadCityDashboardData>> | null,
 ): PlatformCityCardData {
+  const { city } = context;
   const highlights: CityHighlight[] = [];
 
   if (city.capabilities?.includes("weather")) {
@@ -84,55 +89,73 @@ function createPlatformCityCardData(
       key: "weather",
       label: "Vrijeme",
       priority: 1,
+      state: "available",
       value: temperature === undefined ? "Nije dostupno" : `${Math.round(temperature)} °C`,
       visual: "cloud",
     });
   }
 
   if (isCityPublicFeatureRouteAvailable(city, "events")) {
-    const count = dashboardData
-      ? getCityEventsForPublicListing(dashboardData.events.events).length
-      : 0;
-    highlights.push({
-      accessibilityLabel: `${formatCount(count, "događaj", "događaja")} u ${city.name}`,
-      href: getEventsPath(city),
-      key: "events",
-      label: "Događaji",
-      priority: 2,
-      value: formatCount(count, "događaj", "događaja"),
-      visual: "calendar",
-    });
+    const events = dashboardData
+      ? filterEventsForUi(getCityEventsForPublicListing(dashboardData.events.events), context, {
+          datePreset: "upcoming",
+          sort: "soonest",
+        })
+      : [];
+    highlights.push(
+      createCountHighlight({
+        available:
+          dashboardData !== null &&
+          isCityEventsSummaryAvailable(dashboardData.events, events.length),
+        city,
+        href: getEventsPath(city),
+        key: "events",
+        label: "Događaji",
+        priority: 2,
+        value: formatCount(events.length, "događaj", "događaja"),
+        visual: "calendar",
+      }),
+    );
   }
 
   if (isCityPublicFeatureRouteAvailable(city, "goingOut")) {
-    const count = dashboardData?.goingOut
-      ? getAvailableGoingOutEvents(dashboardData.goingOut.events).length
-      : 0;
-    highlights.push({
-      accessibilityLabel: `${formatCount(count, "izlazak", "izlaska", "izlazaka")} u ${city.name}`,
-      href: getGoingOutPath(city),
-      key: "going-out",
-      label: "Izlasci",
-      priority: 3,
-      value: formatCount(count, "izlazak", "izlaska", "izlazaka"),
-      visual: "music",
-    });
+    const events = dashboardData?.goingOut
+      ? getGoingOutPageEvents(dashboardData.goingOut.events)
+      : [];
+    highlights.push(
+      createCountHighlight({
+        available:
+          dashboardData !== null &&
+          isSnapshotSummaryAvailable(dashboardData.goingOut?.state, events.length),
+        city,
+        href: getGoingOutPath(city),
+        key: "going-out",
+        label: "Izlasci",
+        priority: 3,
+        value: formatCount(events.length, "izlazak", "izlaska", "izlazaka"),
+        visual: "music",
+      }),
+    );
   }
 
   if (isCityPublicFeatureRouteAvailable(city, "flights")) {
     const groups = dashboardData?.flights
-      ? getUpcomingPodgoricaFlightGroups(dashboardData.flights.flights, new Date(), 99)
+      ? getUpcomingPodgoricaFlightGroups(dashboardData.flights.flights, new Date(), 5)
       : { arrival: [], departure: [] };
     const count = groups.arrival.length + groups.departure.length;
-    highlights.push({
-      accessibilityLabel: `${formatCount(count, "let", "leta", "letova")} za ${city.name}`,
-      href: getFlightsPath(city),
-      key: "flights",
-      label: "Letovi",
-      priority: 4,
-      value: formatCount(count, "let", "leta", "letova"),
-      visual: "plane",
-    });
+    highlights.push(
+      createCountHighlight({
+        available:
+          dashboardData !== null && isSnapshotSummaryAvailable(dashboardData.flights?.state, count),
+        city,
+        href: getFlightsPath(city),
+        key: "flights",
+        label: "Letovi",
+        priority: 4,
+        value: formatCount(count, "let", "leta", "letova"),
+        visual: "plane",
+      }),
+    );
   }
 
   return {
@@ -140,6 +163,56 @@ function createPlatformCityCardData(
     highlights: highlights.sort((left, right) => left.priority - right.priority).slice(0, 6),
     href: getCityPath(city),
     shortcuts: getCityModuleShortcuts(city),
+  };
+}
+
+function isCityEventsSummaryAvailable(
+  events: Awaited<ReturnType<typeof loadCityDashboardData>>["events"],
+  count: number,
+) {
+  const providers = events.providers.filter((provider) => provider.id !== "cineplexx-podgorica");
+
+  if (isHomepageEventsUnavailable(providers)) return false;
+  if (count > 0) return true;
+
+  return providers.some((provider) => provider.state === "fresh");
+}
+
+function isSnapshotSummaryAvailable(
+  state: "fresh" | "stale" | "unavailable" | undefined,
+  count: number,
+) {
+  return state === "fresh" || (state === "stale" && count > 0);
+}
+
+function createCountHighlight({
+  available,
+  city,
+  href,
+  key,
+  label,
+  priority,
+  value,
+  visual,
+}: {
+  available: boolean;
+  city: City;
+  href: string;
+  key: string;
+  label: string;
+  priority: number;
+  value: string;
+  visual: CityHighlightVisual;
+}): CityHighlight {
+  return {
+    accessibilityLabel: available ? `${value} u ${city.name}` : `${label}: podaci nijesu dostupni`,
+    href,
+    key,
+    label,
+    priority,
+    state: available ? "available" : "unavailable",
+    value: available ? value : "Podaci nijesu dostupni",
+    visual,
   };
 }
 
@@ -187,6 +260,13 @@ function createPlatformHomepageStructuredData(cards: readonly PlatformCityCardDa
   };
 }
 
+function formatCityNames(cards: readonly PlatformCityCardData[]) {
+  const cityNames = cards.map((card) => getCityName(card.city, "accusative"));
+  if (cityNames.length < 2) return cityNames[0] ?? "";
+  if (cityNames.length === 2) return `${cityNames[0]} i ${cityNames[1]}`;
+  return `${cityNames.slice(0, -1).join(", ")} i ${cityNames.at(-1)}`;
+}
+
 function formatCount(count: number, singular: string, paucal: string, plural = paucal) {
   const lastTwo = count % 100;
   const last = count % 10;
@@ -205,6 +285,7 @@ export {
   createPlatformCityCardData,
   createPlatformHomepageStructuredData,
   formatCount,
+  formatCityNames,
   getPlatformCityCards,
   getPlatformHomepageMetadata,
   platformHomepageDescription,

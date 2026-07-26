@@ -7,6 +7,7 @@ import {
   getActiveCityBySlug,
   getCity,
   getCityBySlug,
+  getCityName,
   getMainCity,
   isCityId,
   supportsCityCapability,
@@ -54,6 +55,8 @@ test("resolves active city route slugs and retains inactive city configuration",
   assert.equal(getCityBySlug("budva")?.longitude, 18.8401);
   assert.equal(getCityBySlug("budva")?.timezone, "Europe/Podgorica");
   assert.equal(createCityContext("podgorica").city.timezone, "Europe/Podgorica");
+  assert.equal(getCityName(getCityBySlug("budva")!, "locative"), "Budvi");
+  assert.equal(getCityName(getCityBySlug("podgorica")!, "locative"), "Podgorici");
 });
 
 test("rejects prototype properties as city identifiers", () => {

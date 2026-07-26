@@ -1,8 +1,9 @@
 import { defaultLocale, type Locale } from "./locale.ts";
-import type { City, CityCapability, CityContext, CityId } from "@/shared/types/city";
+import type { City, CityCapability, CityContext, CityId, CityNameForm } from "@/shared/types/city";
 
 const cityRegistry: Record<string, City> = {
   bar: {
+    accusativeName: "Bar",
     capabilities: [],
     country: "Montenegro",
     description: "Informacije za svakodnevni život u Baru.",
@@ -11,11 +12,13 @@ const cityRegistry: Record<string, City> = {
     isMain: false,
     latitude: 42.0937,
     longitude: 19.1005,
+    locativeName: "Baru",
     name: "Bar",
     slug: "bar",
     timezone: "Europe/Podgorica",
   },
   budva: {
+    accusativeName: "Budvu",
     capabilities: ["electricity", "weather", "goingOut"],
     country: "Montenegro",
     description: "Lokalne informacije za Budvu.",
@@ -24,11 +27,13 @@ const cityRegistry: Record<string, City> = {
     isMain: false,
     latitude: 42.2864,
     longitude: 18.8401,
+    locativeName: "Budvi",
     name: "Budva",
     slug: "budva",
     timezone: "Europe/Podgorica",
   },
   niksic: {
+    accusativeName: "Nikšić",
     capabilities: [],
     country: "Montenegro",
     description: "Informacije za svakodnevni život u Nikšiću.",
@@ -37,11 +42,13 @@ const cityRegistry: Record<string, City> = {
     isMain: false,
     latitude: 42.7731,
     longitude: 18.9445,
+    locativeName: "Nikšiću",
     name: "Nikšić",
     slug: "niksic",
     timezone: "Europe/Podgorica",
   },
   podgorica: {
+    accusativeName: "Podgoricu",
     capabilities: ["electricity", "events", "flights", "goingOut", "railway", "water", "weather"],
     country: "Montenegro",
     description: "Vrijeme, događaji, izlasci, prevoz i važne servisne informacije za Podgoricu.",
@@ -50,6 +57,7 @@ const cityRegistry: Record<string, City> = {
     isMain: true,
     latitude: 42.441,
     longitude: 19.263,
+    locativeName: "Podgorici",
     name: "Podgorica",
     slug: "podgorica",
     timezone: "Europe/Podgorica",
@@ -113,7 +121,9 @@ function isActiveCity(city: City) {
   return city.isActive === true;
 }
 
-function getCityName(city: City) {
+function getCityName(city: City, form: CityNameForm = "nominative") {
+  if (form === "locative") return city.locativeName ?? city.name;
+  if (form === "accusative") return city.accusativeName ?? city.name;
   return city.name;
 }
 

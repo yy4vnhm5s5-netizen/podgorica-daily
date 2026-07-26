@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { getDailyOverviewTranslations } from "./daily-overview-translations.ts";
+import { getCity } from "@/shared/config/cities";
 
 test("uses the summary labels and count forms", () => {
   const translations = getDailyOverviewTranslations("me");
@@ -26,4 +27,11 @@ test("uses English singular and plural forms in the retained locale infrastructu
   assert.equal(translations.performancesCount(1), "1 Performance");
   assert.equal(translations.eventsCount(2), "2 Events");
   assert.equal(translations.moviesCount(1), "1 Movie");
+});
+
+test("uses the current city in the summary label", () => {
+  const budva = getCity("budva");
+  assert.ok(budva);
+
+  assert.equal(getDailyOverviewTranslations("me", budva).summaryLabel, "Danas u Budvi");
 });

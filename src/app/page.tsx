@@ -6,6 +6,7 @@ import { getPlatformCityCards, getPlatformHomepageMetadata } from "@/app/platfor
 import { PlatformHomepage } from "@/app/platform-homepage";
 
 export const metadata = getPlatformHomepageMetadata();
+export const revalidate = 0;
 
 async function HomePage() {
   const [cards, city] = await Promise.all([getPlatformCityCards(), Promise.resolve(getMainCity())]);

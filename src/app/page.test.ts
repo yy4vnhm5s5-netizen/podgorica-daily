@@ -8,4 +8,5 @@ test("renders the platform homepage rather than redirecting to the Podgorica das
   assert.match(source, /<PlatformHomepage cards=\{cards\} \/>/u);
   assert.doesNotMatch(source, /permanentRedirect|CityDashboard/u);
   assert.match(source, /homeHref="\/"/u);
+  assert.match(source, /export const revalidate = 0/u);
 });

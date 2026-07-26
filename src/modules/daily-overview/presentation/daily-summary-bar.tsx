@@ -35,7 +35,7 @@ function DailySummaryBar({
   performancesCount,
   weather,
 }: DailySummaryBarProps) {
-  const translations = getDailyOverviewTranslations(locale);
+  const translations = getDailyOverviewTranslations(locale, city);
   const temperatureCelsius = getWeatherTemperature(weather);
   const itemIds = getDailySummaryItemIds(availability);
 

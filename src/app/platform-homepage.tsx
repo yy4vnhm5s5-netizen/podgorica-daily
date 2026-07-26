@@ -1,9 +1,11 @@
 import { ArrowRight, CalendarDays, CloudSun, Music2, Plane } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import type { ReactNode } from "react";
 
 import {
   createPlatformHomepageStructuredData,
+  formatCityNames,
   type CityHighlightVisual,
   type PlatformCityCardData,
 } from "@/app/platform-homepage-data";
@@ -23,7 +25,7 @@ const highlightIcons = {
 
 function PlatformHomepage({ cards }: PlatformHomepageProps) {
   const structuredData = createPlatformHomepageStructuredData(cards);
-  const cityNames = cards.map((card) => card.city.name).join(", ");
+  const cityNames = formatCityNames(cards);
 
   return (
     <div className="space-y-14 sm:space-y-20">
@@ -116,7 +118,7 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
             okuplja provjerene svakodnevne informacije, uz vidljive izvore i status podataka.
           </FaqItem>
           <FaqItem question="Koje gradove Gradom.me trenutno podržava?">
-            Trenutno je javno dostupna Podgorica. Novi gradovi će biti dodati tek kada imaju
+            Gradom.me trenutno podržava {cityNames}. Novi gradovi će biti dodati tek kada imaju
             dovoljno pouzdanih lokalnih izvora i korisnih usluga.
           </FaqItem>
           <FaqItem question="Odakle dolaze podaci?">
@@ -148,7 +150,6 @@ function CityCard({ card }: { card: PlatformCityCardData }) {
       </Link>
       <div className="pointer-events-none relative z-20 space-y-6">
         <div className="space-y-2">
-          <p className="text-sm font-medium text-primary">Crna Gora</p>
           <h3 className="text-2xl font-semibold tracking-tight text-slate-950">{card.city.name}</h3>
           <p className="max-w-xl leading-6 text-muted-foreground">
             {card.city.description ?? `Lokalne informacije za grad ${card.city.name}.`}
@@ -166,7 +167,9 @@ function CityCard({ card }: { card: PlatformCityCardData }) {
                   <span className="block text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     {highlight.label}
                   </span>
-                  <span className="mt-0.5 block truncate font-medium text-slate-900">
+                  <span
+                    className={`mt-0.5 block font-medium text-slate-900 ${highlight.state === "unavailable" ? "text-sm text-muted-foreground" : "truncate"}`}
+                  >
                     {highlight.value}
                   </span>
                 </span>
@@ -209,7 +212,7 @@ function CityCard({ card }: { card: PlatformCityCardData }) {
   );
 }
 
-function FaqItem({ children, question }: { children: string; question: string }) {
+function FaqItem({ children, question }: { children: ReactNode; question: string }) {
   return (
     <details className="group px-5 py-4 sm:px-6">
       <summary className="cursor-pointer list-none pr-8 font-medium text-slate-950 marker:content-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">

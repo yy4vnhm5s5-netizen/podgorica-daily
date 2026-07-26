@@ -11,6 +11,7 @@ import {
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { NewTabNotice } from "@/shared/components/new-tab-notice";
 import { SectionTitle } from "@/shared/components/section-title";
+import { getCityName } from "@/shared/config/cities";
 import type { Locale } from "@/shared/config/locale";
 import type { City } from "@/shared/types/city";
 
@@ -23,6 +24,7 @@ interface GoingOutPageProps {
 
 function GoingOutPage({ city, events, locale, state }: GoingOutPageProps) {
   const copy = locale === "me" ? montenegrinCopy : englishCopy;
+  const cityName = getCityName(city, locale === "me" ? "locative" : "nominative");
   const upcoming = getGoingOutPageEvents(events);
   const displayState = getGoingOutDisplayState({ eventCount: upcoming.length, state });
 
@@ -32,10 +34,10 @@ function GoingOutPage({ city, events, locale, state }: GoingOutPageProps) {
         <SectionTitle
           as="h1"
           id="going-out-page-heading"
-          title={copy.title.replace("{city}", city.name)}
+          title={copy.title.replace("{city}", cityName)}
         />
         <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-          {copy.description.replace("{city}", city.name)}
+          {copy.description.replace("{city}", cityName)}
         </p>
       </div>
       {displayState === "events" || displayState === "stale" ? (

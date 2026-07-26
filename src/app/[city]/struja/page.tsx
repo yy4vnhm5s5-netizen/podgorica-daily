@@ -6,6 +6,7 @@ import { createPublicRouteMetadata } from "@/app/public-route-metadata";
 import { getPowerOutages } from "@/modules/city-alerts/application/get-power-outages";
 import { PowerOutagesPage } from "@/modules/city-alerts/presentation/power-outages-page";
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
+import { getCityName } from "@/shared/config/cities";
 import { getElectricityPath } from "@/shared/config/public-routes";
 import { getPageTitle } from "@/shared/config/site";
 import { getTranslations } from "@/shared/lib/translations";
@@ -18,8 +19,9 @@ async function generateMetadata({ params }: ElectricityPageProps): Promise<Metad
   const { city: slug } = await params;
   const context = resolveActiveCityFeatureRoute(slug, "electricity");
   if (!context) return {};
-  const title = `Planirana isključenja struje u ${context.city.name}`;
-  const description = `Aktuelna i najavljena planirana isključenja struje u ${context.city.name} iz zvaničnih servisnih informacija.`;
+  const cityName = getCityName(context.city, "locative");
+  const title = `Planirana isključenja struje u ${cityName}`;
+  const description = `Aktuelna i najavljena planirana isključenja struje u ${cityName} iz zvaničnih servisnih informacija.`;
 
   return createPublicRouteMetadata({
     canonical: getElectricityPath(context.city),
@@ -40,7 +42,7 @@ async function ElectricityPage({ params }: ElectricityPageProps) {
 
   return (
     <DashboardLayout city={context.city} translations={translations}>
-      <PowerOutagesPage locale={locale} result={result} />
+      <PowerOutagesPage city={context.city} locale={locale} result={result} />
     </DashboardLayout>
   );
 }
