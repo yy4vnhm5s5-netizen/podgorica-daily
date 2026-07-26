@@ -9,19 +9,12 @@ import type { City } from "@/shared/types/city";
 import type { Translations } from "@/shared/lib/translations";
 
 interface DashboardLayoutProps extends PropsWithChildren {
-  brandVariant?: "default" | "platform";
   city: City;
   homeHref?: string;
   translations: Translations;
 }
 
-function DashboardLayout({
-  brandVariant,
-  children,
-  city,
-  homeHref,
-  translations,
-}: DashboardLayoutProps) {
+function DashboardLayout({ children, city, homeHref, translations }: DashboardLayoutProps) {
   const isCityScoped = homeHref === undefined;
 
   return (
@@ -32,12 +25,7 @@ function DashboardLayout({
       >
         {translations.shell.skipToContent}
       </a>
-      <AppHeader
-        brandVariant={brandVariant}
-        city={city}
-        homeHref={homeHref}
-        translations={translations}
-      />
+      <AppHeader city={city} homeHref={homeHref} translations={translations} />
       <main id="main-content">
         <ResponsiveContainer className="py-6 sm:py-10">
           {isCityScoped ? (
