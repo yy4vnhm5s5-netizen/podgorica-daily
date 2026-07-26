@@ -13,6 +13,10 @@ import {
   getActiveCityAlerts,
   type CityAlertsMetadata,
 } from "@/modules/city-alerts/application/get-active-city-alerts";
+import {
+  getCityAlertServiceIds,
+  type CityAlertServiceId,
+} from "@/modules/city-alerts/application/city-alert-service-capabilities";
 import { getHomepagePowerOutageLocations } from "@/modules/city-alerts/application/power-outage-selection";
 import { selectNextPowerOutage } from "@/modules/city-alerts/application/select-next-power-outage";
 import type { AlertSeverity, AlertType, CityAlert } from "@/modules/city-alerts/domain/city-alert";
@@ -93,7 +97,8 @@ async function CityAlertsSection({ context, locale }: CityAlertsSectionProps) {
   const result = await getActiveCityAlerts(context);
   const translations = getCityAlertsTranslations(locale, context.city);
   const metadata: CityAlertsMetadata = "metadata" in result ? result.metadata : { sources: [] };
-  const services = getCityServices(result, context, locale, translations, metadata);
+  const serviceIds = getCityAlertServiceIds(context.city);
+  const services = getCityServices(result, context, locale, translations, metadata, serviceIds);
   const otherAlerts =
     result.status === "success"
       ? result.data.filter(({ type }) => type !== "powerOutage" && type !== "waterOutage")
@@ -104,6 +109,7 @@ async function CityAlertsSection({ context, locale }: CityAlertsSectionProps) {
       <SectionTitle id="city-alerts-heading" title={translations.cityServices} />
       <CityServicesPanel
         locale={locale}
+        serviceIds={serviceIds}
         services={services}
         translations={{ ...translations, label: translations.cityServices }}
       />
@@ -133,7 +139,8 @@ function getCityServices(
   locale: Locale,
   translations: CityAlertsTranslations,
   metadata: CityAlertsMetadata,
-): Record<"power" | "water", CityServiceInfo> {
+  serviceIds: readonly CityAlertServiceId[],
+): Partial<Record<CityAlertServiceId, CityServiceInfo>> {
   const alerts = result.status === "success" ? result.data : [];
   const powerAlert = selectNextPowerOutage(alerts);
   const waterAlert = alerts.find(({ type }) => type === "waterOutage");
@@ -141,16 +148,24 @@ function getCityServices(
   const vikpgSource = metadata.sources.find(({ id }) => id === "vikpg");
 
   return {
-    power: powerAlert
-      ? toCityServiceInfo(powerAlert, context, cedisSource, locale, translations)
-      : {
-          ...toEmptyCityServiceInfo(cedisSource, locale, translations),
-          detailsHref: getElectricityPath(context.city),
-          detailsLabel: getPowerOutageDetailsLabel(locale),
-        },
-    water: waterAlert
-      ? toCityServiceInfo(waterAlert, context, vikpgSource, locale, translations)
-      : toEmptyCityServiceInfo(vikpgSource, locale, translations),
+    ...(serviceIds.includes("power")
+      ? {
+          power: powerAlert
+            ? toCityServiceInfo(powerAlert, context, cedisSource, locale, translations)
+            : {
+                ...toEmptyCityServiceInfo(cedisSource, locale, translations),
+                detailsHref: getElectricityPath(context.city),
+                detailsLabel: getPowerOutageDetailsLabel(locale),
+              },
+        }
+      : {}),
+    ...(serviceIds.includes("water")
+      ? {
+          water: waterAlert
+            ? toCityServiceInfo(waterAlert, context, vikpgSource, locale, translations)
+            : toEmptyCityServiceInfo(vikpgSource, locale, translations),
+        }
+      : {}),
   };
 }
 

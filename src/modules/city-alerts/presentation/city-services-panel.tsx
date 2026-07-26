@@ -4,13 +4,13 @@ import { Droplets, Zap } from "lucide-react";
 import { useId, useState, type KeyboardEvent } from "react";
 
 import { formatCompactPowerOutageLocations } from "@/modules/city-alerts/presentation/power-outages-ui-model";
+import type { CityAlertServiceId } from "@/modules/city-alerts/application/city-alert-service-capabilities";
 import { StatusBadge } from "@/shared/components/status-badge";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import type { Locale } from "@/shared/config/locale";
 import { getRovingTabIndex } from "@/shared/lib/roving-tab-index";
 import { cn } from "@/shared/lib/utils";
 
-type CityServiceId = "power" | "water";
 type CityServiceState = "available" | "none" | "unavailable";
 
 interface CityServiceInfo {
@@ -49,26 +49,36 @@ interface CityServicesTranslations {
 
 interface CityServicesPanelProps {
   locale: Locale;
-  services: Record<CityServiceId, CityServiceInfo>;
+  serviceIds: readonly CityAlertServiceId[];
+  services: Partial<Record<CityAlertServiceId, CityServiceInfo>>;
   translations: CityServicesTranslations;
 }
 
 const serviceIcons = { power: Zap, water: Droplets };
-const serviceIds: readonly CityServiceId[] = ["power", "water"];
 
-function CityServicesPanel({ locale, services, translations }: CityServicesPanelProps) {
-  const [selectedService, setSelectedService] = useState<CityServiceId>("power");
+function CityServicesPanel({ locale, serviceIds, services, translations }: CityServicesPanelProps) {
+  const [selectedService, setSelectedService] = useState<CityAlertServiceId>(
+    serviceIds[0] ?? "power",
+  );
   const panelId = useId();
-  const service = services[selectedService];
-  const Icon = serviceIcons[selectedService];
+  const activeServiceId = serviceIds.includes(selectedService) ? selectedService : serviceIds[0];
+  if (!activeServiceId) return null;
+
+  const service = services[activeServiceId];
+  if (!service) return null;
+
+  const Icon = serviceIcons[activeServiceId];
   const labels = { power: translations.power, water: translations.water };
 
-  function selectService(serviceId: CityServiceId) {
+  function selectService(serviceId: CityAlertServiceId) {
     setSelectedService(serviceId);
     document.getElementById(`${panelId}-${serviceId}`)?.focus();
   }
 
-  function handleTabKeyDown(event: KeyboardEvent<HTMLButtonElement>, serviceId: CityServiceId) {
+  function handleTabKeyDown(
+    event: KeyboardEvent<HTMLButtonElement>,
+    serviceId: CityAlertServiceId,
+  ) {
     const index = serviceIds.indexOf(serviceId);
     const nextService = serviceIds[(index + 1) % serviceIds.length];
     const previousService = serviceIds[(index - 1 + serviceIds.length) % serviceIds.length];
@@ -103,7 +113,7 @@ function CityServicesPanel({ locale, services, translations }: CityServicesPanel
       >
         {serviceIds.map((serviceId) => {
           const TabIcon = serviceIcons[serviceId];
-          const isSelected = selectedService === serviceId;
+          const isSelected = activeServiceId === serviceId;
 
           return (
             <button
@@ -139,7 +149,7 @@ function CityServicesPanel({ locale, services, translations }: CityServicesPanel
         })}
       </div>
       <CardContent
-        aria-labelledby={`${panelId}-${selectedService}`}
+        aria-labelledby={`${panelId}-${activeServiceId}`}
         className="p-4 sm:p-5"
         id={panelId}
         role="tabpanel"
@@ -148,7 +158,7 @@ function CityServicesPanel({ locale, services, translations }: CityServicesPanel
           <div
             className={cn(
               "flex size-9 shrink-0 items-center justify-center rounded-xl",
-              selectedService === "power"
+              activeServiceId === "power"
                 ? "bg-amber-100/80 text-amber-800"
                 : "bg-blue-100/80 text-blue-800",
             )}
@@ -159,7 +169,7 @@ function CityServicesPanel({ locale, services, translations }: CityServicesPanel
             {service.state === "none" ? (
               <div>
                 <p className="pt-1 text-sm font-semibold text-foreground">
-                  {selectedService === "power"
+                  {activeServiceId === "power"
                     ? translations.noPowerOutages
                     : translations.noWaterInterruptions}
                 </p>
@@ -263,7 +273,7 @@ function ServiceDetail({ label, value }: { label: string; value: string }) {
 
 export {
   CityServicesPanel,
-  type CityServiceId,
+  type CityAlertServiceId as CityServiceId,
   type CityServiceInfo,
   type CityServicesTranslations,
 };

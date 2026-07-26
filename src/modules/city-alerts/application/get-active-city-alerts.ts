@@ -1,5 +1,6 @@
 import { getDefaultCityContext } from "@/config/city-context";
 import { getCityAlertProviderData } from "@/config/providers";
+import { getCityAlertServiceIds } from "@/modules/city-alerts/application/city-alert-service-capabilities";
 import type { CityAlert } from "@/modules/city-alerts/domain/city-alert";
 import type { CityContext } from "@/shared/types/city";
 
@@ -41,22 +42,34 @@ async function getActiveCityAlerts(
 ): Promise<CityAlertsResult> {
   try {
     const [cedis, vikpg] = await getCityAlertProviderData(context);
+    const serviceIds = getCityAlertServiceIds(context.city);
     const sources: CityAlertsSourceMetadata[] = [
-      {
-        freshnessStatus: cedis.freshnessStatus,
-        id: "cedis",
-        lastSuccessfulUpdate: cedis.lastSuccessfulUpdate,
-        providerMode: cedis.mode,
-      },
-      {
-        freshnessStatus: vikpg.freshnessStatus,
-        id: "vikpg",
-        lastSuccessfulUpdate: vikpg.lastSuccessfulUpdate,
-        providerMode: vikpg.mode,
-      },
+      ...(serviceIds.includes("power")
+        ? [
+            {
+              freshnessStatus: cedis.freshnessStatus,
+              id: "cedis" as const,
+              lastSuccessfulUpdate: cedis.lastSuccessfulUpdate,
+              providerMode: cedis.mode,
+            },
+          ]
+        : []),
+      ...(serviceIds.includes("water")
+        ? [
+            {
+              freshnessStatus: vikpg.freshnessStatus,
+              id: "vikpg" as const,
+              lastSuccessfulUpdate: vikpg.lastSuccessfulUpdate,
+              providerMode: vikpg.mode,
+            },
+          ]
+        : []),
     ];
     const metadata = { sources };
-    const sourceAlerts = [...cedis.alerts, ...vikpg.alerts];
+    const sourceAlerts = [
+      ...(serviceIds.includes("power") ? cedis.alerts : []),
+      ...(serviceIds.includes("water") ? vikpg.alerts : []),
+    ];
     const activeAlerts = sourceAlerts.filter(
       ({ status }) => status === "active" || status === "scheduled",
     );
