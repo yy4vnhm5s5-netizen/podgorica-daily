@@ -17,4 +17,6 @@ test("renders the continuation only for a valid stored city and uses the correct
   assert.match(source, /if \(cards\.length < 2 \|\| !cityId\) return null/u);
   assert.match(source, /Nastavite gdje ste stali/u);
   assert.doesNotMatch(source, /Nastavi gdje ste stali/u);
+  assert.match(source, /flex flex-wrap items-center justify-between/u);
+  assert.match(source, /px-4 py-2\.5/u);
 });

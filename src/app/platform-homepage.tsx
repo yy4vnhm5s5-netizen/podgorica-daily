@@ -23,11 +23,18 @@ const highlightIcons = {
   plane: Plane,
 } satisfies Record<CityHighlightVisual, typeof CalendarDays>;
 
-const highlightStyles = {
-  calendar: "border-indigo-100 bg-indigo-50 text-indigo-700",
-  cloud: "border-sky-100 bg-sky-50 text-sky-700",
-  music: "border-fuchsia-100 bg-fuchsia-50 text-fuchsia-700",
-  plane: "border-blue-100 bg-blue-50 text-blue-700",
+const highlightSurfaceStyles = {
+  calendar: "border-indigo-100 bg-indigo-50/75 hover:bg-indigo-50",
+  cloud: "border-sky-100 bg-sky-50/80 hover:bg-sky-50",
+  music: "border-fuchsia-100 bg-fuchsia-50/75 hover:bg-fuchsia-50",
+  plane: "border-blue-100 bg-blue-50/80 hover:bg-blue-50",
+} satisfies Record<CityHighlightVisual, string>;
+
+const highlightIconStyles = {
+  calendar: "bg-white/75 text-indigo-700",
+  cloud: "bg-white/75 text-sky-700",
+  music: "bg-white/75 text-fuchsia-700",
+  plane: "bg-white/75 text-blue-700",
 } satisfies Record<CityHighlightVisual, string>;
 
 const shortcutIcons = {
@@ -56,7 +63,7 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
       />
       <section
         aria-labelledby="platform-homepage-title"
-        className="card-fog card-fog--info overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-r from-white via-blue-50/75 to-sky-100/65 px-5 py-5 shadow-sm shadow-blue-950/[0.04] sm:px-7 sm:py-6"
+        className="card-fog card-fog--info overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-r from-white via-blue-50/75 to-sky-100/65 px-5 py-4 shadow-sm shadow-blue-950/[0.04] sm:px-7 sm:py-5"
       >
         <PlatformWordmark />
         <div className="mt-4 max-w-3xl space-y-2">
@@ -97,7 +104,7 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
         aria-labelledby="how-it-works-heading"
         className="grid gap-3 lg:grid-cols-[1.25fr_0.75fr]"
       >
-        <div className="rounded-xl border border-border bg-background px-4 py-4 sm:px-5">
+        <div className="rounded-xl border border-border bg-background px-4 py-3 sm:px-5 sm:py-3.5">
           <p className="text-xs font-medium uppercase tracking-wide text-primary">
             Lokalno, po gradu
           </p>
@@ -113,7 +120,7 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
           </p>
         </div>
         <aside
-          className="card-fog card-fog--neutral rounded-xl border border-amber-100 bg-amber-50/55 px-4 py-4 sm:px-5"
+          className="card-fog card-fog--neutral rounded-xl border border-amber-100 bg-amber-50/55 px-4 py-3 sm:px-5 sm:py-3.5"
           aria-label="Kako Gradom.me radi"
         >
           <h3 className="font-semibold text-slate-950">Podaci sa jasnim ograničenjima</h3>
@@ -193,7 +200,7 @@ function CityCard({ card }: { card: PlatformCityCardData }) {
               const content = (
                 <>
                   <span
-                    className={`flex size-8 shrink-0 items-center justify-center rounded-lg border ${highlightStyles[highlight.visual]}`}
+                    className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${highlightIconStyles[highlight.visual]}`}
                   >
                     <Icon aria-hidden="true" className="size-4" />
                   </span>
@@ -214,7 +221,7 @@ function CityCard({ card }: { card: PlatformCityCardData }) {
                 <li key={highlight.key}>
                   <Link
                     aria-label={highlight.accessibilityLabel}
-                    className="pointer-events-auto flex min-h-[4.5rem] min-w-0 items-center gap-2 rounded-xl border border-transparent bg-white/70 px-2.5 py-2 transition-colors hover:border-blue-100 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    className={`pointer-events-auto flex min-h-[4.5rem] min-w-0 items-center gap-2 rounded-xl border px-2.5 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${highlightSurfaceStyles[highlight.visual]}`}
                     href={highlight.href}
                   >
                     {content}
@@ -222,7 +229,7 @@ function CityCard({ card }: { card: PlatformCityCardData }) {
                 </li>
               ) : (
                 <li
-                  className="flex min-h-[4.5rem] min-w-0 items-center gap-2 rounded-xl bg-white/55 px-2.5 py-2"
+                  className={`flex min-h-[4.5rem] min-w-0 items-center gap-2 rounded-xl border px-2.5 py-2 ${highlightSurfaceStyles[highlight.visual]}`}
                   key={highlight.key}
                 >
                   {content}

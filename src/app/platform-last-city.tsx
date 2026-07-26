@@ -37,12 +37,12 @@ function LastCityContinuation({ cards }: { cards: readonly PlatformCityCardData[
 
   return (
     <aside
-      className="rounded-2xl border border-blue-100 bg-blue-50/60 p-4"
+      className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 rounded-xl border border-blue-100 bg-blue-50/60 px-4 py-2.5"
       aria-label="Nastavite gdje ste stali"
     >
       <p className="text-sm font-medium text-muted-foreground">Nastavite gdje ste stali</p>
       <Link
-        className="mt-1 inline-flex rounded-md font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className="inline-flex rounded-md text-sm font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         href={card.href}
       >
         {card.city.name}

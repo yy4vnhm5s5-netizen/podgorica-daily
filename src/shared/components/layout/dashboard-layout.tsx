@@ -1,10 +1,12 @@
 import type { PropsWithChildren } from "react";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
 import { AppFooter } from "@/shared/components/layout/app-footer";
 import { AppHeader } from "@/shared/components/layout/app-header";
 import { MobileNavigation } from "@/shared/components/layout/mobile-navigation";
 import { ResponsiveContainer } from "@/shared/components/layout/responsive-container";
+import { Button } from "@/shared/components/ui/button";
 import type { City } from "@/shared/types/city";
 import type { Translations } from "@/shared/lib/translations";
 
@@ -29,12 +31,12 @@ function DashboardLayout({ children, city, homeHref, translations }: DashboardLa
       <main id="main-content">
         <ResponsiveContainer className="py-6 sm:py-10">
           {isCityScoped ? (
-            <Link
-              className="mb-6 inline-flex rounded-md text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              href="/"
-            >
-              Povratak na izbor gradova
-            </Link>
+            <Button asChild className="mb-6 rounded-lg" size="sm" variant="outline">
+              <Link href="/">
+                <ArrowLeft aria-hidden="true" className="size-4" />
+                Povratak na izbor gradova
+              </Link>
+            </Button>
           ) : null}
           {children}
         </ResponsiveContainer>
