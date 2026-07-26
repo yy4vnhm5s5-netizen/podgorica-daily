@@ -4,13 +4,14 @@ import type { Translations } from "@/shared/lib/translations";
 
 interface MobileNavigationProps {
   city: City;
+  homeHref?: string;
   translations: Translations;
 }
 
-function MobileNavigation({ city, translations }: MobileNavigationProps) {
+function MobileNavigation({ city, homeHref, translations }: MobileNavigationProps) {
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 px-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 backdrop-blur md:hidden">
-      <Navigation city={city} mobile translations={translations} />
+      <Navigation city={city} homeHref={homeHref} mobile translations={translations} />
     </div>
   );
 }

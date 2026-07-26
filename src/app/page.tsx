@@ -1,9 +1,20 @@
-import { permanentRedirect } from "next/navigation";
+import { getMainCity } from "@/shared/config/cities";
+import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
+import { getTranslations } from "@/shared/lib/translations";
 
-import { getCanonicalMainCityPath } from "@/app/root-redirect";
+import { getPlatformCityCards, getPlatformHomepageMetadata } from "@/app/platform-homepage-data";
+import { PlatformHomepage } from "@/app/platform-homepage";
 
-function HomePage() {
-  permanentRedirect(getCanonicalMainCityPath());
+export const metadata = getPlatformHomepageMetadata();
+
+async function HomePage() {
+  const [cards, city] = await Promise.all([getPlatformCityCards(), Promise.resolve(getMainCity())]);
+
+  return (
+    <DashboardLayout city={city} homeHref="/" translations={getTranslations("me")}>
+      <PlatformHomepage cards={cards} />
+    </DashboardLayout>
+  );
 }
 
 export default HomePage;

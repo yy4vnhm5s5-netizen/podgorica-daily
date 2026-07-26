@@ -9,15 +9,25 @@ import {
   assertMonteGigsUrl,
   createMonteGigsHttpClient,
   getCachedMonteGigsGoingOut,
-  parseMonteGigsPodgoricaEvents,
+  getGoingOutCachePath,
+  getMonteGigsCitySource,
+  parseMonteGigsEvents,
   refreshMonteGigsGoingOut,
 } from "./montegigs-going-out.ts";
+import { createCityContext } from "@/shared/config/cities";
 
-const fixturePath = join(import.meta.dirname, "__fixtures__", "montegigs-podgorica-listing.html");
+const podgoricaFixturePath = join(
+  import.meta.dirname,
+  "__fixtures__",
+  "montegigs-podgorica-listing.html",
+);
+const budvaFixturePath = join(import.meta.dirname, "__fixtures__", "montegigs-budva-listing.html");
+const podgorica = createCityContext("podgorica");
+const budva = createCityContext("budva");
 
 test("parses only Podgorica events from the official-style listing fixture", async () => {
-  const html = await readFile(fixturePath, "utf8");
-  const parsed = parseMonteGigsPodgoricaEvents(html, new Date("2026-07-22T10:00:00.000Z"));
+  const html = await readFile(podgoricaFixturePath, "utf8");
+  const parsed = parseMonteGigsEvents(html, podgorica, new Date("2026-07-22T10:00:00.000Z"));
 
   assert.equal(parsed.recognized, true);
   assert.equal(parsed.records, 2);
@@ -35,18 +45,54 @@ test("parses only Podgorica events from the official-style listing fixture", asy
   );
   assert.equal(parsed.events[1]?.startsAt, "2026-08-25T20:30:00.000Z");
   assert.equal(parsed.events[0]?.imageUrl, "https://staging.montegigs.me/images/summer-jam.jpg");
+  assert.deepEqual(
+    parsed.events.map((event) => event.city),
+    ["podgorica", "podgorica"],
+  );
+});
+
+test("parses Budva events with the correct city assignment and preserves date-only records", async () => {
+  const html = await readFile(budvaFixturePath, "utf8");
+  const parsed = parseMonteGigsEvents(html, budva, new Date("2026-07-22T10:00:00.000Z"));
+
+  assert.equal(parsed.recognized, true);
+  assert.equal(parsed.records, 2);
+  assert.deepEqual(
+    parsed.events.map(({ city, startDate, startsAt, title }) => ({
+      city,
+      startDate,
+      startsAt,
+      title,
+    })),
+    [
+      {
+        city: "budva",
+        startDate: "2026-08-12",
+        startsAt: "2026-08-12T18:00:00.000Z",
+        title: "Budva Sunset Session",
+      },
+      {
+        city: "budva",
+        startDate: "2026-08-13",
+        startsAt: undefined,
+        title: "Acoustic on the Coast",
+      },
+    ],
+  );
 });
 
 test("retains a valid cache when the listing no longer exposes event links", async () => {
   const cachePath = join(await mkdtemp(join(tmpdir(), "gradom-going-out-")), "going-out.json");
-  const validHtml = await readFile(fixturePath, "utf8");
+  const validHtml = await readFile(podgoricaFixturePath, "utf8");
   const first = await refreshMonteGigsGoingOut({
     cachePath,
+    context: podgorica,
     httpClient: { get: async () => response(validHtml) },
     now: new Date("2026-07-22T10:00:00.000Z"),
   });
   const retained = await refreshMonteGigsGoingOut({
     cachePath,
+    context: podgorica,
     httpClient: { get: async () => response("<html><main><p>Maintenance</p></main></html>") },
     now: new Date("2026-07-22T11:00:00.000Z"),
   });
@@ -62,14 +108,19 @@ test("reads the atomically written cache without a live request", async () => {
     await mkdtemp(join(tmpdir(), "gradom-going-out-cache-")),
     "going-out.json",
   );
-  const html = await readFile(fixturePath, "utf8");
+  const html = await readFile(podgoricaFixturePath, "utf8");
   await refreshMonteGigsGoingOut({
     cachePath,
+    context: podgorica,
     httpClient: { get: async () => response(html) },
     now: new Date("2026-07-22T10:00:00.000Z"),
   });
 
-  const cached = await getCachedMonteGigsGoingOut(cachePath, new Date("2026-07-22T14:01:00.000Z"));
+  const cached = await getCachedMonteGigsGoingOut({
+    cachePath,
+    context: podgorica,
+    now: new Date("2026-07-22T14:01:00.000Z"),
+  });
   assert.equal(cached.state, "stale");
   assert.equal(cached.events.length, 2);
 });
@@ -77,6 +128,74 @@ test("reads the atomically written cache without a live request", async () => {
 test("allows only the configured MonteGigs listing host", () => {
   assert.doesNotThrow(() => assertMonteGigsUrl("https://staging.montegigs.me/me/events/podgorica"));
   assert.throws(() => assertMonteGigsUrl("https://example.test/me/events/podgorica"));
+});
+
+test("uses explicit city sources and independent city cache paths", () => {
+  assert.equal(
+    getMonteGigsCitySource("podgorica")?.listingUrl,
+    "https://staging.montegigs.me/me/events/podgorica",
+  );
+  assert.equal(
+    getMonteGigsCitySource("budva")?.listingUrl,
+    "https://staging.montegigs.me/me/events/budva",
+  );
+  assert.equal(getMonteGigsCitySource("bar"), undefined);
+  assert.notEqual(getGoingOutCachePath("podgorica"), getGoingOutCachePath("budva"));
+});
+
+test("keeps Budva and Podgorica snapshots isolated through independent retention and freshness", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "gradom-going-out-cities-"));
+  const podgoricaCachePath = join(directory, "podgorica.json");
+  const budvaCachePath = join(directory, "budva.json");
+  const podgoricaHtml = await readFile(podgoricaFixturePath, "utf8");
+  const budvaHtml = await readFile(budvaFixturePath, "utf8");
+
+  await refreshMonteGigsGoingOut({
+    cachePath: podgoricaCachePath,
+    context: podgorica,
+    httpClient: { get: async () => response(podgoricaHtml) },
+    now: new Date("2026-07-22T10:00:00.000Z"),
+  });
+  await refreshMonteGigsGoingOut({
+    cachePath: budvaCachePath,
+    context: budva,
+    httpClient: { get: async () => response(budvaHtml, "budva") },
+    now: new Date("2026-07-22T12:00:00.000Z"),
+  });
+
+  const retainedPodgorica = await refreshMonteGigsGoingOut({
+    cachePath: podgoricaCachePath,
+    context: podgorica,
+    httpClient: { get: async () => response("<html><main>Maintenance</main></html>") },
+    now: new Date("2026-07-22T13:00:00.000Z"),
+  });
+  const cachedBudva = await getCachedMonteGigsGoingOut({
+    cachePath: budvaCachePath,
+    context: budva,
+    now: new Date("2026-07-22T13:00:00.000Z"),
+  });
+  const cachedPodgorica = await getCachedMonteGigsGoingOut({
+    cachePath: podgoricaCachePath,
+    context: podgorica,
+    now: new Date("2026-07-22T15:00:00.000Z"),
+  });
+
+  assert.equal(retainedPodgorica.retainedPreviousSnapshot, true);
+  assert.deepEqual(
+    cachedBudva.events.map((event) => event.city),
+    ["budva", "budva"],
+  );
+  assert.equal(cachedBudva.state, "fresh");
+  assert.equal(cachedPodgorica.state, "stale");
+});
+
+test("rejects unsupported city contexts without reading or writing a snapshot", async () => {
+  const unsupported = { ...budva, city: { ...budva.city, id: "bar", slug: "bar" } };
+  const result = await refreshMonteGigsGoingOut({ context: unsupported });
+
+  assert.equal(result.success, false);
+  assert.equal(result.errorCode, "montegigs-city-unsupported");
+  assert.equal(result.snapshot, null);
 });
 
 test("retries a transient MonteGigs response through the injected client", async () => {
@@ -106,12 +225,12 @@ test("retries a transient MonteGigs response through the injected client", async
   assert.equal(value.status, 200);
 });
 
-function response(body: string) {
+function response(body: string, city: "budva" | "podgorica" = "podgorica") {
   return {
     body,
     contentType: "text/html",
-    finalUrl: "https://staging.montegigs.me/me/events/podgorica",
-    requestedUrl: "https://staging.montegigs.me/me/events/podgorica",
+    finalUrl: `https://staging.montegigs.me/me/events/${city}`,
+    requestedUrl: `https://staging.montegigs.me/me/events/${city}`,
     status: 200,
   };
 }

@@ -1,12 +1,38 @@
 import { createHash } from "node:crypto";
 
 import type { CityAlert } from "@/modules/city-alerts/domain/city-alert";
+import type { CityContext, CityId } from "@/shared/types/city";
+import { getCedisCityId, getCedisMunicipality, type CedisSupportedCityId } from "./cedis-cities.ts";
 
 const cedisOrigin = "https://cedis.me";
-const municipalityNames =
-  "Podgorica|Nikšić|Danilovgrad|Cetinje|Kolašin|Herceg Novi|Bar|Budva|Kotor|Tivat|Ulcinj|Pljevlja|Bijelo Polje|Berane|Rožaje|Plav|Gusinje|Mojkovac|Šavnik|Žabljak|Tuzi|Zeta";
+const municipalityNames = [
+  "Podgorica",
+  "Glavni grad Podgorica",
+  "Nikšić",
+  "Danilovgrad",
+  "Cetinje",
+  "Kolašin",
+  "Herceg Novi",
+  "Bar",
+  "Budva",
+  "Opština Budva",
+  "Kotor",
+  "Tivat",
+  "Ulcinj",
+  "Pljevlja",
+  "Bijelo Polje",
+  "Berane",
+  "Rožaje",
+  "Plav",
+  "Gusinje",
+  "Mojkovac",
+  "Šavnik",
+  "Žabljak",
+  "Tuzi",
+  "Zeta",
+] as const;
 const municipalityPattern = new RegExp(
-  `\\b(${municipalityNames})\\s*(?:[-–—:]\\s*|(?=\\n|$))`,
+  `(?:^|\\n)\\s*(?:${municipalityNames.map(escapeRegularExpression).join("|")})\\s*(?:[-–—:]\\s*|(?=\\n|$))`,
   "gi",
 );
 const monthNumbers: Record<string, number> = {
@@ -46,13 +72,25 @@ interface CedisArticleParseResult {
   alerts: CityAlert[];
   contentSelector?: string;
   contentRecognized: boolean;
+  extractionState:
+    | "ambiguous-section-boundaries"
+    | "article-content-unrecognized"
+    | "municipality-section-empty"
+    | "municipality-section-found"
+    | "municipality-section-not-found"
+    | "publication-date-unrecognized"
+    | "unsupported-city";
+  municipalityHeadingFound: boolean;
+  /** @deprecated use municipalityHeadingFound */
   podgoricaHeadingFound: boolean;
   warnings: string[];
   zeroRecordsReason?:
     | "article-content-unrecognized"
-    | "no-parseable-podgorica-records"
-    | "podgorica-heading-not-found"
-    | "publication-date-unrecognized";
+    | "ambiguous-section-boundaries"
+    | "municipality-section-not-found"
+    | "no-parseable-municipality-records"
+    | "publication-date-unrecognized"
+    | "unsupported-city";
 }
 
 function discoverCedisArticles(html: string, now = new Date()): CedisArticleLink[] {
@@ -67,20 +105,42 @@ function discoverCedisArticles(html: string, now = new Date()): CedisArticleLink
   });
 }
 
-function parseCedisArticle(article: CedisArticleLink, html: string, now = new Date()): CityAlert[] {
-  return parseCedisArticleResult(article, html, now).alerts;
+function parseCedisArticle(
+  article: CedisArticleLink,
+  html: string,
+  contextOrNow: CityContext | CityId | Date = "podgorica",
+  now = new Date(),
+): CityAlert[] {
+  return parseCedisArticleResult(article, html, contextOrNow, now).alerts;
 }
 
 function parseCedisArticleResult(
   article: CedisArticleLink,
   html: string,
+  contextOrNow: CityContext | CityId | Date = "podgorica",
   now = new Date(),
 ): CedisArticleParseResult {
-  const publicationDate = article.publishedAt ?? parseArticleDate(article.title, now);
+  const context = contextOrNow instanceof Date ? "podgorica" : contextOrNow;
+  const effectiveNow = contextOrNow instanceof Date ? contextOrNow : now;
+  const cityId = getCedisCityId(context);
+  if (!cityId) {
+    return {
+      alerts: [],
+      contentRecognized: false,
+      extractionState: "unsupported-city",
+      municipalityHeadingFound: false,
+      podgoricaHeadingFound: false,
+      warnings: ["cedis-city-unsupported"],
+      zeroRecordsReason: "unsupported-city",
+    };
+  }
+  const publicationDate = article.publishedAt ?? parseArticleDate(article.title, effectiveNow);
   if (!publicationDate) {
     return {
       alerts: [],
       contentRecognized: false,
+      extractionState: "publication-date-unrecognized",
+      municipalityHeadingFound: false,
       podgoricaHeadingFound: false,
       warnings: ["publication-date-unrecognized"],
       zeroRecordsReason: "publication-date-unrecognized",
@@ -93,40 +153,66 @@ function parseCedisArticleResult(
     return {
       alerts: [],
       contentRecognized: false,
+      extractionState: "article-content-unrecognized",
+      municipalityHeadingFound: false,
       podgoricaHeadingFound: false,
       warnings: ["article-content-unrecognized"],
       zeroRecordsReason: "article-content-unrecognized",
     };
   }
-  const sections = getPodgoricaSections(text);
-  if (sections.length === 0) {
+  const extraction = getMunicipalitySections(text, cityId);
+  if (extraction.state !== "found") {
     return {
       alerts: [],
       contentRecognized: true,
       contentSelector: articleContent?.selector,
-      podgoricaHeadingFound: false,
-      warnings: [],
-      zeroRecordsReason: "podgorica-heading-not-found",
+      extractionState:
+        extraction.state === "ambiguous"
+          ? "ambiguous-section-boundaries"
+          : "municipality-section-not-found",
+      municipalityHeadingFound: extraction.state === "ambiguous",
+      podgoricaHeadingFound: extraction.state === "ambiguous",
+      warnings:
+        extraction.state === "ambiguous"
+          ? ["ambiguous-section-boundaries"]
+          : ["municipality-section-not-found"],
+      zeroRecordsReason:
+        extraction.state === "ambiguous"
+          ? "ambiguous-section-boundaries"
+          : "municipality-section-not-found",
     };
   }
 
-  const alerts = sections.flatMap(({ section, startIndex }) => {
-    const date = getDateBeforePosition(text, startIndex, publicationDate);
-    const lines = section
-      .split(/(?=\s*-?\s*(?:(?:u terminu\s+)?od\s+\d{1,2}))/i)
-      .filter((line) => line.trim() && !/^u terminu$/i.test(line.trim()));
-    return lines.flatMap((line) => parseOutageLine(line, date, article, now));
-  });
+  const hasExplicitEmptySection = extraction.sections.every(({ section }) =>
+    /\b(?:nema\s+(?:planiranih\s+)?(?:radova|isključenja)|bez\s+planiranih\s+radova)\b/i.test(
+      section,
+    ),
+  );
+  const alerts = hasExplicitEmptySection
+    ? []
+    : extraction.sections.flatMap(({ section, startIndex }) => {
+        const date = getDateBeforePosition(text, startIndex, publicationDate);
+        const lines = section
+          .split(/(?=\s*-?\s*(?:(?:u terminu\s+)?od\s+\d{1,2}))/i)
+          .filter((line) => line.trim() && !/^u terminu$/i.test(line.trim()));
+        return lines.flatMap((line) => parseOutageLine(line, date, article, cityId, effectiveNow));
+      });
 
   const normalizedAlerts = deduplicateAlerts(alerts);
   return {
     alerts: normalizedAlerts,
     contentRecognized: true,
     contentSelector: articleContent?.selector,
-    podgoricaHeadingFound: true,
-    warnings: [],
+    extractionState:
+      normalizedAlerts.length === 0 ? "municipality-section-empty" : "municipality-section-found",
+    municipalityHeadingFound: true,
+    podgoricaHeadingFound: cityId === "podgorica",
+    warnings:
+      normalizedAlerts.length === 0 && !hasExplicitEmptySection
+        ? ["no-parseable-municipality-records"]
+        : [],
     ...(normalizedAlerts.length === 0
-      ? { zeroRecordsReason: "no-parseable-podgorica-records" as const }
+      ? { zeroRecordsReason: "no-parseable-municipality-records" as const }
       : {}),
   };
 }
@@ -135,6 +221,7 @@ function parseOutageLine(
   line: string,
   date: Date,
   article: CedisArticleLink,
+  cityId: CedisSupportedCityId,
   now: Date,
 ): CityAlert[] {
   const normalized = normalizeWhitespace(line).replace(/^[-–—]\s*/, "");
@@ -156,7 +243,7 @@ function parseOutageLine(
   return [
     {
       affectedArea: { kind: "source", value: area },
-      cityIds: ["podgorica"],
+      cityIds: [cityId],
       dataMode: "live",
       description: {
         kind: "source",
@@ -180,26 +267,46 @@ function parseOutageLine(
 }
 
 function getPodgoricaSection(text: string) {
-  return getPodgoricaSections(text)[0]?.section ?? null;
+  return getMunicipalitySections(text, "podgorica").sections[0]?.section ?? null;
 }
 
-function getPodgoricaSections(text: string) {
-  const sections: Array<{ section: string; startIndex: number }> = [];
-  const matches = [
-    ...text.matchAll(new RegExp(`\\b(Podgorica)\\s*(?:[-–—:]\\s*|(?=\\n|$))`, "gi")),
-  ];
-  for (const [index, match] of matches.entries()) {
-    const startIndex = (match.index ?? 0) + match[0].length;
-    const nextPodgoricaIndex = matches[index + 1]?.index ?? text.length;
-    const afterPodgorica = text.slice(startIndex, nextPodgoricaIndex);
-    municipalityPattern.lastIndex = 0;
-    const nextMunicipality = municipalityPattern.exec(afterPodgorica);
-    const section = (
-      nextMunicipality ? afterPodgorica.slice(0, nextMunicipality.index) : afterPodgorica
-    ).trim();
-    if (section) sections.push({ section, startIndex: match.index ?? 0 });
+function getMunicipalitySections(text: string, cityId: CedisSupportedCityId) {
+  const municipality = getCedisMunicipality(cityId);
+  if (!municipality) return { sections: [], state: "not-found" as const };
+
+  const headings = [...text.matchAll(municipalityPattern)];
+  const requestedHeadingPattern = new RegExp(
+    `^(?:${municipality.headingVariants.map(escapeRegularExpression).join("|")})\\s*(?:[-–—:]\\s*)?$`,
+    "i",
+  );
+  const requested = headings.filter((heading) => requestedHeadingPattern.test(heading[0].trim()));
+  if (requested.length === 0) return { sections: [], state: "not-found" as const };
+
+  const sections = requested
+    .map((heading) => {
+      const startIndex = (heading.index ?? 0) + heading[0].length;
+      const nextHeading = headings.find(
+        (candidate) => (candidate.index ?? 0) > (heading.index ?? 0),
+      );
+      return {
+        section: text.slice(startIndex, nextHeading?.index ?? text.length).trim(),
+        startIndex: heading.index ?? 0,
+      };
+    })
+    .filter(({ section }) => section.length > 0);
+
+  if (sections.length === 0) return { sections: [], state: "found" as const };
+  if (
+    sections.some(({ section }) =>
+      new RegExp(
+        `^(?:${municipalityNames.map(escapeRegularExpression).join("|")})\\s*[-–—:]`,
+        "i",
+      ).test(section),
+    )
+  ) {
+    return { sections: [], state: "ambiguous" as const };
   }
-  return sections;
+  return { sections, state: "found" as const };
 }
 
 function getDateBeforePosition(text: string, position: number, fallback: Date) {
@@ -311,6 +418,9 @@ function normalizeWhitespace(value: string) {
 function normalizeArea(value: string) {
   return normalizeWhitespace(value).toLocaleLowerCase("sr-Latn-ME");
 }
+function escapeRegularExpression(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 function stripHtml(value: string) {
   return value.replace(/<[^>]+>/g, " ").replace(/&nbsp;/gi, " ");
 }
@@ -412,6 +522,7 @@ function deduplicateAlerts(items: CityAlert[]) {
 export {
   cedisOrigin,
   discoverCedisArticles,
+  getMunicipalitySections,
   getPodgoricaSection,
   parseCedisArticle,
   parseCedisArticleResult,

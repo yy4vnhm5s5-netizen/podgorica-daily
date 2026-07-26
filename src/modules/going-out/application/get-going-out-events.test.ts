@@ -16,4 +16,5 @@ test("does not read the going-out cache for a city without going-out capability"
 test("allows the going-out cache only for a city with going-out capability", () => {
   const context = createCityContext("podgorica");
   assert.equal(canReadGoingOutEvents(context), true);
+  assert.equal(canReadGoingOutEvents(createCityContext("budva")), true);
 });

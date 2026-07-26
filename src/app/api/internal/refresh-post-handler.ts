@@ -8,7 +8,7 @@ interface RefreshEndpointResult {
 }
 
 interface RefreshPostHandlerDependencies<TResult extends RefreshEndpointResult> {
-  refresh: () => Promise<TResult>;
+  refresh: (request: Request) => Promise<TResult>;
   secret?: string;
 }
 
@@ -25,7 +25,7 @@ function createRefreshPostHandler<TResult extends RefreshEndpointResult>({
     }
 
     try {
-      const summary = await refresh();
+      const summary = await refresh(request);
       return Response.json(summary, { status: getRefreshResponseStatus(summary.state) });
     } catch {
       return Response.json({ code: "REFRESH_INTERNAL_ERROR", status: "error" }, { status: 500 });

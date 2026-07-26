@@ -17,14 +17,16 @@ test("publishes only canonical indexable public routes", async () => {
     ].every((path) => urls.includes(path)),
     true,
   );
-  assert.equal(urls.includes("/"), false);
+  assert.equal(urls.includes("/"), true);
+  assert.equal(urls.includes("/budva"), true);
+  assert.equal(urls.includes("/budva/izlasci"), true);
+  assert.equal(urls.includes("/budva/struja"), true);
   assert.equal(urls.includes("/o-platformi"), true);
   assert.equal(
     urls.some((path) => path.startsWith("/api/")),
     false,
   );
-  assert.equal(
-    urls.some((path) => path.startsWith("/budva")),
-    false,
-  );
+  assert.equal(urls.includes("/budva/dogadjaji"), false);
+  assert.equal(urls.includes("/budva/filmovi"), false);
+  assert.equal(urls.includes("/budva/letovi"), false);
 });

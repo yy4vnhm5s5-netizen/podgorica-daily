@@ -4,6 +4,8 @@ import test from "node:test";
 import {
   calculateFreshness,
   CedisCacheError,
+  defaultCachePath,
+  getCedisCachePath,
   readCedisCacheResult,
   writeCedisCache,
   type CacheFileSystem,
@@ -13,6 +15,7 @@ import { createRefreshResult } from "./cedis-refresh.ts";
 
 const snapshot = (): CedisCacheSnapshot => ({
   alerts: [],
+  cityId: "podgorica",
   fetchedAt: "2026-07-17T10:00:00.000Z",
   freshnessStatus: "fresh",
   lastSuccessfulRefreshAt: "2026-07-17T10:00:00.000Z",
@@ -160,6 +163,53 @@ test("restores alert timestamps from JSON before homepage date mapping", async (
     "2026-07-21T11:00:00.000Z",
     "2026-07-20T18:00:00.000Z",
   ]);
+});
+
+test("keeps the legacy Podgorica snapshot path while deriving an isolated Budva path", () => {
+  assert.equal(getCedisCachePath("podgorica"), defaultCachePath);
+  assert.notEqual(getCedisCachePath("budva"), defaultCachePath);
+  assert.match(getCedisCachePath("budva"), /cedis-planned-outages-budva\.json$/);
+});
+
+test("rejects a snapshot written for another city", async () => {
+  const crossCitySnapshot = {
+    ...snapshot(),
+    cityId: "podgorica",
+    alerts: [
+      {
+        affectedArea: { kind: "source", value: "Zabjelo" },
+        cityIds: ["podgorica"],
+        dataMode: "live",
+        description: { kind: "source", value: "Planirano isključenje." },
+        id: "cedis-podgorica-1",
+        severity: "information",
+        source: { kind: "source", value: "CEDIS" },
+        status: "scheduled",
+        title: { kind: "source", value: "Planirano isključenje struje" },
+        type: "powerOutage",
+      },
+    ],
+  };
+  const result = await readCedisCacheResult(
+    "budva.json",
+    fileSystem({ readFile: async () => JSON.stringify(crossCitySnapshot) }),
+    "budva",
+  );
+
+  assert.equal(result.snapshot, null);
+  assert.equal(result.error?.code, "cache-invalid-json");
+});
+
+test("accepts a legacy Podgorica snapshot without a city identifier", async () => {
+  const legacySnapshot: Record<string, unknown> = { ...snapshot() };
+  delete legacySnapshot.cityId;
+  const result = await readCedisCacheResult(
+    "podgorica.json",
+    fileSystem({ readFile: async () => JSON.stringify(legacySnapshot) }),
+    "podgorica",
+  );
+
+  assert.equal(result.snapshot?.cityId, "podgorica");
 });
 
 for (const [name, failure] of [

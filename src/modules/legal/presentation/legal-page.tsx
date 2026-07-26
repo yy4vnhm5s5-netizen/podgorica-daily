@@ -100,7 +100,7 @@ function LegalPage({ city, document }: { city: City; document: LegalDocument }) 
   const translations = getTranslations("me");
 
   return (
-    <DashboardLayout city={city} translations={translations}>
+    <DashboardLayout city={city} homeHref="/" translations={translations}>
       <article aria-labelledby="legal-heading" className="mx-auto max-w-3xl space-y-8">
         <header className="space-y-3">
           <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl" id="legal-heading">

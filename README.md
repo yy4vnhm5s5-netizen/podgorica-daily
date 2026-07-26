@@ -1,6 +1,6 @@
 # Gradom
 
-Gradom is a production-oriented local information platform for Podgorica. It provides current weather, a deterministic Daily Overview, City Alerts backed by cached official CEDIS planned power-outage and VIK Podgorica water-service snapshots, a cache-backed public Events experience, a Cineplexx programme card, a separate cache-backed MonteGigs `Izlasci` section, cache-backed Aerodrom Podgorica flights and ŽPCG railway departures, and a BusTicket4.me external link. Maps, unified search, accounts, and editorial workflows are not implemented.
+Gradom.me is a production-oriented platform for local city information in Montenegro. Podgorica and Budva are active cities. Podgorica includes current weather, a deterministic Daily Overview, City Alerts backed by cached official CEDIS planned power-outage and VIK Podgorica water-service snapshots, a cache-backed public Events experience, a Cineplexx programme card, a separate cache-backed MonteGigs `Izlasci` section, cache-backed Aerodrom Podgorica flights and ŽPCG railway departures, and a BusTicket4.me external link. Budva currently exposes Weather, MonteGigs `Izlasci`, and official CEDIS planned power-outage notices. Maps, unified search, accounts, and editorial workflows are not implemented.
 
 Daily Overview is a zero-cost deterministic summary generated from normalized cached city data. It does not use generative services, language models, or visitor-triggered data collection.
 
@@ -18,7 +18,7 @@ The bundled VPS scheduler refreshes CEDIS every six hours. The file cache at `.r
 
 VIK Podgorica water-service notices are collected only through `pnpm run collect:vikpg`. The collector fetches the official service-information page and validated first-party notice links, then atomically writes `.runtime/cache/vikpg-water-alerts.json`. Dashboard requests read that cache only. `ENABLE_VIKPG=true` and `VIKPG_PROVIDER_MODE=live` are required to expose live cached data; no mock water notices are used. Tests use local fixtures and injected HTTP, never live VIK requests. See [ADR 0016](docs/adr/0016-vikpg-cached-water-notices.md).
 
-The public interface uses Montenegrin Latin, ijekavian. City content is published on city-prefixed canonical URLs; the root page renders the main city but is canonicalized to `/podgorica`. English translations and locale infrastructure remain in the repository for a future rollout.
+The public interface uses Montenegrin Latin, ijekavian. City content is published on city-prefixed canonical URLs, while `/` is the canonical Gradom.me platform homepage for choosing an active city. English translations and locale infrastructure remain in the repository for a future rollout.
 
 ## Transport
 
@@ -28,7 +28,7 @@ The Aerodrom Podgorica card and `/podgorica/letovi` read arrivals and departures
 
 ## Izlasci
 
-`/podgorica/izlasci` and the dashboard section read only `.runtime/cache/montegigs-going-out.json`. `pnpm run collect:montegigs-going-out` reads the public [MonteGigs Podgorica listing](https://staging.montegigs.me/me/events/podgorica), normalizes explicit future records, and retains a valid cache when the listing or parser fails. The listing can omit event times; Gradom displays only the date in that case. Automated tests use saved fixtures only. Review MonteGigs source policy before enabling production collection. See [ADR 0020](docs/adr/0020-montegigs-going-out-provider.md).
+`/podgorica/izlasci`, `/budva/izlasci`, and their dashboard sections read only isolated city snapshots. `pnpm run collect:montegigs-going-out` reads the explicitly allowlisted MonteGigs listing for each active supported city, normalizes explicit future records, and retains that city's valid cache when its listing or parser fails. The listing can omit event times; Gradom displays only the date in that case. Automated tests use saved fixtures only. See [ADR 0020](docs/adr/0020-montegigs-going-out-provider.md).
 
 ## Contact
 
@@ -38,7 +38,7 @@ Configure `CONTACT_EMAIL`, `SMTP_FROM`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`,
 
 ## City-aware foundation
 
-Podgorica is the only active city. The root dashboard renders its content for convenience, while city content uses canonical `/podgorica/*` routes. Routes derive a `CityContext` from the central static city registry, and normalized events carry one stable `cityId`; legacy event cache snapshots are backfilled from their existing `cityIds` on read. `DEFAULT_CITY=podgorica` remains validated for collector compatibility. See [ADR 0022](docs/adr/0022-city-prefixed-public-routing.md).
+Podgorica and Budva are active cities. The platform homepage at `/` derives public city cards from the active registry, while local content uses capability-specific canonical city routes. Budva currently exposes `/budva`, `/budva/izlasci`, and `/budva/struja`; unsupported city modules are neither linked nor routed. Routes derive a `CityContext` from the central static city registry, and normalized events carry one stable `cityId`; legacy event cache snapshots are backfilled from their existing `cityIds` on read. `DEFAULT_CITY=podgorica` remains validated for collector compatibility. See [PRODUCT_VISION.md](docs/PRODUCT_VISION.md), [UX_ARCHITECTURE.md](docs/UX_ARCHITECTURE.md), [ADR 0022](docs/adr/0022-city-prefixed-public-routing.md), and [ADR 0023](docs/adr/0023-platform-root-homepage.md).
 
 ## Event platform and official collectors
 

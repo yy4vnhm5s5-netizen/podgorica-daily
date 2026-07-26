@@ -7,11 +7,19 @@ import type { RefreshEndpointState } from "./refresh-post-handler";
 
 interface ProviderRefreshEndpointResult {
   acceptedCount: number;
+  cityId?: string;
   errorCode?: string;
   provider: string;
   retainedPreviousSnapshot: boolean;
+  snapshotState?: "fresh" | "not-run" | "stale" | "unavailable";
   state: RefreshEndpointState;
   warnings: readonly string[];
+}
+
+interface MultiCityAlertRefreshEndpointResult {
+  cities: readonly ProviderRefreshEndpointResult[];
+  provider: "cedis";
+  state: RefreshEndpointState;
 }
 
 interface EventRefreshEndpointResult {
@@ -32,11 +40,34 @@ function toCityAlertRefreshEndpointResult(
   const { summary } = result;
   return {
     acceptedCount: summary.alertCount,
+    ...(summary.cityId ? { cityId: summary.cityId } : {}),
     ...(summary.errorCode ? { errorCode: summary.errorCode } : {}),
     provider,
     retainedPreviousSnapshot: summary.retainedPreviousSnapshot,
     state: summary.status,
     warnings: summary.warnings,
+  };
+}
+
+function toMultiCityAlertRefreshEndpointResult(
+  provider: "cedis",
+  results: readonly CityAlertCollectorResult[],
+): MultiCityAlertRefreshEndpointResult {
+  const cities = results.map((result) => toCityAlertRefreshEndpointResult(provider, result));
+  const states = cities.map(({ state }) => state);
+
+  return {
+    cities,
+    provider,
+    state: states.every((state) => state === "success")
+      ? "success"
+      : states.every((state) => state === "already-running")
+        ? "already-running"
+        : states.every((state) => state === "unavailable")
+          ? "unavailable"
+          : states.some((state) => state === "unavailable")
+            ? "partial"
+            : "retained",
   };
 }
 
@@ -57,6 +88,7 @@ function toGoingOutRefreshEndpointResult(
     "montegigs-going-out",
     result,
     (refresh) => refresh.acceptedEvents,
+    result.cityId,
   );
 }
 
@@ -79,15 +111,19 @@ function toSingleProviderRefreshEndpointResult<
   provider: string,
   result: {
     refresh: TRefresh | null;
+    snapshotState?: ProviderRefreshEndpointResult["snapshotState"];
     state: "already-running" | "failed" | "success";
   },
   getAcceptedCount: (refresh: TRefresh) => number,
+  cityId?: string,
 ): ProviderRefreshEndpointResult {
   if (result.state === "already-running") {
     return {
       acceptedCount: 0,
+      ...(cityId ? { cityId } : {}),
       provider,
       retainedPreviousSnapshot: false,
+      ...(result.snapshotState ? { snapshotState: result.snapshotState } : {}),
       state: "already-running",
       warnings: [],
     };
@@ -97,8 +133,10 @@ function toSingleProviderRefreshEndpointResult<
   if (!refresh) {
     return {
       acceptedCount: 0,
+      ...(cityId ? { cityId } : {}),
       provider,
       retainedPreviousSnapshot: false,
+      ...(result.snapshotState ? { snapshotState: result.snapshotState } : {}),
       state: "unavailable",
       warnings: [],
     };
@@ -106,9 +144,11 @@ function toSingleProviderRefreshEndpointResult<
 
   return {
     acceptedCount: getAcceptedCount(refresh),
+    ...(cityId ? { cityId } : {}),
     ...(refresh.errorCode ? { errorCode: refresh.errorCode } : {}),
     provider,
     retainedPreviousSnapshot: refresh.retainedPreviousSnapshot,
+    ...(result.snapshotState ? { snapshotState: result.snapshotState } : {}),
     state: refresh.success
       ? "success"
       : refresh.retainedPreviousSnapshot
@@ -146,7 +186,9 @@ export {
   toEventRefreshEndpointResult,
   toFlightsRefreshEndpointResult,
   toGoingOutRefreshEndpointResult,
+  toMultiCityAlertRefreshEndpointResult,
   toZpcgRefreshEndpointResult,
   type EventRefreshEndpointResult,
+  type MultiCityAlertRefreshEndpointResult,
   type ProviderRefreshEndpointResult,
 };

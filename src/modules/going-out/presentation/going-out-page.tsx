@@ -12,14 +12,16 @@ import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { NewTabNotice } from "@/shared/components/new-tab-notice";
 import { SectionTitle } from "@/shared/components/section-title";
 import type { Locale } from "@/shared/config/locale";
+import type { City } from "@/shared/types/city";
 
 interface GoingOutPageProps {
+  city: City;
   events: readonly GoingOutEvent[];
   locale: Locale;
   state: GoingOutCacheState;
 }
 
-function GoingOutPage({ events, locale, state }: GoingOutPageProps) {
+function GoingOutPage({ city, events, locale, state }: GoingOutPageProps) {
   const copy = locale === "me" ? montenegrinCopy : englishCopy;
   const upcoming = getGoingOutPageEvents(events);
   const displayState = getGoingOutDisplayState({ eventCount: upcoming.length, state });
@@ -27,8 +29,14 @@ function GoingOutPage({ events, locale, state }: GoingOutPageProps) {
   return (
     <section aria-labelledby="going-out-page-heading" className="space-y-6" id="izlasci">
       <div className="space-y-2">
-        <SectionTitle as="h1" id="going-out-page-heading" title={copy.title} />
-        <p className="max-w-2xl text-sm leading-6 text-muted-foreground">{copy.description}</p>
+        <SectionTitle
+          as="h1"
+          id="going-out-page-heading"
+          title={copy.title.replace("{city}", city.name)}
+        />
+        <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
+          {copy.description.replace("{city}", city.name)}
+        </p>
       </div>
       {displayState === "events" || displayState === "stale" ? (
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -95,20 +103,20 @@ function GoingOutPageCard({ event, locale }: { event: GoingOutEvent; locale: Loc
 
 const montenegrinCopy = {
   description:
-    "Pronađite koncerte, DJ večeri, svirke, žurke i druge izlaske u Podgorici na jednom mjestu.",
+    "Pronađite koncerte, DJ večeri, svirke, žurke i druge izlaske u {city} na jednom mjestu.",
   empty: "Trenutno nema najavljenih izlazaka.",
   source: "Pogledajte na MonteGigs-u",
   stale: "Prikazani su posljednji dostupni podaci.",
-  title: "Izlasci u Podgorici – koncerti, žurke i noćni život",
+  title: "Izlasci u {city} – koncerti, žurke i noćni život",
   unavailable: "Podaci trenutno nijesu dostupni.",
 } as const;
 
 const englishCopy = {
-  description: "Upcoming music performances, parties and other nights out in Podgorica.",
+  description: "Upcoming music performances, parties and other nights out in {city}.",
   empty: "There are no upcoming nights out right now.",
   source: "View on MonteGigs",
   stale: "The latest available data is shown.",
-  title: "Nights out in Podgorica",
+  title: "Nights out in {city}",
   unavailable: "Data is currently unavailable.",
 } as const;
 

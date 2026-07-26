@@ -1,4 +1,8 @@
 import type { CityAlert } from "../domain/city-alert.ts";
+import { createCityContext } from "@/shared/config/cities";
+import type { CityContext } from "@/shared/types/city";
+import { getCedisCityId } from "./cedis-cities.ts";
+import type { CedisSupportedCityId } from "./cedis-cities.ts";
 import {
   calculateFreshness,
   isSafeCedisCacheAlert,
@@ -16,6 +20,7 @@ type RefreshClassification =
 
 interface RefreshInput {
   alerts: CityAlert[];
+  cityId?: CedisSupportedCityId;
   inspectedArticles: number;
   listingConfidentlyEmpty?: boolean;
   parserWarnings: string[];
@@ -29,6 +34,7 @@ interface RefreshCache {
 
 interface CedisRefreshDependencies {
   cache: RefreshCache;
+  context?: CityContext;
   diagnostic?: CedisDiagnosticEmitter;
   httpClient: CedisHttpClient;
   now?: () => Date;
@@ -76,6 +82,7 @@ function createRefreshResult(
   const timestamp = now.toISOString();
   const snapshot: CedisCacheSnapshot = {
     alerts,
+    cityId: input.cityId ?? "podgorica",
     fetchedAt: timestamp,
     freshnessStatus: calculateFreshness(now, now),
     lastSuccessfulRefreshAt: timestamp,
@@ -96,10 +103,21 @@ function createRefreshResult(
 
 async function refreshCedis({
   cache,
+  context = createCityContext("podgorica"),
   diagnostic = emitCedisDiagnostic,
   httpClient,
   now = () => new Date(),
 }: CedisRefreshDependencies) {
+  const cityId = getCedisCityId(context);
+  if (!cityId) {
+    return retainPrevious(
+      null,
+      "failed",
+      "cedis-city-unsupported",
+      "CEDIS does not support this city.",
+      ["cedis-city-unsupported"],
+    );
+  }
   let phase = "cache-read";
   let previous: CedisCacheSnapshot | null;
   try {
@@ -108,6 +126,7 @@ async function refreshCedis({
     diagnostic({
       event: "cedis-refresh-failed",
       phase,
+      cityId,
       reason: "cache-read-failed",
     });
     return retainPrevious(
@@ -129,12 +148,14 @@ async function refreshCedis({
       htmlLength: listing.html.length,
       httpStatus: listing.status,
       requestedUrl: sourceUrl,
+      cityId,
     });
 
     phase = "listing-discovery";
     const articles = discoverCedisArticles(listing.html, now()).slice(0, 7);
     diagnostic({
       event: "cedis-refresh-article-discovery",
+      cityId,
       plannedWorkArticleCount: articles.length,
     });
     if (articles.length === 0 && containsPlannedWorkReference(listing.html)) {
@@ -165,6 +186,7 @@ async function refreshCedis({
             htmlLength: articleDocument.html.length,
             httpStatus: articleDocument.status,
             requestedUrl: article.url,
+            cityId,
           });
         } catch (error) {
           diagnostic({
@@ -172,6 +194,7 @@ async function refreshCedis({
             errorCode: getErrorCode(error),
             errorMessage: getErrorMessage(error),
             event: "cedis-refresh-article-failed",
+            cityId,
             phase: "article-fetch",
           });
           throw error;
@@ -179,13 +202,14 @@ async function refreshCedis({
 
         let parsed: ReturnType<typeof parseCedisArticleResult>;
         try {
-          parsed = parseCedisArticleResult(article, articleDocument.html, now());
+          parsed = parseCedisArticleResult(article, articleDocument.html, context, now());
         } catch (error) {
           diagnostic({
             articleUrl: article.url,
             errorCode: getErrorCode(error),
             errorMessage: getErrorMessage(error),
             event: "cedis-refresh-article-failed",
+            cityId,
             phase: "article-parser",
           });
           throw error;
@@ -194,8 +218,10 @@ async function refreshCedis({
           articleUrl: article.url,
           contentSelector: parsed.contentSelector ?? "",
           event: "cedis-refresh-article-parsed",
+          cityId,
           parsedRecordCount: parsed.alerts.length,
-          podgoricaHeadingFound: parsed.podgoricaHeadingFound,
+          municipalitySectionFound: parsed.municipalityHeadingFound,
+          extractionState: parsed.extractionState,
           ...(parsed.zeroRecordsReason ? { zeroRecordsReason: parsed.zeroRecordsReason } : {}),
         });
         return parsed;
@@ -208,6 +234,7 @@ async function refreshCedis({
     const result = createRefreshResult(
       {
         alerts: parsedArticles.flatMap((parsed) => parsed.alerts),
+        cityId,
         inspectedArticles: articles.length,
         listingConfidentlyEmpty: articles.length === 0,
         parserWarnings,
@@ -218,6 +245,7 @@ async function refreshCedis({
     );
     diagnostic({
       classification: result.classification,
+      cityId,
       event: "cedis-refresh-result",
       freshAlertCount: result.freshAlertCount,
       retainedPreviousSnapshot: result.retainedPreviousSnapshot,
@@ -232,6 +260,7 @@ async function refreshCedis({
       diagnostic({
         cacheWriteResult: "written",
         event: "cedis-refresh-cache-write",
+        cityId,
         freshAlertCount: result.freshAlertCount,
         retainedPreviousSnapshot: false,
       });
@@ -241,6 +270,7 @@ async function refreshCedis({
         errorCode: getErrorCode(error),
         errorMessage: getErrorMessage(error),
         event: "cedis-refresh-cache-write",
+        cityId,
         phase,
         result: "failed",
       });
@@ -257,6 +287,7 @@ async function refreshCedis({
       errorCode: getErrorCode(error),
       errorMessage: getErrorMessage(error),
       event: "cedis-refresh-failed",
+      cityId,
       phase,
     });
     return retainPrevious(

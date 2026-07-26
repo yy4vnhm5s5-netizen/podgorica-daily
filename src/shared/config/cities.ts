@@ -5,6 +5,7 @@ const cityRegistry: Record<string, City> = {
   bar: {
     capabilities: [],
     country: "Montenegro",
+    description: "Informacije za svakodnevni život u Baru.",
     id: "bar",
     isActive: false,
     isMain: false,
@@ -15,10 +16,11 @@ const cityRegistry: Record<string, City> = {
     timezone: "Europe/Podgorica",
   },
   budva: {
-    capabilities: [],
+    capabilities: ["electricity", "weather", "goingOut"],
     country: "Montenegro",
+    description: "Lokalne informacije za Budvu.",
     id: "budva",
-    isActive: false,
+    isActive: true,
     isMain: false,
     latitude: 42.2864,
     longitude: 18.8401,
@@ -29,6 +31,7 @@ const cityRegistry: Record<string, City> = {
   niksic: {
     capabilities: [],
     country: "Montenegro",
+    description: "Informacije za svakodnevni život u Nikšiću.",
     id: "niksic",
     isActive: false,
     isMain: false,
@@ -39,8 +42,9 @@ const cityRegistry: Record<string, City> = {
     timezone: "Europe/Podgorica",
   },
   podgorica: {
-    capabilities: ["electricity", "events", "flights", "goingOut", "railway", "water"],
+    capabilities: ["electricity", "events", "flights", "goingOut", "railway", "water", "weather"],
     country: "Montenegro",
+    description: "Vrijeme, događaji, izlasci, prevoz i važne servisne informacije za Podgoricu.",
     id: "podgorica",
     isActive: true,
     isMain: true,

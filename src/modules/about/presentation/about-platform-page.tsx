@@ -18,10 +18,10 @@ import { aboutPlatformContent, createAboutPlatformStructuredData } from "./about
 
 function AboutPlatformPage({ city }: { city: City }) {
   const translations = getTranslations("me");
-  const structuredData = createAboutPlatformStructuredData(city);
+  const structuredData = createAboutPlatformStructuredData();
 
   return (
-    <DashboardLayout city={city} translations={translations}>
+    <DashboardLayout city={city} homeHref="/" translations={translations}>
       <script
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
         type="application/ld+json"
@@ -32,7 +32,7 @@ function AboutPlatformPage({ city }: { city: City }) {
             <li>
               <Link
                 className="underline-offset-4 hover:text-foreground hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                href={getCityPath(city)}
+                href="/"
               >
                 Početna
               </Link>

@@ -38,7 +38,7 @@ The Event Quality Layer is complete: policy is validated from environment config
 
 ## Platform expansion foundation
 
-The static city registry, route-derived `CityContext`, provider registry, generic cache helpers, and city-prefixed public routing are in place. Podgorica remains the only active city; `/` renders its dashboard and canonicalizes to `/podgorica`. Before activating another city, approve source coverage, cache durability, city-specific alert filtering, localized metadata, and operational ownership.
+The static city registry, route-derived `CityContext`, provider registry, generic cache helpers, city-prefixed public routing, and platform homepage are in place. Podgorica and Budva are active cities; `/` is the Gradom.me platform homepage, while `/podgorica` and `/budva` are their canonical city dashboards. Budva initially exposes Weather, Going Out, and CEDIS electricity notices; all other modules remain capability-gated until city-specific source coverage is approved.
 
 ## Discovery and operations
 

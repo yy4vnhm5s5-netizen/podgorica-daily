@@ -13,15 +13,21 @@ import { cn } from "@/shared/lib/utils";
 
 interface NavigationProps {
   city: City;
+  homeHref?: string;
   mobile?: boolean;
   translations: Translations;
 }
 
-function Navigation({ city, mobile = false, translations }: NavigationProps) {
+function Navigation({
+  city,
+  homeHref = getCityPath(city),
+  mobile = false,
+  translations,
+}: NavigationProps) {
   const pathname = usePathname();
   const navigationItems = [
     {
-      href: getCityPath(city),
+      href: homeHref,
       icon: House,
       label: translations.shell.navigation.dashboard,
     },

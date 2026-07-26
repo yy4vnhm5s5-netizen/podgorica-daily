@@ -1,4 +1,5 @@
 import type { CityAlert } from "@/modules/city-alerts/domain/city-alert";
+import { dirname, join } from "node:path";
 import { deserializeCityAlerts } from "./city-alert-cache-deserialization.ts";
 import { env } from "../../../config/env.ts";
 import {
@@ -7,11 +8,13 @@ import {
   writeJsonCache,
   type CacheFileSystem,
 } from "../../../shared/lib/cache.ts";
+import { isCedisSupportedCityId, type CedisSupportedCityId } from "./cedis-cities.ts";
 
 type FreshnessStatus = "fresh" | "stale" | "unavailable";
 
 interface CedisCacheSnapshot {
   alerts: CityAlert[];
+  cityId: CedisSupportedCityId;
   fetchedAt: string;
   freshnessStatus: FreshnessStatus;
   lastRefreshError?: string;
@@ -42,6 +45,11 @@ interface CacheReadResult {
 }
 
 const defaultCachePath = env.CEDIS_CACHE_PATH;
+function getCedisCachePath(cityId: CedisSupportedCityId) {
+  return cityId === "podgorica"
+    ? env.CEDIS_CACHE_PATH
+    : join(dirname(env.CEDIS_CACHE_PATH), `cedis-planned-outages-${cityId}.json`);
+}
 function calculateFreshness(
   fetchedAt: Date | undefined,
   now = new Date(),
@@ -53,10 +61,11 @@ function calculateFreshness(
 async function readCedisCacheResult(
   cachePath = env.CEDIS_CACHE_PATH,
   fileSystem: CacheFileSystem = nodeFileSystem,
+  cityId: CedisSupportedCityId = "podgorica",
 ): Promise<CacheReadResult> {
   try {
     const parsed = JSON.parse(await fileSystem.readFile(cachePath, "utf8")) as unknown;
-    const snapshot = deserializeCedisCacheSnapshot(parsed);
+    const snapshot = deserializeCedisCacheSnapshot(parsed, cityId);
     if (!snapshot) {
       return {
         error: new CedisCacheError("cache-invalid-json", "CEDIS cache contains invalid data."),
@@ -84,7 +93,10 @@ async function readCedisCacheResult(
   }
 }
 
-function deserializeCedisCacheSnapshot(value: unknown): CedisCacheSnapshot | undefined {
+function deserializeCedisCacheSnapshot(
+  value: unknown,
+  expectedCityId: CedisSupportedCityId,
+): CedisCacheSnapshot | undefined {
   if (!isRecord(value) || value.schemaVersion !== 1 || value.source !== "CEDIS") return undefined;
 
   const alerts = deserializeCityAlerts(value.alerts);
@@ -101,9 +113,16 @@ function deserializeCedisCacheSnapshot(value: unknown): CedisCacheSnapshot | und
   ) {
     return undefined;
   }
+  const cityId = value.cityId === undefined ? "podgorica" : value.cityId;
+  if (!isString(cityId) || !isCedisSupportedCityId(cityId) || cityId !== expectedCityId) {
+    return undefined;
+  }
+
+  if (!alerts.every((alert) => alert.cityIds.includes(cityId))) return undefined;
 
   return {
     alerts,
+    cityId,
     fetchedAt: value.fetchedAt,
     freshnessStatus: value.freshnessStatus,
     ...(value.lastRefreshError ? { lastRefreshError: value.lastRefreshError } : {}),
@@ -139,8 +158,9 @@ function containsEmbeddedCodeArtifact(value: string) {
 async function readCedisCache(
   cachePath = env.CEDIS_CACHE_PATH,
   fileSystem: CacheFileSystem = nodeFileSystem,
+  cityId: CedisSupportedCityId = "podgorica",
 ) {
-  return (await readCedisCacheResult(cachePath, fileSystem)).snapshot;
+  return (await readCedisCacheResult(cachePath, fileSystem, cityId)).snapshot;
 }
 
 async function writeCedisCache(
@@ -182,6 +202,7 @@ function isStringArray(value: unknown): value is string[] {
 export {
   calculateFreshness,
   defaultCachePath,
+  getCedisCachePath,
   readCedisCache,
   readCedisCacheResult,
   isSafeCedisCacheAlert,

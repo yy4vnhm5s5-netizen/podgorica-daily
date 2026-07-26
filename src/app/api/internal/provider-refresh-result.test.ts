@@ -5,6 +5,7 @@ import {
   toCityAlertRefreshEndpointResult,
   toEventRefreshEndpointResult,
   toFlightsRefreshEndpointResult,
+  toMultiCityAlertRefreshEndpointResult,
 } from "./provider-refresh-result.ts";
 
 test("maps fixed-provider refresh outcomes without exposing cache paths", () => {
@@ -44,6 +45,63 @@ test("maps fixed-provider refresh outcomes without exposing cache paths", () => 
   assert.equal(retainedFlights.state, "retained");
   assert.equal(retainedFlights.acceptedCount, 4);
   assert.equal(JSON.stringify(cedis).includes("/private/"), false);
+});
+
+test("includes the safe city identifier for a city-aware CEDIS refresh", () => {
+  const result = toCityAlertRefreshEndpointResult("cedis", {
+    exitCode: 0,
+    summary: {
+      alertCount: 1,
+      cachePath: "/private/runtime/cedis-budva.json",
+      cacheStatus: "fresh",
+      cityId: "budva",
+      completedAt: "2026-07-22T10:00:00.000Z",
+      retainedPreviousSnapshot: false,
+      status: "success",
+      warnings: [],
+    },
+  });
+
+  assert.equal(result.cityId, "budva");
+  assert.equal(JSON.stringify(result).includes("/private/"), false);
+});
+
+test("maps the fixed CEDIS endpoint to every active city result without cache paths", () => {
+  const result = toMultiCityAlertRefreshEndpointResult("cedis", [
+    {
+      exitCode: 0,
+      summary: {
+        alertCount: 2,
+        cachePath: "/private/runtime/cedis-podgorica.json",
+        cacheStatus: "fresh",
+        cityId: "podgorica",
+        completedAt: "2026-07-22T10:00:00.000Z",
+        retainedPreviousSnapshot: false,
+        status: "success",
+        warnings: [],
+      },
+    },
+    {
+      exitCode: 0,
+      summary: {
+        alertCount: 1,
+        cachePath: "/private/runtime/cedis-budva.json",
+        cacheStatus: "stale",
+        cityId: "budva",
+        completedAt: "2026-07-22T10:00:00.000Z",
+        retainedPreviousSnapshot: true,
+        status: "retained",
+        warnings: [],
+      },
+    },
+  ]);
+
+  assert.equal(result.state, "retained");
+  assert.deepEqual(
+    result.cities.map(({ cityId }) => cityId),
+    ["podgorica", "budva"],
+  );
+  assert.equal(JSON.stringify(result).includes("/private/"), false);
 });
 
 test("keeps Cineplexx out of the standard-events endpoint result", () => {

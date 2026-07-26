@@ -25,7 +25,10 @@ import { getEmergencyNumbers } from "@/shared/components/dashboard/emergency-num
 import { EmergencyNumbersStrip } from "@/shared/components/dashboard/emergency-numbers-strip";
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
 import { loadCityDashboardData } from "@/app/city-dashboard-data";
+import { getCityDashboardSummaryAvailability } from "@/app/city-routing";
+import { LastCityTracker } from "@/app/platform-last-city";
 import { isFeatureEnabled } from "@/shared/config/features";
+import { getActiveCities } from "@/shared/config/cities";
 import { getContactPath } from "@/shared/config/public-routes";
 import type { CityContext } from "@/shared/types/city";
 import { getTranslations } from "@/shared/lib/translations";
@@ -55,12 +58,18 @@ async function CityDashboard({ context }: CityDashboardProps) {
   const displayableCinemaMovieCount = getDistinctCineplexxProgrammeMovieCount(
     cinemaProgramme.events,
   );
+  const summaryAvailability = getCityDashboardSummaryAvailability(city);
 
   return (
     <DashboardLayout city={city} translations={translations}>
+      <LastCityTracker
+        activeCityIds={getActiveCities().map((activeCity) => activeCity.id)}
+        cityId={city.id}
+      />
       <section className="space-y-10" id="dashboard">
         <div className="space-y-7">
           <DailySummaryBar
+            availability={summaryAvailability}
             city={city}
             eventsCount={homepageCityEvents.length}
             locale={locale}

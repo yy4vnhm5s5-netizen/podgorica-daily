@@ -1,7 +1,8 @@
 import { toZonedIso } from "../../../shared/lib/date.ts";
+import type { CityId } from "@/shared/types/city";
 
 interface GoingOutEvent {
-  city: "podgorica";
+  city: CityId;
   id: string;
   imageUrl?: string;
   sourceName: "MonteGigs";
@@ -13,6 +14,7 @@ interface GoingOutEvent {
 }
 
 interface GoingOutEventCandidate {
+  city: CityId;
   imageUrl?: string;
   sourceUrl: string;
   startDate: string;
@@ -32,7 +34,7 @@ function normalizeGoingOutEvent(candidate: GoingOutEventCandidate): GoingOutEven
   const startsAt = startTime ? toZonedIso({ date: startDate, time: startTime }) : undefined;
 
   return {
-    city: "podgorica",
+    city: candidate.city,
     id: createGoingOutEventId({ sourceUrl, startDate, startTime, title }),
     ...(normalizeUrl(candidate.imageUrl) ? { imageUrl: normalizeUrl(candidate.imageUrl) } : {}),
     sourceName: "MonteGigs",

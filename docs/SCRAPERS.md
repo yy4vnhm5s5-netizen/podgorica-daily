@@ -18,7 +18,9 @@ Each collector has a named owner, monitoring for failure and staleness, alert th
 
 ## CEDIS planned outages
 
-CEDIS is the currently approved HTML collection source for planned Podgorica power outages. The collector uses only `https://cedis.me/servisne-informacije/` and validated official article URLs, with a clear product user agent, a 10-second timeout, one retry, and low request volume. It is manually invoked with `pnpm run collect:cedis`; pages only read its cache.
+CEDIS is the approved national HTML collection source for planned electricity outages. The collector uses only `https://cedis.me/servisne-informacije/` and validated official article URLs, with a clear product user agent, a 10-second timeout, one retry, and low request volume. One article can contain municipality sections for several cities; Gradom derives only explicitly allowlisted municipality read models (`Podgorica`/`Glavni grad Podgorica` and `Budva`/`Opština Budva`) from that source.
+
+`pnpm run collect:cedis` fetches each CEDIS document at most once per run, then sequentially processes every active city with the electricity capability and an approved municipality mapping. Each city keeps an isolated atomic snapshot and lock; the established Podgorica snapshot path remains compatible. A missing, malformed, ambiguous, or unexpectedly empty municipality section retains only that city's previous valid snapshot. Inactive cities are not scheduled. Pages only read their city snapshot.
 
 The bundled VPS scheduler refreshes CEDIS every six hours. It uses local fixtures for automated tests and preserves a valid cached snapshot when the source, network, or markup is suspicious. The local cache is appropriate for development and persistent servers, but not as durable shared storage in serverless deployments. See ADR 0007 for configuration, classification, and scheduling constraints.
 
@@ -38,7 +40,7 @@ Podgorica Airport flights are collected only from the public first-party feed us
 
 ## MonteGigs going out
 
-MonteGigs is the approved source for the separate Podgorica `Izlasci` module, not an Event Platform provider. `pnpm run collect:montegigs-going-out` requests only `https://staging.montegigs.me/me/events/podgorica`, through an allow-listed HTTPS client with a ten-second timeout, one transient retry, a 1.5 MB response limit, and a clear product user agent. It parses public event links and only preserves future Podgorica records, writes `.runtime/cache/montegigs-going-out.json` atomically, and retains the prior valid snapshot if the listing or parser fails. Tests use a minimal saved listing fixture and injected HTTP only. The public listing provides dates but may omit times; Gradom leaves those times unavailable. Automated access terms and robots rules were not discoverable during implementation, so source permission and any published policy must be rechecked with MonteGigs before production rollout. Visitor requests never fetch MonteGigs. See ADR 0020.
+MonteGigs is the approved source for the separate `Izlasci` module, not an Event Platform provider. Its explicitly allow-listed listings currently cover Podgorica and Budva; no arbitrary city slug or source URL is accepted. `pnpm run collect:montegigs-going-out` requests a city-specific listing through an allow-listed HTTPS client with a ten-second timeout, one transient retry, a 1.5 MB response limit, and a clear product user agent. Each city has an isolated atomic snapshot and lock; the established Podgorica path remains `.runtime/cache/montegigs-going-out.json`, while other approved cities use a separate module-owned cache file. The collector retains that city's prior valid snapshot if its listing or parser fails. Tests use minimal saved fixtures and injected HTTP only. The public listing provides dates but may omit times; Gradom leaves those times unavailable. Visitor requests never fetch MonteGigs. See ADR 0020.
 
 ## Events
 

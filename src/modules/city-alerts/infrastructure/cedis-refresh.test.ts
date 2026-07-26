@@ -16,6 +16,11 @@ import {
   type CedisHttpClient,
 } from "./cedis-http-client.ts";
 import { runCedisCollector } from "./collect-cedis.ts";
+import {
+  createMemoizedCedisHttpClient,
+  getActiveCedisContexts,
+  runActiveCedisCollectors,
+} from "./collect-cedis.ts";
 import { refreshCedis, type RefreshCache, type RefreshResult } from "./cedis-refresh.ts";
 
 const fixture = (name: string) =>
@@ -23,6 +28,7 @@ const fixture = (name: string) =>
 
 const previousSnapshot = (): CedisCacheSnapshot => ({
   alerts: [{ id: "previous" }] as never[],
+  cityId: "podgorica",
   fetchedAt: "2026-03-29T09:00:00.000Z",
   freshnessStatus: "fresh",
   lastSuccessfulRefreshAt: "2026-03-29T09:00:00.000Z",
@@ -153,24 +159,209 @@ test("emits CEDIS-only diagnostics for the real Elementor article-content shape"
   assert.equal(listingDiagnostic.htmlLength, pages[listingUrl].length);
   assert.deepEqual(
     diagnostics.find((payload) => payload.event === "cedis-refresh-article-discovery"),
-    { event: "cedis-refresh-article-discovery", plannedWorkArticleCount: 1 },
+    { cityId: "podgorica", event: "cedis-refresh-article-discovery", plannedWorkArticleCount: 1 },
   );
   assert.deepEqual(
     diagnostics.find((payload) => payload.event === "cedis-refresh-article-parsed"),
     {
       articleUrl: elementorArticleUrl,
+      cityId: "podgorica",
       contentSelector: ".elementor-widget-theme-post-content",
       event: "cedis-refresh-article-parsed",
+      extractionState: "municipality-section-found",
+      municipalitySectionFound: true,
       parsedRecordCount: 4,
-      podgoricaHeadingFound: true,
     },
   );
   assert.deepEqual(diagnostics.at(-1), {
     cacheWriteResult: "written",
+    cityId: "podgorica",
     event: "cedis-refresh-cache-write",
     freshAlertCount: 4,
     retainedPreviousSnapshot: false,
   });
+});
+
+test("reuses one fetched source document set for every active CEDIS city", async () => {
+  const requests: string[] = [];
+  const client = createMemoizedCedisHttpClient({
+    get: async (url) => `<article>${url}</article>`,
+    getDocument: async (url) => {
+      requests.push(url);
+      return { finalUrl: url, html: `<article>${url}</article>`, status: 200 };
+    },
+  });
+  const cities = [
+    {
+      capabilities: ["electricity"] as const,
+      country: "Montenegro",
+      id: "podgorica",
+      isActive: true,
+      isMain: true,
+      latitude: 42.441,
+      longitude: 19.263,
+      name: "Podgorica",
+      slug: "podgorica",
+      timezone: "Europe/Podgorica",
+    },
+    {
+      capabilities: ["electricity"] as const,
+      country: "Montenegro",
+      id: "budva",
+      isActive: true,
+      isMain: false,
+      latitude: 42.2864,
+      longitude: 18.8401,
+      name: "Budva",
+      slug: "budva",
+      timezone: "Europe/Podgorica",
+    },
+  ];
+
+  const results = await runActiveCedisCollectors({
+    cities,
+    createContext: (cityId) => ({
+      city: cities.find((city) => city.id === cityId)!,
+      locale: "me",
+      timezone: "Europe/Podgorica",
+    }),
+    httpClient: client,
+    runCollector: async (context, sharedClient) => {
+      await sharedClient.getDocument?.("https://cedis.me/servisne-informacije/");
+      await sharedClient.getDocument?.("https://cedis.me/article/");
+      return {
+        exitCode: 0,
+        summary: {
+          alertCount: 0,
+          cachePath: `${context.city.id}.json`,
+          cacheStatus: "fresh",
+          completedAt: "2026-03-29T12:00:00.000Z",
+          retainedPreviousSnapshot: false,
+          status: "success",
+          warnings: [],
+        },
+      };
+    },
+  });
+
+  assert.equal(results.length, 2);
+  assert.deepEqual(requests, [
+    "https://cedis.me/servisne-informacije/",
+    "https://cedis.me/article/",
+  ]);
+});
+
+test("selects only active CEDIS-supported electricity cities for scheduled collection", () => {
+  const contexts = getActiveCedisContexts(
+    [
+      {
+        capabilities: ["electricity"] as const,
+        country: "Montenegro",
+        id: "podgorica",
+        isActive: true,
+        isMain: true,
+        latitude: 0,
+        longitude: 0,
+        name: "Podgorica",
+        slug: "podgorica",
+        timezone: "Europe/Podgorica",
+      },
+      {
+        capabilities: ["electricity"] as const,
+        country: "Montenegro",
+        id: "budva",
+        isActive: false,
+        isMain: false,
+        latitude: 0,
+        longitude: 0,
+        name: "Budva",
+        slug: "budva",
+        timezone: "Europe/Podgorica",
+      },
+    ],
+    (cityId) => ({
+      city: {
+        capabilities: ["electricity"],
+        country: "Montenegro",
+        id: cityId,
+        isActive: true,
+        isMain: cityId === "podgorica",
+        latitude: 0,
+        longitude: 0,
+        name: cityId,
+        slug: cityId,
+        timezone: "Europe/Podgorica",
+      },
+      locale: "me",
+      timezone: "Europe/Podgorica",
+    }),
+  );
+
+  assert.deepEqual(
+    contexts.map((context) => context.city.id),
+    ["podgorica"],
+  );
+});
+
+test("continues with another city snapshot when one city refresh is unavailable", async () => {
+  const cities = [
+    {
+      capabilities: ["electricity"] as const,
+      country: "Montenegro",
+      id: "podgorica",
+      isActive: true,
+      isMain: true,
+      latitude: 0,
+      longitude: 0,
+      name: "Podgorica",
+      slug: "podgorica",
+      timezone: "Europe/Podgorica",
+    },
+    {
+      capabilities: ["electricity"] as const,
+      country: "Montenegro",
+      id: "budva",
+      isActive: true,
+      isMain: false,
+      latitude: 0,
+      longitude: 0,
+      name: "Budva",
+      slug: "budva",
+      timezone: "Europe/Podgorica",
+    },
+  ];
+  const calls: string[] = [];
+  const results = await runActiveCedisCollectors({
+    cities,
+    createContext: (cityId) => ({
+      city: cities.find((city) => city.id === cityId)!,
+      locale: "me",
+      timezone: "Europe/Podgorica",
+    }),
+    runCollector: async (context) => {
+      calls.push(context.city.id);
+      const unavailable = context.city.id === "podgorica";
+      return {
+        exitCode: unavailable ? 1 : 0,
+        summary: {
+          alertCount: unavailable ? 0 : 1,
+          cachePath: `${context.city.id}.json`,
+          cacheStatus: unavailable ? "unavailable" : "fresh",
+          completedAt: "2026-03-29T12:00:00.000Z",
+          ...(unavailable ? { errorCode: "cedis-request-failed" } : {}),
+          retainedPreviousSnapshot: false,
+          status: unavailable ? "unavailable" : "success",
+          warnings: [],
+        },
+      };
+    },
+  });
+
+  assert.deepEqual(calls, ["podgorica", "budva"]);
+  assert.deepEqual(
+    results.map(({ exitCode }) => exitCode),
+    [1, 0],
+  );
 });
 
 test("replaces, rather than merges, a prior cache with clean current CEDIS notices", async () => {
@@ -305,6 +496,77 @@ test("retains a previous cache when article markup is structurally suspicious", 
   assert.equal(result.retainedPreviousSnapshot, true);
 });
 
+test("retains only Budva's previous snapshot when its municipality section is missing", async () => {
+  const previousBudva = {
+    ...previousSnapshot(),
+    alerts: [{ id: "budva-previous", cityIds: ["budva"] }] as never[],
+    cityId: "budva" as const,
+  };
+  const memory = createMemoryCache(previousBudva);
+  const result = await refreshCedis({
+    cache: memory.cache,
+    context: {
+      city: {
+        capabilities: ["electricity"],
+        country: "Montenegro",
+        id: "budva",
+        isActive: false,
+        isMain: false,
+        latitude: 42.2864,
+        longitude: 18.8401,
+        name: "Budva",
+        slug: "budva",
+        timezone: "Europe/Podgorica",
+      },
+      locale: "me",
+      timezone: "Europe/Podgorica",
+    },
+    httpClient: createFixtureClient({
+      [articleUrl]: await fixture("multi-municipality.html"),
+      [listingUrl]: await fixture("listing.html"),
+    }),
+    now: fixedNow,
+  });
+
+  assert.equal(result.classification, "structurally-suspicious");
+  assert.equal(result.retainedPreviousSnapshot, true);
+  assert.equal(result.snapshot?.cityId, "budva");
+  assert.equal(result.snapshot?.alerts[0]?.id, "budva-previous");
+});
+
+test("writes a valid explicitly empty municipality section", async () => {
+  const emptyArticleUrl = "https://cedis.me/planirani-radovi-za-31-mart/";
+  const result = await refreshCedis({
+    cache: createMemoryCache().cache,
+    context: {
+      city: {
+        capabilities: ["electricity"],
+        country: "Montenegro",
+        id: "budva",
+        isActive: false,
+        isMain: false,
+        latitude: 42.2864,
+        longitude: 18.8401,
+        name: "Budva",
+        slug: "budva",
+        timezone: "Europe/Podgorica",
+      },
+      locale: "me",
+      timezone: "Europe/Podgorica",
+    },
+    httpClient: createFixtureClient({
+      [emptyArticleUrl]: "<article><p>Budva</p><p>Nema planiranih radova.</p></article>",
+      [listingUrl]: `<a href="${emptyArticleUrl}">Planirani radovi za 31. mart</a>`,
+    }),
+    now: fixedNow,
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(result.classification, "trustworthy-empty");
+  assert.equal(result.snapshot?.cityId, "budva");
+  assert.deepEqual(result.snapshot?.alerts, []);
+});
+
 test("replaces a previous cache with a confidently empty listing", async () => {
   const memory = createMemoryCache(previousSnapshot());
   const result = await refreshCedis({
@@ -359,6 +621,7 @@ test("collector exits zero after a successful refresh", async () => {
     "alertCount",
     "cachePath",
     "cacheStatus",
+    "cityId",
     "completedAt",
     "retainedPreviousSnapshot",
     "status",
@@ -427,4 +690,50 @@ test("collector prevents overlapping refreshes for one cache path", async () => 
 
   assert.equal(overlapping.exitCode, 0);
   assert.equal(overlapping.summary.status, "already-running");
+});
+
+test("collector locks are isolated by CEDIS city snapshot", async () => {
+  const calls: string[] = [];
+  const contextFor = (cityId: "budva" | "podgorica") => ({
+    city: {
+      capabilities: ["electricity"] as const,
+      country: "Montenegro",
+      id: cityId,
+      isActive: cityId === "podgorica",
+      isMain: cityId === "podgorica",
+      latitude: 0,
+      longitude: 0,
+      name: cityId,
+      slug: cityId,
+      timezone: "Europe/Podgorica",
+    },
+    locale: "me" as const,
+    timezone: "Europe/Podgorica",
+  });
+  const result = await Promise.all([
+    runCedisCollector({
+      cachePath: join(tmpdir(), "cedis-podgorica-lock-test.json"),
+      context: contextFor("podgorica"),
+      refresh: async () => {
+        calls.push("podgorica");
+        return refreshResult({});
+      },
+      writeOutput: () => undefined,
+    }),
+    runCedisCollector({
+      cachePath: join(tmpdir(), "cedis-budva-lock-test.json"),
+      context: contextFor("budva"),
+      refresh: async () => {
+        calls.push("budva");
+        return refreshResult({ snapshot: { ...previousSnapshot(), cityId: "budva" } });
+      },
+      writeOutput: () => undefined,
+    }),
+  ]);
+
+  assert.deepEqual(calls.sort(), ["budva", "podgorica"]);
+  assert.deepEqual(
+    result.map(({ summary }) => summary.status),
+    ["success", "success"],
+  );
 });

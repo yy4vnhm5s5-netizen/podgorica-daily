@@ -2,7 +2,7 @@
 
 ## Architecture
 
-Railway is a managed deployment option for the current single-city rollout. Create one Web service and attach one persistent volume at `/app/.runtime`. Set `RUNTIME_DATA_DIR=/app/.runtime`; the validated cache defaults then keep City Alerts, Events, Cineplexx, Podgorica Airport Flights, and ŽPCG snapshots below that mount. Do not create a second service that expects to share the same file-cache volume: Railway volumes attach to individual services and cannot be used as a concurrent shared filesystem.
+Railway is a managed deployment option for the current multi-city rollout. Create one Web service and attach one persistent volume at `/app/.runtime`. Set `RUNTIME_DATA_DIR=/app/.runtime`; the validated cache defaults then keep city-scoped City Alerts and Going Out snapshots, together with Events, Cineplexx, Podgorica Airport Flights, and ŽPCG snapshots, below that mount. Do not create a second service that expects to share the same file-cache volume: Railway volumes attach to individual services and cannot be used as a concurrent shared filesystem.
 
 The Web service serves cached application data only. Visitor requests never scrape providers. When enabled, production startup starts one non-blocking refresh only if a provider snapshot is absent or unusable. This boot initialization makes an empty mounted cache useful; it is not a periodic scheduler. Fixed protected endpoints invoke existing collectors on the Web service, which owns the mounted cache, atomic writes, and locks. Railway's cron configuration does not itself establish a confidential custom-header request contract, so use a trigger service that can send authenticated POST requests to the Web service.
 
@@ -31,17 +31,18 @@ For each job below, create a small Railway Cron trigger service from `curlimages
 sh -c 'curl --fail-with-body --silent --show-error --max-time 120 --request POST --header "Authorization: Bearer $REFRESH_SECRET" "$REFRESH_URL"'
 ```
 
-The trigger never mounts or writes `/app/.runtime`; the Web service owns the mounted cache, lock, and atomic cache writes. The request body, query string, and URL cannot choose a provider or source URL.
+The trigger never mounts or writes `/app/.runtime`; the Web service owns the mounted cache, lock, and atomic cache writes. The request body, query string, and URL cannot choose a provider or source URL. The fixed CEDIS endpoint invokes the existing sequential collector for every active city with an electricity capability and approved CEDIS municipality mapping; its response includes one safe result per city.
 
-| Job                                       | Railway cron (UTC)        | Endpoint                                | Web secret                       |
-| ----------------------------------------- | ------------------------- | --------------------------------------- | -------------------------------- |
-| Flights, every 15 minutes                 | `*/15 * * * *`            | `/api/internal/flights/refresh`         | `FLIGHTS_REFRESH_SECRET`         |
-| VIK, every 30 minutes                     | `*/30 * * * *`            | `/api/internal/vikpg/refresh`           | `VIKPG_REFRESH_SECRET`           |
-| CEDIS, every two hours                    | `25 */2 * * *`            | `/api/internal/cedis/refresh`           | `CEDIS_REFRESH_SECRET`           |
-| Standard Events, every three hours        | `5 */3 * * *`             | `/api/internal/events/standard/refresh` | `STANDARD_EVENTS_REFRESH_SECRET` |
-| Going Out, every three hours, staggered   | `35 */3 * * *`            | `/api/internal/going-out/refresh`       | `GOING_OUT_REFRESH_SECRET`       |
-| Cineplexx, 05:00 and 17:00 Podgorica time | see daylight-saving table | `/api/internal/cineplexx/refresh`       | `CINEPLEXX_REFRESH_SECRET`       |
-| ŽPCG, 06:45 and 18:45 Podgorica time      | see daylight-saving table | `/api/internal/zpcg/refresh`            | `ZPCG_RAILWAY_REFRESH_SECRET`    |
+| Job                                                | Railway cron (UTC)        | Endpoint                                         | Web secret                       |
+| -------------------------------------------------- | ------------------------- | ------------------------------------------------ | -------------------------------- |
+| Flights, every 15 minutes                          | `*/15 * * * *`            | `/api/internal/flights/refresh`                  | `FLIGHTS_REFRESH_SECRET`         |
+| VIK, every 30 minutes                              | `*/30 * * * *`            | `/api/internal/vikpg/refresh`                    | `VIKPG_REFRESH_SECRET`           |
+| CEDIS, every two hours for active supported cities | `25 */2 * * *`            | `/api/internal/cedis/refresh`                    | `CEDIS_REFRESH_SECRET`           |
+| Standard Events, every three hours                 | `5 */3 * * *`             | `/api/internal/events/standard/refresh`          | `STANDARD_EVENTS_REFRESH_SECRET` |
+| Going Out — Podgorica, every three hours           | `35 */3 * * *`            | `/api/internal/going-out/refresh?city=podgorica` | `GOING_OUT_REFRESH_SECRET`       |
+| Going Out — Budva, every three hours, staggered    | `40 */3 * * *`            | `/api/internal/going-out/refresh?city=budva`     | `GOING_OUT_REFRESH_SECRET`       |
+| Cineplexx, 05:00 and 17:00 Podgorica time          | see daylight-saving table | `/api/internal/cineplexx/refresh`                | `CINEPLEXX_REFRESH_SECRET`       |
+| ŽPCG, 06:45 and 18:45 Podgorica time               | see daylight-saving table | `/api/internal/zpcg/refresh`                     | `ZPCG_RAILWAY_REFRESH_SECRET`    |
 
 Configure each trigger with its own explicit variables and command:
 
@@ -61,7 +62,11 @@ sh -c 'curl --fail-with-body --silent --show-error --max-time 120 --request POST
 # Standard Events: /api/internal/events/standard/refresh + STANDARD_EVENTS_REFRESH_SECRET
 sh -c 'curl --fail-with-body --silent --show-error --max-time 120 --request POST --header "Authorization: Bearer $REFRESH_SECRET" "$REFRESH_URL"'
 
-# Going Out: /api/internal/going-out/refresh + GOING_OUT_REFRESH_SECRET
+# Going Out uses one allowlisted city per trigger. The endpoint defaults to
+# Podgorica only when no city query is present, so configure both active cities.
+# Podgorica: /api/internal/going-out/refresh?city=podgorica
+# Budva: /api/internal/going-out/refresh?city=budva
+# Both REFRESH_SECRET values reference GOING_OUT_REFRESH_SECRET.
 sh -c 'curl --fail-with-body --silent --show-error --max-time 120 --request POST --header "Authorization: Bearer $REFRESH_SECRET" "$REFRESH_URL"'
 
 # Cineplexx: /api/internal/cineplexx/refresh + CINEPLEXX_REFRESH_SECRET

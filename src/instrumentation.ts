@@ -1,28 +1,53 @@
 import { env } from "@/config/env";
 import { initializeCityAlertCaches } from "@/modules/city-alerts/infrastructure/city-alerts-initialization";
-import { readCedisCacheResult } from "@/modules/city-alerts/infrastructure/cedis-cache";
-import { runCedisCollector } from "@/modules/city-alerts/infrastructure/collect-cedis";
+import {
+  getCedisCachePath,
+  readCedisCacheResult,
+} from "@/modules/city-alerts/infrastructure/cedis-cache";
+import {
+  getActiveCedisContexts,
+  runActiveCedisCollectors,
+} from "@/modules/city-alerts/infrastructure/collect-cedis";
 import { runVikpgCollector } from "@/modules/city-alerts/infrastructure/collect-vikpg";
 import { readVikpgCacheResult } from "@/modules/city-alerts/infrastructure/vikpg-cache";
 import { readEventCacheSnapshot } from "@/modules/events/infrastructure/events-cache";
 import { initializeEventCaches } from "@/modules/events/infrastructure/events-initialization";
 import { refreshAllEvents } from "@/modules/events/infrastructure/events-refresh";
 import { initializePodgoricaFlights } from "@/modules/flights/infrastructure/podgorica-flights-initialization";
+import { getActiveMonteGigsGoingOutContexts } from "@/modules/going-out/infrastructure/collect-montegigs-going-out";
+import {
+  getGoingOutCachePath,
+  getMonteGigsCitySource,
+} from "@/modules/going-out/infrastructure/montegigs-going-out";
 import { initializeMonteGigsGoingOut } from "@/modules/going-out/infrastructure/montegigs-going-out-initialization";
 import { initializeZpcgRailwayCache } from "@/modules/transport/infrastructure/zpcg-railway-initialization";
 
 export function register() {
   if (process.env.NEXT_RUNTIME !== "nodejs" || env.NODE_ENV !== "production") return;
 
+  const cedisContexts = getActiveCedisContexts();
+  let activeCedisRefresh: ReturnType<typeof runActiveCedisCollectors> | undefined;
   void initializeCityAlertCaches({
     providers: [
-      {
-        cachePath: env.CEDIS_CACHE_PATH,
+      ...cedisContexts.map((context) => ({
+        cachePath: getCedisCachePath(context.city.id as "budva" | "podgorica"),
         enabled: env.ENABLE_CEDIS && env.CEDIS_PROVIDER_MODE === "live",
-        id: "CEDIS",
-        readCache: () => readCedisCacheResult(env.CEDIS_CACHE_PATH),
-        refresh: () => runCedisCollector({ cachePath: env.CEDIS_CACHE_PATH }),
-      },
+        id: "CEDIS" as const,
+        readCache: () =>
+          readCedisCacheResult(
+            getCedisCachePath(context.city.id as "budva" | "podgorica"),
+            undefined,
+            context.city.id as "budva" | "podgorica",
+          ),
+        refresh: async () => {
+          activeCedisRefresh ??= runActiveCedisCollectors();
+          const result = (await activeCedisRefresh).find(
+            (candidate) => candidate.summary.cityId === context.city.id,
+          );
+          if (!result) throw new Error("CEDIS city refresh result was unavailable.");
+          return result;
+        },
+      })),
       {
         cachePath: env.VIKPG_CACHE_PATH,
         enabled: env.ENABLE_VIKPG && env.VIKPG_PROVIDER_MODE === "live",
@@ -44,7 +69,14 @@ export function register() {
   }
 
   if (env.ENABLE_GOING_OUT) {
-    void initializeMonteGigsGoingOut({ cachePath: env.GOING_OUT_CACHE_PATH });
+    for (const context of getActiveMonteGigsGoingOutContexts()) {
+      const source = getMonteGigsCitySource(context.city.id);
+      if (!source) continue;
+      void initializeMonteGigsGoingOut({
+        cachePath: getGoingOutCachePath(source.cityId),
+        context,
+      });
+    }
   }
 
   if (env.ENABLE_EVENTS && env.EVENT_PROVIDER_MODE === "live") {

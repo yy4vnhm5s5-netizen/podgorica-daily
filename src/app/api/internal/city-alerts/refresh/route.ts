@@ -3,6 +3,6 @@ import { refreshCityAlerts } from "@/modules/city-alerts/infrastructure/city-ale
 import { createRefreshPostHandler } from "./refresh-post-handler";
 
 export const POST = createRefreshPostHandler({
-  refresh: refreshCityAlerts,
+  refresh: async () => refreshCityAlerts(),
   secret: env.CITY_ALERTS_REFRESH_SECRET,
 });

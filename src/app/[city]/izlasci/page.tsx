@@ -44,7 +44,12 @@ async function GoingOutRoute({ params }: GoingOutRouteProps) {
 
   return (
     <DashboardLayout city={context.city} translations={getTranslations(locale)}>
-      <GoingOutPage events={result.events} locale={locale} state={result.state} />
+      <GoingOutPage
+        city={context.city}
+        events={result.events}
+        locale={locale}
+        state={result.state}
+      />
     </DashboardLayout>
   );
 }

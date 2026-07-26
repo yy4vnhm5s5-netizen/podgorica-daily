@@ -1,9 +1,10 @@
 import { env } from "@/config/env";
-import { runCedisCollector } from "@/modules/city-alerts/infrastructure/collect-cedis";
+import { runActiveCedisCollectors } from "@/modules/city-alerts/infrastructure/collect-cedis";
 import { createRefreshPostHandler } from "../../refresh-post-handler";
-import { toCityAlertRefreshEndpointResult } from "../../provider-refresh-result";
+import { toMultiCityAlertRefreshEndpointResult } from "../../provider-refresh-result";
 
 export const POST = createRefreshPostHandler({
-  refresh: async () => toCityAlertRefreshEndpointResult("cedis", await runCedisCollector()),
+  refresh: async () =>
+    toMultiCityAlertRefreshEndpointResult("cedis", await runActiveCedisCollectors()),
   secret: env.CEDIS_REFRESH_SECRET,
 });

@@ -30,7 +30,7 @@ function city(overrides: Partial<City> = {}): City {
   };
 }
 
-test("exposes Podgorica as the one active main city", () => {
+test("exposes Podgorica as the main city and Budva as a second active city", () => {
   const mainCity = getMainCity();
 
   assert.equal(mainCity.id, "podgorica");
@@ -40,15 +40,19 @@ test("exposes Podgorica as the one active main city", () => {
   assert.equal(mainCity.isMain, true);
   assert.deepEqual(
     getActiveCities().map(({ slug }) => slug),
-    ["podgorica"],
+    ["budva", "podgorica"],
   );
 });
 
-test("resolves active route slugs without publishing inactive city configuration", () => {
+test("resolves active city route slugs and retains inactive city configuration", () => {
   assert.equal(getActiveCityBySlug("podgorica")?.id, "podgorica");
-  assert.equal(getActiveCityBySlug("budva"), undefined);
+  assert.equal(getActiveCityBySlug("budva")?.id, "budva");
   assert.equal(getActiveCityBySlug("unknown"), undefined);
-  assert.equal(getCityBySlug("budva")?.isActive, false);
+  assert.equal(getCityBySlug("budva")?.isActive, true);
+  assert.deepEqual(getCityBySlug("budva")?.capabilities, ["electricity", "weather", "goingOut"]);
+  assert.equal(getCityBySlug("budva")?.latitude, 42.2864);
+  assert.equal(getCityBySlug("budva")?.longitude, 18.8401);
+  assert.equal(getCityBySlug("budva")?.timezone, "Europe/Podgorica");
   assert.equal(createCityContext("podgorica").city.timezone, "Europe/Podgorica");
 });
 
@@ -67,6 +71,7 @@ test("keeps capabilities explicit per city", () => {
     "goingOut",
     "railway",
     "water",
+    "weather",
   ]);
   assert.equal(supportsCityCapability(getMainCity(), "events"), true);
   assert.equal(supportsCityCapability(city(), "events"), false);

@@ -1,6 +1,6 @@
 # ADR 0022: Use city-prefixed canonical public routes
 
-- Status: Accepted
+- Status: Accepted; root-route and sitemap portions superseded by ADR 0023
 - Date: 2026-07-22
 - Supersedes: ADR 0021
 
@@ -12,11 +12,11 @@ Gradom is preparing for multiple cities while Podgorica remains the only active 
 
 Keep a static central city registry with separate `id` and URL `slug`, plus `name`, `isMain`, and `isActive`. Routes resolve an active city into a `CityContext` at the page boundary and pass that context to city-owned presentation and application queries.
 
-Publish city content only beneath active city slugs. Podgorica therefore uses `/podgorica`, `/podgorica/dogadjaji`, `/podgorica/izlasci`, `/podgorica/letovi`, and `/podgorica/struja`. The root `/` renders the main city without a redirect and has `/podgorica` as its canonical URL. Global contact and legal pages remain root routes.
+Publish city content only beneath active city slugs. Podgorica therefore uses `/podgorica`, `/podgorica/dogadjaji`, `/podgorica/izlasci`, `/podgorica/letovi`, and `/podgorica/struja`. Global contact and legal pages remain root routes. The original root-route decision has been superseded by ADR 0023: `/` is now the canonical Gradom.me platform homepage, while `/podgorica` is the canonical Podgorica city page.
 
 Every normalized event has one required `cityId`. Readers filter by that field before public presentation. Legacy cache snapshots that only contain `cityIds` are backfilled on read when the first cached ID is a registered city; invalid legacy entries are not exposed.
 
-Sitemaps publish active city canonical URLs only, never root as a duplicate city landing page. Page canonical and Open Graph URLs use the resolved city route. No old route redirects or compatibility layer are retained because these routes are not indexed or launched.
+Sitemap and root-route policy now follow ADR 0023. Page canonical and Open Graph URLs use the resolved city route. No old route redirects or compatibility layer are retained because these routes are not indexed or launched.
 
 ## Consequences
 

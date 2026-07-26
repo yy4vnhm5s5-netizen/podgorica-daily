@@ -1,4 +1,5 @@
 import { ensureCacheDirectory, readJsonCache } from "../../../shared/lib/cache.ts";
+import type { CityContext } from "../../../shared/types/city.ts";
 
 import {
   runMonteGigsGoingOutCollector,
@@ -8,6 +9,7 @@ import type { GoingOutCacheSnapshot } from "./montegigs-going-out.ts";
 
 interface InitializeGoingOutDependencies {
   cachePath: string;
+  context: CityContext;
   ensureDirectory?: (cachePath: string) => Promise<void>;
   log?: (message: string) => void;
   readCache?: (cachePath: string) => Promise<GoingOutCacheSnapshot | null>;
@@ -16,10 +18,11 @@ interface InitializeGoingOutDependencies {
 
 async function initializeMonteGigsGoingOut({
   cachePath,
+  context,
   ensureDirectory = ensureCacheDirectory,
   log = console.info,
   readCache = (path) => readJsonCache<GoingOutCacheSnapshot>(path),
-  refresh = () => runMonteGigsGoingOutCollector({ cachePath }),
+  refresh = () => runMonteGigsGoingOutCollector({ cachePath, context }),
 }: InitializeGoingOutDependencies): Promise<"cache-found" | "failed" | "refreshed"> {
   try {
     await ensureDirectory(cachePath);

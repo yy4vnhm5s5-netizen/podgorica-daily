@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { runMonteGigsGoingOutCollector } from "./collect-montegigs-going-out.ts";
+import {
+  runActiveMonteGigsGoingOutCollectors,
+  runMonteGigsGoingOutCollector,
+} from "./collect-montegigs-going-out.ts";
+import { createCityContext } from "@/shared/config/cities";
 
 test("reports a successful MonteGigs collection with a cache write", async () => {
   const output: string[] = [];
@@ -18,7 +22,10 @@ test("reports a successful MonteGigs collection with a cache write", async () =>
   });
 
   assert.equal(result.exitCode, 0);
-  assert.equal(output[0], "provider=montegigs-going-out state=success accepted=6 cache=written");
+  assert.equal(
+    output[0],
+    "provider=montegigs-going-out cityId=podgorica state=success accepted=6 snapshot=unavailable retainedPreviousSnapshot=false",
+  );
 });
 
 test("reports retained cache on a failed MonteGigs collection", async () => {
@@ -39,6 +46,92 @@ test("reports retained cache on a failed MonteGigs collection", async () => {
   assert.equal(result.exitCode, 1);
   assert.equal(
     output[0],
-    "provider=montegigs-going-out state=failed accepted=4 cache=retained error=montegigs-parser-failed",
+    "provider=montegigs-going-out cityId=podgorica state=failed accepted=4 snapshot=unavailable retainedPreviousSnapshot=true error=montegigs-parser-failed",
+  );
+});
+
+test("uses independent city locks and reports city-aware diagnostics", async () => {
+  const podgorica = createCityContext("podgorica");
+  const budva = createCityContext("budva");
+  let finishPodgorica: (() => void) | undefined;
+  let signalPodgoricaRefreshStarted: (() => void) | undefined;
+  const podgoricaRefreshStarted = new Promise<void>((resolve) => {
+    signalPodgoricaRefreshStarted = resolve;
+  });
+  const pendingPodgorica = runMonteGigsGoingOutCollector({
+    cachePath: "/tmp/gradom-going-out-city-locks/podgorica.json",
+    context: podgorica,
+    refresh: () =>
+      new Promise((resolve) => {
+        signalPodgoricaRefreshStarted?.();
+        finishPodgorica = () =>
+          resolve({
+            acceptedEvents: 1,
+            retainedPreviousSnapshot: false,
+            snapshot: null,
+            success: true,
+            warnings: [],
+          });
+      }),
+  });
+
+  await podgoricaRefreshStarted;
+
+  const duplicate = await runMonteGigsGoingOutCollector({
+    cachePath: "/tmp/gradom-going-out-city-locks/podgorica.json",
+    context: podgorica,
+  });
+  const budvaOutput: string[] = [];
+  const independentBudva = await runMonteGigsGoingOutCollector({
+    cachePath: "/tmp/gradom-going-out-city-locks/budva.json",
+    context: budva,
+    refresh: async () => ({
+      acceptedEvents: 2,
+      retainedPreviousSnapshot: false,
+      snapshot: null,
+      success: true,
+      warnings: [],
+    }),
+    writeOutput: (line) => budvaOutput.push(line),
+  });
+
+  assert.equal(duplicate.state, "already-running");
+  assert.equal(independentBudva.state, "success");
+  assert.match(budvaOutput[0]!, /provider=montegigs-going-out cityId=budva/u);
+  finishPodgorica?.();
+  await pendingPodgorica;
+});
+
+test("sequentially refreshes every active city with an approved Going Out source", async () => {
+  const podgorica = createCityContext("podgorica");
+  const budva = createCityContext("budva");
+  const calls: string[] = [];
+
+  const results = await runActiveMonteGigsGoingOutCollectors({
+    cities: [
+      podgorica.city,
+      { ...budva.city, isActive: true },
+      { ...budva.city, capabilities: [], id: "unsupported", slug: "unsupported" },
+    ],
+    createContext(cityId) {
+      return cityId === "budva" ? budva : podgorica;
+    },
+    async runCollector(context) {
+      calls.push(context.city.id);
+      return {
+        cityId: context.city.id,
+        exitCode: 0,
+        output: "",
+        refresh: null,
+        snapshotState: "not-run",
+        state: "success",
+      };
+    },
+  });
+
+  assert.deepEqual(calls, ["podgorica", "budva"]);
+  assert.deepEqual(
+    results.map(({ cityId }) => cityId),
+    ["podgorica", "budva"],
   );
 });

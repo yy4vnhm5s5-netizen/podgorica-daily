@@ -15,7 +15,7 @@ async function getGoingOutEvents(context: CityContext): Promise<GoingOutCacheRes
     return { events: [], state: "unavailable" };
   }
 
-  return getCachedMonteGigsGoingOut();
+  return getCachedMonteGigsGoingOut({ context });
 }
 
 export { canReadGoingOutEvents, getGoingOutEvents };

@@ -1,10 +1,12 @@
 import type { CityAlert } from "../domain/city-alert.ts";
 import {
   defaultCachePath,
+  getCedisCachePath,
   readCedisCache,
   type CedisCacheSnapshot,
   type FreshnessStatus,
 } from "./cedis-cache.ts";
+import { getCedisCityId } from "./cedis-cities.ts";
 import { mockCityAlertsProvider } from "./mock-city-alerts-provider.ts";
 import { isCitySupportedByProvider } from "@/shared/config/cities";
 import type { CityContext } from "@/shared/types/city";
@@ -24,7 +26,7 @@ interface CedisCityAlertsProviderDependencies {
   getMockAlerts?: () => Promise<CityAlert[] | null>;
   mode: CityAlertsProviderMode;
   now?: () => Date;
-  readCache?: () => Promise<CedisCacheSnapshot | null>;
+  readCache?: (cityId: "budva" | "podgorica") => Promise<CedisCacheSnapshot | null>;
 }
 
 async function getCedisCityAlerts({
@@ -32,7 +34,7 @@ async function getCedisCityAlerts({
   getMockAlerts = () => mockCityAlertsProvider.getCityAlerts(),
   mode,
   now = () => new Date(),
-  readCache = readCedisCache,
+  readCache = (cityId) => readCedisCache(getCedisCachePath(cityId), undefined, cityId),
 }: CedisCityAlertsProviderDependencies): Promise<CityAlertsSourceData> {
   if (
     mode === "disabled" ||
@@ -40,12 +42,14 @@ async function getCedisCityAlerts({
   ) {
     return { alerts: [], freshnessStatus: "unavailable", mode };
   }
+  const cityId = getCedisCityId(context);
+  if (!cityId) return { alerts: [], freshnessStatus: "unavailable", mode };
 
   if (mode === "mock") {
     return { alerts: (await getMockAlerts()) ?? [], freshnessStatus: "fresh", mode };
   }
 
-  const cache = await readCache();
+  const cache = await readCache(cityId);
   if (!cache) {
     return { alerts: [], freshnessStatus: "unavailable", mode };
   }
@@ -84,8 +88,8 @@ const cedisProviderMetadata: ProviderMetadata = {
   id: "cedis",
   officialSource: "https://cedis.me/servisne-informacije/",
   refreshIntervalMinutes: 360,
-  supportedCityIds: ["podgorica"],
-  supportsMultipleCities: false,
+  supportedCityIds: ["podgorica", "budva"],
+  supportsMultipleCities: true,
 };
 
 export {

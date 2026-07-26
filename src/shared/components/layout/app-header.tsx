@@ -10,17 +10,18 @@ import type { Translations } from "@/shared/lib/translations";
 
 interface AppHeaderProps {
   city: City;
+  homeHref?: string;
   translations: Translations;
 }
 
-function AppHeader({ city, translations }: AppHeaderProps) {
+function AppHeader({ city, homeHref = getCityPath(city), translations }: AppHeaderProps) {
   return (
     <header className="sticky top-0 z-40 border-b border-blue-100/80 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/85">
       <ResponsiveContainer className="flex h-16 items-center justify-between gap-4">
         <Link
           aria-label={siteConfig.name}
           className="focus-visible:ring-ring shrink-0 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
-          href={getCityPath(city)}
+          href={homeHref}
         >
           <span aria-hidden="true" className="flex h-9 w-[136px] items-center overflow-hidden">
             <span className="relative h-9 w-8 shrink-0 overflow-hidden">
@@ -45,7 +46,7 @@ function AppHeader({ city, translations }: AppHeaderProps) {
           </span>
         </Link>
         <div className="hidden flex-1 justify-center md:flex">
-          <Navigation city={city} translations={translations} />
+          <Navigation city={city} homeHref={homeHref} translations={translations} />
         </div>
       </ResponsiveContainer>
     </header>

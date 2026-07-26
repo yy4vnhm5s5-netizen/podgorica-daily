@@ -9,10 +9,11 @@ import type { Translations } from "@/shared/lib/translations";
 
 interface DashboardLayoutProps extends PropsWithChildren {
   city: City;
+  homeHref?: string;
   translations: Translations;
 }
 
-function DashboardLayout({ children, city, translations }: DashboardLayoutProps) {
+function DashboardLayout({ children, city, homeHref, translations }: DashboardLayoutProps) {
   return (
     <div className="min-h-screen bg-background pb-[calc(5rem+env(safe-area-inset-bottom))] text-foreground md:pb-0">
       <a
@@ -21,12 +22,12 @@ function DashboardLayout({ children, city, translations }: DashboardLayoutProps)
       >
         {translations.shell.skipToContent}
       </a>
-      <AppHeader city={city} translations={translations} />
+      <AppHeader city={city} homeHref={homeHref} translations={translations} />
       <main id="main-content">
         <ResponsiveContainer className="py-8 sm:py-14">{children}</ResponsiveContainer>
       </main>
       <AppFooter tagline={translations.shell.tagline} translations={translations} />
-      <MobileNavigation city={city} translations={translations} />
+      <MobileNavigation city={city} homeHref={homeHref} translations={translations} />
     </div>
   );
 }

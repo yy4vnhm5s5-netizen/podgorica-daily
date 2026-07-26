@@ -27,18 +27,45 @@ interface CityRouteAvailabilityOptions {
   isFeatureEnabled?: typeof isFeatureEnabled;
 }
 
+interface CityDashboardSummaryAvailability {
+  cinema: boolean;
+  events: boolean;
+  goingOut: boolean;
+}
+
 const publicFeatureByCityCapability: Partial<Record<CityCapability, Feature>> = {
   flights: "flights",
   goingOut: "goingOut",
 };
 
 function getCityLandingTitle(context: CityContext) {
-  return getPageTitle(`${getCityName(context.city)} — događaji, izlasci i informacije`);
+  if (!supportsCityCapability(context.city, "events")) {
+    return getPageTitle(`${getCityName(context.city)} — lokalne informacije`);
+  }
+
+  const labels = [
+    "događaji",
+    ...(supportsCityCapability(context.city, "goingOut") ? ["izlasci"] : []),
+  ];
+
+  return getPageTitle(
+    labels.length > 0
+      ? `${getCityName(context.city)} — ${labels.join(", ")} i informacije`
+      : `${getCityName(context.city)} — lokalne informacije`,
+  );
 }
 
 function getCityLandingMetadata(context: CityContext) {
   const canonical = getCityPath(context.city);
-  const description = `Pouzdane lokalne informacije za grad ${getCityName(context.city)}.`;
+  const availableServices = [
+    ...(supportsCityCapability(context.city, "weather") ? ["vremenu"] : []),
+    ...(supportsCityCapability(context.city, "events") ? ["događajima"] : []),
+    ...(supportsCityCapability(context.city, "goingOut") ? ["izlascima"] : []),
+    ...(supportsCityCapability(context.city, "electricity") ? ["servisnim obavještenjima"] : []),
+  ];
+  const description = availableServices.length
+    ? `Pouzdane lokalne informacije za grad ${getCityName(context.city)}, sa podacima o ${availableServices.join(", ")}.`
+    : `Pouzdane lokalne informacije za grad ${getCityName(context.city)}.`;
 
   return createPublicRouteMetadata({ canonical, description, title: getCityLandingTitle(context) });
 }
@@ -64,7 +91,7 @@ function isCityPublicFeatureRouteAvailable(
   capability: CityCapability,
   { isFeatureEnabled: checkFeature = isFeatureEnabled }: CityRouteAvailabilityOptions = {},
 ) {
-  if (!supportsCityCapability(city, capability)) return false;
+  if (!isActiveCity(city) || !supportsCityCapability(city, capability)) return false;
 
   const feature = publicFeatureByCityCapability[capability];
   return feature ? checkFeature(feature) : true;
@@ -99,6 +126,20 @@ function getCityDashboardCapabilities(context: CityContext) {
     flights: supportsCityCapability(context.city, "flights"),
     goingOut: supportsCityCapability(context.city, "goingOut"),
     railway: supportsCityCapability(context.city, "railway"),
+    weather: supportsCityCapability(context.city, "weather"),
+  };
+}
+
+function getCityDashboardSummaryAvailability(
+  city: City,
+  options: CityRouteAvailabilityOptions = {},
+): CityDashboardSummaryAvailability {
+  const events = isCityPublicFeatureRouteAvailable(city, "events", options);
+
+  return {
+    cinema: events,
+    events,
+    goingOut: isCityPublicFeatureRouteAvailable(city, "goingOut", options),
   };
 }
 
@@ -106,6 +147,7 @@ export {
   getCanonicalCitySitemapPaths,
   getActiveCitySitemapPaths,
   getCityDashboardCapabilities,
+  getCityDashboardSummaryAvailability,
   getCityLandingMetadata,
   getCityLandingTitle,
   isCityPublicFeatureRouteAvailable,
@@ -113,4 +155,5 @@ export {
   getMainCityLandingContext,
   resolveActiveCityFeatureRoute,
   resolveActiveCityRoute,
+  type CityDashboardSummaryAvailability,
 };

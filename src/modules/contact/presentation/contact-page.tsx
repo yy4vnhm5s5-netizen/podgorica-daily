@@ -12,7 +12,7 @@ function ContactPage({ city, locale }: { city: City; locale: Locale }) {
   const translations = getContactTranslations(locale);
 
   return (
-    <DashboardLayout city={city} translations={getTranslations(locale)}>
+    <DashboardLayout city={city} homeHref="/" translations={getTranslations(locale)}>
       <section className="mx-auto max-w-5xl space-y-8" aria-labelledby="contact-heading">
         <div className="max-w-2xl">
           <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl" id="contact-heading">

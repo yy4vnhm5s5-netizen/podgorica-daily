@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Gradom is a trusted, fast, and accessible digital guide to daily life in Podgorica. It makes local information easier to discover without obscuring its source, freshness, or limitations.
+Gradom.me is a trusted, fast, and accessible platform for local city information in Montenegro. Each active city is a separate local product; the platform makes information easier to discover without obscuring its source, freshness, or limitations.
 
 ## Principles
 
@@ -14,7 +14,7 @@ Gradom is a trusted, fast, and accessible digital guide to daily life in Podgori
 
 ## Scope
 
-The platform supports verified local weather, city alerts, events, selected transport information, deterministic daily overviews, and a business contact form for advertising and collaboration inquiries. Maps, unified search, editorial operations, accounts, and further mobility coverage remain future work.
+The platform supports verified local weather, city alerts, events, selected transport information, deterministic daily overviews, and a business contact form for advertising and collaboration inquiries where city sources are approved. Maps, unified search, editorial operations, accounts, and further mobility coverage remain future work. See [PRODUCT_VISION.md](PRODUCT_VISION.md) and [UX_ARCHITECTURE.md](UX_ARCHITECTURE.md) for current product and UX guidance.
 
 ## Success
 

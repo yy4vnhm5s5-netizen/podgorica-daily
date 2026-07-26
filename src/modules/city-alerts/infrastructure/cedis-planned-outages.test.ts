@@ -4,6 +4,7 @@ import test from "node:test";
 
 import {
   discoverCedisArticles,
+  getMunicipalitySections,
   getPodgoricaSection,
   parseCedisArticle,
   parseCedisArticleResult,
@@ -173,3 +174,104 @@ test("assigns each Podgorica entry its own date in a multi-date article", async 
   );
   assert.ok(alerts.every((alert) => !alert.rawSourceText?.includes("Nikšić")));
 });
+
+test("extracts only the requested allowlisted municipality from one CEDIS article", async () => {
+  const article = {
+    title: "Planirani radovi za 30. mart",
+    url: "https://cedis.me/planirani-radovi-za-30-mart/",
+  };
+  const html = await fixture("cedis-podgorica-budva.html");
+
+  const podgorica = parseCedisArticle(article, html, "podgorica", fixedNow());
+  const budva = parseCedisArticle(article, html, "budva", fixedNow());
+
+  assert.deepEqual(
+    podgorica.map((alert) => alert.affectedArea.kind === "source" && alert.affectedArea.value),
+    ["Zabjelo."],
+  );
+  assert.deepEqual(
+    budva.map((alert) => alert.affectedArea.kind === "source" && alert.affectedArea.value),
+    ["Pržno i Sveti Stefan."],
+  );
+  assert.ok(podgorica.every((alert) => alert.cityIds.every((cityId) => cityId === "podgorica")));
+  assert.ok(budva.every((alert) => alert.cityIds.every((cityId) => cityId === "budva")));
+});
+
+test("handles Budva before Podgorica without cross-city leakage", async () => {
+  const article = {
+    title: "Planirani radovi za 30. mart",
+    url: "https://cedis.me/planirani-radovi-za-30-mart/",
+  };
+  const html = await fixture("cedis-budva-before-podgorica.html");
+
+  const budva = parseCedisArticle(article, html, "budva", fixedNow());
+  const podgorica = parseCedisArticle(article, html, "podgorica", fixedNow());
+
+  assert.equal(
+    budva[0]?.affectedArea.kind === "source" && budva[0].affectedArea.value,
+    "Petrovac.",
+  );
+  assert.equal(
+    podgorica[0]?.affectedArea.kind === "source" && podgorica[0].affectedArea.value,
+    "Konik.",
+  );
+});
+
+test("does not treat a city name in normal prose as a municipality heading", () => {
+  const extraction = getMunicipalitySections(
+    "U nastavku je navedena Budva kao primjer, bez posebnog naslova.\nNikšić\nOd 08 do 12 sati: Centar.",
+    "budva",
+  );
+
+  assert.equal(extraction.state, "not-found");
+});
+
+test("returns a safe not-found result for an unavailable municipality section", async () => {
+  const result = parseCedisArticleResult(
+    {
+      title: "Planirani radovi za 30. mart",
+      url: "https://cedis.me/planirani-radovi-za-30-mart/",
+    },
+    await fixture("multi-municipality.html"),
+    "budva",
+    fixedNow(),
+  );
+
+  assert.equal(result.extractionState, "municipality-section-not-found");
+  assert.equal(result.alerts.length, 0);
+  assert.equal(result.zeroRecordsReason, "municipality-section-not-found");
+});
+
+test("rejects unsupported municipality extraction", async () => {
+  const result = parseCedisArticleResult(
+    {
+      title: "Planirani radovi za 30. mart",
+      url: "https://cedis.me/planirani-radovi-za-30-mart/",
+    },
+    await fixture("multi-municipality.html"),
+    "bar",
+    fixedNow(),
+  );
+
+  assert.equal(result.extractionState, "unsupported-city");
+  assert.equal(result.alerts.length, 0);
+});
+
+test("rejects an ambiguous municipality boundary instead of guessing", async () => {
+  const result = parseCedisArticleResult(
+    {
+      title: "Planirani radovi za 30. mart",
+      url: "https://cedis.me/planirani-radovi-za-30-mart/",
+    },
+    await fixture("cedis-ambiguous-municipality.html"),
+    "budva",
+    fixedNow(),
+  );
+
+  assert.equal(result.extractionState, "ambiguous-section-boundaries");
+  assert.deepEqual(result.alerts, []);
+});
+
+function fixedNow() {
+  return new Date("2026-03-29T12:00:00.000Z");
+}

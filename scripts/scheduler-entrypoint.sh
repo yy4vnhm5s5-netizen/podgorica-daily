@@ -52,13 +52,14 @@ while true; do
     00:10|02:10|04:10|06:10|08:10|10:10|12:10|14:10|16:10|18:10|20:10|22:10)
       run_collector "vikpg" "pnpm run collect:vikpg"
       ;;
-    # CEDIS: every six hours.
+    # CEDIS: every six hours; the CLI sequentially refreshes each active allowlisted city.
     01:25|07:25|13:25|19:25) run_collector "cedis" "pnpm run collect:cedis" ;;
     # KIC, CNP, Glavni Grad, and Tourism: every three hours under one shared event lock.
     00:05|03:05|06:05|09:05|12:05|15:05|18:05|21:05)
       run_collector "standard-events" "pnpm run events:refresh-standard"
       ;;
-    # MonteGigs: every three hours, offset from the standard events pass.
+    # MonteGigs: every three hours, offset from the standard events pass. The CLI
+    # sequentially refreshes every active city with an explicitly approved source.
     01:00|04:00|07:00|10:00|13:00|16:00|19:00|22:00)
       run_collector "montegigs-going-out" "pnpm run collect:montegigs-going-out"
       ;;

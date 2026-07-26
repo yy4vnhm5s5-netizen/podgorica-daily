@@ -5,6 +5,7 @@ interface CityAlertCollectorSummary {
   alertCount: number;
   cachePath: string;
   cacheStatus: CityAlertCollectorCacheStatus;
+  cityId?: string;
   completedAt: string;
   errorCode?: string;
   retainedPreviousSnapshot: boolean;

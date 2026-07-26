@@ -9,6 +9,7 @@ import {
 
 test("normalizes a Podgorica going-out event and preserves an unavailable time", () => {
   const event = normalizeGoingOutEvent({
+    city: "podgorica",
     sourceUrl: "https://staging.montegigs.me/me/events/podgorica/5520-20260825-summer-jam",
     startDate: "2026-08-25",
     title: "  Summer Jam: Željko Samardžić  ",
@@ -29,16 +30,19 @@ test("normalizes a Podgorica going-out event and preserves an unavailable time",
 test("filters past days in Europe/Podgorica and keeps deterministic ordering", () => {
   const events = [
     normalizeGoingOutEvent({
+      city: "podgorica",
       sourceUrl: "https://staging.montegigs.me/me/events/podgorica/1-20260721-past",
       startDate: "2026-07-21",
       title: "Past",
     }),
     normalizeGoingOutEvent({
+      city: "podgorica",
       sourceUrl: "https://staging.montegigs.me/me/events/podgorica/2-20260722-today",
       startDate: "2026-07-22",
       title: "Today",
     }),
     normalizeGoingOutEvent({
+      city: "podgorica",
       sourceUrl: "https://staging.montegigs.me/me/events/podgorica/3-20260723-next",
       startDate: "2026-07-23",
       title: "Next",

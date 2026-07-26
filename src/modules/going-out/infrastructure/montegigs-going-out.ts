@@ -1,11 +1,13 @@
 import { z } from "zod";
 
 import { env } from "../../../config/env.ts";
+import { resolveRuntimeCachePath } from "../../../config/runtime-data.ts";
 import {
   calculateCacheFreshness,
   readJsonCache,
   writeJsonCache,
 } from "../../../shared/lib/cache.ts";
+import type { CityContext, CityId } from "../../../shared/types/city.ts";
 
 import {
   normalizeGoingOutEvent,
@@ -14,13 +16,25 @@ import {
   type GoingOutEvent,
 } from "../domain/going-out-event.ts";
 
-const monteGigsPodgoricaUrl = "https://staging.montegigs.me/me/events/podgorica";
-const defaultGoingOutCachePath = env.GOING_OUT_CACHE_PATH;
 const maximumResponseLength = 1_500_000;
+
+const monteGigsCitySources = {
+  budva: {
+    cityId: "budva",
+    listingUrl: "https://staging.montegigs.me/me/events/budva",
+  },
+  podgorica: {
+    cityId: "podgorica",
+    listingUrl: "https://staging.montegigs.me/me/events/podgorica",
+  },
+} as const;
+
+type MonteGigsSupportedCityId = keyof typeof monteGigsCitySources;
 
 type GoingOutCacheState = "fresh" | "stale" | "unavailable";
 
 interface GoingOutCacheSnapshot {
+  cityId: MonteGigsSupportedCityId;
   events: GoingOutEvent[];
   fetchedAt: string;
   lastRefreshError?: string;
@@ -78,6 +92,8 @@ type FetchImplementation = (
 
 class MonteGigsFetchError extends Error {
   readonly code:
+    | "montegigs-city-source-rejected"
+    | "montegigs-city-unsupported"
     | "montegigs-host-rejected"
     | "montegigs-invalid-content-type"
     | "montegigs-request-failed"
@@ -178,10 +194,29 @@ function createMonteGigsHttpClient({
   };
 }
 
-function parseMonteGigsPodgoricaEvents(html: string, now = new Date()): GoingOutParseResult {
+function parseMonteGigsEvents(
+  html: string,
+  context: CityContext,
+  now = new Date(),
+): GoingOutParseResult {
+  const source = getMonteGigsCitySource(context.city.id);
+  if (!source) {
+    return {
+      events: [],
+      recognized: false,
+      records: 0,
+      rejected: 0,
+      warnings: ["montegigs-city-unsupported"],
+    };
+  }
+
+  const cityPath = escapeRegularExpression(source.cityId);
   const eventLinks = [
     ...html.matchAll(
-      /<a\b[^>]*href=["']([^"']*\/me\/events\/podgorica\/\d+-\d{8}-[^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi,
+      new RegExp(
+        `<a\\b[^>]*href=["']([^"']*\\/me\\/events\\/${cityPath}\\/\\d+-\\d{8}-[^"']+)["'][^>]*>([\\s\\S]*?)<\\/a>`,
+        "gi",
+      ),
     ),
   ];
   const recognized = eventLinks.length > 0;
@@ -194,11 +229,15 @@ function parseMonteGigsPodgoricaEvents(html: string, now = new Date()): GoingOut
       match.index ?? 0,
       Math.min(nextIndex, (match.index ?? 0) + 6_000),
     );
-    const sourceUrl = new URL(match[1], monteGigsPodgoricaUrl).toString();
+    const sourceUrl = new URL(match[1], source.listingUrl).toString();
     const startDate = dateFromMonteGigsUrl(sourceUrl);
     const title = plainText(match[2]) || firstHeading(cardWindow) || "";
-    const imageUrl = monteGigsImageUrl(firstImage(match[0]) || firstImage(cardWindow));
+    const imageUrl = monteGigsImageUrl(
+      firstImage(match[0]) || firstImage(cardWindow),
+      source.listingUrl,
+    );
     const event = normalizeGoingOutEvent({
+      city: source.cityId,
       ...(imageUrl ? { imageUrl } : {}),
       sourceUrl,
       startDate: startDate ?? "",
@@ -223,23 +262,40 @@ function parseMonteGigsPodgoricaEvents(html: string, now = new Date()): GoingOut
 }
 
 async function refreshMonteGigsGoingOut({
-  cachePath = defaultGoingOutCachePath,
+  cachePath,
+  context,
   httpClient = createMonteGigsHttpClient(),
   now = new Date(),
 }: {
   cachePath?: string;
+  context: CityContext;
   httpClient?: GoingOutHttpClient;
   now?: Date;
-} = {}): Promise<GoingOutRefreshResult> {
-  const previous = await readGoingOutCacheSnapshot(cachePath);
+}): Promise<GoingOutRefreshResult> {
+  const source = getMonteGigsCitySource(context.city.id);
+  if (!source) {
+    return {
+      acceptedEvents: 0,
+      errorCode: "montegigs-city-unsupported",
+      retainedPreviousSnapshot: false,
+      snapshot: null,
+      success: false,
+      warnings: ["montegigs-city-unsupported"],
+    };
+  }
+
+  const resolvedCachePath = cachePath ?? getGoingOutCachePath(source.cityId);
+  const previous = await readGoingOutCacheSnapshot(resolvedCachePath, source.cityId);
   try {
-    const response = await httpClient.get(monteGigsPodgoricaUrl);
-    const parsed = parseMonteGigsPodgoricaEvents(response.body, now);
+    const response = await httpClient.get(source.listingUrl);
+    assertMonteGigsListingUrl(response.finalUrl, source.cityId);
+    const parsed = parseMonteGigsEvents(response.body, context, now);
     if (!parsed.recognized) {
       return retainPrevious(previous, "montegigs-parser-failed", parsed.warnings);
     }
 
     const snapshot: GoingOutCacheSnapshot = {
+      cityId: source.cityId,
       events: sortAndDeduplicateGoingOutEvents(parsed.events),
       fetchedAt: now.toISOString(),
       lastSuccessfulRefreshAt: now.toISOString(),
@@ -247,7 +303,7 @@ async function refreshMonteGigsGoingOut({
       schemaVersion: 1,
       sourceUrl: response.finalUrl,
     };
-    await writeJsonCache(snapshot, cachePath);
+    await writeJsonCache(snapshot, resolvedCachePath);
     return {
       acceptedEvents: snapshot.events.length,
       retainedPreviousSnapshot: false,
@@ -264,11 +320,22 @@ async function refreshMonteGigsGoingOut({
   }
 }
 
-async function getCachedMonteGigsGoingOut(
-  cachePath = defaultGoingOutCachePath,
+async function getCachedMonteGigsGoingOut({
+  cachePath,
+  context,
   now = new Date(),
-): Promise<GoingOutCacheResult> {
-  const snapshot = await readGoingOutCacheSnapshot(cachePath);
+}: {
+  cachePath?: string;
+  context: CityContext;
+  now?: Date;
+}): Promise<GoingOutCacheResult> {
+  const source = getMonteGigsCitySource(context.city.id);
+  if (!source) return { events: [], state: "unavailable" };
+
+  const snapshot = await readGoingOutCacheSnapshot(
+    cachePath ?? getGoingOutCachePath(source.cityId),
+    source.cityId,
+  );
   if (!snapshot) return { events: [], state: "unavailable" };
   const state = calculateCacheFreshness(
     new Date(snapshot.fetchedAt),
@@ -282,10 +349,10 @@ async function getCachedMonteGigsGoingOut(
   };
 }
 
-async function readGoingOutCacheSnapshot(cachePath = defaultGoingOutCachePath) {
+async function readGoingOutCacheSnapshot(cachePath: string, cityId: MonteGigsSupportedCityId) {
   const snapshot = await readJsonCache<unknown>(cachePath);
   const parsed = goingOutCacheSnapshotSchema.safeParse(snapshot);
-  return parsed.success ? parsed.data : null;
+  return parsed.success && parsed.data.cityId === cityId ? parsed.data : null;
 }
 
 function retainPrevious(
@@ -319,16 +386,44 @@ function assertMonteGigsUrl(value: string) {
   }
 }
 
-function monteGigsImageUrl(value: string | undefined) {
+function assertMonteGigsListingUrl(value: string, cityId: MonteGigsSupportedCityId) {
+  assertMonteGigsUrl(value);
+  const source = monteGigsCitySources[cityId];
+  if (new URL(value).pathname !== new URL(source.listingUrl).pathname) {
+    throw new MonteGigsFetchError(
+      "montegigs-city-source-rejected",
+      "MonteGigs redirected to an unexpected city listing.",
+    );
+  }
+}
+
+function getMonteGigsCitySource(cityId: CityId) {
+  return isMonteGigsSupportedCityId(cityId) ? monteGigsCitySources[cityId] : undefined;
+}
+
+function getGoingOutCachePath(cityId: MonteGigsSupportedCityId) {
+  if (cityId === "podgorica") return env.GOING_OUT_CACHE_PATH;
+  return resolveRuntimeCachePath(`montegigs-going-out-${cityId}.json`, env.RUNTIME_DATA_DIR);
+}
+
+function isMonteGigsSupportedCityId(cityId: CityId): cityId is MonteGigsSupportedCityId {
+  return Object.hasOwn(monteGigsCitySources, cityId);
+}
+
+function monteGigsImageUrl(value: string | undefined, sourceUrl: string) {
   if (!value) return undefined;
   try {
-    const url = new URL(value, monteGigsPodgoricaUrl);
+    const url = new URL(value, sourceUrl);
     return url.protocol === "https:" && url.hostname === "staging.montegigs.me"
       ? url.toString()
       : undefined;
   } catch {
     return undefined;
   }
+}
+
+function escapeRegularExpression(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function dateFromMonteGigsUrl(sourceUrl: string) {
@@ -372,7 +467,7 @@ function extractVenue(value: string) {
 }
 
 const goingOutEventSchema = z.object({
-  city: z.literal("podgorica"),
+  city: z.enum(["podgorica", "budva"]),
   id: z.string().min(1),
   imageUrl: z.string().url().optional(),
   sourceName: z.literal("MonteGigs"),
@@ -384,6 +479,7 @@ const goingOutEventSchema = z.object({
 });
 
 const goingOutCacheSnapshotSchema = z.object({
+  cityId: z.enum(["podgorica", "budva"]).default("podgorica"),
   events: z.array(goingOutEventSchema),
   fetchedAt: z.string().datetime(),
   lastRefreshError: z.string().optional(),
@@ -395,11 +491,15 @@ const goingOutCacheSnapshotSchema = z.object({
 
 export {
   MonteGigsFetchError,
+  assertMonteGigsListingUrl,
   assertMonteGigsUrl,
   createMonteGigsHttpClient,
   getCachedMonteGigsGoingOut,
-  monteGigsPodgoricaUrl,
-  parseMonteGigsPodgoricaEvents,
+  getGoingOutCachePath,
+  getMonteGigsCitySource,
+  isMonteGigsSupportedCityId,
+  monteGigsCitySources,
+  parseMonteGigsEvents,
   readGoingOutCacheSnapshot,
   refreshMonteGigsGoingOut,
   type GoingOutCacheResult,
@@ -408,4 +508,5 @@ export {
   type GoingOutHttpClient,
   type GoingOutHttpResponse,
   type GoingOutRefreshResult,
+  type MonteGigsSupportedCityId,
 };

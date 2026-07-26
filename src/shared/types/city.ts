@@ -2,11 +2,13 @@ import type { Locale } from "@/shared/config/locale";
 
 type CityId = string;
 
-type CityCapability = "electricity" | "events" | "flights" | "goingOut" | "railway" | "water";
+type CityCapability =
+  "electricity" | "events" | "flights" | "goingOut" | "railway" | "water" | "weather";
 
 interface City {
   capabilities?: readonly CityCapability[];
   country: string;
+  description?: string;
   id: CityId;
   isActive: boolean;
   isMain: boolean;

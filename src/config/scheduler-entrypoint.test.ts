@@ -24,5 +24,6 @@ test("keeps every provider on its intended independent cadence", async () => {
   assert.match(scheduler, /01:25\|07:25\|13:25\|19:25\) run_collector "cedis"/);
   assert.match(scheduler, /00:05\|03:05[\s\S]*21:05[\s\S]*"standard-events"/);
   assert.match(scheduler, /01:00\|04:00[\s\S]*22:00[\s\S]*"montegigs-going-out"/);
+  assert.match(scheduler, /sequentially refreshes every active city/u);
   assert.match(scheduler, /06:45\|18:45\) run_collector "zpcg-railway"/);
 });

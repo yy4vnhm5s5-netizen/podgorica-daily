@@ -43,6 +43,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     });
   });
   const globalEntries = [
+    createEntry("/", "weekly", 0.9),
     createEntry(getAboutPlatformPath(), "monthly", 0.5),
     createEntry(getContactPath(), "monthly", 0.5),
     createEntry(getTermsOfUsePath(), "yearly", 0.3),

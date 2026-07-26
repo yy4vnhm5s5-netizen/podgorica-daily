@@ -8,7 +8,6 @@ import {
   aboutPlatformContent,
   createAboutPlatformStructuredData,
 } from "./about-platform-content.ts";
-import { getMainCity } from "@/shared/config/cities";
 
 test("provides the page heading and only currently public information categories", () => {
   assert.equal(aboutPlatformContent.heading, "O platformi Gradom.me");
@@ -31,7 +30,7 @@ test("provides the page heading and only currently public information categories
 });
 
 test("creates minimal AboutPage and breadcrumb structured data without organization claims", () => {
-  const structuredData = createAboutPlatformStructuredData(getMainCity());
+  const structuredData = createAboutPlatformStructuredData();
   const graph = structuredData["@graph"];
 
   assert.equal(graph[0]?.["@type"], "AboutPage");
@@ -40,7 +39,7 @@ test("creates minimal AboutPage and breadcrumb structured data without organizat
   assert.deepEqual(graph[1]?.itemListElement, [
     {
       "@type": "ListItem",
-      item: "https://gradom.me/podgorica",
+      item: "https://gradom.me",
       name: "Početna",
       position: 1,
     },

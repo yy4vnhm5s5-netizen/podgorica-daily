@@ -1,6 +1,4 @@
-import { getCityPath } from "@/shared/config/public-routes";
 import { siteConfig } from "@/shared/config/site";
-import type { City } from "@/shared/types/city";
 
 const aboutPlatformContent = {
   description:
@@ -42,9 +40,8 @@ const aboutPlatformContent = {
   ],
 } as const;
 
-function createAboutPlatformStructuredData(city: City) {
+function createAboutPlatformStructuredData() {
   const canonical = new URL("/o-platformi", siteConfig.url).toString();
-  const cityUrl = new URL(getCityPath(city), siteConfig.url).toString();
 
   return {
     "@context": "https://schema.org",
@@ -60,7 +57,7 @@ function createAboutPlatformStructuredData(city: City) {
         itemListElement: [
           {
             "@type": "ListItem",
-            item: cityUrl,
+            item: siteConfig.url,
             name: "Početna",
             position: 1,
           },

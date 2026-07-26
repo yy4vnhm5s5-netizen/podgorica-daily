@@ -38,19 +38,19 @@ async function loadCityDashboardData(
 
   const [events, flights, goingOut, railway, weather] = await Promise.all([
     capabilities.events
-      ? resolvedDependencies.getCityEvents(context)
+      ? resolvedDependencies.getCityEvents(context).catch(() => getEmptyCityEventsReadModel())
       : Promise.resolve(getEmptyCityEventsReadModel()),
     resolvedDependencies.isFeatureEnabled("flights") && capabilities.flights
-      ? resolvedDependencies.getPodgoricaFlights(context)
+      ? resolvedDependencies.getPodgoricaFlights(context).catch(() => null)
       : Promise.resolve(null),
     resolvedDependencies.isFeatureEnabled("goingOut") && capabilities.goingOut
-      ? resolvedDependencies.getGoingOutEvents(context)
+      ? resolvedDependencies.getGoingOutEvents(context).catch(() => null)
       : Promise.resolve(null),
     capabilities.railway
-      ? resolvedDependencies.getRailwayDepartures(context)
+      ? resolvedDependencies.getRailwayDepartures(context).catch(() => null)
       : Promise.resolve(null),
-    resolvedDependencies.isFeatureEnabled("weather")
-      ? resolvedDependencies.getCurrentWeather(context)
+    resolvedDependencies.isFeatureEnabled("weather") && capabilities.weather
+      ? resolvedDependencies.getCurrentWeather(context).catch(() => null)
       : Promise.resolve(null),
   ]);
 

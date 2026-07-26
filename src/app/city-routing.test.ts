@@ -5,6 +5,7 @@ import {
   getCanonicalCitySitemapPaths,
   getActiveCitySitemapPaths,
   getCityDashboardCapabilities,
+  getCityDashboardSummaryAvailability,
   getCityLandingMetadata,
   getCityLandingTitle,
   getCitySitemapPaths,
@@ -51,8 +52,24 @@ test("the active city route uses its own canonical metadata", () => {
   assert.equal(metadata.openGraph?.description, metadata.description);
 });
 
-test("does not resolve inactive or unknown city routes", () => {
-  assert.equal(resolveActiveCityRoute("budva"), undefined);
+test("uses capability-aware metadata and summary routes for a future city", () => {
+  const budva = {
+    ...createCityContext("budva"),
+    city: { ...createCityContext("budva").city, isActive: true },
+  };
+
+  assert.equal(getCityLandingTitle(budva), "Budva — lokalne informacije | Gradom");
+  assert.match(getCityLandingMetadata(budva).description ?? "", /vremenu, izlascima/u);
+  assert.deepEqual(getCityDashboardSummaryAvailability(budva.city), {
+    cinema: false,
+    events: false,
+    goingOut: true,
+  });
+});
+
+test("resolves active Budva routes but rejects inactive and unknown city routes", () => {
+  assert.equal(resolveActiveCityRoute("budva")?.city.id, "budva");
+  assert.equal(resolveActiveCityRoute("bar"), undefined);
   assert.equal(resolveActiveCityRoute("unknown"), undefined);
 });
 
@@ -82,11 +99,12 @@ test("a city without capabilities does not enable Podgorica dashboard data sourc
     flights: false,
     goingOut: false,
     railway: false,
+    weather: false,
   });
 });
 
 test("sitemap paths contain only active canonical city paths", () => {
-  assert.deepEqual(getCanonicalCitySitemapPaths(), ["/podgorica"]);
+  assert.deepEqual(getCanonicalCitySitemapPaths(), ["/budva", "/podgorica"]);
 });
 
 test("sitemap emits only capability-supported routes for active cities", () => {
@@ -127,4 +145,14 @@ test("does not publish feature-flagged routes when their public feature is disab
     "/full/dogadjaji",
     "/full/struja",
   ]);
+});
+
+test("exposes only Budva's capability-supported feature routes", () => {
+  const budva = createCityContext("budva").city;
+
+  assert.equal(isCityPublicFeatureRouteAvailable(budva, "goingOut"), true);
+  assert.equal(isCityPublicFeatureRouteAvailable(budva, "electricity"), true);
+  assert.equal(isCityPublicFeatureRouteAvailable(budva, "events"), false);
+  assert.equal(isCityPublicFeatureRouteAvailable(budva, "flights"), false);
+  assert.deepEqual(getCitySitemapPaths(budva), ["/budva", "/budva/struja", "/budva/izlasci"]);
 });
