@@ -311,6 +311,168 @@ test("classifies HTTP status, timeout, and redirect failures without exposing re
   );
 });
 
+test("retries a transient HTTP 500 once and writes a snapshot after the successful retry", async () => {
+  const cachePath = join(await mkdtemp(join(tmpdir(), "podgorica-flights-")), "flights.json");
+  let attempts = 0;
+  const client = createPodgoricaFlightsHttpClient({
+    fetchImplementation: async () => {
+      attempts += 1;
+      if (attempts === 1) {
+        return {
+          headers: { get: () => "text/html" },
+          ok: false,
+          status: 500,
+          text: async () => "upstream error",
+          url: "https://montenegroairports.com/aerodromixs/cache-flights.php?airport=pg",
+        };
+      }
+
+      return {
+        headers: { get: () => "application/json" },
+        ok: true,
+        status: 200,
+        text: async () => readFile(fixture, "utf8"),
+        url: "https://montenegroairports.com/aerodromixs/cache-flights.php?airport=pg",
+      };
+    },
+  });
+
+  const result = await refreshPodgoricaFlights({
+    cachePath,
+    httpClient: client,
+    now: () => new Date("2026-07-22T08:00:00.000Z"),
+  });
+  const cached = await getCachedPodgoricaFlights(cachePath, new Date("2026-07-22T08:00:00.000Z"));
+
+  assert.equal(attempts, 2);
+  assert.equal(result.success, true);
+  assert.equal(result.acceptedFlights, 4);
+  assert.equal(cached.flights.length, 4);
+});
+
+test("retries every supported transient upstream HTTP status once", async () => {
+  for (const status of [502, 503, 504]) {
+    let attempts = 0;
+    const client = createPodgoricaFlightsHttpClient({
+      fetchImplementation: async () => {
+        attempts += 1;
+        return attempts === 1
+          ? {
+              headers: { get: () => "text/html" },
+              ok: false,
+              status,
+              text: async () => "upstream error",
+              url: "https://montenegroairports.com/aerodromixs/cache-flights.php?airport=pg",
+            }
+          : {
+              headers: { get: () => "application/json" },
+              ok: true,
+              status: 200,
+              text: async () => '{"value":[]}',
+              url: "https://montenegroairports.com/aerodromixs/cache-flights.php?airport=pg",
+            };
+      },
+    });
+
+    await client.get("https://montenegroairports.com/aerodromixs/cache-flights.php?airport=pg");
+    assert.equal(attempts, 2);
+  }
+});
+
+test("keeps the existing unavailable or retained result after two HTTP 500 responses", async () => {
+  const cacheDirectory = await mkdtemp(join(tmpdir(), "podgorica-flights-"));
+  const unavailableCachePath = join(cacheDirectory, "unavailable.json");
+  const retainedCachePath = join(cacheDirectory, "retained.json");
+  const flights = parsePodgoricaFlights(await readFile(fixture, "utf8")).flights;
+  await writeFile(
+    retainedCachePath,
+    JSON.stringify({
+      fetchedAt: "2026-07-22T08:00:00.000Z",
+      flights,
+      lastSuccessfulRefreshAt: "2026-07-22T08:00:00.000Z",
+      parserWarnings: [],
+      schemaVersion: 1,
+      sourceUrl: "https://montenegroairports.com/aerodromixs/cache-flights.php?airport=pg",
+    }),
+  );
+
+  let attempts = 0;
+  const client = createPodgoricaFlightsHttpClient({
+    fetchImplementation: async () => {
+      attempts += 1;
+      return {
+        headers: { get: () => "text/html" },
+        ok: false,
+        status: 500,
+        text: async () => "upstream error",
+        url: "https://montenegroairports.com/aerodromixs/cache-flights.php?airport=pg",
+      };
+    },
+  });
+
+  const unavailable = await refreshPodgoricaFlights({
+    cachePath: unavailableCachePath,
+    diagnostic: () => {},
+    httpClient: client,
+  });
+  const retained = await refreshPodgoricaFlights({
+    cachePath: retainedCachePath,
+    diagnostic: () => {},
+    httpClient: client,
+  });
+
+  assert.equal(attempts, 4);
+  assert.equal(unavailable.success, false);
+  assert.equal(unavailable.retainedPreviousSnapshot, false);
+  assert.equal(unavailable.snapshot, null);
+  assert.equal(retained.success, false);
+  assert.equal(retained.retainedPreviousSnapshot, true);
+  assert.equal(retained.snapshot?.flights.length, flights.length);
+});
+
+test("does not retry non-retryable HTTP 4xx responses or exceed the configured retry count", async () => {
+  let clientAttempts = 0;
+  const client = createPodgoricaFlightsHttpClient({
+    fetchImplementation: async () => {
+      clientAttempts += 1;
+      return {
+        headers: { get: () => "text/html" },
+        ok: false,
+        status: 404,
+        text: async () => "not found",
+        url: "https://montenegroairports.com/aerodromixs/cache-flights.php?airport=pg",
+      };
+    },
+  });
+
+  await assert.rejects(() =>
+    client.get("https://montenegroairports.com/aerodromixs/cache-flights.php?airport=pg"),
+  );
+
+  assert.equal(clientAttempts, 1);
+
+  let configuredAttempts = 0;
+  const configuredClient = createPodgoricaFlightsHttpClient({
+    fetchImplementation: async () => {
+      configuredAttempts += 1;
+      return {
+        headers: { get: () => "text/html" },
+        ok: false,
+        status: 503,
+        text: async () => "unavailable",
+        url: "https://montenegroairports.com/aerodromixs/cache-flights.php?airport=pg",
+      };
+    },
+    retries: 2,
+  });
+
+  await assert.rejects(() =>
+    configuredClient.get("https://montenegroairports.com/aerodromixs/cache-flights.php?airport=pg"),
+  );
+
+  assert.equal(configuredAttempts, 3);
+});
+
 test("retains a valid snapshot and emits safe diagnostics after a DNS request failure", async () => {
   const cachePath = join(await mkdtemp(join(tmpdir(), "podgorica-flights-")), "flights.json");
   const diagnostics: Record<string, unknown>[] = [];

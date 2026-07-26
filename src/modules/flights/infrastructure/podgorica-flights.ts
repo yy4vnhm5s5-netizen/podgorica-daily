@@ -18,6 +18,7 @@ const podgoricaFlightsUrl =
   "https://montenegroairports.com/aerodromixs/cache-flights.php?airport=pg";
 const defaultPodgoricaFlightsCachePath = env.PODGORICA_FLIGHTS_CACHE_PATH;
 const maximumResponseLength = 2_000_000;
+const retryDelayMs = 250;
 
 const rawFlightSchema = z
   .object({
@@ -212,7 +213,8 @@ function createPodgoricaFlightsHttpClient({
                 upstreamHostname,
               },
             );
-            if (response.status < 429) break;
+            if (!isRetryableHttpStatus(response.status) || attempt === retries) break;
+            await waitForRetry();
             continue;
           }
 
@@ -566,6 +568,16 @@ function isJsonLikeContentType(contentType: string | null) {
     normalized.includes("text/plain") ||
     normalized.includes("text/html")
   );
+}
+
+function isRetryableHttpStatus(status: number) {
+  return status === 429 || [500, 502, 503, 504].includes(status);
+}
+
+function waitForRetry() {
+  return new Promise<void>((resolve) => {
+    setTimeout(resolve, retryDelayMs);
+  });
 }
 
 function parseJson(value: string): { success: true; value: unknown } | { success: false } {
