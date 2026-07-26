@@ -18,6 +18,7 @@ const podgoricaFlightsUrl =
   "https://montenegroairports.com/aerodromixs/cache-flights.php?airport=pg";
 const defaultPodgoricaFlightsCachePath = env.PODGORICA_FLIGHTS_CACHE_PATH;
 const maximumResponseLength = 2_000_000;
+const maximumDiagnosticBodyPreviewLength = 200;
 const retryDelayMs = 250;
 
 const rawFlightSchema = z
@@ -50,6 +51,7 @@ interface PodgoricaFlightsCacheSnapshot {
 }
 
 interface PodgoricaFlightsHttpResponse {
+  attemptCount?: number;
   contentType: string | null;
   finalUrl: string;
   requestedUrl: string;
@@ -100,6 +102,7 @@ type FetchImplementation = (
   url: string,
   init: RequestInit,
 ) => Promise<{
+  body?: ReadableStream<Uint8Array> | null;
   headers?: { get(name: string): string | null };
   ok: boolean;
   status: number;
@@ -115,9 +118,13 @@ class PodgoricaFlightsFetchError extends Error {
     | "podgorica-flights-response-too-large"
     | "podgorica-flights-timeout";
   readonly elapsedMs?: number;
+  readonly attemptCount?: number;
   readonly failureCategory: PodgoricaFlightsRequestFailureCategory;
   readonly finalHostname?: string;
   readonly httpStatus?: number;
+  readonly responseBodyPreview?: string;
+  readonly responseContentLength?: number;
+  readonly responseContentType?: string;
   readonly upstreamHostname: string;
 
   constructor(
@@ -129,26 +136,38 @@ class PodgoricaFlightsFetchError extends Error {
       | "podgorica-flights-timeout",
     message: string,
     {
+      attemptCount,
       elapsedMs,
       failureCategory = "unknown",
       finalHostname,
       httpStatus,
+      responseBodyPreview,
+      responseContentLength,
+      responseContentType,
       upstreamHostname = "montenegroairports.com",
     }: {
+      attemptCount?: number;
       elapsedMs?: number;
       failureCategory?: PodgoricaFlightsRequestFailureCategory;
       finalHostname?: string;
       httpStatus?: number;
+      responseBodyPreview?: string;
+      responseContentLength?: number;
+      responseContentType?: string;
       upstreamHostname?: string;
     } = {},
   ) {
     super(message);
     this.name = "PodgoricaFlightsFetchError";
     this.code = code;
+    this.attemptCount = attemptCount;
     this.elapsedMs = elapsedMs;
     this.failureCategory = failureCategory;
     this.finalHostname = finalHostname;
     this.httpStatus = httpStatus;
+    this.responseBodyPreview = responseBodyPreview;
+    this.responseContentLength = responseContentLength;
+    this.responseContentType = responseContentType;
     this.upstreamHostname = upstreamHostname;
   }
 }
@@ -202,14 +221,17 @@ function createPodgoricaFlightsHttpClient({
           }
 
           if (!response.ok) {
+            const responseMetadata = await getFailureResponseMetadata(response);
             latestError = new PodgoricaFlightsFetchError(
               "podgorica-flights-request-failed",
               `Aerodrom Podgorica returned HTTP ${response.status}.`,
               {
+                attemptCount: attempt + 1,
                 elapsedMs: Date.now() - requestStartedAt,
                 failureCategory: "http-status",
                 finalHostname,
                 httpStatus: response.status,
+                ...responseMetadata,
                 upstreamHostname,
               },
             );
@@ -223,6 +245,16 @@ function createPodgoricaFlightsHttpClient({
             throw new PodgoricaFlightsFetchError(
               "podgorica-flights-invalid-content-type",
               "Aerodrom Podgorica did not return the public flight-feed format.",
+              {
+                attemptCount: attempt + 1,
+                finalHostname,
+                httpStatus: response.status,
+                responseContentLength: getResponseContentLength(
+                  response.headers?.get("content-length"),
+                ),
+                ...(contentType ? { responseContentType: contentType } : {}),
+                upstreamHostname,
+              },
             );
           }
 
@@ -231,16 +263,43 @@ function createPodgoricaFlightsHttpClient({
             throw new PodgoricaFlightsFetchError(
               "podgorica-flights-request-failed",
               "Aerodrom Podgorica returned an empty flight feed.",
+              {
+                attemptCount: attempt + 1,
+                finalHostname,
+                httpStatus: response.status,
+                responseContentLength: getResponseContentLength(
+                  response.headers?.get("content-length"),
+                ),
+                ...(contentType ? { responseContentType: contentType } : {}),
+                upstreamHostname,
+              },
             );
           }
           if (body.length > maximumResponseLength) {
             throw new PodgoricaFlightsFetchError(
               "podgorica-flights-response-too-large",
               "Aerodrom Podgorica response exceeded the allowed size.",
+              {
+                attemptCount: attempt + 1,
+                finalHostname,
+                httpStatus: response.status,
+                responseContentLength: getResponseContentLength(
+                  response.headers?.get("content-length"),
+                ),
+                ...(contentType ? { responseContentType: contentType } : {}),
+                upstreamHostname,
+              },
             );
           }
 
-          return { body, contentType, finalUrl, requestedUrl, status: response.status };
+          return {
+            attemptCount: attempt + 1,
+            body,
+            contentType,
+            finalUrl,
+            requestedUrl,
+            status: response.status,
+          };
         } catch (error) {
           if (error instanceof PodgoricaFlightsFetchError) {
             latestError = withRequestElapsedTime(error, Date.now() - requestStartedAt);
@@ -260,6 +319,7 @@ function createPodgoricaFlightsHttpClient({
                 ? "Aerodrom Podgorica request timed out."
                 : "Aerodrom Podgorica request failed.",
               {
+                attemptCount: attempt + 1,
                 elapsedMs: Date.now() - requestStartedAt,
                 failureCategory: classifyRequestFailure(error),
                 upstreamHostname,
@@ -276,6 +336,7 @@ function createPodgoricaFlightsHttpClient({
           "Flight-feed request failed.",
           {
             elapsedMs: Date.now() - requestStartedAt,
+            attemptCount: retries + 1,
             failureCategory: "unknown",
             upstreamHostname,
           },
@@ -363,6 +424,18 @@ async function refreshPodgoricaFlights({
     const response = await httpClient.get(createPodgoricaFlightsUrl());
     const parsed = parsePodgoricaFlights(response.body);
     if (!parsed.recognized) {
+      emitPodgoricaFlightsFailureDiagnostic({
+        attemptCount: response.attemptCount ?? 1,
+        diagnostic,
+        diagnosticNow: now(),
+        errorCode: "podgorica-flights-parser-failed",
+        failureCategory: "response-format",
+        finalHostname: getUrlHostname(response.finalUrl),
+        httpStatus: response.status,
+        previous,
+        responseMetadata: getSuccessfulResponseDiagnosticMetadata(response),
+        upstreamHostname: getUrlHostname(response.requestedUrl) ?? "unknown",
+      });
       return retainPrevious(previous, "podgorica-flights-parser-failed", parsed.warnings);
     }
 
@@ -390,16 +463,21 @@ async function refreshPodgoricaFlights({
     };
   } catch (error) {
     if (error instanceof PodgoricaFlightsFetchError) {
-      const retainedSnapshot = getRetainedSnapshotDiagnostic(previous, now());
-      diagnostic({
+      emitPodgoricaFlightsFailureDiagnostic({
+        attemptCount: error.attemptCount ?? 1,
+        diagnostic,
+        diagnosticNow: now(),
         elapsedMs: error.elapsedMs ?? 0,
         errorCode: error.code,
-        event: "podgorica-flights-request-failed",
         failureCategory: error.failureCategory,
-        ...(error.finalHostname ? { finalHostname: error.finalHostname } : {}),
-        ...(error.httpStatus ? { httpStatus: error.httpStatus } : {}),
-        provider: "podgorica-airport",
-        ...retainedSnapshot,
+        finalHostname: error.finalHostname,
+        httpStatus: error.httpStatus,
+        previous,
+        responseMetadata: {
+          responseBodyPreview: error.responseBodyPreview,
+          responseContentLength: error.responseContentLength,
+          responseContentType: error.responseContentType,
+        },
         upstreamHostname: error.upstreamHostname,
       });
     }
@@ -492,10 +570,14 @@ function toRequestFailure(
 
 function withRequestElapsedTime(error: PodgoricaFlightsFetchError, elapsedMs: number) {
   return new PodgoricaFlightsFetchError(error.code, error.message, {
+    attemptCount: error.attemptCount,
     elapsedMs,
     failureCategory: error.failureCategory,
     finalHostname: error.finalHostname,
     httpStatus: error.httpStatus,
+    responseBodyPreview: error.responseBodyPreview,
+    responseContentLength: error.responseContentLength,
+    responseContentType: error.responseContentType,
     upstreamHostname: error.upstreamHostname,
   });
 }
@@ -568,6 +650,130 @@ function isJsonLikeContentType(contentType: string | null) {
     normalized.includes("text/plain") ||
     normalized.includes("text/html")
   );
+}
+
+async function getFailureResponseMetadata(
+  response: Awaited<ReturnType<FetchImplementation>>,
+): Promise<{
+  responseBodyPreview?: string;
+  responseContentLength?: number;
+  responseContentType?: string;
+}> {
+  const responseContentType = response.headers?.get("content-type") ?? null;
+  const responseContentLength = getResponseContentLength(response.headers?.get("content-length"));
+  const responseMetadata = {
+    ...(responseContentLength !== undefined ? { responseContentLength } : {}),
+    ...(responseContentType ? { responseContentType } : {}),
+  };
+
+  if (!response.body || !isDiagnosticPreviewContentType(responseContentType)) {
+    return responseMetadata;
+  }
+
+  try {
+    const reader = response.body.getReader();
+    try {
+      const chunk = await reader.read();
+      if (chunk.done || !chunk.value) return responseMetadata;
+
+      const responseBodyPreview = new TextDecoder()
+        .decode(chunk.value)
+        .slice(0, maximumDiagnosticBodyPreviewLength);
+      return responseBodyPreview ? { ...responseMetadata, responseBodyPreview } : responseMetadata;
+    } finally {
+      void reader.cancel().catch(() => {});
+    }
+  } catch {
+    return responseMetadata;
+  }
+}
+
+function getSuccessfulResponseDiagnosticMetadata(response: PodgoricaFlightsHttpResponse) {
+  return {
+    responseBodyPreview: isDiagnosticPreviewContentType(response.contentType)
+      ? response.body.slice(0, maximumDiagnosticBodyPreviewLength)
+      : undefined,
+    responseContentLength: new TextEncoder().encode(response.body).byteLength,
+    ...(response.contentType ? { responseContentType: response.contentType } : {}),
+  };
+}
+
+function getResponseContentLength(value: string | null | undefined) {
+  const parsed = Number.parseInt(value ?? "", 10);
+  return Number.isSafeInteger(parsed) && parsed >= 0 ? parsed : undefined;
+}
+
+function isDiagnosticPreviewContentType(contentType: string | null) {
+  const normalized = contentType?.toLocaleLowerCase("en") ?? "";
+  return (
+    normalized.startsWith("text/") ||
+    normalized.startsWith("application/json") ||
+    normalized.startsWith("application/problem+json")
+  );
+}
+
+function emitPodgoricaFlightsFailureDiagnostic({
+  attemptCount,
+  diagnostic,
+  diagnosticNow,
+  elapsedMs,
+  errorCode,
+  failureCategory,
+  finalHostname,
+  httpStatus,
+  previous,
+  responseMetadata,
+  upstreamHostname,
+}: {
+  attemptCount: number;
+  diagnostic: PodgoricaFlightsDiagnosticEmitter;
+  diagnosticNow: Date;
+  elapsedMs?: number;
+  errorCode: string;
+  failureCategory: PodgoricaFlightsRequestFailureCategory | "response-format";
+  finalHostname?: string;
+  httpStatus?: number;
+  previous: PodgoricaFlightsCacheSnapshot | null;
+  responseMetadata: {
+    responseBodyPreview?: string;
+    responseContentLength?: number;
+    responseContentType?: string;
+  };
+  upstreamHostname: string;
+}) {
+  diagnostic({
+    totalAttemptCount: attemptCount,
+    errorCode,
+    event: "podgorica-flights-request-failed",
+    failureCategory,
+    failureType: getFailureType(failureCategory),
+    finalState: "failed",
+    ...(elapsedMs !== undefined ? { elapsedMs } : {}),
+    ...(finalHostname ? { finalHostname } : {}),
+    ...(httpStatus !== undefined ? { httpStatus } : {}),
+    provider: "podgorica-airport",
+    ...getRetainedSnapshotDiagnostic(previous, diagnosticNow),
+    retryCountPerformed: Math.max(0, attemptCount - 1),
+    ...(responseMetadata.responseBodyPreview
+      ? { responseBodyPreview: responseMetadata.responseBodyPreview }
+      : {}),
+    ...(responseMetadata.responseContentLength !== undefined
+      ? { responseContentLength: responseMetadata.responseContentLength }
+      : {}),
+    ...(responseMetadata.responseContentType
+      ? { responseContentType: responseMetadata.responseContentType }
+      : {}),
+    upstreamHostname,
+  });
+}
+
+function getFailureType(
+  failureCategory: PodgoricaFlightsRequestFailureCategory | "response-format",
+) {
+  if (failureCategory === "http-status") return "http";
+  if (failureCategory === "timeout") return "timeout";
+  if (failureCategory === "response-format") return "parser";
+  return "network";
 }
 
 function isRetryableHttpStatus(status: number) {

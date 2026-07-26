@@ -109,6 +109,7 @@ test("keeps an earlier valid snapshot when the flight feed is invalid", async ()
 
   const result = await refreshPodgoricaFlights({
     cachePath,
+    diagnostic: () => {},
     httpClient: responseClient(JSON.stringify({ value: [{ Airport: "Beograd" }] })),
     now: () => new Date("2026-07-21T08:00:00.000Z"),
   });
@@ -511,10 +512,14 @@ test("retains a valid snapshot and emits safe diagnostics after a DNS request fa
       errorCode: "podgorica-flights-request-failed",
       event: "podgorica-flights-request-failed",
       failureCategory: "dns",
+      failureType: "network",
+      finalState: "failed",
       provider: "podgorica-airport",
       retainedPreviousSnapshot: true,
       retainedRecordCount: 0,
       retainedSnapshotAgeMs: 300_000,
+      retryCountPerformed: 0,
+      totalAttemptCount: 1,
       upstreamHostname: "montenegroairports.com",
     },
   ]);
@@ -567,16 +572,114 @@ test("retains cache-backed flights after an HTTP 500 without exposing the refres
       errorCode: "podgorica-flights-request-failed",
       event: "podgorica-flights-request-failed",
       failureCategory: "http-status",
+      failureType: "http",
       finalHostname: "montenegroairports.com",
+      finalState: "failed",
       httpStatus: 500,
       provider: "podgorica-airport",
+      responseContentType: "text/html",
       retainedPreviousSnapshot: true,
       retainedRecordCount: flights.length,
       retainedSnapshotAgeMs: 300_000,
+      retryCountPerformed: 0,
+      totalAttemptCount: 1,
       upstreamHostname: "montenegroairports.com",
     },
   ]);
   assert.equal("body" in (diagnostics[0] ?? {}), false);
+});
+
+test("emits a bounded safe preview and final retry metadata for an HTTP failure", async () => {
+  const cachePath = join(await mkdtemp(join(tmpdir(), "podgorica-flights-")), "flights.json");
+  const diagnostics: Record<string, unknown>[] = [];
+  const responseBody = `{"error":"${"x".repeat(240)}"}`;
+  const client = createPodgoricaFlightsHttpClient({
+    fetchImplementation: async () => ({
+      body: readableBody(responseBody),
+      headers: {
+        get: (name) => {
+          if (name === "content-type") return "application/problem+json";
+          if (name === "content-length") return String(responseBody.length);
+          return null;
+        },
+      },
+      ok: false,
+      status: 500,
+      text: async () => responseBody,
+      url: "https://montenegroairports.com/aerodromixs/cache-flights.php?airport=pg",
+    }),
+  });
+
+  const result = await refreshPodgoricaFlights({
+    cachePath,
+    diagnostic: (payload) => diagnostics.push(payload),
+    httpClient: client,
+  });
+
+  assert.equal(result.success, false);
+  assert.deepEqual(diagnostics, [
+    {
+      elapsedMs: diagnostics[0]?.elapsedMs,
+      errorCode: "podgorica-flights-request-failed",
+      event: "podgorica-flights-request-failed",
+      failureCategory: "http-status",
+      failureType: "http",
+      finalHostname: "montenegroairports.com",
+      finalState: "failed",
+      httpStatus: 500,
+      provider: "podgorica-airport",
+      responseBodyPreview: responseBody.slice(0, 200),
+      responseContentLength: responseBody.length,
+      responseContentType: "application/problem+json",
+      retainedPreviousSnapshot: false,
+      retainedRecordCount: 0,
+      retainedSnapshotAgeMs: null,
+      retryCountPerformed: 1,
+      totalAttemptCount: 2,
+      upstreamHostname: "montenegroairports.com",
+    },
+  ]);
+  assert.equal((diagnostics[0]?.responseBodyPreview as string).length, 200);
+  assert.equal("responseBody" in (diagnostics[0] ?? {}), false);
+});
+
+test("identifies an HTML response that fails JSON parsing", async () => {
+  const diagnostics: Record<string, unknown>[] = [];
+  const result = await refreshPodgoricaFlights({
+    cachePath: join(await mkdtemp(join(tmpdir(), "podgorica-flights-")), "flights.json"),
+    diagnostic: (payload) => diagnostics.push(payload),
+    httpClient: {
+      get: async (requestedUrl) => ({
+        attemptCount: 1,
+        body: "<html><title>Maintenance</title></html>",
+        contentType: "text/html; charset=utf-8",
+        finalUrl: requestedUrl,
+        requestedUrl,
+        status: 200,
+      }),
+    },
+  });
+
+  assert.equal(result.errorCode, "podgorica-flights-parser-failed");
+  assert.deepEqual(diagnostics[0], {
+    errorCode: "podgorica-flights-parser-failed",
+    event: "podgorica-flights-request-failed",
+    failureCategory: "response-format",
+    failureType: "parser",
+    finalHostname: "montenegroairports.com",
+    finalState: "failed",
+    httpStatus: 200,
+    provider: "podgorica-airport",
+    responseBodyPreview: "<html><title>Maintenance</title></html>",
+    responseContentLength: 39,
+    responseContentType: "text/html; charset=utf-8",
+    retainedPreviousSnapshot: false,
+    retainedRecordCount: 0,
+    retainedSnapshotAgeMs: null,
+    retryCountPerformed: 0,
+    totalAttemptCount: 1,
+    upstreamHostname: "montenegroairports.com",
+  });
 });
 
 test("emits one parseable metadata-only request failure diagnostic", () => {
@@ -617,4 +720,13 @@ function responseClient(body: string): PodgoricaFlightsHttpClient {
       status: 200,
     }),
   };
+}
+
+function readableBody(value: string) {
+  return new ReadableStream<Uint8Array>({
+    start(controller) {
+      controller.enqueue(new TextEncoder().encode(value));
+      controller.close();
+    },
+  });
 }
