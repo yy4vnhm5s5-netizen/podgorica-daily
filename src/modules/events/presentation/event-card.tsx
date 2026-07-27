@@ -1,4 +1,4 @@
-import { CalendarClock, MapPin } from "lucide-react";
+import { ArrowRight, CalendarClock, MapPin } from "lucide-react";
 import Link from "next/link";
 
 import type { CityEvent } from "../domain/event.ts";
@@ -27,8 +27,13 @@ function EventCard({ city, event, locale }: EventCardProps) {
   const detailHref = getEventDetailPath(city, event.id);
 
   return (
-    <Card className="overflow-hidden transition-colors hover:border-primary/40">
-      <div className="flex min-h-36">
+    <Card className="group relative overflow-hidden transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[0_10px_22px_-18px_rgb(15_23_42_/_0.32)]">
+      <Link
+        aria-label={`${translations.details}: ${event.title}`}
+        className="absolute inset-0 z-20 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+        href={detailHref}
+      />
+      <div className="pointer-events-none relative z-10 flex min-h-36">
         {event.imageUrl ? (
           <div className="w-28 shrink-0 bg-muted sm:w-36">
             {/* Provider image hosts and dimensions are not stable enough for the Next image optimizer. */}
@@ -59,13 +64,8 @@ function EventCard({ city, event, locale }: EventCardProps) {
             ) : null}
           </div>
           <div className="min-w-0 space-y-1">
-            <h3 className="text-base font-semibold leading-snug sm:text-lg">
-              <Link
-                className="rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                href={detailHref}
-              >
-                {event.title}
-              </Link>
+            <h3 className="text-base font-semibold leading-snug text-foreground transition-colors group-hover:text-primary sm:text-lg">
+              {event.title}
             </h3>
             {event.venueName ? (
               <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
@@ -78,13 +78,13 @@ function EventCard({ city, event, locale }: EventCardProps) {
             <CalendarClock aria-hidden="true" className="size-4 shrink-0" />
             <EventTime event={event} locale={locale} />
           </div>
-          <Link
-            aria-label={`${translations.details}: ${event.title}`}
-            className="w-fit rounded-sm text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-            href={detailHref}
-          >
+          <span className="inline-flex w-fit items-center gap-1 text-sm font-medium text-primary transition-colors group-hover:text-blue-800">
             {translations.details}
-          </Link>
+            <ArrowRight
+              aria-hidden="true"
+              className="size-3.5 transition-transform group-hover:translate-x-0.5"
+            />
+          </span>
         </CardContent>
       </div>
     </Card>
