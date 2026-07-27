@@ -133,7 +133,7 @@ function HomepageAtmosphere() {
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none absolute left-1/2 top-0 h-[40rem] w-screen -translate-x-1/2 overflow-hidden sm:h-[34rem]"
+      className="pointer-events-none absolute -top-24 left-1/2 h-[46rem] w-screen -translate-x-1/2 overflow-hidden sm:h-[40rem]"
       style={{ WebkitMaskImage: maskImage, maskImage }}
     >
       <div className="absolute inset-0 opacity-100 sm:opacity-80 lg:opacity-65">
