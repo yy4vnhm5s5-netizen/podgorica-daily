@@ -12,7 +12,8 @@ const platformCityPanelId = "platform-city-panel";
 
 function PlatformCitySelector({ cards }: { cards: readonly PlatformCityCardData[] }) {
   const cityIds = cards.map((card) => card.city.id);
-  const [selectedCityId, setSelectedCityId] = useState<string | undefined>(cityIds[0]);
+  const defaultCityId = cityIds.includes("podgorica") ? "podgorica" : cityIds[0];
+  const [selectedCityId, setSelectedCityId] = useState<string | undefined>(defaultCityId);
 
   useEffect(() => {
     const stored = getStoredActiveCityId(window.localStorage.getItem(lastCityStorageKey), cityIds);
