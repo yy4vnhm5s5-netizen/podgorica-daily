@@ -117,67 +117,37 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
   );
 }
 
-// Homepage-only atmosphere, scoped to the hero + city-selector zone rather than the whole page —
-// spreading one mesh across the entire page reads as sterile on short mobile viewports, since
-// there's no "canvas" length left for it to compose within. This is a hero canvas instead: two
-// mesh-field radials plus one directional linear wash, confined to a fixed-height band pinned to
-// the top of the page and faded out via a mask (not a hard bottom edge) so it blends into the
-// plain white lower sections naturally. The `-top-*` extension avoids a hard cutoff at the
-// homepage's own top boundary, same reasoning as before. Mobile and tablet/desktop each render
-// their own band so they can carry different gradient/mask values — mobile is tuned richer (larger,
-// more overlapping mesh fields, a brighter wash, and a longer fade tail) since a short mobile
-// viewport has less canvas for the effect to read against; the desktop band's own values and its
-// opacity ramp (full at sm, easing to lg:opacity-60) stay comparatively restrained. A near-invisible
-// noise layer (2% opacity, overlay blend) sits on top for texture. Full-bleed breakout (left-1/2 +
-// w-screen + -translate-x-1/2) unchanged, still reaches real viewport edges with no
-// horizontal/vertical overflow. Painted before all other homepage children so normal DOM paint
-// order keeps it behind every section — same convention as the shared shell's contour motif, which
-// stays layered underneath and secondary to it.
+// Homepage-only background texture: a lightweight repeating triangular line pattern (SVG
+// <pattern>, not a raster image, so it stays sharp on retina/mobile) pinned to the top of the
+// page and masked to fade to fully transparent by mid-page — replaces the earlier mesh-gradient/
+// glow/noise composition entirely, which this component previously rendered. One tile (two
+// crossing zigzag paths) repeats seamlessly via patternUnits, at very low, constant opacity — the
+// fade-out is handled purely by the mask, not by varying the pattern itself, so it can't read as
+// a second competing effect. Full-bleed breakout (left-1/2 + w-screen + -translate-x-1/2), same
+// technique used elsewhere on this page, so it spans the real viewport width, not the inner
+// max-w content column, with no horizontal/vertical overflow. Painted before all other homepage
+// children so normal DOM paint order keeps it behind every section — same convention as the
+// shared shell's contour motif, which stays layered underneath and unaffected by this.
 function HomepageAtmosphere() {
-  const desktopMesh = [
-    "radial-gradient(65% 60% at 18% 8%, hsl(199 75% 82% / 0.5) 0%, transparent 72%)",
-    "radial-gradient(60% 55% at 84% 4%, hsl(212 68% 85% / 0.42) 0%, transparent 74%)",
-    "radial-gradient(70% 62% at 90% 42%, hsl(233 45% 82% / 0.24) 0%, transparent 76%)",
-  ].join(", ");
-  const desktopWash =
-    "linear-gradient(165deg, hsl(200 60% 95% / 0.75) 0%, transparent 55%, hsl(230 40% 90% / 0.2) 100%)";
-  const desktopMask = "linear-gradient(to bottom, black 0%, black 45%, transparent 92%)";
-
-  const mobileMesh = [
-    "radial-gradient(74% 68% at 16% 6%, hsl(199 75% 80% / 0.58) 0%, transparent 74%)",
-    "radial-gradient(68% 62% at 86% 2%, hsl(212 68% 83% / 0.48) 0%, transparent 76%)",
-    "radial-gradient(78% 70% at 92% 40%, hsl(233 45% 82% / 0.3) 0%, transparent 78%)",
-  ].join(", ");
-  const mobileWash =
-    "linear-gradient(165deg, hsl(200 60% 95% / 0.85) 0%, transparent 60%, hsl(230 40% 90% / 0.24) 100%)";
-  const mobileMask = "linear-gradient(to bottom, black 0%, black 42%, transparent 97%)";
+  const maskImage = "linear-gradient(to bottom, black 0%, black 30%, transparent 70%)";
 
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none absolute -top-28 left-1/2 h-[42rem] w-screen -translate-x-1/2 overflow-hidden sm:h-[34rem]"
+      className="pointer-events-none absolute left-1/2 top-0 h-[34rem] w-screen -translate-x-1/2 overflow-hidden text-slate-600 opacity-[0.04] sm:h-[30rem]"
+      style={{ WebkitMaskImage: maskImage, maskImage }}
     >
-      <div
-        className="absolute inset-0 sm:hidden"
-        style={{ WebkitMaskImage: mobileMask, maskImage: mobileMask }}
-      >
-        <div className="absolute inset-0" style={{ backgroundImage: mobileMesh }} />
-        <div className="absolute inset-0" style={{ backgroundImage: mobileWash }} />
-      </div>
-      <div
-        className="absolute inset-0 hidden sm:block"
-        style={{ WebkitMaskImage: desktopMask, maskImage: desktopMask }}
-      >
-        <div className="absolute inset-0 opacity-75 lg:opacity-60" style={{ backgroundImage: desktopMesh }} />
-        <div className="absolute inset-0 opacity-75 lg:opacity-60" style={{ backgroundImage: desktopWash }} />
-      </div>
-      <div
-        className="absolute inset-0 opacity-[0.02] mix-blend-overlay"
-        style={{
-          backgroundImage:
-            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
-        }}
-      />
+      <svg className="h-full w-full" preserveAspectRatio="xMidYMin slice">
+        <pattern height="34.64" id="homepage-triangle-pattern" patternUnits="userSpaceOnUse" width="40">
+          <path
+            d="M0 34.64L20 0L40 34.64M0 0L20 34.64L40 0"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={1}
+          />
+        </pattern>
+        <rect fill="url(#homepage-triangle-pattern)" height="100%" width="100%" />
+      </svg>
     </div>
   );
 }
