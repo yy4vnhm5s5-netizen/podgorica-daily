@@ -78,6 +78,7 @@ interface CedisArticleParseResult {
     | "municipality-section-empty"
     | "municipality-section-found"
     | "municipality-section-not-found"
+    | "no-municipality-headings-recognized"
     | "publication-date-unrecognized"
     | "unsupported-city";
   municipalityHeadingFound: boolean;
@@ -88,6 +89,7 @@ interface CedisArticleParseResult {
     | "article-content-unrecognized"
     | "ambiguous-section-boundaries"
     | "municipality-section-not-found"
+    | "no-municipality-headings-recognized"
     | "no-parseable-municipality-records"
     | "publication-date-unrecognized"
     | "unsupported-city";
@@ -162,24 +164,26 @@ function parseCedisArticleResult(
   }
   const extraction = getMunicipalitySections(text, cityId);
   if (extraction.state !== "found") {
+    // "not-found" means at least one other municipality's heading was recognized in this
+    // article, just not this city's — expected in a multi-city refresh, since CEDIS articles
+    // are frequently scoped to one municipality. "no-headings" means the regex-based heading
+    // pattern matched nothing at all in the article, which is stronger evidence of a genuine
+    // structural change and must not be treated the same as an ordinary city mismatch.
+    const extractionState =
+      extraction.state === "ambiguous"
+        ? ("ambiguous-section-boundaries" as const)
+        : extraction.state === "no-headings"
+          ? ("no-municipality-headings-recognized" as const)
+          : ("municipality-section-not-found" as const);
     return {
       alerts: [],
       contentRecognized: true,
       contentSelector: articleContent?.selector,
-      extractionState:
-        extraction.state === "ambiguous"
-          ? "ambiguous-section-boundaries"
-          : "municipality-section-not-found",
+      extractionState,
       municipalityHeadingFound: extraction.state === "ambiguous",
       podgoricaHeadingFound: extraction.state === "ambiguous",
-      warnings:
-        extraction.state === "ambiguous"
-          ? ["ambiguous-section-boundaries"]
-          : ["municipality-section-not-found"],
-      zeroRecordsReason:
-        extraction.state === "ambiguous"
-          ? "ambiguous-section-boundaries"
-          : "municipality-section-not-found",
+      warnings: [extractionState],
+      zeroRecordsReason: extractionState,
     };
   }
 
@@ -275,6 +279,12 @@ function getMunicipalitySections(text: string, cityId: CedisSupportedCityId) {
   if (!municipality) return { sections: [], state: "not-found" as const };
 
   const headings = [...text.matchAll(municipalityPattern)];
+  // No municipality heading of any kind was recognized anywhere in the article. This is
+  // distinct from "this city's heading specifically wasn't found" and is not city-specific:
+  // it applies identically to every CEDIS-supported city and signals a possible structural
+  // change in the source rather than an ordinary per-article municipality mismatch.
+  if (headings.length === 0) return { sections: [], state: "no-headings" as const };
+
   const requestedHeadingPattern = new RegExp(
     `^(?:${municipality.headingVariants.map(escapeRegularExpression).join("|")})\\s*(?:[-–—:]\\s*)?$`,
     "i",

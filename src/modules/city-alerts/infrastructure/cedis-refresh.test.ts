@@ -496,7 +496,11 @@ test("retains a previous cache when article markup is structurally suspicious", 
   assert.equal(result.retainedPreviousSnapshot, true);
 });
 
-test("retains only Budva's previous snapshot when its municipality section is missing", async () => {
+test("writes a trustworthy empty result for a city when only its municipality section is missing from otherwise-parseable articles", async () => {
+  // multi-municipality.html only contains Podgorica and Nikšić sections. For Budva, that
+  // article's only warning is the benign "municipality-section-not-found" — this must not be
+  // treated as structurally suspicious, since the article was fetched and parsed successfully;
+  // it simply isn't about Budva. Previously this incorrectly retained stale/no data forever.
   const previousBudva = {
     ...previousSnapshot(),
     alerts: [{ id: "budva-previous", cityIds: ["budva"] }] as never[],
@@ -528,10 +532,49 @@ test("retains only Budva's previous snapshot when its municipality section is mi
     now: fixedNow,
   });
 
-  assert.equal(result.classification, "structurally-suspicious");
-  assert.equal(result.retainedPreviousSnapshot, true);
+  assert.equal(result.classification, "trustworthy-empty");
+  assert.equal(result.success, true);
+  assert.equal(result.retainedPreviousSnapshot, false);
   assert.equal(result.snapshot?.cityId, "budva");
-  assert.equal(result.snapshot?.alerts[0]?.id, "budva-previous");
+  assert.deepEqual(result.snapshot?.alerts, []);
+});
+
+test("retains a previous snapshot when no article has any recognizable municipality heading", async () => {
+  const memory = createMemoryCache(previousSnapshot());
+  const result = await refreshCedis({
+    cache: memory.cache,
+    httpClient: createFixtureClient({
+      [articleUrl]: "<article><p>Obavještenje bez navedenih opština.</p></article>",
+      [listingUrl]: await fixture("listing.html"),
+    }),
+    now: fixedNow,
+  });
+
+  assert.equal(result.classification, "structurally-suspicious");
+  assert.equal(result.errorCode, "suspicious-empty-result");
+  assert.equal(result.retainedPreviousSnapshot, true);
+  assert.equal(result.snapshot?.alerts[0]?.id, "previous");
+});
+
+test("combines a Podgorica-present article with a benign Podgorica-absent article into one trustworthy non-empty result", async () => {
+  const secondArticleUrl = "https://cedis.me/planirani-radovi-za-31-mart/";
+  const result = await refreshCedis({
+    cache: createMemoryCache().cache,
+    httpClient: createFixtureClient({
+      [articleUrl]: await fixture("multi-municipality.html"),
+      [secondArticleUrl]: "<article><p>Budva – od 08 do 15 sati: Centar.</p></article>",
+      [listingUrl]:
+        '<a href="/planirani-radovi-za-30-mart/">Planirani radovi na mreži za 30. mart</a>' +
+        '<a href="/planirani-radovi-za-31-mart/">Planirani radovi na mreži za 31. mart</a>',
+    }),
+    now: fixedNow,
+  });
+
+  assert.equal(result.classification, "trustworthy-non-empty");
+  assert.equal(result.success, true);
+  assert.ok(result.snapshot && result.snapshot.alerts.length > 0);
+  assert.ok(result.warnings.includes("municipality-section-not-found"));
+  assert.ok(!result.warnings.includes("no-municipality-headings-recognized"));
 });
 
 test("writes a valid explicitly empty municipality section", async () => {

@@ -4,7 +4,7 @@ import { env } from "../../../config/env.ts";
 import { createCnpHttpClient } from "./cnp-http-client.ts";
 import { createCineplexxBrowserRenderer } from "./cineplexx-browser-renderer.ts";
 import { refreshCineplexxProgramme } from "./cineplexx-refresh.ts";
-import { emitError, emitInfo } from "./event-refresh-logger.ts";
+import { emitInfo } from "./event-refresh-logger.ts";
 import { refreshCnpEvents } from "./cnp-refresh.ts";
 import { readEventCacheSnapshot } from "./events-cache.ts";
 import {
@@ -14,8 +14,6 @@ import {
 } from "./events-refresh-runner.ts";
 import { createGlavniGradHttpClient } from "./glavni-grad-http-client.ts";
 import { refreshGlavniGradEvents } from "./glavni-grad-refresh.ts";
-import { createKicHttpClient } from "./kic-http-client.ts";
-import { refreshKicEvents } from "./kic-refresh.ts";
 import { createTourismHttpClient } from "./tourism-http-client.ts";
 import { refreshTourismEvents } from "./tourism-refresh.ts";
 
@@ -39,21 +37,6 @@ function createStandardEventRefreshProviders(
   context: ReturnType<typeof getDefaultCityContext>,
 ): EventRefreshProvider[] {
   return [
-    {
-      id: "kic",
-      refresh: async () => {
-        try {
-          return await refreshKicEvents({
-            cachePath: env.KIC_EVENT_CACHE_PATH,
-            context,
-            httpClient: createKicHttpClient(),
-          });
-        } catch (error) {
-          logKicRefreshFailure(error);
-          throw error;
-        }
-      },
-    },
     {
       id: "cnp",
       refresh: async () => {
@@ -152,19 +135,6 @@ function logEventRefreshSummary(summary: EventRefreshSummary) {
     providerCount: summary.providers.length,
     startedAt: summary.startedAt,
     state: summary.state,
-  });
-}
-
-function logKicRefreshFailure(error: unknown) {
-  const exception = error instanceof Error ? error : new Error(String(error));
-  emitError({
-    error: {
-      message: exception.message,
-      name: exception.name,
-      stack: exception.stack ?? `${exception.name}: ${exception.message}`,
-    },
-    event: "events-refresh-provider-failed",
-    provider: "kic",
   });
 }
 

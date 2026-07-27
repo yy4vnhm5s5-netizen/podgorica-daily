@@ -89,12 +89,6 @@ export function register() {
           readCache: () => readEventCacheSnapshot(env.CINEPLEXX_EVENT_CACHE_PATH),
         },
         {
-          cachePath: env.KIC_EVENT_CACHE_PATH,
-          enabled: true,
-          id: "kic",
-          readCache: () => readEventCacheSnapshot(env.KIC_EVENT_CACHE_PATH),
-        },
-        {
           cachePath: env.CNP_EVENT_CACHE_PATH,
           enabled: true,
           id: "cnp",

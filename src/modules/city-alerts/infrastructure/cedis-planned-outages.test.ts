@@ -257,6 +257,37 @@ test("rejects unsupported municipality extraction", async () => {
   assert.equal(result.alerts.length, 0);
 });
 
+test("distinguishes no recognized municipality headings from a benign per-city mismatch", () => {
+  const otherCityFound = getMunicipalitySections(
+    "Nikšić\nOd 08 do 12 sati: Centar.",
+    "budva",
+  );
+  assert.equal(otherCityFound.state, "not-found");
+
+  const noHeadingsAtAll = getMunicipalitySections(
+    "Obavještenje o planiranim radovima bez navedenih opština.",
+    "budva",
+  );
+  assert.equal(noHeadingsAtAll.state, "no-headings");
+});
+
+test("flags an article with no recognizable municipality heading as structurally suspicious, not a benign mismatch", () => {
+  const result = parseCedisArticleResult(
+    {
+      title: "Planirani radovi za 30. mart",
+      url: "https://cedis.me/planirani-radovi-za-30-mart/",
+    },
+    "<article><p>Obavještenje o planiranim radovima bez navedenih opština.</p></article>",
+    "budva",
+    fixedNow(),
+  );
+
+  assert.equal(result.extractionState, "no-municipality-headings-recognized");
+  assert.equal(result.alerts.length, 0);
+  assert.equal(result.zeroRecordsReason, "no-municipality-headings-recognized");
+  assert.deepEqual(result.warnings, ["no-municipality-headings-recognized"]);
+});
+
 test("rejects an ambiguous municipality boundary instead of guessing", async () => {
   const result = parseCedisArticleResult(
     {

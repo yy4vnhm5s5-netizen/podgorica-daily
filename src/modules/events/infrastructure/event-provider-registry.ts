@@ -4,14 +4,14 @@ import { cnpEventProvider } from "./cnp-event-provider.ts";
 import { cineplexxEventProvider } from "./cineplexx-event-provider.ts";
 import { glavniGradEventProvider } from "./glavni-grad-event-provider.ts";
 import { tourismEventProvider } from "./tourism-event-provider.ts";
-import { kicEventProvider } from "./kic-event-provider.ts";
 
+// KIC is intentionally excluded: kic.podgorica.me has an expired TLS certificate and is no
+// longer a reliable production source. The kic-* infrastructure is retained to re-enable later.
 const eventProviderRegistry: readonly EventProvider[] = [
   cnpEventProvider,
   cineplexxEventProvider,
   glavniGradEventProvider,
   tourismEventProvider,
-  kicEventProvider,
 ];
 
 function getEnabledEventProviders(

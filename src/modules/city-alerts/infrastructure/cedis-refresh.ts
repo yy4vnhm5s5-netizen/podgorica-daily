@@ -53,6 +53,14 @@ interface RefreshResult {
   warnings: string[];
 }
 
+// "municipality-section-not-found" means at least one other municipality's heading was
+// recognized in the article, just not this city's — expected and benign in a multi-city
+// refresh, since CEDIS articles are frequently scoped to one municipality. It is distinct from
+// "no-municipality-headings-recognized" (no heading of any kind matched anywhere in the
+// article), which remains a structurally suspicious signal for any city. Every other warning
+// code also stays suspicious, so this remains a generic rule, not a per-city special case.
+const benignPerArticleWarnings = new Set(["municipality-section-not-found"]);
+
 function createRefreshResult(
   input: RefreshInput,
   previous: CedisCacheSnapshot | null,
@@ -64,10 +72,13 @@ function createRefreshResult(
     ...input.parserWarnings,
     ...(malformedAlertCount > 0 ? ["embedded-code-artifact"] : []),
   ];
+  const structurallySuspiciousWarnings = parserWarnings.filter(
+    (warning) => !benignPerArticleWarnings.has(warning),
+  );
   const suspiciousEmpty =
     alerts.length === 0 &&
     ((input.inspectedArticles === 0 && !input.listingConfidentlyEmpty) ||
-      parserWarnings.length > 0);
+      structurallySuspiciousWarnings.length > 0);
 
   if (suspiciousEmpty) {
     return retainPrevious(
