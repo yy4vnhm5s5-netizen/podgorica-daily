@@ -119,28 +119,28 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
 
 // Homepage-only background texture: a lightweight repeating triangular line pattern (SVG
 // <pattern>, not a raster image, so it stays sharp on retina/mobile) pinned to the top of the
-// page and masked to fade to fully transparent by mid-page — replaces the earlier mesh-gradient/
-// glow/noise composition entirely, which this component previously rendered. One tile (two
-// crossing zigzag paths) repeats seamlessly via patternUnits, at very low, constant opacity — the
-// fade-out is handled purely by the mask, not by varying the pattern itself, so it can't read as
-// a second competing effect. Full-bleed breakout (left-1/2 + w-screen + -translate-x-1/2), same
-// technique used elsewhere on this page, so it spans the real viewport width, not the inner
-// max-w content column, with no horizontal/vertical overflow. Painted before all other homepage
-// children so normal DOM paint order keeps it behind every section — same convention as the
-// shared shell's contour motif, which stays layered underneath and unaffected by this.
+// page and masked to fade to fully transparent by mid-page. The tile carries all three line
+// families a true triangular tessellation needs — a near-horizontal edge plus both diagonal
+// zigzags — not just the two diagonals alone; two diagonals with no horizontal edge repeats as
+// one loose row of large diamonds instead of a dense triangle mesh, which is what the previous
+// version got wrong. Full-bleed breakout (left-1/2 + w-screen + -translate-x-1/2), same technique
+// used elsewhere on this page, so it spans the real viewport width, not the inner max-w content
+// column, with no horizontal/vertical overflow. Painted before all other homepage children so
+// normal DOM paint order keeps it behind every section — same convention as the shared shell's
+// contour motif, which stays layered underneath and unaffected by this.
 function HomepageAtmosphere() {
-  const maskImage = "linear-gradient(to bottom, black 0%, black 30%, transparent 70%)";
+  const maskImage = "linear-gradient(to bottom, black 0%, black 45%, transparent 80%)";
 
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none absolute left-1/2 top-0 h-[34rem] w-screen -translate-x-1/2 overflow-hidden text-slate-600 opacity-[0.04] sm:h-[30rem]"
+      className="pointer-events-none absolute left-1/2 top-0 h-[38rem] w-screen -translate-x-1/2 overflow-hidden text-slate-600 opacity-[0.11] sm:h-[34rem] sm:opacity-[0.08]"
       style={{ WebkitMaskImage: maskImage, maskImage }}
     >
       <svg className="h-full w-full" preserveAspectRatio="xMidYMin slice">
-        <pattern height="34.64" id="homepage-triangle-pattern" patternUnits="userSpaceOnUse" width="40">
+        <pattern height="20.78" id="homepage-triangle-pattern" patternUnits="userSpaceOnUse" width="24">
           <path
-            d="M0 34.64L20 0L40 34.64M0 0L20 34.64L40 0"
+            d="M0 20.78L12 0L24 20.78M0 0L12 20.78L24 0M0 0L24 0"
             fill="none"
             stroke="currentColor"
             strokeWidth={1}
