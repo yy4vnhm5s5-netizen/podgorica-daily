@@ -20,7 +20,8 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
   const cityNames = formatCityNames(cards);
 
   return (
-    <div className="space-y-6 sm:space-y-8">
+    <div className="relative space-y-6 overflow-hidden sm:space-y-8">
+      <HomepageAtmosphere />
       <script
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
         type="application/ld+json"
@@ -112,6 +113,21 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
           </FaqItem>
         </div>
       </section>
+    </div>
+  );
+}
+
+// Homepage-only atmosphere: two or three large, heavily blurred glows, not a texture. Positioned
+// near outer edges so their (already very soft) falloff never sits behind readable text. Painted
+// before all other homepage children so normal DOM paint order keeps it behind every section
+// without any z-index bookkeeping — same convention as the shared shell's contour motif, which
+// this is layered on top of (both stay well under any card's opaque background).
+function HomepageAtmosphere() {
+  return (
+    <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+      <div className="absolute -right-24 -top-32 size-72 rounded-full bg-sky-400/10 blur-3xl sm:-right-16 sm:size-[26rem]" />
+      <div className="absolute -bottom-40 -left-24 size-72 rounded-full bg-indigo-400/[0.08] blur-3xl sm:size-[28rem]" />
+      <div className="absolute left-1/2 top-8 size-64 -translate-x-1/2 rounded-full bg-blue-300/[0.06] blur-3xl sm:size-80" />
     </div>
   );
 }
