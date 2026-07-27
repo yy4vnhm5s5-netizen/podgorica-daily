@@ -4,11 +4,6 @@ const defaultLocale = getLocaleTag("me");
 const defaultTimeZone = "Europe/Podgorica";
 
 interface FormatDateTimeOptions {
-  // TEMPORARY diagnostics for the event-detail "Invalid option : option" production incident.
-  // Remove diagnosticEventId/diagnosticLabel and the surrounding logging once the failing
-  // Intl.DateTimeFormat construction is confirmed from production logs.
-  diagnosticEventId?: string;
-  diagnosticLabel?: string;
   formatOptions?: Intl.DateTimeFormatOptions;
   locale?: string;
   timeZone?: string;
@@ -19,50 +14,49 @@ interface LocalDateTime {
   time?: string;
 }
 
+// Intl.DateTimeFormat rejects combining dateStyle/timeStyle with any individual date-time
+// component option (weekday, year, month, day, hour, minute, second, etc.) in the same options
+// object. formatDateTime previously always injected its own dateStyle/timeStyle defaults ahead
+// of a caller's formatOptions, so any caller supplying a component option without also
+// overriding both style keys produced an invalid combination — regardless of which specific
+// call site did so. Detecting component options generically and omitting the style defaults
+// entirely in that case makes this impossible for any current or future caller.
+//
+// hour12 and hourCycle are deliberately excluded: they configure how an already-selected hour
+// component is represented (12- vs 24-hour, AM/PM), they do not themselves select an output
+// component, and they do not conflict with dateStyle/timeStyle. Treating them as component
+// options would incorrectly suppress the style defaults whenever a caller supplies only one of
+// them, silently changing existing or future formatting behavior.
+const dateTimeComponentOptionKeys: readonly (keyof Intl.DateTimeFormatOptions)[] = [
+  "weekday",
+  "era",
+  "year",
+  "month",
+  "day",
+  "dayPeriod",
+  "hour",
+  "minute",
+  "second",
+  "fractionalSecondDigits",
+  "timeZoneName",
+];
+
+function hasDateTimeComponentOption(formatOptions: Intl.DateTimeFormatOptions | undefined) {
+  return formatOptions
+    ? dateTimeComponentOptionKeys.some((key) => formatOptions[key] !== undefined)
+    : false;
+}
+
 function formatDateTime(value: Date, options: FormatDateTimeOptions = {}) {
-  const {
-    diagnosticEventId,
-    diagnosticLabel = "shared-lib-date:formatDateTime",
-    formatOptions,
-    locale = defaultLocale,
-    timeZone = defaultTimeZone,
-  } = options;
-  const resolvedOptions: Intl.DateTimeFormatOptions = {
-    dateStyle: "medium",
-    timeStyle: "short",
-    timeZone,
-    ...formatOptions,
+  const { formatOptions, locale = defaultLocale, timeZone = defaultTimeZone } = options;
+  const resolvedOptions: Intl.DateTimeFormatOptions = hasDateTimeComponentOption(formatOptions)
+    ? { timeZone, ...formatOptions }
+    : { dateStyle: "medium", timeStyle: "short", timeZone, ...formatOptions };
+
+  return {
+    dateTime: value.toISOString(),
+    label: new Intl.DateTimeFormat(locale, resolvedOptions).format(value),
   };
-
-  console.info(
-    JSON.stringify({
-      diagnostic: "intl-datetimeformat-construct",
-      eventId: diagnosticEventId,
-      label: diagnosticLabel,
-      locale,
-      options: resolvedOptions,
-    }),
-  );
-
-  try {
-    return {
-      dateTime: value.toISOString(),
-      label: new Intl.DateTimeFormat(locale, resolvedOptions).format(value),
-    };
-  } catch (error) {
-    console.error(
-      JSON.stringify({
-        diagnostic: "intl-datetimeformat-failed",
-        errorMessage: error instanceof Error ? error.message : String(error),
-        errorName: error instanceof Error ? error.name : "UnknownError",
-        eventId: diagnosticEventId,
-        label: diagnosticLabel,
-        locale,
-        options: resolvedOptions,
-      }),
-    );
-    throw error;
-  }
 }
 
 function getHourInTimeZone(value: Date, timeZone = defaultTimeZone) {
