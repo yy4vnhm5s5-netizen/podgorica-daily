@@ -16,8 +16,8 @@ function MillenniumBridgeIcon(props: SVGProps<SVGSVGElement>) {
       viewBox="0 0 24 24"
       {...props}
     >
-      <path d="M6 17 12 5 18 17M12 5v12" />
-      <line x1="3" x2="21" y1="17" y2="17" />
+      <path d="M4 17 12 9 20 17M12 9v8" />
+      <line x1="2" x2="22" y1="17" y2="17" />
     </svg>
   );
 }
@@ -34,7 +34,7 @@ function CitadelIcon(props: SVGProps<SVGSVGElement>) {
       viewBox="0 0 24 24"
       {...props}
     >
-      <path d="M4 19v-7h3v5h3v-5h3v5h3v-5h3v7" />
+      <path d="M4 20v-10h4v3h2v-3h4v3h2v-3h4v10" />
     </svg>
   );
 }
