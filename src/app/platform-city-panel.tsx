@@ -1,16 +1,8 @@
-import {
-  ArrowRight,
-  CalendarDays,
-  Castle,
-  CloudSun,
-  Landmark,
-  Music2,
-  Plane,
-  Zap,
-  type LucideIcon,
-} from "lucide-react";
+import { ArrowRight, CalendarDays, CloudSun, Landmark, Music2, Plane, Zap } from "lucide-react";
 import Link from "next/link";
+import type { ComponentType, SVGProps } from "react";
 
+import { CitadelIcon, MillenniumBridgeIcon } from "@/app/platform-city-icons";
 import type {
   CityHighlight,
   CityHighlightVisual,
@@ -46,12 +38,12 @@ const shortcutStyles = {
   "going-out": "bg-fuchsia-50 text-fuchsia-800 hover:bg-fuchsia-100",
 } as const;
 
-// Closest available Lucide stand-ins for each city's identity, per city id. Supports more
+// Dedicated city identity marks (see platform-city-icons.tsx), per city id. Supports more
 // cities later without redesigning the component: unmapped cities fall back to a neutral
 // landmark glyph and a neutral tint rather than requiring a code change to render at all.
-const cityIdentityIcons: Record<string, LucideIcon> = {
-  budva: Castle,
-  podgorica: Landmark,
+const cityIdentityIcons: Record<string, ComponentType<SVGProps<SVGSVGElement>>> = {
+  budva: CitadelIcon,
+  podgorica: MillenniumBridgeIcon,
 };
 
 const cityIdentityStyles: Record<string, string> = {

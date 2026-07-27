@@ -62,10 +62,7 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
         <PlatformCitySelector cards={cards} />
       </section>
 
-      <section
-        aria-labelledby="how-it-works-heading"
-        className="grid gap-3 lg:grid-cols-[1.25fr_0.75fr]"
-      >
+      <section aria-labelledby="how-it-works-heading">
         <div className="rounded-xl border border-border bg-background px-4 py-3 sm:px-5 sm:py-3.5">
           <p className="text-xs font-medium uppercase tracking-wide text-primary">
             Lokalno, po gradu
@@ -81,20 +78,6 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
             gradsku stranicu. Svaki grad ima svoj skup usluga, izvora i učestalost osvježavanja.
           </p>
         </div>
-        <aside
-          className="card-fog card-fog--neutral rounded-xl border border-amber-100 bg-amber-50/55 px-4 py-3 sm:px-5 sm:py-3.5"
-          aria-label="Kako Gradom.me radi"
-        >
-          <h3 className="font-semibold text-slate-950">Podaci sa jasnim ograničenjima</h3>
-          <p className="mt-1.5 text-sm leading-6 text-muted-foreground">
-            Podaci se osvježavaju periodično i uz svaki važan prikaz zadržavamo informaciju o
-            izvoru, svježini i dostupnosti. Gradom.me ne prikazuje izmišljene rasporede niti pokreće
-            prikupljanje podataka tokom vaše posjete.
-          </p>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            Trenutno su dostupne {cityNames}.
-          </p>
-        </aside>
       </section>
 
       <section aria-labelledby="faq-heading" className="space-y-3">
