@@ -57,12 +57,17 @@ function PageContourMotif() {
 
 function DashboardLayout({ children, city, homeHref, translations }: DashboardLayoutProps) {
   const isCityScoped = homeHref === undefined;
+  // The platform homepage carries its own hero atmosphere layer (see HomepageAtmosphere), which
+  // should be the one source of background depth there — stacking the shell's own per-city tint
+  // underneath it reads as two competing blue background systems. City-scoped dashboard pages
+  // have no such atmosphere layer, so they keep their existing subtle identity tint unchanged.
+  const shellTint = isCityScoped ? (cityShellTints[city.id] ?? defaultCityShellTint) : defaultCityShellTint;
 
   return (
     <div
       className={cn(
         "relative min-h-screen overflow-hidden bg-gradient-to-b via-background to-background pb-[calc(5rem+env(safe-area-inset-bottom))] text-foreground md:pb-0",
-        cityShellTints[city.id] ?? defaultCityShellTint,
+        shellTint,
       )}
     >
       <PageContourMotif />

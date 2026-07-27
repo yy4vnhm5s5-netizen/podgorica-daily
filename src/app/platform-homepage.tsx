@@ -135,21 +135,21 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
 // stays layered underneath and secondary to it.
 function HomepageAtmosphere() {
   const desktopMesh = [
-    "radial-gradient(65% 60% at 18% 8%, hsl(199 70% 88% / 0.4) 0%, transparent 72%)",
-    "radial-gradient(60% 55% at 84% 4%, hsl(212 62% 90% / 0.32) 0%, transparent 74%)",
-    "radial-gradient(70% 62% at 90% 42%, hsl(233 40% 88% / 0.18) 0%, transparent 76%)",
+    "radial-gradient(65% 60% at 18% 8%, hsl(199 75% 82% / 0.5) 0%, transparent 72%)",
+    "radial-gradient(60% 55% at 84% 4%, hsl(212 68% 85% / 0.42) 0%, transparent 74%)",
+    "radial-gradient(70% 62% at 90% 42%, hsl(233 45% 82% / 0.24) 0%, transparent 76%)",
   ].join(", ");
   const desktopWash =
-    "linear-gradient(165deg, hsl(200 55% 97% / 0.6) 0%, transparent 55%, hsl(230 35% 94% / 0.15) 100%)";
+    "linear-gradient(165deg, hsl(200 60% 95% / 0.75) 0%, transparent 55%, hsl(230 40% 90% / 0.2) 100%)";
   const desktopMask = "linear-gradient(to bottom, black 0%, black 45%, transparent 92%)";
 
   const mobileMesh = [
-    "radial-gradient(74% 68% at 16% 6%, hsl(199 70% 88% / 0.46) 0%, transparent 74%)",
-    "radial-gradient(68% 62% at 86% 2%, hsl(212 62% 90% / 0.37) 0%, transparent 76%)",
-    "radial-gradient(78% 70% at 92% 40%, hsl(233 40% 88% / 0.22) 0%, transparent 78%)",
+    "radial-gradient(74% 68% at 16% 6%, hsl(199 75% 80% / 0.58) 0%, transparent 74%)",
+    "radial-gradient(68% 62% at 86% 2%, hsl(212 68% 83% / 0.48) 0%, transparent 76%)",
+    "radial-gradient(78% 70% at 92% 40%, hsl(233 45% 82% / 0.3) 0%, transparent 78%)",
   ].join(", ");
   const mobileWash =
-    "linear-gradient(165deg, hsl(200 55% 97% / 0.72) 0%, transparent 60%, hsl(230 35% 94% / 0.18) 100%)";
+    "linear-gradient(165deg, hsl(200 60% 95% / 0.85) 0%, transparent 60%, hsl(230 40% 90% / 0.24) 100%)";
   const mobileMask = "linear-gradient(to bottom, black 0%, black 42%, transparent 97%)";
 
   return (
