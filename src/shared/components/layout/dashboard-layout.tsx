@@ -26,28 +26,31 @@ const cityShellTints: Record<string, string> = {
 };
 const defaultCityShellTint = "from-background";
 
-// A single, barely-there identity motif for the page canvas itself: contour-map lines, evoking
-// "this is about places" without literal landmarks or added color. It lives on the shared shell
-// (not any individual card), painted before every other child so normal DOM paint order puts it
-// behind the header, main content, and footer without any z-index bookkeeping. Opaque card/section
-// backgrounds naturally occlude it wherever content sits, so it only reads in the page's gutters.
+// A single, barely-there identity motif for the page canvas itself: two asymmetric contour-line
+// zones — one near the top, one near the footer — with a deliberately empty middle. This is a
+// brand signature, not a texture: it must never read as a repeating or tiled pattern, so the two
+// zones use different line counts, lengths, and curvature rather than mirrored/evenly-spaced
+// copies of each other. It lives on the shared shell (not any individual card), painted before
+// every other child so normal DOM paint order puts it behind the header, main content, and footer
+// without any z-index bookkeeping. Opaque card/section backgrounds naturally occlude it wherever
+// content sits, so it only reads faintly in the page's gutters.
 function PageContourMotif() {
   return (
     <svg
       aria-hidden="true"
-      className="pointer-events-none absolute inset-0 h-full w-full text-slate-900/[0.05]"
+      className="pointer-events-none absolute inset-0 h-full w-full text-slate-900/[0.04]"
       fill="none"
       preserveAspectRatio="xMidYMid slice"
       stroke="currentColor"
       strokeWidth={1}
       viewBox="0 0 800 900"
     >
-      <path d="M-40 80 C 120 30, 220 130, 360 70 S 620 110, 860 50" />
-      <path d="M-40 150 C 140 90, 240 190, 380 130 S 640 170, 860 110" />
-      <path d="M-40 220 C 160 150, 260 250, 400 190 S 660 230, 860 170" />
-      <path d="M-40 610 C 140 560, 240 660, 380 600 S 640 640, 860 580" />
-      <path d="M-40 680 C 160 620, 260 720, 400 660 S 660 700, 860 640" />
-      <path d="M-40 750 C 180 690, 280 790, 420 730 S 680 770, 860 710" />
+      {/* Top zone */}
+      <path d="M-40 45 C 150 5, 270 95, 470 40 S 770 15, 900 55" />
+      <path d="M300 115 C 470 80, 610 150, 900 100" />
+      {/* Bottom zone, near the footer — intentionally not a mirror of the top zone */}
+      <path d="M-40 815 C 170 770, 310 850, 540 800 S 800 825, 900 785" />
+      <path d="M-40 865 C 110 835, 250 885, 470 850" />
     </svg>
   );
 }
