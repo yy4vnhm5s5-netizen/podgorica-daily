@@ -1,14 +1,13 @@
-import { ArrowRight, CalendarDays, CloudSun, Music2, Plane, Zap } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 import type { ReactNode } from "react";
 
 import {
   createPlatformHomepageStructuredData,
   formatCityNames,
-  type CityHighlightVisual,
   type PlatformCityCardData,
 } from "@/app/platform-homepage-data";
+import { CityCard } from "@/app/platform-city-panel";
+import { PlatformCitySelector } from "@/app/platform-city-selector";
 import { LastCityContinuation } from "@/app/platform-last-city";
 import { siteConfig } from "@/shared/config/site";
 
@@ -16,66 +15,33 @@ interface PlatformHomepageProps {
   cards: readonly PlatformCityCardData[];
 }
 
-const highlightIcons = {
-  calendar: CalendarDays,
-  cloud: CloudSun,
-  music: Music2,
-  plane: Plane,
-} satisfies Record<CityHighlightVisual, typeof CalendarDays>;
-
-const highlightSurfaceStyles = {
-  calendar: "border-indigo-100 bg-indigo-50/75 hover:bg-indigo-50",
-  cloud: "border-sky-100 bg-sky-50/80 hover:bg-sky-50",
-  music: "border-fuchsia-100 bg-fuchsia-50/75 hover:bg-fuchsia-50",
-  plane: "border-blue-100 bg-blue-50/80 hover:bg-blue-50",
-} satisfies Record<CityHighlightVisual, string>;
-
-const highlightIconStyles = {
-  calendar: "bg-white/75 text-indigo-700",
-  cloud: "bg-white/75 text-sky-700",
-  music: "bg-white/75 text-fuchsia-700",
-  plane: "bg-white/75 text-blue-700",
-} satisfies Record<CityHighlightVisual, string>;
-
-const shortcutIcons = {
-  electricity: Zap,
-  events: CalendarDays,
-  flights: Plane,
-  "going-out": Music2,
-} as const;
-
-const shortcutStyles = {
-  electricity: "bg-amber-50 text-amber-800 hover:bg-amber-100",
-  events: "bg-indigo-50 text-indigo-800 hover:bg-indigo-100",
-  flights: "bg-sky-50 text-sky-800 hover:bg-sky-100",
-  "going-out": "bg-fuchsia-50 text-fuchsia-800 hover:bg-fuchsia-100",
-} as const;
-
 function PlatformHomepage({ cards }: PlatformHomepageProps) {
   const structuredData = createPlatformHomepageStructuredData(cards);
   const cityNames = formatCityNames(cards);
 
   return (
-    <div className="space-y-8 sm:space-y-10">
+    <div className="space-y-6 sm:space-y-8">
       <script
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
         type="application/ld+json"
       />
       <section
         aria-labelledby="platform-homepage-title"
-        className="card-fog card-fog--info overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-r from-white via-blue-50/75 to-sky-100/65 px-5 py-4 shadow-sm shadow-blue-950/[0.04] sm:px-7 sm:py-5"
+        className="card-fog card-fog--info overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-r from-white via-blue-50/70 to-sky-100/60 px-5 py-4 shadow-sm shadow-blue-950/[0.04] sm:px-6"
       >
-        <PlatformWordmark />
-        <div className="mt-4 max-w-3xl space-y-2">
-          <h1
-            className="max-w-2xl text-2xl font-semibold leading-tight tracking-tight text-slate-950 sm:text-3xl"
-            id="platform-homepage-title"
-          >
-            Lokalne informacije za gradove Crne Gore
-          </h1>
-          <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-            Izaberite grad i odmah provjerite najvažnije lokalne informacije.
-          </p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+          <PlatformWordmark />
+          <div className="max-w-2xl space-y-1 sm:border-l sm:border-blue-100/80 sm:pl-4">
+            <h1
+              className="text-xl font-semibold leading-tight tracking-tight text-slate-950 sm:text-2xl"
+              id="platform-homepage-title"
+            >
+              Lokalne informacije za gradove Crne Gore
+            </h1>
+            <p className="text-sm leading-6 text-muted-foreground">
+              Izaberite grad i odmah provjerite najvažnije lokalne informacije.
+            </p>
+          </div>
         </div>
       </section>
 
@@ -93,11 +59,7 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
           <p className="text-sm text-muted-foreground">Aktuelni podaci i provjereni izvori</p>
         </div>
         <LastCityContinuation cards={cards} />
-        <div className="space-y-3">
-          {cards.map((card) => (
-            <CityCard card={card} key={card.city.id} />
-          ))}
-        </div>
+        <PlatformCitySelector cards={cards} />
       </section>
 
       <section
@@ -168,101 +130,6 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
         </div>
       </section>
     </div>
-  );
-}
-
-function CityCard({ card }: { card: PlatformCityCardData }) {
-  const highlightGridClass = card.highlights.length > 2 ? "sm:grid-cols-4" : "sm:grid-cols-2";
-
-  return (
-    <article className="group relative overflow-hidden rounded-2xl border border-slate-200/90 bg-gradient-to-r from-white via-blue-50/45 to-white shadow-sm shadow-blue-950/[0.04] transition-[border-color,box-shadow] duration-200 hover:border-blue-200 hover:shadow-[0_14px_26px_-22px_rgb(15_23_42_/_0.32)]">
-      <Link
-        aria-label={`Otvori grad ${card.city.name}`}
-        className="absolute inset-0 z-10 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-        href={card.href}
-      >
-        <span className="sr-only">Otvori grad {card.city.name}</span>
-      </Link>
-      <div className="pointer-events-none relative z-20">
-        <div className="grid gap-5 p-5 sm:p-6 lg:grid-cols-[minmax(12rem,0.72fr)_minmax(0,1.65fr)_auto] lg:items-center">
-          <div className="space-y-1.5">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">Grad</p>
-            <h3 className="text-xl font-semibold tracking-tight text-slate-950 sm:text-2xl">
-              {card.city.name}
-            </h3>
-            <p className="max-w-xs text-sm leading-5 text-muted-foreground">
-              {card.city.description ?? `Lokalne informacije za grad ${card.city.name}.`}
-            </p>
-          </div>
-          <ul className={`grid min-w-0 grid-cols-2 gap-2 ${highlightGridClass}`}>
-            {card.highlights.map((highlight) => {
-              const Icon = highlightIcons[highlight.visual];
-              const content = (
-                <>
-                  <span
-                    className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${highlightIconStyles[highlight.visual]}`}
-                  >
-                    <Icon aria-hidden="true" className="size-4" />
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                      {highlight.label}
-                    </span>
-                    <span
-                      className={`mt-0.5 block text-sm font-semibold leading-5 text-slate-900 ${highlight.state === "unavailable" ? "text-xs font-medium leading-4 text-muted-foreground" : "truncate"}`}
-                    >
-                      {highlight.value}
-                    </span>
-                  </span>
-                </>
-              );
-
-              return highlight.href ? (
-                <li key={highlight.key}>
-                  <Link
-                    aria-label={highlight.accessibilityLabel}
-                    className={`pointer-events-auto flex min-h-[4.5rem] min-w-0 items-center gap-2 rounded-xl border px-2.5 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${highlightSurfaceStyles[highlight.visual]}`}
-                    href={highlight.href}
-                  >
-                    {content}
-                  </Link>
-                </li>
-              ) : (
-                <li
-                  className={`flex min-h-[4.5rem] min-w-0 items-center gap-2 rounded-xl border px-2.5 py-2 ${highlightSurfaceStyles[highlight.visual]}`}
-                  key={highlight.key}
-                >
-                  {content}
-                </li>
-              );
-            })}
-          </ul>
-          <span className="inline-flex items-center justify-start gap-1 whitespace-nowrap text-sm font-semibold text-primary transition-colors group-hover:text-blue-800 lg:justify-end">
-            Otvori grad <ArrowRight aria-hidden="true" className="size-4" />
-          </span>
-        </div>
-        <div className="flex flex-wrap items-center gap-2 border-t border-blue-100/80 px-5 py-3 sm:px-6">
-          {card.shortcuts.map((shortcut) => (
-            <CityShortcut key={shortcut.key} shortcut={shortcut} />
-          ))}
-        </div>
-      </div>
-    </article>
-  );
-}
-
-function CityShortcut({ shortcut }: { shortcut: PlatformCityCardData["shortcuts"][number] }) {
-  const Icon = shortcutIcons[shortcut.key as keyof typeof shortcutIcons];
-  const style = shortcutStyles[shortcut.key as keyof typeof shortcutStyles];
-
-  return (
-    <Link
-      className={`pointer-events-auto inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${style}`}
-      href={shortcut.href}
-    >
-      <Icon aria-hidden="true" className="size-3.5" />
-      {shortcut.label}
-    </Link>
   );
 }
 
