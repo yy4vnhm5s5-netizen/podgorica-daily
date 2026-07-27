@@ -29,7 +29,6 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
         aria-labelledby="platform-homepage-title"
         className="card-fog card-fog--info overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-r from-white via-blue-50/70 to-sky-100/60 px-5 py-4 shadow-sm shadow-blue-950/[0.04] sm:px-6"
       >
-        <HeroContourMotif />
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
           <PlatformWordmark />
           <div className="max-w-2xl space-y-1 sm:border-l sm:border-blue-100/80 sm:pl-4">
@@ -114,29 +113,6 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
         </div>
       </section>
     </div>
-  );
-}
-
-// A single, barely-there identity motif for the hero: contour-map lines, evoking "this is about
-// places" without literal landmarks or added color. Painted first inside .card-fog (which puts
-// direct children at the same stacking level), so it sits behind the content div purely by DOM
-// order — no extra z-index bookkeeping needed. Fades out entirely once the hero scrolls past.
-function HeroContourMotif() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="pointer-events-none absolute inset-0 h-full w-full text-slate-900/[0.05]"
-      fill="none"
-      preserveAspectRatio="xMidYMid slice"
-      stroke="currentColor"
-      strokeWidth={1}
-      viewBox="0 0 800 240"
-    >
-      <path d="M-40 60 C 120 20, 220 100, 360 55 S 620 85, 860 40" />
-      <path d="M-40 100 C 140 55, 240 140, 380 95 S 640 125, 860 80" />
-      <path d="M-40 140 C 160 90, 260 175, 400 135 S 660 160, 860 120" />
-      <path d="M-40 180 C 180 130, 280 210, 420 175 S 680 195, 860 160" />
-    </svg>
   );
 }
 
