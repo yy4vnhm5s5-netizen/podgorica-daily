@@ -47,6 +47,30 @@ test("does not invent time or location for date-only events", () => {
   assert.equal(structuredData?.location, undefined);
 });
 
+test("falls back to a valid startDate when startsAt is malformed instead of embedding it as-is", () => {
+  const structuredData = createEventStructuredData(
+    podgoricaEvent({ startDate: "2026-08-14", startsAt: "not-a-real-timestamp" }),
+  );
+
+  assert.equal(structuredData?.startDate, "2026-08-14");
+});
+
+test("omits structured data entirely when neither date field is valid", () => {
+  const structuredData = createEventStructuredData(
+    podgoricaEvent({ startDate: undefined, startsAt: "not-a-real-timestamp" }),
+  );
+
+  assert.equal(structuredData, undefined);
+});
+
+test("omits a malformed endDate instead of embedding it as-is", () => {
+  const structuredData = createEventStructuredData(
+    podgoricaEvent({ endsAt: "not-a-real-timestamp" }),
+  );
+
+  assert.equal(structuredData?.endDate, undefined);
+});
+
 test("keeps event summaries concise without inventing source content", () => {
   const description = `${"Opis događaja ".repeat(60)}završetak`;
   const summary = getEventSummary(description);

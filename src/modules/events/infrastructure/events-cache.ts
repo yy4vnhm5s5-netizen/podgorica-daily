@@ -3,6 +3,7 @@ import {
   readJsonCache,
   writeJsonCache,
 } from "../../../shared/lib/cache.ts";
+import { isIsoDate, isIsoTimestamp } from "../domain/event.ts";
 import type { CityEvent, EventProviderResult, Venue } from "../domain/event.ts";
 import type { EventQualityDiagnostics } from "../domain/event-quality.ts";
 import type { CacheFreshnessStatus } from "@/shared/lib/cache";
@@ -62,7 +63,20 @@ async function readEventCacheSnapshot(cachePath: string) {
     ...snapshot,
     events: snapshot.events.flatMap((event) => {
       const cityId = resolveCachedEventCityId(event);
-      return cityId && isCityId(cityId) ? [{ ...event, cityId }] : [];
+      if (!cityId || !isCityId(cityId)) return [];
+      const sanitized = sanitizeCachedEventDates({ ...event, cityId });
+      if (!sanitized) {
+        console.warn(
+          JSON.stringify({
+            cachePath,
+            event: "event-cache-invalid-date-dropped",
+            eventId: event.id,
+            sourceId: event.sourceId,
+          }),
+        );
+        return [];
+      }
+      return [sanitized];
     }),
   };
 }
@@ -75,6 +89,26 @@ function resolveCachedEventCityId(event: CityEvent) {
     : [];
 
   return cityIds.length === 1 ? cityIds[0] : undefined;
+}
+
+// Normalization and the quality pipeline only validate an event's date fields at collection
+// time; a cached snapshot is trusted verbatim on every subsequent read, with no re-validation.
+// A record that predates today's validation rules (schema drift, an old retained snapshot, or
+// any future provider regression) could otherwise carry a startsAt/startDate/endsAt value that
+// no longer parses as a valid date and would crash date formatting wherever it's rendered. This
+// re-applies the same isIsoTimestamp/isIsoDate checks normalization already uses, generically,
+// for every provider and city — not just at write time.
+function sanitizeCachedEventDates(event: CityEvent): CityEvent | undefined {
+  const startsAt = isIsoTimestamp(event.startsAt) ? event.startsAt : undefined;
+  const startDate = isIsoDate(event.startDate) ? event.startDate : undefined;
+  if (!startsAt && !startDate) return undefined;
+
+  return {
+    ...event,
+    endsAt: isIsoTimestamp(event.endsAt) ? event.endsAt : undefined,
+    startDate,
+    startsAt,
+  };
 }
 
 async function writeEventCache(snapshot: EventCacheSnapshot, cachePath: string) {

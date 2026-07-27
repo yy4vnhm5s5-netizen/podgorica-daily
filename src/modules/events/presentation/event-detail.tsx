@@ -8,14 +8,14 @@ import {
   getEventStatusLabel,
 } from "./events-translations";
 import { getEventPresentationCategory } from "./event-presentation-category";
+import { formatEventSchedule } from "./event-schedule.ts";
 import { getEventSummary } from "./event-summary";
 import { Badge } from "@/shared/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { NewTabNotice } from "@/shared/components/new-tab-notice";
-import { getLocaleTag, type Locale } from "@/shared/config/locale";
+import type { Locale } from "@/shared/config/locale";
 import { getEventsPath } from "@/shared/config/public-routes";
 import type { City } from "@/shared/types/city";
-import { formatDateTime } from "@/shared/lib/date";
 
 interface EventDetailProps {
   city: City;
@@ -134,27 +134,6 @@ function EventDetailItem({
       </div>
     </div>
   );
-}
-
-function formatEventSchedule(event: CityEvent, locale: Locale) {
-  if (event.startsAt) {
-    const startsAt = formatDateTime(new Date(event.startsAt), {
-      locale: getLocaleTag(locale),
-    }).label;
-    if (!event.endsAt) return startsAt;
-    const endsAt = formatDateTime(new Date(event.endsAt), {
-      formatOptions: { hour: "2-digit", minute: "2-digit" },
-      locale: getLocaleTag(locale),
-    }).label;
-    return `${startsAt} – ${endsAt}`;
-  }
-
-  return event.startDate
-    ? formatDateTime(new Date(`${event.startDate}T12:00:00.000Z`), {
-        formatOptions: { dateStyle: "medium", timeStyle: undefined },
-        locale: getLocaleTag(locale),
-      }).label
-    : undefined;
 }
 
 export { EventDetail, type EventDetailProps };
