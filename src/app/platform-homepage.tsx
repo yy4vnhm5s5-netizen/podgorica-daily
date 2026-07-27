@@ -117,26 +117,51 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
   );
 }
 
-// Homepage-only atmosphere: several large, heavily blurred glows anchored to the full page
-// canvas, not the padded content column. The wrapper below breaks out of the ResponsiveContainer
-// with the standard full-bleed trick (left-1/2 + w-screen + -translate-x-1/2) so glows can reach
-// the actual viewport edges/corners; its own overflow-hidden contains the off-canvas blobs so
-// nothing causes horizontal scroll. Painted before all other homepage children so normal DOM
-// paint order keeps it behind every section without any z-index bookkeeping — same convention as
-// the shared shell's contour motif, which this is layered on top of (both stay well under any
-// card's opaque background).
+// Homepage-only atmosphere, built as layered CSS gradient fields rather than discrete blurred
+// "blob" divs — the previous 8-blob version still read as separate shapes no matter how much
+// they were resized or spread out. Radial-gradient stops that fade to transparent are inherently
+// soft and continuous with no filter/blur needed, and stacking a few of them in one layer lets
+// them blend into each other instead of remaining visually separate objects. Three layers, each
+// serving one job: (1) broad mesh fields for overall shape, (2) one soft directional linear wash
+// (brighter upper canvas, near-neutral by mid-page, a faint cool tint at the very bottom), and
+// (3) two small corner accents for a touch of extra depth. The wrapper keeps the same full-bleed
+// breakout (left-1/2 + w-screen + -translate-x-1/2) and the same upward top extension (-top-40)
+// used previously, so it still reaches the real viewport edges/corners with no hard cutoff at the
+// homepage's own top boundary and no horizontal/vertical overflow. Painted before all other
+// homepage children so normal DOM paint order keeps it behind every section — same convention as
+// the shared shell's contour motif, which stays layered underneath and secondary to it.
 function HomepageAtmosphere() {
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none absolute left-1/2 top-0 h-full w-screen -translate-x-1/2 overflow-hidden"
+      className="pointer-events-none absolute -top-40 bottom-0 left-1/2 w-screen -translate-x-1/2 overflow-hidden"
     >
-      <div className="absolute -right-16 -top-24 size-72 rounded-full bg-sky-400/10 blur-3xl sm:size-[26rem]" />
-      <div className="absolute -left-20 -top-16 size-64 rounded-full bg-blue-400/[0.08] blur-3xl sm:size-80" />
-      <div className="absolute left-1/2 top-0 size-[28rem] -translate-x-1/2 rounded-full bg-blue-300/[0.05] blur-3xl sm:size-[34rem]" />
-      <div className="absolute -right-24 top-1/3 size-72 rounded-full bg-cyan-300/[0.06] blur-3xl sm:size-96" />
-      <div className="absolute -left-24 bottom-10 size-72 rounded-full bg-sky-300/[0.07] blur-3xl sm:size-96" />
-      <div className="absolute -right-16 bottom-0 size-64 rounded-full bg-indigo-400/[0.06] blur-3xl sm:size-80" />
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundImage: [
+            "radial-gradient(60% 55% at 20% 12%, hsl(199 70% 88% / 0.35) 0%, transparent 72%)",
+            "radial-gradient(58% 50% at 82% 6%, hsl(212 62% 90% / 0.28) 0%, transparent 74%)",
+            "radial-gradient(65% 58% at 88% 46%, hsl(233 40% 88% / 0.16) 0%, transparent 76%)",
+          ].join(", "),
+        }}
+      />
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundImage:
+            "linear-gradient(165deg, hsl(200 55% 97% / 0.55) 0%, transparent 42%, transparent 62%, hsl(230 35% 94% / 0.2) 100%)",
+        }}
+      />
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundImage: [
+            "radial-gradient(28% 24% at 94% 8%, hsl(195 72% 80% / 0.22) 0%, transparent 70%)",
+            "radial-gradient(24% 20% at 4% 84%, hsl(226 42% 82% / 0.14) 0%, transparent 70%)",
+          ].join(", "),
+        }}
+      />
     </div>
   );
 }
