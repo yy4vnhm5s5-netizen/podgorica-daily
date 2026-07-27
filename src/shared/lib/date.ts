@@ -4,6 +4,11 @@ const defaultLocale = getLocaleTag("me");
 const defaultTimeZone = "Europe/Podgorica";
 
 interface FormatDateTimeOptions {
+  // TEMPORARY diagnostics for the event-detail "Invalid option : option" production incident.
+  // Remove diagnosticEventId/diagnosticLabel and the surrounding logging once the failing
+  // Intl.DateTimeFormat construction is confirmed from production logs.
+  diagnosticEventId?: string;
+  diagnosticLabel?: string;
   formatOptions?: Intl.DateTimeFormatOptions;
   locale?: string;
   timeZone?: string;
@@ -15,17 +20,49 @@ interface LocalDateTime {
 }
 
 function formatDateTime(value: Date, options: FormatDateTimeOptions = {}) {
-  const { formatOptions, locale = defaultLocale, timeZone = defaultTimeZone } = options;
-
-  return {
-    dateTime: value.toISOString(),
-    label: new Intl.DateTimeFormat(locale, {
-      dateStyle: "medium",
-      timeStyle: "short",
-      timeZone,
-      ...formatOptions,
-    }).format(value),
+  const {
+    diagnosticEventId,
+    diagnosticLabel = "shared-lib-date:formatDateTime",
+    formatOptions,
+    locale = defaultLocale,
+    timeZone = defaultTimeZone,
+  } = options;
+  const resolvedOptions: Intl.DateTimeFormatOptions = {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone,
+    ...formatOptions,
   };
+
+  console.info(
+    JSON.stringify({
+      diagnostic: "intl-datetimeformat-construct",
+      eventId: diagnosticEventId,
+      label: diagnosticLabel,
+      locale,
+      options: resolvedOptions,
+    }),
+  );
+
+  try {
+    return {
+      dateTime: value.toISOString(),
+      label: new Intl.DateTimeFormat(locale, resolvedOptions).format(value),
+    };
+  } catch (error) {
+    console.error(
+      JSON.stringify({
+        diagnostic: "intl-datetimeformat-failed",
+        errorMessage: error instanceof Error ? error.message : String(error),
+        errorName: error instanceof Error ? error.name : "UnknownError",
+        eventId: diagnosticEventId,
+        label: diagnosticLabel,
+        locale,
+        options: resolvedOptions,
+      }),
+    );
+    throw error;
+  }
 }
 
 function getHourInTimeZone(value: Date, timeZone = defaultTimeZone) {

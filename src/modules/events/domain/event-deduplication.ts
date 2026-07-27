@@ -122,16 +122,46 @@ function getEventStart(event: CityEvent) {
   return event.startsAt ?? event.startDate ?? "";
 }
 
+// TEMPORARY diagnostic label for the event-detail "Invalid option : option" incident.
+// Remove this label and the surrounding logging once the failing construction is confirmed.
+const getEventCalendarDayDiagnosticLabel = "event-deduplication:getEventCalendarDay";
+
 function getEventCalendarDay(event: CityEvent) {
   if (event.startDate) return event.startDate;
   if (!event.startsAt) return "";
 
-  const parts = new Intl.DateTimeFormat("en-CA", {
+  const options: Intl.DateTimeFormatOptions = {
     day: "2-digit",
     month: "2-digit",
     timeZone: event.timezone,
     year: "numeric",
-  }).formatToParts(new Date(event.startsAt));
+  };
+  console.info(
+    JSON.stringify({
+      diagnostic: "intl-datetimeformat-construct",
+      eventId: event.id,
+      label: getEventCalendarDayDiagnosticLabel,
+      locale: "en-CA",
+      options,
+    }),
+  );
+  let parts: Intl.DateTimeFormatPart[];
+  try {
+    parts = new Intl.DateTimeFormat("en-CA", options).formatToParts(new Date(event.startsAt));
+  } catch (error) {
+    console.error(
+      JSON.stringify({
+        diagnostic: "intl-datetimeformat-failed",
+        errorMessage: error instanceof Error ? error.message : String(error),
+        errorName: error instanceof Error ? error.name : "UnknownError",
+        eventId: event.id,
+        label: getEventCalendarDayDiagnosticLabel,
+        locale: "en-CA",
+        options,
+      }),
+    );
+    throw error;
+  }
   const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
   return `${values.year}-${values.month}-${values.day}`;
 }
