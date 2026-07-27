@@ -20,7 +20,7 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
   const cityNames = formatCityNames(cards);
 
   return (
-    <div className="relative space-y-6 overflow-hidden sm:space-y-8">
+    <div className="relative space-y-6 sm:space-y-8">
       <HomepageAtmosphere />
       <script
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
@@ -117,17 +117,26 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
   );
 }
 
-// Homepage-only atmosphere: two or three large, heavily blurred glows, not a texture. Positioned
-// near outer edges so their (already very soft) falloff never sits behind readable text. Painted
-// before all other homepage children so normal DOM paint order keeps it behind every section
-// without any z-index bookkeeping — same convention as the shared shell's contour motif, which
-// this is layered on top of (both stay well under any card's opaque background).
+// Homepage-only atmosphere: several large, heavily blurred glows anchored to the full page
+// canvas, not the padded content column. The wrapper below breaks out of the ResponsiveContainer
+// with the standard full-bleed trick (left-1/2 + w-screen + -translate-x-1/2) so glows can reach
+// the actual viewport edges/corners; its own overflow-hidden contains the off-canvas blobs so
+// nothing causes horizontal scroll. Painted before all other homepage children so normal DOM
+// paint order keeps it behind every section without any z-index bookkeeping — same convention as
+// the shared shell's contour motif, which this is layered on top of (both stay well under any
+// card's opaque background).
 function HomepageAtmosphere() {
   return (
-    <div aria-hidden="true" className="pointer-events-none absolute inset-0">
-      <div className="absolute -right-24 -top-32 size-72 rounded-full bg-sky-400/10 blur-3xl sm:-right-16 sm:size-[26rem]" />
-      <div className="absolute -bottom-40 -left-24 size-72 rounded-full bg-indigo-400/[0.08] blur-3xl sm:size-[28rem]" />
-      <div className="absolute left-1/2 top-8 size-64 -translate-x-1/2 rounded-full bg-blue-300/[0.06] blur-3xl sm:size-80" />
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute left-1/2 top-0 h-full w-screen -translate-x-1/2 overflow-hidden"
+    >
+      <div className="absolute -right-16 -top-24 size-72 rounded-full bg-sky-400/10 blur-3xl sm:size-[26rem]" />
+      <div className="absolute -left-20 -top-16 size-64 rounded-full bg-blue-400/[0.08] blur-3xl sm:size-80" />
+      <div className="absolute left-1/2 top-0 size-[28rem] -translate-x-1/2 rounded-full bg-blue-300/[0.05] blur-3xl sm:size-[34rem]" />
+      <div className="absolute -right-24 top-1/3 size-72 rounded-full bg-cyan-300/[0.06] blur-3xl sm:size-96" />
+      <div className="absolute -left-24 bottom-10 size-72 rounded-full bg-sky-300/[0.07] blur-3xl sm:size-96" />
+      <div className="absolute -right-16 bottom-0 size-64 rounded-full bg-indigo-400/[0.06] blur-3xl sm:size-80" />
     </div>
   );
 }
