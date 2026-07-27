@@ -1,6 +1,6 @@
 import type { CityEvent } from "../domain/event.ts";
 import { getLocaleTag, type Locale } from "@/shared/config/locale";
-import { formatDateTime } from "@/shared/lib/date";
+import { defaultTimeZone, formatDateTime } from "@/shared/lib/date";
 
 // A cached event's date fields are not guaranteed to be a valid, parseable date (see
 // sanitizeCachedEventDates in events-cache.ts for the primary defense at the read boundary).
@@ -18,15 +18,17 @@ function formatEventSchedule(event: CityEvent, locale: Locale) {
     const startsAtLabel = formatDateTime(startsAt, { locale: getLocaleTag(locale) }).label;
     const endsAt = getValidDate(event.endsAt);
     if (!endsAt) return startsAtLabel;
-    const endsAtLabel = formatDateTime(endsAt, {
-      // dateStyle/timeStyle must be explicitly cleared here: Intl.DateTimeFormat throws a
-      // TypeError if dateStyle/timeStyle are combined with individual component options
-      // (hour, minute, etc.) in the same options object, and formatDateTime's own defaults
-      // always include dateStyle/timeStyle unless a caller explicitly clears them. An event
-      // with both a valid startsAt and a valid endsAt hit exactly this combination.
-      formatOptions: { dateStyle: undefined, hour: "2-digit", minute: "2-digit", timeStyle: undefined },
-      locale: getLocaleTag(locale),
-    }).label;
+    // Built directly, not through formatDateTime: that helper always includes dateStyle and
+    // timeStyle as own-properties of its options object (formatDateTime's own hardcoded
+    // defaults), and Intl.DateTimeFormat rejects combining dateStyle/timeStyle with individual
+    // component options (hour, minute, etc.) even when their values are explicitly undefined —
+    // the keys being present at all is what triggers the conflict, not their resolved value.
+    // An event with both a valid startsAt and a valid endsAt hit exactly this combination.
+    const endsAtLabel = new Intl.DateTimeFormat(getLocaleTag(locale), {
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: defaultTimeZone,
+    }).format(endsAt);
     return `${startsAtLabel} – ${endsAtLabel}`;
   }
 
