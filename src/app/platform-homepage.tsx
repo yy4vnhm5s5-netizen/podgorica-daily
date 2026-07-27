@@ -117,37 +117,32 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
   );
 }
 
-// Homepage-only background texture: a lightweight repeating triangular line pattern (SVG
-// <pattern>, not a raster image, so it stays sharp on retina/mobile) pinned to the top of the
-// page and masked to fade to fully transparent by mid-page. The tile carries all three line
-// families a true triangular tessellation needs — a near-horizontal edge plus both diagonal
-// zigzags — not just the two diagonals alone; two diagonals with no horizontal edge repeats as
-// one loose row of large diamonds instead of a dense triangle mesh, which is what the previous
-// version got wrong. Full-bleed breakout (left-1/2 + w-screen + -translate-x-1/2), same technique
-// used elsewhere on this page, so it spans the real viewport width, not the inner max-w content
-// column, with no horizontal/vertical overflow. Painted before all other homepage children so
-// normal DOM paint order keeps it behind every section — same convention as the shared shell's
-// contour motif, which stays layered underneath and unaffected by this.
+// Homepage-only atmosphere: a handful of large, heavily blurred glows (rounded, blur-3xl divs —
+// no gradients-as-mesh, no SVG, no repeating pattern), asymmetrically placed and mostly off-canvas
+// so only their soft falloff shows. A single mask on the wrapper concentrates them in the upper
+// half of the page and dissolves them to fully transparent before the lower sections, and a single
+// opacity multiplier makes the whole composition slightly stronger on mobile than desktop. Full-
+// bleed breakout (left-1/2 + w-screen + -translate-x-1/2), same technique used elsewhere on this
+// page, so it spans the real viewport width, not the inner max-w content column, with no
+// horizontal/vertical overflow. Painted before all other homepage children so normal DOM paint
+// order keeps it behind every section — same convention as the shared shell's contour motif, which
+// stays layered underneath and unaffected by this.
 function HomepageAtmosphere() {
-  const maskImage = "linear-gradient(to bottom, black 0%, black 45%, transparent 80%)";
+  const maskImage = "linear-gradient(to bottom, black 0%, black 50%, transparent 85%)";
 
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none absolute left-1/2 top-0 h-[38rem] w-screen -translate-x-1/2 overflow-hidden text-slate-600 opacity-[0.11] sm:h-[34rem] sm:opacity-[0.08]"
+      className="pointer-events-none absolute left-1/2 top-0 h-[40rem] w-screen -translate-x-1/2 overflow-hidden sm:h-[34rem]"
       style={{ WebkitMaskImage: maskImage, maskImage }}
     >
-      <svg className="h-full w-full" preserveAspectRatio="xMidYMin slice">
-        <pattern height="20.78" id="homepage-triangle-pattern" patternUnits="userSpaceOnUse" width="24">
-          <path
-            d="M0 20.78L12 0L24 20.78M0 0L12 20.78L24 0M0 0L24 0"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={1}
-          />
-        </pattern>
-        <rect fill="url(#homepage-triangle-pattern)" height="100%" width="100%" />
-      </svg>
+      <div className="absolute inset-0 opacity-100 sm:opacity-80 lg:opacity-65">
+        <div className="absolute -left-20 -top-16 size-72 rounded-full bg-sky-400/[0.14] blur-3xl sm:size-96" />
+        <div className="absolute -right-16 -top-24 size-80 rounded-full bg-blue-400/[0.12] blur-3xl sm:size-[26rem]" />
+        <div className="absolute -right-10 top-1/3 size-72 rounded-full bg-indigo-300/[0.1] blur-3xl sm:size-[22rem]" />
+        <div className="absolute -left-24 bottom-10 size-72 rounded-full bg-sky-300/[0.09] blur-3xl sm:size-96" />
+        <div className="absolute -right-14 bottom-0 size-64 rounded-full bg-indigo-400/[0.06] blur-3xl sm:size-80" />
+      </div>
     </div>
   );
 }
