@@ -17,12 +17,9 @@ const highlightIcons = {
   plane: Plane,
 } satisfies Record<CityHighlightVisual, typeof CalendarDays>;
 
-const highlightIconTints = {
-  calendar: "text-indigo-600",
-  cloud: "text-sky-600",
-  music: "text-fuchsia-600",
-  plane: "text-blue-600",
-} satisfies Record<CityHighlightVisual, string>;
+// One neutral tone for every highlight icon — the accent color is reserved for the city
+// identity mark and the primary CTA, not spread across each metric.
+const highlightIconTint = "text-muted-foreground";
 
 const shortcutIcons = {
   electricity: Zap,
@@ -31,12 +28,9 @@ const shortcutIcons = {
   "going-out": Music2,
 } as const;
 
-const shortcutStyles = {
-  electricity: "bg-amber-50 text-amber-800 hover:bg-amber-100",
-  events: "bg-indigo-50 text-indigo-800 hover:bg-indigo-100",
-  flights: "bg-sky-50 text-sky-800 hover:bg-sky-100",
-  "going-out": "bg-fuchsia-50 text-fuchsia-800 hover:bg-fuchsia-100",
-} as const;
+// One neutral pill style for every shortcut, regardless of capability — consistent with the
+// rest of the product's single-accent philosophy instead of a different color per feature.
+const shortcutStyle = "bg-muted text-foreground hover:bg-muted/70";
 
 // Dedicated city identity marks (see platform-city-icons.tsx), per city id. Supports more
 // cities later without redesigning the component: unmapped cities fall back to a neutral
@@ -46,12 +40,20 @@ const cityIdentityIcons: Record<string, ComponentType<SVGProps<SVGSVGElement>>> 
   podgorica: MillenniumBridgeIcon,
 };
 
+// Restrained per-city identity accents (see globals.css) — a subtle surface tint, not a theme.
 const cityIdentityStyles: Record<string, string> = {
-  budva: "bg-sky-50 text-sky-700",
-  podgorica: "bg-indigo-50 text-indigo-700",
+  budva: "bg-[hsl(var(--accent-budva-soft))] text-[hsl(var(--accent-budva))]",
+  podgorica: "bg-[hsl(var(--accent-podgorica-soft))] text-[hsl(var(--accent-podgorica))]",
 };
 
 const defaultCityIdentityStyle = "bg-slate-100 text-slate-700";
+
+// Same accent tokens, used as the starting stop of the card's ambient background gradient.
+const cityCardSurfaceTints: Record<string, string> = {
+  budva: "from-[hsl(var(--accent-budva-soft))]",
+  podgorica: "from-[hsl(var(--accent-podgorica-soft))]",
+};
+const defaultCityCardSurfaceTint = "from-muted/60";
 
 function CityIdentityIcon({ cityId, size = "md" }: { cityId: string; size?: "md" | "sm" }) {
   const Icon = cityIdentityIcons[cityId] ?? Landmark;
@@ -77,7 +79,10 @@ function CityCard({ card }: { card: PlatformCityCardData }) {
   return (
     <article
       aria-labelledby={headingId}
-      className="group relative overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-br from-white via-blue-50/40 to-white shadow-sm shadow-blue-950/[0.05] transition-shadow duration-200 hover:shadow-[0_16px_30px_-22px_rgb(15_23_42_/_0.32)]"
+      className={cn(
+        "group relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br via-background to-background shadow-md shadow-slate-950/[0.06] transition-shadow duration-200 hover:shadow-lg hover:shadow-slate-950/[0.09]",
+        cityCardSurfaceTints[card.city.id] ?? defaultCityCardSurfaceTint,
+      )}
     >
       <Link
         aria-label={`Otvori grad ${card.city.name}`}
@@ -131,10 +136,7 @@ function MetricTile({ highlight }: { highlight: CityHighlight }) {
   const Icon = highlightIcons[highlight.visual];
   const content = (
     <>
-      <Icon
-        aria-hidden="true"
-        className={`size-4 shrink-0 ${highlightIconTints[highlight.visual]}`}
-      />
+      <Icon aria-hidden="true" className={`size-4 shrink-0 ${highlightIconTint}`} />
       <span className="min-w-0">
         <span className="block text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
           {highlight.label}
@@ -168,11 +170,10 @@ function MetricTile({ highlight }: { highlight: CityHighlight }) {
 
 function CityShortcut({ shortcut }: { shortcut: PlatformCityCardData["shortcuts"][number] }) {
   const Icon = shortcutIcons[shortcut.key as keyof typeof shortcutIcons];
-  const style = shortcutStyles[shortcut.key as keyof typeof shortcutStyles];
 
   return (
     <Link
-      className={`pointer-events-auto inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors focus-visible:relative focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${style}`}
+      className={`pointer-events-auto inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors focus-visible:relative focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${shortcutStyle}`}
       href={shortcut.href}
     >
       <Icon aria-hidden="true" className="size-3.5" />

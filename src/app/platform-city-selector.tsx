@@ -56,7 +56,10 @@ function PlatformCitySelector({ cards }: { cards: readonly PlatformCityCardData[
   return (
     <div className="space-y-4">
       <nav aria-label="Izaberite grad" className="-mx-1 overflow-x-auto px-1 pb-1">
-        <div className="flex min-w-max gap-2" role="tablist">
+        <div
+          className="flex min-w-max gap-1 rounded-xl border border-border/70 bg-muted/50 p-1"
+          role="tablist"
+        >
           {cards.map((card) => {
             const isSelected = card.city.id === selectedCityId;
 
@@ -65,10 +68,10 @@ function PlatformCitySelector({ cards }: { cards: readonly PlatformCityCardData[
                 aria-controls={platformCityPanelId}
                 aria-selected={isSelected}
                 className={cn(
-                  "flex min-h-11 items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+                  "flex min-h-11 items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
                   isSelected
-                    ? "border-primary/30 bg-background text-foreground shadow-sm"
-                    : "border-transparent text-muted-foreground hover:bg-background/70 hover:text-foreground",
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground",
                 )}
                 id={`platform-city-tab-${card.city.id}`}
                 key={card.city.id}
