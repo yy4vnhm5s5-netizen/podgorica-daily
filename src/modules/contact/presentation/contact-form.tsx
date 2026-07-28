@@ -23,11 +23,9 @@ function ContactForm({ locale }: { locale: Locale }) {
   const [fieldErrors, setFieldErrors] = useState<ContactInquiryFieldErrors>({});
   const [status, setStatus] = useState<ContactFormStatus>("idle");
   const fieldIds: ContactFormFieldIds = {
-    company: `${formId}-company`,
     email: `${formId}-email`,
     fullName: `${formId}-full-name`,
     message: `${formId}-message`,
-    phone: `${formId}-phone`,
   };
   const errorSummaryItems = getContactFormErrorSummaryItems(fieldErrors, fieldIds);
 
@@ -46,12 +44,10 @@ function ContactForm({ locale }: { locale: Locale }) {
     const form = event.currentTarget;
     const formData = new FormData(form);
     const payload = {
-      company: getFormValue(formData, "company"),
       email: getFormValue(formData, "email"),
       fullName: getFormValue(formData, "fullName"),
       locale,
       message: getFormValue(formData, "message"),
-      phone: getFormValue(formData, "phone"),
       website: getFormValue(formData, "website"),
     };
 
@@ -124,25 +120,6 @@ function ContactForm({ locale }: { locale: Locale }) {
         required
         type="email"
       />
-      <div className="grid gap-5 sm:grid-cols-2">
-        <FormField
-          autoComplete="organization"
-          error={fieldErrors.company}
-          id={fieldIds.company}
-          label={translations.company}
-          name="company"
-          optionalLabel={translations.optional}
-        />
-        <FormField
-          autoComplete="tel"
-          error={fieldErrors.phone}
-          id={fieldIds.phone}
-          label={translations.phone}
-          name="phone"
-          optionalLabel={translations.optional}
-          type="tel"
-        />
-      </div>
       <FormField
         error={fieldErrors.message}
         id={fieldIds.message}
@@ -184,7 +161,6 @@ function FormField({
   id,
   label,
   name,
-  optionalLabel,
   required = false,
   textarea = false,
   type = "text",
@@ -194,10 +170,9 @@ function FormField({
   id: string;
   label: string;
   name: ContactInquiryField;
-  optionalLabel?: string;
   required?: boolean;
   textarea?: boolean;
-  type?: "email" | "tel" | "text";
+  type?: "email" | "text";
 }) {
   const errorId = `${id}-error`;
   const className =
@@ -207,9 +182,6 @@ function FormField({
     <div>
       <label className="text-sm font-medium" htmlFor={id}>
         {label}
-        {optionalLabel ? (
-          <span className="ml-1 font-normal text-muted-foreground">({optionalLabel})</span>
-        ) : null}
       </label>
       {textarea ? (
         <textarea

@@ -4,11 +4,9 @@ import test from "node:test";
 import { getContactFormErrorSummaryItems } from "./contact-form-errors.ts";
 
 const fieldIds = {
-  company: "contact-company",
   email: "contact-email",
   fullName: "contact-full-name",
   message: "contact-message",
-  phone: "contact-phone",
 };
 
 test("creates ordered error-summary links for only invalid contact fields", () => {

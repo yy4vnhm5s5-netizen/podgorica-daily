@@ -23,8 +23,8 @@ async function generateMetadata({ params }: PlazePageProps): Promise<Metadata> {
   const { city: slug } = await params;
   const context = resolveActiveCityFeatureRoute(slug, "seaWaterQuality");
   if (!context || !isCityPublicFeatureRouteAvailable(context.city, "seaWaterQuality")) return {};
-  const title = `Plaže ${context.city.name} — kvalitet mora`;
-  const description = `Zvanično praćenje sanitarnog kvaliteta mora na javnim kupalištima u ${context.city.locativeName ?? context.city.name}, iz podataka Javnog preduzeća za upravljanje morskim dobrom Crne Gore.`;
+  const title = `Plaže ${context.city.name} i kvalitet mora`;
+  const description = `Zvanično praćenje sanitarnog kvaliteta mora na javnim plažama u ${context.city.locativeName ?? context.city.name} — aktuelne ocjene kvaliteta i datumi uzorkovanja za svako kupalište.`;
 
   return createPublicRouteMetadata({
     canonical: getSeaWaterQualityPath(context.city),

@@ -3,14 +3,12 @@ import test from "node:test";
 
 import { parseContactInquiry } from "./contact-inquiry.ts";
 
-test("accepts a complete contact inquiry and normalizes blank optional fields", () => {
+test("accepts a complete contact inquiry", () => {
   const result = parseContactInquiry({
-    company: "  ",
     email: "ana@example.com",
     fullName: "Ana Petrović",
     locale: "me",
     message: "Zanima me saradnja sa Gradom-om.",
-    phone: "",
   });
 
   assert.equal(result.success, true);

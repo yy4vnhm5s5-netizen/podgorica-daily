@@ -68,7 +68,8 @@ function PageContourMotif() {
 // wraps `main`), so `inset-0` here already spans the true page width — no full-bleed breakout trick
 // is needed, unlike the homepage's atmosphere. A mask fades the whole thing out by the lower half of
 // the band so it resolves into the plain shell background before scrolling far. Independent of, and
-// unrelated to, the homepage's HomepageAtmosphere — no code or values shared.
+// unrelated to, the shared PlatformAtmosphere used by the homepage/contact page — no code or
+// values shared.
 function CityAtmosphere() {
   const maskImage = "linear-gradient(to bottom, black 0%, black 50%, transparent 85%)";
 
@@ -110,10 +111,11 @@ function CityAtmosphere() {
 
 function DashboardLayout({ children, city, homeHref, translations }: DashboardLayoutProps) {
   const isCityScoped = homeHref === undefined;
-  // The platform homepage carries its own hero atmosphere layer (see HomepageAtmosphere), which
-  // should be the one source of background depth there — stacking the shell's own per-city tint
-  // underneath it reads as two competing blue background systems. City-scoped dashboard pages
-  // have no such atmosphere layer, so they keep their existing subtle identity tint unchanged.
+  // The platform homepage and contact page each render their own shared PlatformAtmosphere layer
+  // (src/app/platform-atmosphere.tsx), which should be the one source of background depth there —
+  // stacking the shell's own per-city tint underneath it reads as two competing blue background
+  // systems. City-scoped dashboard pages have no such atmosphere layer, so they keep their
+  // existing subtle identity tint unchanged.
   const shellTint = isCityScoped ? (cityShellTints[city.id] ?? defaultCityShellTint) : defaultCityShellTint;
 
   return (

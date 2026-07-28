@@ -20,7 +20,11 @@ function SeaWaterQualityPage({ city, locale, result }: SeaWaterQualityPageProps)
   return (
     <section aria-labelledby="plaze-heading" className="space-y-6" id="plaze">
       <div className="space-y-2">
-        <SectionTitle as="h1" id="plaze-heading" title={`Plaže ${city.name}`} />
+        <SectionTitle
+          as="h1"
+          id="plaze-heading"
+          title={`Plaže u ${city.locativeName ?? city.name} i kvalitet mora`}
+        />
         <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
           Zvanično praćenje sanitarnog kvaliteta mora na javnim kupalištima u {city.locativeName ?? city.name} —
           podaci Javnog preduzeća za upravljanje morskim dobrom Crne Gore.
@@ -43,53 +47,63 @@ function SeaWaterQualityPage({ city, locale, result }: SeaWaterQualityPageProps)
             </p>
           ) : null}
 
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-            <div className="rounded-xl border border-border bg-background/60 px-4 py-3">
-              <span className="block text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                Kupališta
-              </span>
-              <span className="block text-2xl font-bold leading-tight text-foreground">
-                {summary.totalLocations}
-              </span>
-            </div>
-            {gradeOrder.map((grade) => (
-              <div className={`rounded-xl border px-4 py-3 ${gradeStyles[grade]}`} key={grade}>
-                <span className="block text-[11px] font-medium uppercase tracking-wide opacity-80">
-                  {gradeLabels[grade]}
+          <section aria-labelledby="plaze-pregled-heading" className="space-y-3">
+            <h2 className="text-base font-semibold tracking-tight" id="plaze-pregled-heading">
+              Pregled kvaliteta
+            </h2>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+              <div className="rounded-xl border border-border bg-background/60 px-4 py-3">
+                <span className="block text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                  Kupališta
                 </span>
-                <span className="block text-2xl font-bold leading-tight">
-                  {summary.gradeCounts[grade]}
+                <span className="block text-2xl font-bold leading-tight text-foreground">
+                  {summary.totalLocations}
                 </span>
               </div>
-            ))}
-          </div>
+              {gradeOrder.map((grade) => (
+                <div className={`rounded-xl border px-4 py-3 ${gradeStyles[grade]}`} key={grade}>
+                  <span className="block text-[11px] font-medium uppercase tracking-wide opacity-80">
+                    {gradeLabels[grade]}
+                  </span>
+                  <span className="block text-2xl font-bold leading-tight">
+                    {summary.gradeCounts[grade]}
+                  </span>
+                </div>
+              ))}
+            </div>
 
-          <div className="space-y-1">
-            {summary.latestSamplingDate ? (
-              <p className="text-xs leading-5 text-muted-foreground">
-                Uzorkovanje:{" "}
-                {
-                  formatDateTime(new Date(`${summary.latestSamplingDate}T12:00:00.000Z`), {
-                    formatOptions: { dateStyle: "medium" },
-                    locale: getLocaleTag(locale),
-                  }).label
-                }
-              </p>
-            ) : null}
-            {lastSuccessfulRefreshAt ? (
-              <p className="text-xs leading-5 text-muted-foreground">
-                Posljednje osvježenje:{" "}
-                {
-                  formatDateTime(new Date(lastSuccessfulRefreshAt), {
-                    formatOptions: { dateStyle: "medium" },
-                    locale: getLocaleTag(locale),
-                  }).label
-                }
-              </p>
-            ) : null}
-          </div>
+            <div className="space-y-1">
+              {summary.latestSamplingDate ? (
+                <p className="text-xs leading-5 text-muted-foreground">
+                  Uzorkovanje:{" "}
+                  {
+                    formatDateTime(new Date(`${summary.latestSamplingDate}T12:00:00.000Z`), {
+                      formatOptions: { dateStyle: "medium" },
+                      locale: getLocaleTag(locale),
+                    }).label
+                  }
+                </p>
+              ) : null}
+              {lastSuccessfulRefreshAt ? (
+                <p className="text-xs leading-5 text-muted-foreground">
+                  Posljednje osvježenje:{" "}
+                  {
+                    formatDateTime(new Date(lastSuccessfulRefreshAt), {
+                      formatOptions: { dateStyle: "medium" },
+                      locale: getLocaleTag(locale),
+                    }).label
+                  }
+                </p>
+              ) : null}
+            </div>
+          </section>
 
-          <BeachTable locale={locale} summary={summary} />
+          <section aria-labelledby="plaze-tabela-heading" className="space-y-3">
+            <h2 className="text-base font-semibold tracking-tight" id="plaze-tabela-heading">
+              Sva kupališta
+            </h2>
+            <BeachTable locale={locale} summary={summary} />
+          </section>
         </div>
       )}
 

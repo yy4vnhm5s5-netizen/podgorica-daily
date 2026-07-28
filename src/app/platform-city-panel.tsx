@@ -1,4 +1,14 @@
-import { ArrowRight, CalendarDays, CloudSun, Film, Landmark, Music2, Plane, Zap } from "lucide-react";
+import {
+  ArrowRight,
+  CalendarDays,
+  CloudSun,
+  Film,
+  Landmark,
+  Music2,
+  Plane,
+  Waves,
+  Zap,
+} from "lucide-react";
 import Link from "next/link";
 import type { ComponentType, SVGProps } from "react";
 
@@ -29,6 +39,7 @@ const shortcutIcons = {
   events: CalendarDays,
   flights: Plane,
   "going-out": Music2,
+  "sea-water-quality": Waves,
 } as const;
 
 // One neutral pill style for every shortcut, regardless of capability — consistent with the

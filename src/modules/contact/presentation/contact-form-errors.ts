@@ -3,13 +3,7 @@ import type {
   ContactInquiryFieldErrors,
 } from "@/modules/contact/domain/contact-inquiry";
 
-const contactFieldOrder: readonly ContactInquiryField[] = [
-  "fullName",
-  "email",
-  "company",
-  "phone",
-  "message",
-];
+const contactFieldOrder: readonly ContactInquiryField[] = ["fullName", "email", "message"];
 
 type ContactFormFieldIds = Record<ContactInquiryField, string>;
 

@@ -26,7 +26,7 @@ test("derives generic city cards from every active registry city", () => {
   assert.ok(budva);
   assert.deepEqual(
     budva.shortcuts.map((shortcut) => shortcut.label),
-    ["Izlasci", "Struja"],
+    ["Izlasci", "Plaže", "Struja"],
   );
   assert.deepEqual(
     budva.highlights.map((highlight) => highlight.key),

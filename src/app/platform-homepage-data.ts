@@ -18,6 +18,7 @@ import {
   getEventsPath,
   getFlightsPath,
   getGoingOutPath,
+  getSeaWaterQualityPath,
 } from "@/shared/config/public-routes";
 import { getPageTitle, siteConfig } from "@/shared/config/site";
 import type { City, CityContext } from "@/shared/types/city";
@@ -219,11 +220,19 @@ function createCountHighlight({
 
 function getCityModuleShortcuts(city: City): CityModuleShortcut[] {
   const definitions: Array<
-    CityModuleShortcut & { capability: "electricity" | "events" | "flights" | "goingOut" }
+    CityModuleShortcut & {
+      capability: "electricity" | "events" | "flights" | "goingOut" | "seaWaterQuality";
+    }
   > = [
     { capability: "events", href: getEventsPath(city), key: "events", label: "Događaji" },
     { capability: "goingOut", href: getGoingOutPath(city), key: "going-out", label: "Izlasci" },
     { capability: "flights", href: getFlightsPath(city), key: "flights", label: "Letovi" },
+    {
+      capability: "seaWaterQuality",
+      href: getSeaWaterQualityPath(city),
+      key: "sea-water-quality",
+      label: "Plaže",
+    },
     {
       capability: "electricity",
       href: getElectricityPath(city),

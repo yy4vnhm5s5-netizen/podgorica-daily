@@ -16,8 +16,6 @@ function formatContactInquiryMessage(
     `Submission timestamp: ${submittedAt}`,
     `Sender name: ${inquiry.fullName}`,
     `Sender email: ${inquiry.email}`,
-    ...(inquiry.company ? [`Company: ${inquiry.company}`] : []),
-    ...(inquiry.phone ? [`Phone: ${inquiry.phone}`] : []),
     ...(clientIp ? [`Client IP: ${clientIp}`] : []),
     ...(userAgent ? [`User-Agent: ${userAgent}`] : []),
     "",
