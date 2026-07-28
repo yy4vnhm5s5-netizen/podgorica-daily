@@ -1,6 +1,5 @@
 import { dirname } from "node:path";
 
-import { env } from "../../../config/env.ts";
 import { acquireRefreshLock } from "../../../shared/lib/refresh-lock.ts";
 
 import { defaultBudvaSeaWaterQualityCachePath } from "./budva-sea-water-quality-cache.ts";

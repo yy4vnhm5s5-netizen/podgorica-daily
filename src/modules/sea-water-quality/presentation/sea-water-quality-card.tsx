@@ -5,7 +5,7 @@ import type {
   SeaWaterQualitySummary,
 } from "../domain/sea-water-quality";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
-import { getNewTabNotice } from "@/shared/components/new-tab-notice";
+import { NewTabNotice } from "@/shared/components/new-tab-notice";
 import type { CacheFreshnessStatus } from "@/shared/lib/cache";
 import type { Locale } from "@/shared/config/locale";
 import { formatDateTime } from "@/shared/lib/date";
@@ -110,7 +110,7 @@ function SeaWaterQualityCard({
             target="_blank"
           >
             Javno preduzeće za upravljanje morskim dobrom Crne Gore
-            <span className="sr-only"> {getNewTabNotice(locale)}</span>
+            <NewTabNotice locale={locale} />
           </a>
         </p>
       </CardContent>
