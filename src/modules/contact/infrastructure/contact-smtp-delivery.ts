@@ -27,6 +27,16 @@ function createSmtpContactDelivery(
     };
   }
 
+  // TEMPORARY DEBUG LOGGING — remove once the "hangs on Slanje..." issue is diagnosed.
+  // NOTE: createSmtpContactDelivery runs once at route-module load (cold start), not per
+  // request, so these two log lines will appear once per server instance, not once per
+  // submission — they confirm the transporter was actually constructed with the expected
+  // (non-secret) host/port/secure settings.
+  console.log("[contact-debug] 4. before creating SMTP transporter", {
+    host: configuration.host,
+    port: configuration.port,
+    secure: configuration.secure,
+  });
   const transporter = nodemailer.createTransport({
     auth:
       configuration.username && configuration.password
@@ -36,9 +46,12 @@ function createSmtpContactDelivery(
     port: configuration.port,
     secure: configuration.secure,
   });
+  console.log("[contact-debug] 5. after transporter created");
 
   return {
     async deliver({ inquiry, metadata }) {
+      // TEMPORARY DEBUG LOGGING — remove once the "hangs on Slanje..." issue is diagnosed.
+      console.log("[contact-debug] 8. before transporter.sendMail()");
       await transporter.sendMail({
         from: configuration.from,
         replyTo: inquiry.email,
@@ -46,6 +59,7 @@ function createSmtpContactDelivery(
         text: formatContactInquiryMessage(inquiry, metadata),
         to: configuration.contactEmail,
       });
+      console.log("[contact-debug] 9. after transporter.sendMail() resolved");
     },
   };
 }

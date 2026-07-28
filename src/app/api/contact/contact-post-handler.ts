@@ -21,17 +21,31 @@ function createContactPostHandler({
     const payload = await readJsonBody(request);
     if (!payload.success)
       return Response.json({ code: "INVALID_REQUEST", status: "error" }, { status: 400 });
+    // TEMPORARY DEBUG LOGGING — remove once the "hangs on Slanje..." issue is diagnosed.
+    console.log("[contact-debug] 2. request body successfully parsed");
 
     const clientIp = getClientIp(request);
-    const result = await submitContactInquiry({
-      clientId: clientIp ?? "anonymous",
-      clientIp,
-      delivery,
-      input: payload.value,
-      now: now(),
-      rateLimiter,
-      userAgent: normalizeRequestMetadata(request.headers.get("user-agent")),
-    });
+    let result: ContactSubmissionResult;
+    try {
+      result = await submitContactInquiry({
+        clientId: clientIp ?? "anonymous",
+        clientIp,
+        delivery,
+        input: payload.value,
+        now: now(),
+        rateLimiter,
+        userAgent: normalizeRequestMetadata(request.headers.get("user-agent")),
+      });
+    } catch (error) {
+      // TEMPORARY DEBUG LOGGING — safety net: submitContactInquiry already catches delivery
+      // errors internally, but log here too (with the full error/stack) in case anything
+      // upstream of that internal catch throws unexpectedly, so it is never silently swallowed.
+      console.error("[contact-debug] 10. caught error in post() before submitContactInquiry resolved", error);
+      throw error;
+    }
+
+    // TEMPORARY DEBUG LOGGING — remove once the "hangs on Slanje..." issue is diagnosed.
+    console.log("[contact-debug] 11. before returning response, result.status =", result.status);
     return responseForSubmission(result);
   };
 }
@@ -43,7 +57,9 @@ async function readJsonBody(
     const body = await request.text();
     if (body.length === 0 || body.length > 16_384) return { success: false };
     return { success: true, value: JSON.parse(body) as unknown };
-  } catch {
+  } catch (error) {
+    // TEMPORARY DEBUG LOGGING — remove once the "hangs on Slanje..." issue is diagnosed.
+    console.error("[contact-debug] caught error while reading/parsing request body", error);
     return { success: false };
   }
 }

@@ -25,5 +25,7 @@ const post = createContactPostHandler({
 });
 
 export async function POST(request: Request) {
+  // TEMPORARY DEBUG LOGGING — remove once the "hangs on Slanje..." issue is diagnosed.
+  console.log("[contact-debug] 1. request entered /api/contact");
   return post(request);
 }
