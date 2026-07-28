@@ -9,8 +9,12 @@ import { getGoingOutPageEvents } from "@/modules/going-out/presentation/going-ou
 import { getWeatherTemperature } from "@/modules/weather/presentation/weather-temperature";
 import { createPublicRouteMetadata } from "@/app/public-route-metadata";
 import { loadCityDashboardData } from "@/app/city-dashboard-data";
-import { isCityPublicFeatureRouteAvailable } from "@/app/city-routing";
-import { createCityContext, getActiveCities, getCityName } from "@/shared/config/cities";
+import { isCityCinemaRouteAvailable, isCityPublicFeatureRouteAvailable } from "@/app/city-routing";
+import {
+  createCityContext,
+  getActiveCities,
+  getCityName,
+} from "@/shared/config/cities";
 import { formatBcsCount } from "@/shared/lib/pluralize";
 import {
   getCityPath,
@@ -159,7 +163,10 @@ function createPlatformCityCardData(
     );
   }
 
-  if (isCityPublicFeatureRouteAvailable(city, "events")) {
+  // isCityCinemaRouteAvailable (not the generic "events" capability): Cineplexx is a Podgorica-only
+  // sub-feature, so other events-capable cities (e.g. Tivat, backed only by the Tourism Tivat
+  // provider) must not show a permanently-unavailable "Filmovi" tile.
+  if (isCityCinemaRouteAvailable(city)) {
     const cinemaEvents = dashboardData
       ? dashboardData.events.events.filter((event) => event.sourceId === "cineplexx-podgorica")
       : [];

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { resolveActiveCityFeatureRoute } from "@/app/city-routing";
+import { isCityCinemaRouteAvailable, resolveActiveCityFeatureRoute } from "@/app/city-routing";
 import { createPublicRouteMetadata } from "@/app/public-route-metadata";
 import { getCityEvents } from "@/modules/events/application/get-city-events";
 import { CineplexxProgrammeCard } from "@/modules/events/presentation/cineplexx-programme-card";
@@ -21,7 +21,7 @@ interface CinemaPageProps {
 async function generateMetadata({ params }: CinemaPageProps): Promise<Metadata> {
   const { city: slug } = await params;
   const context = resolveActiveCityFeatureRoute(slug, "events");
-  if (!context) return {};
+  if (!context || !isCityCinemaRouteAvailable(context.city)) return {};
 
   const title = `Filmovi u ${context.city.name}`;
   const description = `Aktuelni program Cineplexx bioskopa u ${context.city.name}.`;
@@ -38,7 +38,7 @@ async function CinemaPage({ params }: CinemaPageProps) {
   const { city: slug } = await params;
   const locale = "me" as const;
   const context = resolveActiveCityFeatureRoute(slug, "events");
-  if (!context) notFound();
+  if (!context || !isCityCinemaRouteAvailable(context.city)) notFound();
 
   const result = await getCityEvents(context);
   const cinemaEvents = result.events.filter((event) => event.sourceId === "cineplexx-podgorica");

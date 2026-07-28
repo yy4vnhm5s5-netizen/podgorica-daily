@@ -3,7 +3,12 @@ import { emitInfoMessage } from "./event-refresh-logger.ts";
 import type { EventRefreshSummary } from "./events-refresh-runner.ts";
 
 type EventProviderId =
-  "cineplexx-podgorica" | "cnp" | "glavni-grad-podgorica" | "kic" | "tourism-podgorica";
+  | "cineplexx-podgorica"
+  | "cnp"
+  | "glavni-grad-podgorica"
+  | "kic"
+  | "tourism-podgorica"
+  | "tourism-tivat";
 
 type EventInitializationState = "cache-found" | "failed" | "refreshed" | "skipped";
 

@@ -14,6 +14,7 @@ import { readVikpgCacheResult } from "@/modules/city-alerts/infrastructure/vikpg
 import { readEventCacheSnapshot } from "@/modules/events/infrastructure/events-cache";
 import { initializeEventCaches } from "@/modules/events/infrastructure/events-initialization";
 import { refreshAllEvents } from "@/modules/events/infrastructure/events-refresh";
+import { defaultTivatTourismEventCachePath } from "@/modules/events/infrastructure/tivat-tourism-event-provider";
 import { getActiveFlightsContexts } from "@/modules/flights/infrastructure/collect-podgorica-flights";
 import { initializePodgoricaFlights } from "@/modules/flights/infrastructure/podgorica-flights-initialization";
 import {
@@ -121,6 +122,12 @@ export function register() {
           enabled: true,
           id: "tourism-podgorica",
           readCache: () => readEventCacheSnapshot(env.TOURISM_EVENT_CACHE_PATH),
+        },
+        {
+          cachePath: defaultTivatTourismEventCachePath,
+          enabled: true,
+          id: "tourism-tivat",
+          readCache: () => readEventCacheSnapshot(defaultTivatTourismEventCachePath),
         },
       ],
       refresh: refreshAllEvents,

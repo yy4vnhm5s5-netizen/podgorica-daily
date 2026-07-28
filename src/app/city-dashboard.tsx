@@ -26,7 +26,7 @@ import { getEmergencyNumbers } from "@/shared/components/dashboard/emergency-num
 import { EmergencyNumbersStrip } from "@/shared/components/dashboard/emergency-numbers-strip";
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
 import { loadCityDashboardData } from "@/app/city-dashboard-data";
-import { getCityDashboardSummaryAvailability } from "@/app/city-routing";
+import { getCityDashboardSummaryAvailability, isCityCinemaRouteAvailable } from "@/app/city-routing";
 import { LastCityTracker } from "@/app/platform-last-city";
 import { isFeatureEnabled } from "@/shared/config/features";
 import { getActiveCities } from "@/shared/config/cities";
@@ -60,6 +60,7 @@ async function CityDashboard({ context }: CityDashboardProps) {
     cinemaProgramme.events,
   );
   const summaryAvailability = getCityDashboardSummaryAvailability(city);
+  const cinemaAvailable = isCityCinemaRouteAvailable(city);
 
   return (
     <DashboardLayout city={city} translations={translations}>
@@ -101,7 +102,7 @@ async function CityDashboard({ context }: CityDashboardProps) {
           />
         ) : null}
         {capabilities.events ? (
-          <div className="grid items-start gap-5 lg:grid-cols-2">
+          <div className={cinemaAvailable ? "grid items-start gap-5 lg:grid-cols-2" : undefined}>
             <HomepageEventsCard
               city={city}
               eventCount={homepageCityEvents.length}
@@ -109,16 +110,19 @@ async function CityDashboard({ context }: CityDashboardProps) {
               isUnavailable={cityEventsUnavailable}
               locale={locale}
             />
-            <div id="bioskop">
-              <CineplexxProgrammeCard
-                day={cinemaProgramme.day}
-                events={cinemaProgramme.events}
-                locale={locale}
-                state={
-                  events.providers.find((provider) => provider.id === "cineplexx-podgorica")?.state
-                }
-              />
-            </div>
+            {cinemaAvailable ? (
+              <div id="bioskop">
+                <CineplexxProgrammeCard
+                  day={cinemaProgramme.day}
+                  events={cinemaProgramme.events}
+                  locale={locale}
+                  state={
+                    events.providers.find((provider) => provider.id === "cineplexx-podgorica")
+                      ?.state
+                  }
+                />
+              </div>
+            ) : null}
           </div>
         ) : null}
         <AdvertisingCard

@@ -9,6 +9,7 @@ import { lockFileName, staleLockMs } from "./events-refresh-lock.ts";
 import {
   createCineplexxRefreshProvider,
   createStandardEventRefreshProviders,
+  createTivatTourismRefreshProvider,
 } from "./events-refresh.ts";
 import { runEventRefresh, type EventRefreshProvider } from "./events-refresh-runner.ts";
 
@@ -32,6 +33,16 @@ test("keeps standard event providers separate from the Cineplexx refresh plan", 
     ["kic", "cnp", "glavni-grad-podgorica", "tourism-podgorica"],
   );
   assert.equal(createCineplexxRefreshProvider(context).id, "cineplexx-podgorica");
+});
+
+test("creates a standalone Tivat Tourism refresh provider with its own city context, kept out of the standard plan", () => {
+  assert.equal(createTivatTourismRefreshProvider().id, "tourism-tivat");
+  assert.equal(
+    createStandardEventRefreshProviders(getDefaultCityContext())
+      .map(({ id }) => id)
+      .includes("tourism-tivat"),
+    false,
+  );
 });
 
 test("runs every provider in order and preserves accepted counts and retained cache state", async () => {

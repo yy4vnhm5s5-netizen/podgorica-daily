@@ -10,6 +10,7 @@ import {
   getCityLandingTitle,
   getCitySitemapPaths,
   getMainCityLandingContext,
+  isCityCinemaRouteAvailable,
   isCityPublicFeatureRouteAvailable,
   resolveActiveCityFeatureRoute,
   resolveActiveCityRoute,
@@ -68,6 +69,20 @@ test("uses capability-aware metadata and summary routes for a future city", () =
   });
 });
 
+test("cinema route availability requires both the events capability and Cineplexx city support", () => {
+  const podgorica = createCityContext("podgorica").city;
+  const eventsOnlyCity = city({ capabilities: ["events"], id: "events-only", slug: "events-only" });
+
+  assert.equal(isCityCinemaRouteAvailable(podgorica), true);
+  assert.equal(isCityCinemaRouteAvailable(eventsOnlyCity), false);
+  assert.deepEqual(getCityDashboardSummaryAvailability(podgorica), {
+    cinema: true,
+    events: true,
+    goingOut: true,
+    seaWaterQuality: false,
+  });
+});
+
 test("resolves active Budva routes but rejects inactive and unknown city routes", () => {
   assert.equal(resolveActiveCityRoute("budva")?.city.id, "budva");
   assert.equal(resolveActiveCityRoute("bar"), undefined);
@@ -118,9 +133,9 @@ test("sitemap emits only capability-supported routes for active cities", () => {
     slug: "inactive",
   });
 
+  assert.equal(isCityCinemaRouteAvailable(limited), false);
   assert.deepEqual(getActiveCitySitemapPaths([limited, inactive]), [
     "/limited",
-    "/limited/filmovi",
     "/limited/dogadjaji",
   ]);
   assert.equal(getActiveCitySitemapPaths([limited, inactive]).includes("/"), false);
@@ -143,7 +158,6 @@ test("does not publish feature-flagged routes when their public feature is disab
   assert.equal(isCityPublicFeatureRouteAvailable(full, "events", { isFeatureEnabled }), true);
   assert.deepEqual(getCitySitemapPaths(full, { isFeatureEnabled }), [
     "/full",
-    "/full/filmovi",
     "/full/dogadjaji",
     "/full/struja",
   ]);

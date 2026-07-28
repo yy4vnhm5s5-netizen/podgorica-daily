@@ -4,10 +4,12 @@ import {
   getMainCityContext,
   supportsCityAlerts,
 } from "@/config/city-context";
+import { cineplexxEventProviderMetadata } from "@/modules/events/infrastructure/cineplexx-event-provider";
 import {
   getActiveCities,
   getCityName,
   isActiveCity,
+  isCitySupportedByProvider,
   supportsCityCapability,
 } from "@/shared/config/cities";
 import {
@@ -100,10 +102,22 @@ function isCityPublicFeatureRouteAvailable(
   return feature ? checkFeature(feature) : true;
 }
 
+// Cinema is a Cineplexx-specific sub-feature of "events", not a synonym for it — Cineplexx only
+// covers Podgorica (see cineplexxEventProviderMetadata.supportedCityIds). A city with a different
+// events provider (e.g. Tivat, backed only by the Tourism Tivat provider) must not get a
+// reachable /filmovi route, a sitemap entry for it, or a "Filmovi" dashboard/homepage tile that
+// can only ever show "no movies" or "unavailable".
+function isCityCinemaRouteAvailable(city: City, options: CityRouteAvailabilityOptions = {}) {
+  return (
+    isCityPublicFeatureRouteAvailable(city, "events", options) &&
+    isCitySupportedByProvider(city, cineplexxEventProviderMetadata.supportedCityIds)
+  );
+}
+
 function getCitySitemapPaths(city: City, options: CityRouteAvailabilityOptions = {}) {
   return [
     getCityPath(city),
-    ...(isCityPublicFeatureRouteAvailable(city, "events", options) ? [getCinemaPath(city)] : []),
+    ...(isCityCinemaRouteAvailable(city, options) ? [getCinemaPath(city)] : []),
     ...(isCityPublicFeatureRouteAvailable(city, "events", options) ? [getEventsPath(city)] : []),
     ...(isCityPublicFeatureRouteAvailable(city, "electricity", options)
       ? [getElectricityPath(city)]
@@ -144,7 +158,7 @@ function getCityDashboardSummaryAvailability(
   const events = isCityPublicFeatureRouteAvailable(city, "events", options);
 
   return {
-    cinema: events,
+    cinema: isCityCinemaRouteAvailable(city, options),
     events,
     goingOut: isCityPublicFeatureRouteAvailable(city, "goingOut", options),
     seaWaterQuality: isCityPublicFeatureRouteAvailable(city, "seaWaterQuality", options),
@@ -158,6 +172,7 @@ export {
   getCityDashboardSummaryAvailability,
   getCityLandingMetadata,
   getCityLandingTitle,
+  isCityCinemaRouteAvailable,
   isCityPublicFeatureRouteAvailable,
   getCitySitemapPaths,
   getMainCityLandingContext,

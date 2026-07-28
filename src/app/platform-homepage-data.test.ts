@@ -46,11 +46,11 @@ test("derives generic city cards from every active registry city", () => {
   assert.ok(tivat);
   assert.deepEqual(
     tivat.shortcuts.map((shortcut) => shortcut.label),
-    ["Izlasci", "Struja"],
+    ["Događaji", "Izlasci", "Struja"],
   );
   assert.deepEqual(
     tivat.highlights.map((highlight) => highlight.key),
-    ["weather", "going-out"],
+    ["weather", "events", "going-out"],
   );
   assert.equal(getCity("budva")?.isActive, true);
   assert.equal(getCity("tivat")?.isActive, true);
@@ -218,6 +218,68 @@ test("derives Podgorica event and movie totals from the same displayable read mo
 
   assert.equal(card.highlights.find(({ key }) => key === "events")?.value, "1 događaj");
   assert.equal(card.highlights.find(({ key }) => key === "movies")?.value, "2 filma");
+});
+
+test("never shows a movies highlight for Tivat, even if Cineplexx-shaped events appear in its read model", () => {
+  const context = createCityContext("tivat");
+  const tivatEvent: CityEvent = {
+    category: "concert",
+    cityId: "tivat",
+    cityIds: ["tivat"],
+    id: "tivat-koncert",
+    language: "me",
+    sourceId: "tourism-tivat",
+    sourceName: "Turistička organizacija Tivat",
+    sourceReferences: [],
+    sourceUrl: "https://tivat.travel/dogadjaji/koncert/",
+    startDate: "2099-12-31",
+    status: "scheduled",
+    tags: [],
+    timezone: "Europe/Podgorica",
+    title: "Tivatski koncert",
+  };
+  const unexpectedMovieEvent: CityEvent = {
+    category: "movie",
+    cityId: "tivat",
+    cityIds: ["tivat"],
+    id: "unexpected-movie",
+    language: "me",
+    sourceId: "cineplexx-podgorica",
+    sourceName: "Cineplexx",
+    sourceReferences: [],
+    sourceUrl: "https://example.test/cineplexx/unexpected-movie",
+    startsAt: "2099-12-31T18:00:00.000Z",
+    status: "scheduled",
+    tags: [],
+    timezone: "Europe/Podgorica",
+    title: "Unexpected Movie",
+  };
+  // Only `id`/`state` are read by the code under test; the full EventProviderStatusReadModel
+  // shape isn't needed for this fixture.
+  const cineplexxProvider = { id: "cineplexx-podgorica", state: "fresh" } as CityEventsReadModel["providers"][number];
+
+  const card = createPlatformCityCardData(context, {
+    capabilities: {
+      cityAlerts: false,
+      events: true,
+      flights: false,
+      goingOut: true,
+      railway: false,
+      weather: true,
+    },
+    events: {
+      ...getEmptyCityEventsReadModel(),
+      events: [tivatEvent, unexpectedMovieEvent],
+      providers: [cineplexxProvider],
+    },
+    flights: null,
+    goingOut: { events: [], state: "fresh" },
+    railway: null,
+    weather: null,
+  });
+
+  assert.equal(card.highlights.some((highlight) => highlight.key === "movies"), false);
+  assert.equal(card.highlights.find(({ key }) => key === "events")?.value, "1 događaj");
 });
 
 test("uses Montenegrin count forms for platform summaries", () => {

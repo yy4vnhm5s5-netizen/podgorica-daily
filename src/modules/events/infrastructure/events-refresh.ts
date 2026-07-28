@@ -1,6 +1,7 @@
 import { getDefaultCityContext } from "../../../config/city-context.ts";
 import { getEventQualityPolicy } from "../../../config/event-quality.ts";
 import { env } from "../../../config/env.ts";
+import { createCityContext } from "@/shared/config/cities";
 import { createCnpHttpClient } from "./cnp-http-client.ts";
 import { createCineplexxBrowserRenderer } from "./cineplexx-browser-renderer.ts";
 import { refreshCineplexxProgramme } from "./cineplexx-refresh.ts";
@@ -14,6 +15,9 @@ import {
 } from "./events-refresh-runner.ts";
 import { createGlavniGradHttpClient } from "./glavni-grad-http-client.ts";
 import { refreshGlavniGradEvents } from "./glavni-grad-refresh.ts";
+import { createTivatTourismHttpClient } from "./tivat-tourism-http-client.ts";
+import { defaultTivatTourismEventCachePath } from "./tivat-tourism-event-provider.ts";
+import { refreshTivatTourismEvents } from "./tivat-tourism-refresh.ts";
 import { createTourismHttpClient } from "./tourism-http-client.ts";
 import { refreshTourismEvents } from "./tourism-refresh.ts";
 
@@ -22,11 +26,15 @@ async function refreshAllEvents(): Promise<EventRefreshSummary> {
   return refreshEventProviders([
     createCineplexxRefreshProvider(context),
     ...createStandardEventRefreshProviders(context),
+    createTivatTourismRefreshProvider(),
   ]);
 }
 
 async function refreshStandardEvents(): Promise<EventRefreshSummary> {
-  return refreshEventProviders(createStandardEventRefreshProviders(getDefaultCityContext()));
+  return refreshEventProviders([
+    ...createStandardEventRefreshProviders(getDefaultCityContext()),
+    createTivatTourismRefreshProvider(),
+  ]);
 }
 
 async function refreshCineplexxEvents(): Promise<EventRefreshSummary> {
@@ -78,6 +86,27 @@ function createStandardEventRefreshProviders(
       },
     },
   ];
+}
+
+// Tivat's Tourism provider is not part of createStandardEventRefreshProviders because that
+// function's providers all deliberately share one Podgorica context — Tivat needs its own city
+// context and its own (env-var-free, EVENT_CACHE_DIR-derived) cache path instead.
+function createTivatTourismRefreshProvider(): EventRefreshProvider {
+  return {
+    id: "tourism-tivat",
+    refresh: async () => {
+      const result = await refreshTivatTourismEvents({
+        cachePath: defaultTivatTourismEventCachePath,
+        context: createCityContext("tivat"),
+        httpClient: createTivatTourismHttpClient(),
+      });
+      return {
+        acceptedCount: result.snapshot?.events.length ?? 0,
+        retainedPreviousSnapshot: result.retainedPreviousSnapshot,
+        success: result.success,
+      };
+    },
+  };
 }
 
 function createCineplexxRefreshProvider(
@@ -141,6 +170,7 @@ function logEventRefreshSummary(summary: EventRefreshSummary) {
 export {
   createCineplexxRefreshProvider,
   createStandardEventRefreshProviders,
+  createTivatTourismRefreshProvider,
   refreshAllEvents,
   refreshCineplexxEvents,
   refreshStandardEvents,
