@@ -41,8 +41,30 @@ test("exposes Podgorica as the main city and Budva as a second active city", () 
   assert.equal(mainCity.isMain, true);
   assert.deepEqual(
     getActiveCities().map(({ slug }) => slug),
-    ["budva", "podgorica"],
+    ["budva", "podgorica", "tivat"],
   );
+});
+
+test("registers Tivat as a third active city with its launch-phase capability set", () => {
+  const tivat = getCityBySlug("tivat");
+
+  assert.equal(tivat?.id, "tivat");
+  assert.equal(tivat?.isActive, true);
+  assert.equal(tivat?.isMain, false);
+  assert.deepEqual(tivat?.capabilities, ["electricity", "goingOut", "weather"]);
+  // Explicitly excluded this phase: water and seaWaterQuality by product decision (no approved
+  // provider coverage), events (no Tivat events provider yet), flights (Airports of Montenegro's
+  // airport= code for Tivat is not yet verified — see podgorica-flights.ts).
+  for (const capability of ["water", "seaWaterQuality", "events", "flights"] as const) {
+    assert.equal(supportsCityCapability(tivat!, capability), false);
+  }
+  assert.equal(getCityName(tivat!, "locative"), "Tivtu");
+  assert.equal(getCityName(tivat!, "accusative"), "Tivat");
+  assert.equal(tivat?.timezone, "Europe/Podgorica");
+  assert.equal(tivat?.latitude, 42.4353);
+  assert.equal(tivat?.longitude, 18.6961);
+  // Adding a third active city must not disturb the single main city.
+  assert.equal(getMainCity().id, "podgorica");
 });
 
 test("resolves active city route slugs and retains inactive city configuration", () => {

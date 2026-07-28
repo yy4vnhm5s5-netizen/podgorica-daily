@@ -9,6 +9,14 @@ const cedisMunicipalities = {
     cityId: "podgorica",
     headingVariants: ["Podgorica", "Glavni grad Podgorica"],
   },
+  tivat: {
+    cityId: "tivat",
+    // "Tivat" is a recognized municipality-heading boundary in cedis-planned-outages.ts's
+    // municipalityNames list already; "Opština Tivat" follows the same formal-variant pattern
+    // used for Budva (an ordinary municipality, like Tivat — unlike Podgorica's "Glavni grad"
+    // capital-city designation) and has been added alongside it there too.
+    headingVariants: ["Tivat", "Opština Tivat"],
+  },
 } as const;
 
 type CedisSupportedCityId = keyof typeof cedisMunicipalities;

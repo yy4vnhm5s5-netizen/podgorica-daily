@@ -1,3 +1,5 @@
+import { dirname, join } from "node:path";
+
 import { z } from "zod";
 
 import { env } from "../../../config/env.ts";
@@ -14,12 +16,43 @@ import {
   type FlightDirection,
 } from "../domain/flight.ts";
 
-const podgoricaFlightsUrl =
-  "https://montenegroairports.com/aerodromixs/cache-flights.php?airport=pg";
+const montenegroAirportsBaseUrl = "https://montenegroairports.com/aerodromixs/cache-flights.php";
+
+// Airports of Montenegro serves every airport's flight feed from this one endpoint, selected by
+// the `airport` query parameter (Podgorica is "pg"). Tivat Airport is part of the same official
+// system (montenegroairports.com/aerodrom-tivat/), but its selector code does not appear anywhere
+// in this repository and has not been verified against the live endpoint — it must not be
+// guessed. Add a `tivat: "<verified-code>"` entry here once confirmed, and only then add
+// "flights" to Tivat's capabilities in src/shared/config/cities.ts.
+const montenegroAirportsCodes = {
+  podgorica: "pg",
+} as const;
+
+type FlightsSupportedCityId = keyof typeof montenegroAirportsCodes;
+
+const podgoricaFlightsUrl = buildMontenegroAirportsUrl("podgorica");
 const defaultPodgoricaFlightsCachePath = env.PODGORICA_FLIGHTS_CACHE_PATH;
 const maximumResponseLength = 2_000_000;
 const maximumDiagnosticBodyPreviewLength = 200;
 const retryDelayMs = 250;
+
+function buildMontenegroAirportsUrl(cityId: FlightsSupportedCityId) {
+  return `${montenegroAirportsBaseUrl}?airport=${montenegroAirportsCodes[cityId]}`;
+}
+
+function isFlightsSupportedCityId(cityId: string): cityId is FlightsSupportedCityId {
+  return Object.hasOwn(montenegroAirportsCodes, cityId);
+}
+
+// Mirrors the CEDIS (getCedisCachePath) and MonteGigs (getGoingOutCachePath) derived-sibling-path
+// convention: Podgorica keeps the existing configured cache path for backward compatibility;
+// every other supported airport gets a sibling file derived from the same directory, so no new
+// per-city environment variable is needed.
+function getFlightsCachePath(cityId: FlightsSupportedCityId) {
+  return cityId === "podgorica"
+    ? defaultPodgoricaFlightsCachePath
+    : join(dirname(defaultPodgoricaFlightsCachePath), `podgorica-flights-${cityId}.json`);
+}
 
 const rawFlightSchema = z
   .object({
@@ -406,22 +439,26 @@ function parsePodgoricaFlights(payload: string): PodgoricaFlightsParseResult {
 }
 
 async function refreshPodgoricaFlights({
-  cachePath = defaultPodgoricaFlightsCachePath,
+  cachePath,
   cacheWriter = writeJsonCache,
+  cityId = "podgorica",
   diagnostic = emitPodgoricaFlightsDiagnostic,
   httpClient,
   now = () => new Date(),
 }: {
   cachePath?: string;
   cacheWriter?: (snapshot: PodgoricaFlightsCacheSnapshot, destination: string) => Promise<void>;
+  cityId?: FlightsSupportedCityId;
   diagnostic?: PodgoricaFlightsDiagnosticEmitter;
   httpClient: PodgoricaFlightsHttpClient;
   now?: () => Date;
 }): Promise<PodgoricaFlightsRefreshResult> {
-  const previous = await readJsonCache<PodgoricaFlightsCacheSnapshot>(cachePath);
+  const resolvedCachePath = cachePath ?? getFlightsCachePath(cityId);
+  const requestUrl = createPodgoricaFlightsUrl(cityId);
+  const previous = await readJsonCache<PodgoricaFlightsCacheSnapshot>(resolvedCachePath);
 
   try {
-    const response = await httpClient.get(createPodgoricaFlightsUrl());
+    const response = await httpClient.get(requestUrl);
     const parsed = parsePodgoricaFlights(response.body);
     if (!parsed.recognized) {
       emitPodgoricaFlightsFailureDiagnostic({
@@ -446,10 +483,10 @@ async function refreshPodgoricaFlights({
       lastSuccessfulRefreshAt: timestamp,
       parserWarnings: parsed.warnings,
       schemaVersion: 1,
-      sourceUrl: podgoricaFlightsUrl,
+      sourceUrl: requestUrl,
     };
     try {
-      await cacheWriter(snapshot, cachePath);
+      await cacheWriter(snapshot, resolvedCachePath);
     } catch {
       return retainPrevious(previous, "podgorica-flights-cache-write-failed", []);
     }
@@ -510,18 +547,22 @@ async function getCachedPodgoricaFlights(
   };
 }
 
-function createPodgoricaFlightsUrl() {
-  return podgoricaFlightsUrl;
+function createPodgoricaFlightsUrl(cityId: FlightsSupportedCityId = "podgorica") {
+  return buildMontenegroAirportsUrl(cityId);
 }
 
 function assertPodgoricaFlightsUrl(value: string) {
   try {
     const url = new URL(value);
+    const airportCode = url.searchParams.get("airport");
     if (
       url.protocol !== "https:" ||
       !["montenegroairports.com", "www.montenegroairports.com"].includes(url.hostname) ||
       url.pathname !== "/aerodromixs/cache-flights.php" ||
-      url.searchParams.get("airport") !== "pg"
+      !airportCode ||
+      !Object.values(montenegroAirportsCodes).includes(
+        airportCode as (typeof montenegroAirportsCodes)[FlightsSupportedCityId],
+      )
     ) {
       throw new Error("unapproved host or path");
     }
@@ -834,11 +875,15 @@ export {
   defaultPodgoricaFlightsCachePath,
   emitPodgoricaFlightsDiagnostic,
   getCachedPodgoricaFlights,
+  getFlightsCachePath,
+  isFlightsSupportedCityId,
+  montenegroAirportsCodes,
   parsePodgoricaFlights,
   podgoricaFlightsUrl,
   refreshPodgoricaFlights,
   PodgoricaFlightsFetchError,
   type FlightCacheState,
+  type FlightsSupportedCityId,
   type PodgoricaFlightsCacheSnapshot,
   type PodgoricaFlightsCacheResult,
   type PodgoricaFlightsDiagnosticEmitter,

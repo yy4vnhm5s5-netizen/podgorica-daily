@@ -1,8 +1,7 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import test from "node:test";
-import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 
 import {
@@ -24,6 +23,7 @@ const podgoricaFixturePath = join(
 const budvaFixturePath = join(import.meta.dirname, "__fixtures__", "montegigs-budva-listing.html");
 const podgorica = createCityContext("podgorica");
 const budva = createCityContext("budva");
+const tivat = createCityContext("tivat");
 
 test("parses only Podgorica events from the official-style listing fixture", async () => {
   const html = await readFile(podgoricaFixturePath, "utf8");
@@ -103,6 +103,52 @@ test("retains a valid cache when the listing no longer exposes event links", asy
   assert.equal(retained.snapshot?.events.length, 2);
 });
 
+test("accepts and round-trips a Tivat cache snapshot through the widened city schema", async () => {
+  // Regression test for widening goingOutEventSchema/goingOutCacheSnapshotSchema's city enum:
+  // before that change, a cached Tivat snapshot (or a Tivat event within any snapshot) would
+  // fail Zod validation and silently read back as unavailable, even with a correctly configured
+  // MonteGigs source and a successful live fetch.
+  const cachePath = join(
+    await mkdtemp(join(tmpdir(), "gradom-going-out-tivat-cache-")),
+    "going-out.json",
+  );
+  await writeFile(
+    cachePath,
+    JSON.stringify({
+      cityId: "tivat",
+      events: [
+        {
+          city: "tivat",
+          id: "tivat-1-20991231-party",
+          sourceName: "MonteGigs",
+          sourceUrl: "https://staging.montegigs.me/me/events/tivat/1-20991231-party",
+          startDate: "2099-12-31",
+          title: "Tivat party",
+        },
+      ],
+      fetchedAt: "2026-07-22T10:00:00.000Z",
+      lastSuccessfulRefreshAt: "2026-07-22T10:00:00.000Z",
+      parserWarnings: [],
+      schemaVersion: 1,
+      sourceUrl: "https://staging.montegigs.me/me/events/tivat",
+    }),
+    "utf8",
+  );
+
+  const snapshot = await readGoingOutCacheSnapshot(cachePath, "tivat");
+  assert.notEqual(snapshot, null);
+  assert.equal(snapshot?.cityId, "tivat");
+  assert.equal(snapshot?.events[0]?.city, "tivat");
+
+  const cached = await getCachedMonteGigsGoingOut({
+    cachePath,
+    context: tivat,
+    now: new Date("2026-07-22T10:30:00.000Z"),
+  });
+  assert.equal(cached.state, "fresh");
+  assert.equal(cached.events.length, 1);
+});
+
 test("reads the atomically written cache without a live request", async () => {
   const cachePath = join(
     await mkdtemp(join(tmpdir(), "gradom-going-out-cache-")),
@@ -139,8 +185,14 @@ test("uses explicit city sources and independent city cache paths", () => {
     getMonteGigsCitySource("budva")?.listingUrl,
     "https://staging.montegigs.me/me/events/budva",
   );
+  assert.equal(
+    getMonteGigsCitySource("tivat")?.listingUrl,
+    "https://staging.montegigs.me/me/events/tivat",
+  );
   assert.equal(getMonteGigsCitySource("bar"), undefined);
   assert.notEqual(getGoingOutCachePath("podgorica"), getGoingOutCachePath("budva"));
+  assert.notEqual(getGoingOutCachePath("podgorica"), getGoingOutCachePath("tivat"));
+  assert.notEqual(getGoingOutCachePath("budva"), getGoingOutCachePath("tivat"));
 });
 
 test("keeps Budva and Podgorica snapshots isolated through independent retention and freshness", async () => {
@@ -225,7 +277,7 @@ test("retries a transient MonteGigs response through the injected client", async
   assert.equal(value.status, 200);
 });
 
-function response(body: string, city: "budva" | "podgorica" = "podgorica") {
+function response(body: string, city: "budva" | "podgorica" | "tivat" = "podgorica") {
   return {
     body,
     contentType: "text/html",

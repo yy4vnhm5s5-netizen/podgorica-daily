@@ -7,11 +7,16 @@ import test from "node:test";
 import {
   assertPodgoricaFlightsUrl,
   createPodgoricaFlightsHttpClient,
+  createPodgoricaFlightsUrl,
+  defaultPodgoricaFlightsCachePath,
   emitPodgoricaFlightsDiagnostic,
   getCachedPodgoricaFlights,
+  getFlightsCachePath,
+  isFlightsSupportedCityId,
   parsePodgoricaFlights,
   PodgoricaFlightsFetchError,
   refreshPodgoricaFlights,
+  type FlightsSupportedCityId,
   type PodgoricaFlightsHttpClient,
 } from "./podgorica-flights.ts";
 
@@ -708,6 +713,48 @@ test("emits one parseable metadata-only request failure diagnostic", () => {
     provider: "podgorica-airport",
     upstreamHostname: "montenegroairports.com",
   });
+});
+
+test("supports only Podgorica until a verified Airports of Montenegro airport code is added for another city", () => {
+  assert.equal(isFlightsSupportedCityId("podgorica"), true);
+  assert.equal(isFlightsSupportedCityId("tivat"), false);
+  assert.equal(isFlightsSupportedCityId("budva"), false);
+});
+
+test("builds the Podgorica request URL from the airport-code map, not a separate literal", () => {
+  assert.equal(
+    createPodgoricaFlightsUrl("podgorica"),
+    "https://montenegroairports.com/aerodromixs/cache-flights.php?airport=pg",
+  );
+});
+
+test("rejects a request URL whose airport code is not in the known-airport allowlist", () => {
+  assert.throws(
+    () =>
+      assertPodgoricaFlightsUrl(
+        "https://montenegroairports.com/aerodromixs/cache-flights.php?airport=tv",
+      ),
+    PodgoricaFlightsFetchError,
+  );
+  assert.throws(
+    () => assertPodgoricaFlightsUrl("https://montenegroairports.com/aerodromixs/cache-flights.php"),
+    PodgoricaFlightsFetchError,
+  );
+});
+
+test("keeps Podgorica's cache path backward compatible with the configured env path", () => {
+  assert.equal(getFlightsCachePath("podgorica"), defaultPodgoricaFlightsCachePath);
+});
+
+test("derives a sibling cache path for any non-Podgorica supported city, mirroring the CEDIS convention", () => {
+  // "tivat" is not a real member of FlightsSupportedCityId yet (its airport code is unverified —
+  // see the comment above montenegroAirportsCodes in podgorica-flights.ts), but the derivation
+  // function's logic is generic and worth verifying directly ahead of that city being added.
+  const derivedPath = getFlightsCachePath("tivat" as FlightsSupportedCityId);
+  const podgoricaPath = getFlightsCachePath("podgorica");
+
+  assert.notEqual(derivedPath, podgoricaPath);
+  assert.match(derivedPath, /podgorica-flights-tivat\.json$/u);
 });
 
 function responseClient(body: string): PodgoricaFlightsHttpClient {

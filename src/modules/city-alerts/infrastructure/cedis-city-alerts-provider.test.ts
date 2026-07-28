@@ -202,3 +202,37 @@ test("reads only the matching Budva snapshot when Budva receives electricity sup
     [["budva"]],
   );
 });
+
+test("reads only the matching Tivat snapshot when Tivat receives electricity support", async () => {
+  const tivatAlert = {
+    ...liveAlert,
+    affectedArea: { kind: "source" as const, value: "Donja Lastva" },
+    cityIds: ["tivat"],
+    id: "cedis-tivat-1",
+  };
+  const requestedCityIds: string[] = [];
+  const result = await getCedisCityAlerts({
+    context: {
+      ...context,
+      city: {
+        ...context.city,
+        capabilities: ["electricity"],
+        id: "tivat",
+        isMain: false,
+        name: "Tivat",
+        slug: "tivat",
+      },
+    },
+    mode: "live",
+    readCache: async (cityId) => {
+      requestedCityIds.push(cityId);
+      return { ...cache("fresh"), alerts: [tivatAlert], cityId };
+    },
+  });
+
+  assert.deepEqual(requestedCityIds, ["tivat"]);
+  assert.deepEqual(
+    result.alerts.map((alert) => alert.cityIds),
+    [["tivat"]],
+  );
+});

@@ -32,3 +32,13 @@ test("lists all active public cities in the FAQ sentence", () => {
 
   assert.equal(formatCityNames(cards), "Podgoricu i Budvu");
 });
+
+test("joins three active cities with a comma before the final 'i', not just a pair", () => {
+  const cards = [
+    createPlatformCityCardData(createCityContext("podgorica"), null),
+    createPlatformCityCardData(createCityContext("budva"), null),
+    createPlatformCityCardData(createCityContext("tivat"), null),
+  ];
+
+  assert.equal(formatCityNames(cards), "Podgoricu, Budvu i Tivat");
+});

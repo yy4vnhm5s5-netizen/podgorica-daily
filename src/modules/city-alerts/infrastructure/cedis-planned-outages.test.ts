@@ -226,6 +226,28 @@ test("does not treat a city name in normal prose as a municipality heading", () 
   assert.equal(extraction.state, "not-found");
 });
 
+test("extracts a Tivat municipality section bounded by its neighboring headings", () => {
+  const extraction = getMunicipalitySections(
+    "Budva\nOd 08 do 12 sati: Centar.\nTivat\nOd 09 do 13 sati: Donja Lastva.\nKotor\nOd 10 do 14 sati: Centar.",
+    "tivat",
+  );
+
+  assert.equal(extraction.state, "found");
+  assert.equal(extraction.sections.length, 1);
+  assert.match(extraction.sections[0]!.section, /Donja Lastva/u);
+  assert.doesNotMatch(extraction.sections[0]!.section, /Centar/u);
+});
+
+test("also recognizes the formal 'Opština Tivat' heading variant", () => {
+  const extraction = getMunicipalitySections(
+    "Opština Tivat\nOd 09 do 13 sati: Donja Lastva.\nKotor\nOd 10 do 14 sati: Centar.",
+    "tivat",
+  );
+
+  assert.equal(extraction.state, "found");
+  assert.match(extraction.sections[0]!.section, /Donja Lastva/u);
+});
+
 test("returns a safe not-found result for an unavailable municipality section", async () => {
   const result = parseCedisArticleResult(
     {

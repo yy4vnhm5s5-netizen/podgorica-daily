@@ -18,6 +18,7 @@ const municipalityNames = [
   "Opština Budva",
   "Kotor",
   "Tivat",
+  "Opština Tivat",
   "Ulcinj",
   "Pljevlja",
   "Bijelo Polje",

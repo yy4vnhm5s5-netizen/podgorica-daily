@@ -12,7 +12,7 @@ import {
 import Link from "next/link";
 import type { ComponentType, SVGProps } from "react";
 
-import { CitadelIcon, MillenniumBridgeIcon } from "@/app/platform-city-icons";
+import { BucaPalaceIcon, CitadelIcon, MillenniumBridgeIcon } from "@/app/platform-city-icons";
 import type {
   CityHighlight,
   CityHighlightVisual,
@@ -54,12 +54,14 @@ const shortcutStyle = "bg-muted text-foreground hover:bg-muted/70";
 const cityIdentityIcons: Record<string, ComponentType<SVGProps<SVGSVGElement>>> = {
   budva: CitadelIcon,
   podgorica: MillenniumBridgeIcon,
+  tivat: BucaPalaceIcon,
 };
 
 // Restrained per-city identity accents (see globals.css) — a subtle surface tint, not a theme.
 const cityIdentityStyles: Record<string, string> = {
   budva: "bg-[hsl(var(--accent-budva-soft))] text-[hsl(var(--accent-budva))]",
   podgorica: "bg-[hsl(var(--accent-podgorica-soft))] text-[hsl(var(--accent-podgorica))]",
+  tivat: "bg-[hsl(var(--accent-tivat-soft))] text-[hsl(var(--accent-tivat))]",
 };
 
 const defaultCityIdentityStyle = "bg-slate-100 text-slate-700";
@@ -68,6 +70,7 @@ const defaultCityIdentityStyle = "bg-slate-100 text-slate-700";
 const cityCardSurfaceTints: Record<string, string> = {
   budva: "from-[hsl(var(--accent-budva-soft))]",
   podgorica: "from-[hsl(var(--accent-podgorica-soft))]",
+  tivat: "from-[hsl(var(--accent-tivat-soft))]",
 };
 const defaultCityCardSurfaceTint = "from-muted/60";
 

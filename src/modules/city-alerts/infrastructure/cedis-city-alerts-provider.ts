@@ -6,7 +6,7 @@ import {
   type CedisCacheSnapshot,
   type FreshnessStatus,
 } from "./cedis-cache.ts";
-import { getCedisCityId } from "./cedis-cities.ts";
+import { getCedisCityId, type CedisSupportedCityId } from "./cedis-cities.ts";
 import { mockCityAlertsProvider } from "./mock-city-alerts-provider.ts";
 import { isCitySupportedByProvider } from "@/shared/config/cities";
 import type { CityContext } from "@/shared/types/city";
@@ -26,7 +26,7 @@ interface CedisCityAlertsProviderDependencies {
   getMockAlerts?: () => Promise<CityAlert[] | null>;
   mode: CityAlertsProviderMode;
   now?: () => Date;
-  readCache?: (cityId: "budva" | "podgorica") => Promise<CedisCacheSnapshot | null>;
+  readCache?: (cityId: CedisSupportedCityId) => Promise<CedisCacheSnapshot | null>;
 }
 
 async function getCedisCityAlerts({
@@ -88,7 +88,7 @@ const cedisProviderMetadata: ProviderMetadata = {
   id: "cedis",
   officialSource: "https://cedis.me/servisne-informacije/",
   refreshIntervalMinutes: 360,
-  supportedCityIds: ["podgorica", "budva"],
+  supportedCityIds: ["podgorica", "budva", "tivat"],
   supportsMultipleCities: true,
 };
 

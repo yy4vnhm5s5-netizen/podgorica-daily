@@ -23,6 +23,7 @@ interface DashboardLayoutProps extends PropsWithChildren {
 const cityShellTints: Record<string, string> = {
   budva: "from-[hsl(var(--accent-budva-soft))]",
   podgorica: "from-[hsl(var(--accent-podgorica-soft))]",
+  tivat: "from-[hsl(var(--accent-tivat-soft))]",
 };
 const defaultCityShellTint = "from-background";
 

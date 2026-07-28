@@ -20,7 +20,7 @@ test("derives generic city cards from every active registry city", () => {
 
   assert.deepEqual(
     cards.map((card) => card.city.id),
-    ["budva", "podgorica"],
+    ["budva", "podgorica", "tivat"],
   );
   const budva = cards.find((card) => card.city.id === "budva");
   assert.ok(budva);
@@ -42,7 +42,18 @@ test("derives generic city cards from every active registry city", () => {
       ?.highlights.map((highlight) => highlight.key),
     ["weather", "events", "going-out", "movies"],
   );
+  const tivat = cards.find((card) => card.city.id === "tivat");
+  assert.ok(tivat);
+  assert.deepEqual(
+    tivat.shortcuts.map((shortcut) => shortcut.label),
+    ["Izlasci", "Struja"],
+  );
+  assert.deepEqual(
+    tivat.highlights.map((highlight) => highlight.key),
+    ["weather", "going-out"],
+  );
   assert.equal(getCity("budva")?.isActive, true);
+  assert.equal(getCity("tivat")?.isActive, true);
 });
 
 test("creates platform metadata and structured data only from public city cards", () => {
@@ -70,6 +81,12 @@ test("creates platform metadata and structured data only from public city cards"
       name: "Podgorica",
       position: 2,
       url: "https://gradom.me/podgorica",
+    },
+    {
+      "@type": "ListItem",
+      name: "Tivat",
+      position: 3,
+      url: "https://gradom.me/tivat",
     },
   ]);
   assert.equal(JSON.stringify(structuredData).includes("budva"), true);

@@ -27,6 +27,14 @@ const monteGigsCitySources = {
     cityId: "podgorica",
     listingUrl: "https://staging.montegigs.me/me/events/podgorica",
   },
+  // URL derived from the same unbroken convention as the two entries above (the city's own
+  // registry id used verbatim as the /me/events/<cityId> path segment, no abbreviation or
+  // transformation). Not independently fetched/verified against the live site — spot-check the
+  // first real collector run before relying on it.
+  tivat: {
+    cityId: "tivat",
+    listingUrl: "https://staging.montegigs.me/me/events/tivat",
+  },
 } as const;
 
 type MonteGigsSupportedCityId = keyof typeof monteGigsCitySources;
@@ -467,7 +475,7 @@ function extractVenue(value: string) {
 }
 
 const goingOutEventSchema = z.object({
-  city: z.enum(["podgorica", "budva"]),
+  city: z.enum(["podgorica", "budva", "tivat"]),
   id: z.string().min(1),
   imageUrl: z.string().url().optional(),
   sourceName: z.literal("MonteGigs"),
@@ -479,7 +487,7 @@ const goingOutEventSchema = z.object({
 });
 
 const goingOutCacheSnapshotSchema = z.object({
-  cityId: z.enum(["podgorica", "budva"]).default("podgorica"),
+  cityId: z.enum(["podgorica", "budva", "tivat"]).default("podgorica"),
   events: z.array(goingOutEventSchema),
   fetchedAt: z.string().datetime(),
   lastRefreshError: z.string().optional(),

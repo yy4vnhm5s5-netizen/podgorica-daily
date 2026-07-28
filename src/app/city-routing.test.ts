@@ -106,7 +106,7 @@ test("a city without capabilities does not enable Podgorica dashboard data sourc
 });
 
 test("sitemap paths contain only active canonical city paths", () => {
-  assert.deepEqual(getCanonicalCitySitemapPaths(), ["/budva", "/podgorica"]);
+  assert.deepEqual(getCanonicalCitySitemapPaths(), ["/budva", "/podgorica", "/tivat"]);
 });
 
 test("sitemap emits only capability-supported routes for active cities", () => {

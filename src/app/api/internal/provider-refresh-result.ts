@@ -23,6 +23,25 @@ interface MultiCityAlertRefreshEndpointResult {
   state: RefreshEndpointState;
 }
 
+interface MultiCityFlightsRefreshEndpointResult {
+  cities: readonly ProviderRefreshEndpointResult[];
+  provider: "podgorica-flights";
+  state: RefreshEndpointState;
+}
+
+function aggregateMultiCityRefreshState(cities: readonly ProviderRefreshEndpointResult[]) {
+  const states = cities.map(({ state }) => state);
+  return states.every((state) => state === "success")
+    ? "success"
+    : states.every((state) => state === "already-running")
+      ? "already-running"
+      : states.every((state) => state === "unavailable")
+        ? "unavailable"
+        : states.some((state) => state === "unavailable")
+          ? "partial"
+          : "retained";
+}
+
 interface EventRefreshEndpointResult {
   providers: readonly {
     acceptedCount: number;
@@ -79,7 +98,20 @@ function toFlightsRefreshEndpointResult(
     "podgorica-flights",
     result,
     (refresh) => refresh.acceptedFlights,
+    result.cityId,
   );
+}
+
+function toMultiCityFlightsRefreshEndpointResult(
+  results: readonly PodgoricaFlightsCollectorResult[],
+): MultiCityFlightsRefreshEndpointResult {
+  const cities = results.map((result) => toFlightsRefreshEndpointResult(result));
+
+  return {
+    cities,
+    provider: "podgorica-flights",
+    state: aggregateMultiCityRefreshState(cities),
+  };
 }
 
 function toGoingOutRefreshEndpointResult(
@@ -198,9 +230,11 @@ export {
   toFlightsRefreshEndpointResult,
   toGoingOutRefreshEndpointResult,
   toMultiCityAlertRefreshEndpointResult,
+  toMultiCityFlightsRefreshEndpointResult,
   toSeaWaterQualityRefreshEndpointResult,
   toZpcgRefreshEndpointResult,
   type EventRefreshEndpointResult,
   type MultiCityAlertRefreshEndpointResult,
+  type MultiCityFlightsRefreshEndpointResult,
   type ProviderRefreshEndpointResult,
 };

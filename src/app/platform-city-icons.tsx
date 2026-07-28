@@ -39,4 +39,25 @@ function CitadelIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
-export { CitadelIcon, MillenniumBridgeIcon };
+// Buća Palace (Tivat's landmark 18th-century palace) — a pedimented facade with a centered
+// entrance, the same minimal-silhouette treatment as the bridge/citadel marks above.
+function BucaPalaceIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      aria-hidden="true"
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={1.8}
+      viewBox="0 0 24 24"
+      {...props}
+    >
+      <path d="M4 20V10L12 4l8 6v10" />
+      <path d="M10 20v-6h4v6" />
+      <line x1="2" x2="22" y1="20" y2="20" />
+    </svg>
+  );
+}
+
+export { BucaPalaceIcon, CitadelIcon, MillenniumBridgeIcon };

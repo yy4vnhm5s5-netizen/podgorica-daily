@@ -4,6 +4,7 @@ import {
   getCedisCachePath,
   readCedisCacheResult,
 } from "@/modules/city-alerts/infrastructure/cedis-cache";
+import type { CedisSupportedCityId } from "@/modules/city-alerts/infrastructure/cedis-cities";
 import {
   getActiveCedisContexts,
   runActiveCedisCollectors,
@@ -13,7 +14,12 @@ import { readVikpgCacheResult } from "@/modules/city-alerts/infrastructure/vikpg
 import { readEventCacheSnapshot } from "@/modules/events/infrastructure/events-cache";
 import { initializeEventCaches } from "@/modules/events/infrastructure/events-initialization";
 import { refreshAllEvents } from "@/modules/events/infrastructure/events-refresh";
+import { getActiveFlightsContexts } from "@/modules/flights/infrastructure/collect-podgorica-flights";
 import { initializePodgoricaFlights } from "@/modules/flights/infrastructure/podgorica-flights-initialization";
+import {
+  getFlightsCachePath,
+  type FlightsSupportedCityId,
+} from "@/modules/flights/infrastructure/podgorica-flights";
 import { getActiveMonteGigsGoingOutContexts } from "@/modules/going-out/infrastructure/collect-montegigs-going-out";
 import {
   getGoingOutCachePath,
@@ -31,14 +37,14 @@ export function register() {
   void initializeCityAlertCaches({
     providers: [
       ...cedisContexts.map((context) => ({
-        cachePath: getCedisCachePath(context.city.id as "budva" | "podgorica"),
+        cachePath: getCedisCachePath(context.city.id as CedisSupportedCityId),
         enabled: env.ENABLE_CEDIS && env.CEDIS_PROVIDER_MODE === "live",
         id: "CEDIS" as const,
         readCache: () =>
           readCedisCacheResult(
-            getCedisCachePath(context.city.id as "budva" | "podgorica"),
+            getCedisCachePath(context.city.id as CedisSupportedCityId),
             undefined,
-            context.city.id as "budva" | "podgorica",
+            context.city.id as CedisSupportedCityId,
           ),
         refresh: async () => {
           activeCedisRefresh ??= runActiveCedisCollectors();
@@ -64,9 +70,12 @@ export function register() {
   });
 
   if (env.ENABLE_FLIGHTS) {
-    void initializePodgoricaFlights({
-      cachePath: env.PODGORICA_FLIGHTS_CACHE_PATH,
-    });
+    for (const context of getActiveFlightsContexts()) {
+      void initializePodgoricaFlights({
+        cachePath: getFlightsCachePath(context.city.id as FlightsSupportedCityId),
+        cityId: context.city.id as FlightsSupportedCityId,
+      });
+    }
   }
 
   if (env.ENABLE_SEA_WATER_QUALITY) {
