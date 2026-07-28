@@ -7,9 +7,9 @@ import {
   formatCount,
   getPlatformHomepageMetadata,
 } from "./platform-homepage-data.ts";
+import type { CityEventsReadModel } from "@/modules/events/application/get-city-events";
 import { getEmptyCityEventsReadModel } from "@/modules/events/application/get-city-events";
 import type { CityEvent } from "@/modules/events/domain/event";
-import type { Flight } from "@/modules/flights/domain/flight";
 import type { GoingOutEvent } from "@/modules/going-out/domain/going-out-event";
 import { createCityContext, getActiveCities, getCity } from "@/shared/config/cities";
 
@@ -40,7 +40,7 @@ test("derives generic city cards from every active registry city", () => {
     cards
       .find((card) => card.city.id === "podgorica")
       ?.highlights.map((highlight) => highlight.key),
-    ["weather", "events", "going-out", "flights"],
+    ["weather", "events", "going-out", "movies"],
   );
   assert.equal(getCity("budva")?.isActive, true);
 });
@@ -141,7 +141,7 @@ test("uses the same available Going Out result as the city page and does not tur
   );
 });
 
-test("derives Podgorica event and flight totals from the same displayable read models as their pages", () => {
+test("derives Podgorica event and movie totals from the same displayable read models as their pages", () => {
   const context = createCityContext("podgorica");
   const event: CityEvent = {
     category: "concert",
@@ -159,13 +159,25 @@ test("derives Podgorica event and flight totals from the same displayable read m
     timezone: "Europe/Podgorica",
     title: "Budući događaj",
   };
-  const flights: Flight[] = Array.from({ length: 12 }, (_, index) => ({
-    direction: index % 2 === 0 ? "arrival" : "departure",
-    location: `Grad ${index + 1}`,
-    scheduledAt: `2099-12-31T${String(10 + index).padStart(2, "0")}:00:00.000Z`,
-    scheduledDate: "2099-12-31",
-    scheduledTime: `${String(10 + index).padStart(2, "0")}:00`,
+  const movieEvents: CityEvent[] = ["Movie One", "Movie Two"].map((title, index) => ({
+    category: "movie",
+    cityId: "podgorica",
+    cityIds: ["podgorica"],
+    id: `cineplexx-movie-${index + 1}`,
+    language: "me",
+    sourceId: "cineplexx-podgorica",
+    sourceName: "Cineplexx",
+    sourceReferences: [],
+    sourceUrl: `https://example.test/cineplexx/movie-${index + 1}`,
+    startsAt: "2099-12-31T18:00:00.000Z",
+    status: "scheduled",
+    tags: [],
+    timezone: "Europe/Podgorica",
+    title,
   }));
+  // Only `id`/`state` are read by the code under test; the full EventProviderStatusReadModel
+  // shape isn't needed for this fixture.
+  const cineplexxProvider = { id: "cineplexx-podgorica", state: "fresh" } as CityEventsReadModel["providers"][number];
 
   const card = createPlatformCityCardData(context, {
     capabilities: {
@@ -176,15 +188,19 @@ test("derives Podgorica event and flight totals from the same displayable read m
       railway: true,
       weather: true,
     },
-    events: { ...getEmptyCityEventsReadModel(), events: [event] },
-    flights: { flights, state: "fresh" },
+    events: {
+      ...getEmptyCityEventsReadModel(),
+      events: [event, ...movieEvents],
+      providers: [cineplexxProvider],
+    },
+    flights: null,
     goingOut: { events: [], state: "fresh" },
     railway: null,
     weather: null,
   });
 
   assert.equal(card.highlights.find(({ key }) => key === "events")?.value, "1 događaj");
-  assert.equal(card.highlights.find(({ key }) => key === "flights")?.value, "10 letova");
+  assert.equal(card.highlights.find(({ key }) => key === "movies")?.value, "2 filma");
 });
 
 test("uses Montenegrin count forms for platform summaries", () => {

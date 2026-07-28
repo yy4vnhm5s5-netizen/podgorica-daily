@@ -1,15 +1,16 @@
+import { getDistinctCineplexxProgrammeMovieCount } from "@/modules/events/presentation/cineplexx-programme-ui-model";
 import {
   filterEventsForUi,
   getCityEventsForPublicListing,
   isHomepageEventsUnavailable,
 } from "@/modules/events/presentation/events-ui-model";
-import { getUpcomingPodgoricaFlightGroups } from "@/modules/flights/presentation/podgorica-flights-ui-model";
 import { getGoingOutPageEvents } from "@/modules/going-out/presentation/going-out-ui-model";
 import { getWeatherTemperature } from "@/modules/weather/presentation/weather-temperature";
 import { createPublicRouteMetadata } from "@/app/public-route-metadata";
 import { loadCityDashboardData } from "@/app/city-dashboard-data";
 import { isCityPublicFeatureRouteAvailable } from "@/app/city-routing";
 import { createCityContext, getActiveCities, getCityName } from "@/shared/config/cities";
+import { formatBcsCount } from "@/shared/lib/pluralize";
 import {
   getCityPath,
   getElectricityPath,
@@ -20,7 +21,7 @@ import {
 import { getPageTitle, siteConfig } from "@/shared/config/site";
 import type { City, CityContext } from "@/shared/types/city";
 
-type CityHighlightVisual = "calendar" | "cloud" | "music" | "plane";
+type CityHighlightVisual = "calendar" | "cloud" | "film" | "music";
 
 interface CityHighlight {
   accessibilityLabel: string;
@@ -138,22 +139,24 @@ function createPlatformCityCardData(
     );
   }
 
-  if (isCityPublicFeatureRouteAvailable(city, "flights")) {
-    const groups = dashboardData?.flights
-      ? getUpcomingPodgoricaFlightGroups(dashboardData.flights.flights, new Date(), 5)
-      : { arrival: [], departure: [] };
-    const count = groups.arrival.length + groups.departure.length;
+  if (isCityPublicFeatureRouteAvailable(city, "events")) {
+    const cinemaEvents = dashboardData
+      ? dashboardData.events.events.filter((event) => event.sourceId === "cineplexx-podgorica")
+      : [];
+    const count = getDistinctCineplexxProgrammeMovieCount(cinemaEvents);
+    const cinemaProviderState = dashboardData?.events.providers.find(
+      (provider) => provider.id === "cineplexx-podgorica",
+    )?.state;
     highlights.push(
       createCountHighlight({
-        available:
-          dashboardData !== null && isSnapshotSummaryAvailable(dashboardData.flights?.state, count),
+        available: dashboardData !== null && isSnapshotSummaryAvailable(cinemaProviderState, count),
         city,
-        href: getFlightsPath(city),
-        key: "flights",
-        label: "Letovi",
+        href: getEventsPath(city),
+        key: "movies",
+        label: "Filmovi",
         priority: 4,
-        value: formatCount(count, "let", "leta", "letova"),
-        visual: "plane",
+        value: formatCount(count, "film", "filma", "filmova"),
+        visual: "film",
       }),
     );
   }
@@ -268,17 +271,7 @@ function formatCityNames(cards: readonly PlatformCityCardData[]) {
 }
 
 function formatCount(count: number, singular: string, paucal: string, plural = paucal) {
-  const lastTwo = count % 100;
-  const last = count % 10;
-  const form =
-    lastTwo >= 11 && lastTwo <= 14
-      ? plural
-      : last === 1
-        ? singular
-        : last >= 2 && last <= 4
-          ? paucal
-          : plural;
-  return `${count} ${form}`;
+  return formatBcsCount(count, singular, paucal, plural);
 }
 
 export {

@@ -1,5 +1,6 @@
 import type { Locale } from "@/shared/config/locale";
 import { getCityName } from "@/shared/config/cities";
+import { formatBcsCount } from "@/shared/lib/pluralize";
 import type { City } from "@/shared/types/city";
 
 interface DailyOverviewTranslations {
@@ -27,7 +28,7 @@ const dailyOverviewTranslations: Record<Locale, DailyOverviewTranslations> = {
   me: {
     eventsLabel: "Događaji",
     eventsCount: (count) => `${count} ${capitalize(getMontenegrinEventNoun(count))}`,
-    moviesCount: (count) => `${count} ${count === 1 ? "Film" : "Filmova"}`,
+    moviesCount: (count) => formatBcsCount(count, "Film", "Filma", "Filmova"),
     moviesLabel: "Filmovi",
     performancesCount: (count) => `${count} ${count === 1 ? "Nastup" : "Nastupa"}`,
     performancesLabel: "Nastupi",

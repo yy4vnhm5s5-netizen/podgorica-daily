@@ -1,4 +1,4 @@
-import { ArrowRight, CalendarDays, CloudSun, Landmark, Music2, Plane, Zap } from "lucide-react";
+import { ArrowRight, CalendarDays, CloudSun, Film, Landmark, Music2, Plane, Zap } from "lucide-react";
 import Link from "next/link";
 import type { ComponentType, SVGProps } from "react";
 
@@ -13,8 +13,8 @@ import { cn } from "@/shared/lib/utils";
 const highlightIcons = {
   calendar: CalendarDays,
   cloud: CloudSun,
+  film: Film,
   music: Music2,
-  plane: Plane,
 } satisfies Record<CityHighlightVisual, typeof CalendarDays>;
 
 // One neutral tone for every highlight icon — the accent color is reserved for the city

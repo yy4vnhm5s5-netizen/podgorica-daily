@@ -18,6 +18,10 @@ test("uses the summary labels and count forms", () => {
   assert.equal(translations.moviesCount(0), "0 Filmova");
   assert.equal(translations.moviesCount(1), "1 Film");
   assert.equal(translations.moviesCount(2), "2 Filmova");
+  assert.equal(translations.moviesCount(4), "4 Filma");
+  // Regression: a hardcoded count===1 check would incorrectly say "21 Filmova" instead of "21 Film".
+  assert.equal(translations.moviesCount(21), "21 Film");
+  assert.equal(translations.moviesCount(22), "22 Filma");
 });
 
 test("uses English singular and plural forms in the retained locale infrastructure", () => {
