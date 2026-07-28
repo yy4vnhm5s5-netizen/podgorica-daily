@@ -57,7 +57,6 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
               Vaš gradski pregled
             </h2>
           </div>
-          <p className="text-sm text-muted-foreground">Aktuelni podaci i provjereni izvori</p>
         </div>
         <LastCityContinuation cards={cards} />
         <PlatformCitySelector cards={cards} />

@@ -17,9 +17,12 @@ const highlightIcons = {
   music: Music2,
 } satisfies Record<CityHighlightVisual, typeof CalendarDays>;
 
-// One neutral tone for every highlight icon — the accent color is reserved for the city
-// identity mark and the primary CTA, not spread across each metric.
-const highlightIconTint = "text-muted-foreground";
+const highlightIconTints = {
+  calendar: "text-indigo-600",
+  cloud: "text-sky-600",
+  film: "text-blue-600",
+  music: "text-fuchsia-600",
+} satisfies Record<CityHighlightVisual, string>;
 
 const shortcutIcons = {
   electricity: Zap,
@@ -136,7 +139,10 @@ function MetricTile({ highlight }: { highlight: CityHighlight }) {
   const Icon = highlightIcons[highlight.visual];
   const content = (
     <>
-      <Icon aria-hidden="true" className={`size-4 shrink-0 ${highlightIconTint}`} />
+      <Icon
+        aria-hidden="true"
+        className={`size-4 shrink-0 ${highlightIconTints[highlight.visual]}`}
+      />
       <span className="min-w-0">
         <span className="block text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
           {highlight.label}

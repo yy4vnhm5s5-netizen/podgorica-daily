@@ -68,10 +68,10 @@ function PlatformCitySelector({ cards }: { cards: readonly PlatformCityCardData[
                 aria-controls={platformCityPanelId}
                 aria-selected={isSelected}
                 className={cn(
-                  "flex min-h-11 items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+                  "flex min-h-11 items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
                   isSelected
                     ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground",
+                    : "text-slate-700 hover:text-foreground",
                 )}
                 id={`platform-city-tab-${card.city.id}`}
                 key={card.city.id}
