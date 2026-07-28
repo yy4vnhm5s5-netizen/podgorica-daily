@@ -32,6 +32,7 @@ interface CityDashboardSummaryAvailability {
   cinema: boolean;
   events: boolean;
   goingOut: boolean;
+  seaWaterQuality: boolean;
 }
 
 const publicFeatureByCityCapability: Partial<Record<CityCapability, Feature>> = {
@@ -146,6 +147,7 @@ function getCityDashboardSummaryAvailability(
     cinema: events,
     events,
     goingOut: isCityPublicFeatureRouteAvailable(city, "goingOut", options),
+    seaWaterQuality: isCityPublicFeatureRouteAvailable(city, "seaWaterQuality", options),
   };
 }
 

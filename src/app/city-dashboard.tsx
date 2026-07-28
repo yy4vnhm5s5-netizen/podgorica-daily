@@ -75,6 +75,7 @@ async function CityDashboard({ context }: CityDashboardProps) {
           locale={locale}
           moviesCount={displayableCinemaMovieCount}
           performancesCount={goingOutCount}
+          seaWaterQualityLocationCount={seaWaterQuality?.summary?.totalLocations}
           weather={weather}
         />
         {isFeatureEnabled("cityAlerts") && capabilities.cityAlerts ? (

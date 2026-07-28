@@ -10,6 +10,8 @@ interface DailyOverviewTranslations {
   moviesLabel: string;
   performancesCount: (count: number) => string;
   performancesLabel: string;
+  seaWaterQualityCount: (count: number) => string;
+  seaWaterQualityLabel: string;
   summaryLabel: string;
   temperature: string;
 }
@@ -22,6 +24,8 @@ const dailyOverviewTranslations: Record<Locale, DailyOverviewTranslations> = {
     moviesLabel: "Movies",
     performancesCount: (count) => `${count} ${count === 1 ? "Performance" : "Performances"}`,
     performancesLabel: "Going out",
+    seaWaterQualityCount: (count) => `${count} ${count === 1 ? "beach" : "beaches"}`,
+    seaWaterQualityLabel: "Beaches",
     summaryLabel: "Today in {city}",
     temperature: "Temperature",
   },
@@ -32,6 +36,8 @@ const dailyOverviewTranslations: Record<Locale, DailyOverviewTranslations> = {
     moviesLabel: "Filmovi",
     performancesCount: (count) => `${count} ${count === 1 ? "Nastup" : "Nastupa"}`,
     performancesLabel: "Nastupi",
+    seaWaterQualityCount: (count) => formatBcsCount(count, "kupalište", "kupališta", "kupališta"),
+    seaWaterQualityLabel: "Plaže",
     summaryLabel: "Danas u {city}",
     temperature: "Temperatura",
   },

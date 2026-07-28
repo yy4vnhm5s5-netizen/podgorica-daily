@@ -2,16 +2,23 @@ interface DailySummaryAvailability {
   cinema: boolean;
   events: boolean;
   goingOut: boolean;
+  seaWaterQuality: boolean;
 }
 
-type DailySummaryItemId = "cinema" | "events" | "goingOut" | "weather";
+type DailySummaryItemId = "cinema" | "events" | "goingOut" | "seaWaterQuality" | "weather";
 
-function getDailySummaryItemIds({ cinema, events, goingOut }: DailySummaryAvailability) {
+function getDailySummaryItemIds({
+  cinema,
+  events,
+  goingOut,
+  seaWaterQuality,
+}: DailySummaryAvailability) {
   return [
     "weather",
     ...(goingOut ? ["goingOut"] : []),
     ...(events ? ["events"] : []),
     ...(cinema ? ["cinema"] : []),
+    ...(seaWaterQuality ? ["seaWaterQuality"] : []),
   ] as DailySummaryItemId[];
 }
 

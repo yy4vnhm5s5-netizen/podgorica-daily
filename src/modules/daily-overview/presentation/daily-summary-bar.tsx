@@ -1,4 +1,11 @@
-import { CalendarDays, ChevronRight, Clapperboard, MicVocal, Thermometer } from "lucide-react";
+import {
+  CalendarDays,
+  ChevronRight,
+  Clapperboard,
+  MicVocal,
+  Thermometer,
+  Waves,
+} from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 
@@ -12,7 +19,12 @@ import type { CurrentWeatherResult } from "@/modules/weather/application/get-cur
 import { getWeatherTemperature } from "@/modules/weather/presentation/weather-temperature";
 import { Card } from "@/shared/components/ui/card";
 import type { Locale } from "@/shared/config/locale";
-import { getCinemaPath, getEventsPath, getGoingOutPath } from "@/shared/config/public-routes";
+import {
+  getCinemaPath,
+  getEventsPath,
+  getGoingOutPath,
+  getSeaWaterQualityPath,
+} from "@/shared/config/public-routes";
 import type { City } from "@/shared/types/city";
 import { dailySummaryLayout } from "./daily-summary-layout";
 
@@ -23,6 +35,7 @@ interface DailySummaryBarProps {
   locale: Locale;
   moviesCount: number;
   performancesCount: number;
+  seaWaterQualityLocationCount?: number;
   weather: CurrentWeatherResult | null;
 }
 
@@ -33,11 +46,16 @@ function DailySummaryBar({
   locale,
   moviesCount,
   performancesCount,
+  seaWaterQualityLocationCount,
   weather,
 }: DailySummaryBarProps) {
   const translations = getDailyOverviewTranslations(locale, city);
   const temperatureCelsius = getWeatherTemperature(weather);
   const itemIds = getDailySummaryItemIds(availability);
+  const gridClassName =
+    itemIds.length === 3
+      ? dailySummaryLayout.threeColumnGridClassName
+      : dailySummaryLayout.gridClassName;
 
   return (
     <section aria-labelledby="daily-summary-heading">
@@ -49,7 +67,7 @@ function DailySummaryBar({
       </h1>
       <Card className="card-fog card-fog--summary border-blue-200/90 bg-blue-50/60 px-3 py-2 sm:px-4">
         <span aria-hidden="true" className="absolute inset-x-0 top-0 h-px bg-blue-300/80" />
-        <div className={dailySummaryLayout.gridClassName}>
+        <div className={gridClassName}>
           {itemIds.length === 4 ? (
             <>
               <span aria-hidden="true" className={dailySummaryLayout.verticalDividerClassName} />
@@ -63,6 +81,7 @@ function DailySummaryBar({
               itemId,
               moviesCount,
               performancesCount,
+              seaWaterQualityLocationCount,
               temperatureCelsius,
               translations,
             });
@@ -81,6 +100,7 @@ function getDailySummaryItem({
   itemId,
   moviesCount,
   performancesCount,
+  seaWaterQualityLocationCount,
   temperatureCelsius,
   translations,
 }: {
@@ -89,6 +109,7 @@ function getDailySummaryItem({
   itemId: DailySummaryItemId;
   moviesCount: number;
   performancesCount: number;
+  seaWaterQualityLocationCount: number | undefined;
   temperatureCelsius: number | undefined;
   translations: ReturnType<typeof getDailyOverviewTranslations>;
 }): Omit<SummaryItemProps, "children"> & { children: string } {
@@ -116,6 +137,17 @@ function getDailySummaryItem({
         icon: Clapperboard,
         iconClassName: "bg-rose-50/90 text-rose-700/70",
         label: translations.moviesLabel,
+      };
+    case "seaWaterQuality":
+      return {
+        children:
+          seaWaterQualityLocationCount === undefined
+            ? "—"
+            : translations.seaWaterQualityCount(seaWaterQualityLocationCount),
+        href: getSeaWaterQualityPath(city),
+        icon: Waves,
+        iconClassName: "bg-sky-50/90 text-sky-700/70",
+        label: translations.seaWaterQualityLabel,
       };
     case "weather":
       return {

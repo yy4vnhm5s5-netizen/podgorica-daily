@@ -64,6 +64,7 @@ test("uses capability-aware metadata and summary routes for a future city", () =
     cinema: false,
     events: false,
     goingOut: true,
+    seaWaterQuality: true,
   });
 });
 
@@ -99,6 +100,7 @@ test("a city without capabilities does not enable Podgorica dashboard data sourc
     flights: false,
     goingOut: false,
     railway: false,
+    seaWaterQuality: false,
     weather: false,
   });
 });
