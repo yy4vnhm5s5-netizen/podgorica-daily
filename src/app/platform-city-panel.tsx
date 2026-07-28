@@ -25,6 +25,7 @@ const highlightIcons = {
   cloud: CloudSun,
   film: Film,
   music: Music2,
+  waves: Waves,
 } satisfies Record<CityHighlightVisual, typeof CalendarDays>;
 
 const highlightIconTints = {
@@ -32,6 +33,7 @@ const highlightIconTints = {
   cloud: "text-sky-600",
   film: "text-blue-600",
   music: "text-fuchsia-600",
+  waves: "text-teal-600",
 } satisfies Record<CityHighlightVisual, string>;
 
 const shortcutIcons = {

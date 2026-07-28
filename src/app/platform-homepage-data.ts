@@ -23,7 +23,7 @@ import {
 import { getPageTitle, siteConfig } from "@/shared/config/site";
 import type { City, CityContext } from "@/shared/types/city";
 
-type CityHighlightVisual = "calendar" | "cloud" | "film" | "music";
+type CityHighlightVisual = "calendar" | "cloud" | "film" | "music" | "waves";
 
 interface CityHighlight {
   accessibilityLabel: string;
@@ -137,6 +137,24 @@ function createPlatformCityCardData(
         priority: 3,
         value: formatCount(events.length, "izlazak", "izlaska", "izlazaka"),
         visual: "music",
+      }),
+    );
+  }
+
+  if (isCityPublicFeatureRouteAvailable(city, "seaWaterQuality")) {
+    const totalLocations = dashboardData?.seaWaterQuality?.summary?.totalLocations ?? 0;
+    highlights.push(
+      createCountHighlight({
+        available:
+          dashboardData !== null &&
+          isSnapshotSummaryAvailable(dashboardData.seaWaterQuality?.state, totalLocations),
+        city,
+        href: getSeaWaterQualityPath(city),
+        key: "sea-water-quality",
+        label: "Plaže",
+        priority: 5,
+        value: formatCount(totalLocations, "kupalište", "kupališta"),
+        visual: "waves",
       }),
     );
   }
