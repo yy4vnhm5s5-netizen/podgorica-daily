@@ -39,9 +39,12 @@ function CitadelIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
-// Buća Palace (Tivat's landmark 18th-century palace) — a pedimented facade with a centered
-// entrance, the same minimal-silhouette treatment as the bridge/citadel marks above.
-function BucaPalaceIcon(props: SVGProps<SVGSVGElement>) {
+// Tivat's marina/waterfront identity (Porto Montenegro) — a single mast and sail above a
+// waterline, deliberately simpler than the bridge/citadel marks (2 primitives, not 3) since the
+// previous Buća Palace mark did not read clearly at the ~20-24px size the city selector and city
+// card render it at. No hull is drawn: the mast meeting the waterline is enough to read as a
+// boat, the same way the bridge mark implies its deck without drawing one.
+function MarinaSailIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg
       aria-hidden="true"
@@ -53,11 +56,10 @@ function BucaPalaceIcon(props: SVGProps<SVGSVGElement>) {
       viewBox="0 0 24 24"
       {...props}
     >
-      <path d="M4 20V10L12 4l8 6v10" />
-      <path d="M10 20v-6h4v6" />
+      <path d="M12 5v15M12 6l6 8h-6" />
       <line x1="2" x2="22" y1="20" y2="20" />
     </svg>
   );
 }
 
-export { BucaPalaceIcon, CitadelIcon, MillenniumBridgeIcon };
+export { CitadelIcon, MarinaSailIcon, MillenniumBridgeIcon };

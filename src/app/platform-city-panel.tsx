@@ -12,7 +12,7 @@ import {
 import Link from "next/link";
 import type { ComponentType, SVGProps } from "react";
 
-import { BucaPalaceIcon, CitadelIcon, MillenniumBridgeIcon } from "@/app/platform-city-icons";
+import { CitadelIcon, MarinaSailIcon, MillenniumBridgeIcon } from "@/app/platform-city-icons";
 import type {
   CityHighlight,
   CityHighlightVisual,
@@ -54,7 +54,7 @@ const shortcutStyle = "bg-muted text-foreground hover:bg-muted/70";
 const cityIdentityIcons: Record<string, ComponentType<SVGProps<SVGSVGElement>>> = {
   budva: CitadelIcon,
   podgorica: MillenniumBridgeIcon,
-  tivat: BucaPalaceIcon,
+  tivat: MarinaSailIcon,
 };
 
 // Restrained per-city identity accents (see globals.css) — a subtle surface tint, not a theme.
