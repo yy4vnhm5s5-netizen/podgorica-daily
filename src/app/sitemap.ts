@@ -18,9 +18,13 @@ function createEntry(
   changeFrequency: MetadataRoute.Sitemap[0]["changeFrequency"],
   priority: number,
 ) {
+  // No genuine last-modified timestamp exists for these routes (they are rendered from
+  // live/cached provider data, not a tracked content revision), so lastModified is
+  // intentionally omitted rather than stamped with the sitemap generation time — a fabricated
+  // "just changed" date on every request misleads crawlers into treating stable pages as
+  // freshly modified. changeFrequency conveys the update cadence instead.
   return {
     changeFrequency,
-    lastModified: new Date(),
     priority,
     url: new URL(path, siteConfig.url).toString(),
   };
