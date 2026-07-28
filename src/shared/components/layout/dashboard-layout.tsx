@@ -55,38 +55,48 @@ function PageContourMotif() {
   );
 }
 
-// City-page-only atmosphere: several very large elliptical radial gradients on one layer, each
-// given a flat color plateau before it fades (not a fade starting at the very center) so every
-// mass has a genuinely readable core instead of looking hazy everywhere at once. Positions and
-// aspect ratios are deliberately irregular and asymmetric — different radii, different corners,
-// one mass anchored mid-edge rather than in a corner — so they read as one organic landscape
-// rather than a repeated or mirrored motif. A very light directional layer adds cohesion without
-// re-flattening the composition. This root shell div isn't nested inside the padded ResponsiveContainer
-// (that only wraps `main`), so `inset-0` here already spans the true page width — no full-bleed
-// breakout trick is needed, unlike the homepage's atmosphere. A mask fades the whole thing out by
-// the lower half of the band so it resolves into the plain shell background before scrolling far.
-// Independent of, and unrelated to, the homepage's HomepageAtmosphere — no code or values shared.
+// City-page-only atmosphere, composed as two depth planes rather than one flat set of gradients —
+// this is what actually reads as a "landscape" instead of a wash: a soft, broad background plane
+// (lighter, larger, lower saturation — the "sky") sets the bright reading area and the airy upper
+// canvas, while a foreground plane of more saturated, tighter-falloff masses ("hills") sits on top
+// of it with a crisper transition to transparent, so it visually sits in front of the background
+// plane rather than blending flush into it. Both planes still use flat color plateaus before
+// fading (never fading from the very center) so every mass has a genuinely readable core. Positions
+// and aspect ratios are deliberately irregular and asymmetric across both planes — different radii,
+// different corners/edges, nothing mirrored — so the result reads as one organic composition, not a
+// repeated motif. This root shell div isn't nested inside the padded ResponsiveContainer (that only
+// wraps `main`), so `inset-0` here already spans the true page width — no full-bleed breakout trick
+// is needed, unlike the homepage's atmosphere. A mask fades the whole thing out by the lower half of
+// the band so it resolves into the plain shell background before scrolling far. Independent of, and
+// unrelated to, the homepage's HomepageAtmosphere — no code or values shared.
 function CityAtmosphere() {
   const maskImage = "linear-gradient(to bottom, black 0%, black 50%, transparent 85%)";
 
-  const landscape = [
-    "radial-gradient(80% 65% at 4% 2%, hsl(190 75% 80% / 0.5) 0%, hsl(190 75% 80% / 0.5) 30%, transparent 76%)",
-    "radial-gradient(70% 80% at 100% 6%, hsl(205 78% 76% / 0.48) 0%, hsl(205 78% 76% / 0.48) 28%, transparent 74%)",
-    "radial-gradient(55% 100% at -4% 55%, hsl(214 65% 80% / 0.35) 0%, hsl(214 65% 80% / 0.35) 26%, transparent 72%)",
-    "radial-gradient(75% 85% at 98% 60%, hsl(238 50% 70% / 0.32) 0%, hsl(238 50% 70% / 0.32) 26%, transparent 74%)",
-    "radial-gradient(90% 50% at 15% 100%, hsl(200 55% 92% / 0.2) 0%, transparent 78%)",
+  // Background plane: broad, soft, lower-saturation — sets the bright central reading area and
+  // the overall airy sky behind the foreground hills.
+  const sky = [
+    "radial-gradient(100% 65% at 50% -12%, hsl(200 55% 93% / 0.32) 0%, transparent 76%)",
+    "radial-gradient(85% 62% at 6% -4%, hsl(196 62% 84% / 0.3) 0%, transparent 74%)",
+    "radial-gradient(80% 68% at 102% 8%, hsl(214 60% 84% / 0.28) 0%, transparent 74%)",
   ].join(", ");
-  const directional =
-    "linear-gradient(135deg, hsl(200 60% 97% / 0.12) 0%, transparent 45%, transparent 100%)";
+
+  // Foreground plane: fewer, more saturated masses with a tighter fade — these read as sitting
+  // in front of the sky plane, giving the composition depth instead of one flat blend.
+  const hills = [
+    "radial-gradient(68% 55% at 0% 42%, hsl(190 80% 72% / 0.55) 0%, hsl(190 80% 72% / 0.55) 34%, transparent 68%)",
+    "radial-gradient(64% 58% at 100% 46%, hsl(231 58% 66% / 0.46) 0%, hsl(231 58% 66% / 0.46) 32%, transparent 66%)",
+    "radial-gradient(58% 48% at 28% 96%, hsl(210 72% 70% / 0.4) 0%, hsl(210 72% 70% / 0.4) 30%, transparent 68%)",
+    "radial-gradient(42% 38% at 94% 90%, hsl(240 46% 64% / 0.32) 0%, hsl(240 46% 64% / 0.32) 26%, transparent 65%)",
+  ].join(", ");
 
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none absolute inset-x-0 top-0 h-[44rem] overflow-hidden sm:h-[38rem]"
+      className="pointer-events-none absolute inset-x-0 top-0 h-[46rem] overflow-hidden sm:h-[40rem]"
       style={{ WebkitMaskImage: maskImage, maskImage }}
     >
-      <div className="absolute inset-0" style={{ backgroundImage: landscape }} />
-      <div className="absolute inset-0" style={{ backgroundImage: directional }} />
+      <div className="absolute inset-0" style={{ backgroundImage: sky }} />
+      <div className="absolute inset-0" style={{ backgroundImage: hills }} />
     </div>
   );
 }
