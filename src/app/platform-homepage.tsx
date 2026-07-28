@@ -132,17 +132,17 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
 // order keeps it behind every section — same convention as the shared shell's contour motif, which
 // stays layered underneath and unaffected by this.
 function HomepageAtmosphere() {
-  const maskImage = "linear-gradient(to bottom, black 0%, black 45%, transparent 82%)";
+  const maskImage = "linear-gradient(to bottom, black 0%, black 55%, transparent 88%)";
 
   const landscape = [
-    "radial-gradient(125% 95% at 6% 4%, hsl(199 72% 86% / 0.42) 0%, transparent 92%)",
-    "radial-gradient(120% 88% at 96% 0%, hsl(212 64% 86% / 0.38) 0%, transparent 92%)",
-    "radial-gradient(95% 135% at -8% 48%, hsl(205 55% 90% / 0.32) 0%, transparent 90%)",
-    "radial-gradient(100% 130% at 104% 42%, hsl(233 45% 83% / 0.28) 0%, transparent 90%)",
-    "radial-gradient(145% 75% at 50% -8%, hsl(200 50% 95% / 0.24) 0%, transparent 92%)",
+    "radial-gradient(85% 70% at 6% 4%, hsl(196 78% 78% / 0.55) 0%, hsl(196 78% 78% / 0.55) 32%, transparent 78%)",
+    "radial-gradient(82% 65% at 96% 0%, hsl(211 72% 76% / 0.5) 0%, hsl(211 72% 76% / 0.5) 30%, transparent 78%)",
+    "radial-gradient(60% 95% at -6% 48%, hsl(203 65% 82% / 0.4) 0%, hsl(203 65% 82% / 0.4) 28%, transparent 75%)",
+    "radial-gradient(65% 92% at 102% 42%, hsl(235 55% 72% / 0.38) 0%, hsl(235 55% 72% / 0.38) 28%, transparent 75%)",
+    "radial-gradient(105% 55% at 50% -6%, hsl(205 55% 90% / 0.22) 0%, transparent 80%)",
   ].join(", ");
   const wash =
-    "linear-gradient(160deg, hsl(200 55% 97% / 0.35) 0%, transparent 65%, transparent 100%)";
+    "linear-gradient(160deg, hsl(200 55% 97% / 0.15) 0%, transparent 35%, transparent 100%)";
 
   return (
     <div
