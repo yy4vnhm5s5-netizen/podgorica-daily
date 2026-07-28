@@ -135,8 +135,11 @@ function DashboardLayout({ children, city, homeHref, translations }: DashboardLa
       <AppHeader city={city} homeHref={homeHref} translations={translations} />
       <main id="main-content">
         <ResponsiveContainer className="py-6 sm:py-10">
+          {/* Default size, not sm: matches the 44px touch target every other "back" link in the
+              app uses (e.g. the event detail page's "back to events" link), rather than the same
+              navigational action being a smaller target here than elsewhere. */}
           {isCityScoped ? (
-            <Button asChild className="mb-6 rounded-lg" size="sm" variant="outline">
+            <Button asChild className="mb-6 rounded-lg" variant="outline">
               <Link href="/">
                 <ArrowLeft aria-hidden="true" className="size-4" />
                 Povratak na izbor gradova

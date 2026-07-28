@@ -175,8 +175,11 @@ function FormField({
   type?: "email" | "text";
 }) {
   const errorId = `${id}-error`;
+  // text-base (not text-sm): this is the only form on the site, and a <16px input font size
+  // makes iOS Safari auto-zoom the viewport on focus — matches the text-base/h-11 convention the
+  // events filter form already uses for its own inputs and selects.
   const className =
-    "mt-1.5 w-full rounded-md border border-border bg-background px-3 py-2 text-sm shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20";
+    "mt-1.5 w-full rounded-md border border-border bg-background px-3 py-2 text-base shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20";
 
   return (
     <div>
@@ -197,7 +200,7 @@ function FormField({
           aria-describedby={error ? errorId : undefined}
           aria-invalid={error ? true : undefined}
           autoComplete={autoComplete}
-          className={className}
+          className={`${className} h-11`}
           id={id}
           name={name}
           required={required}

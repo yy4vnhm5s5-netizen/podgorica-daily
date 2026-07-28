@@ -13,7 +13,10 @@ const buttonVariants = cva(
     },
     variants: {
       size: {
-        default: "h-10 px-4 py-2",
+        // Matches the 44px (min-h-11) touch target used everywhere else in the app (footer/nav
+        // links, back links, form controls) — the default size is used for primary, standalone
+        // CTAs (contact form submit, events filter trigger/apply), so it should meet the same bar.
+        default: "h-11 px-4 py-2",
         lg: "h-11 px-8",
         sm: "h-9 rounded-md px-3",
       },
