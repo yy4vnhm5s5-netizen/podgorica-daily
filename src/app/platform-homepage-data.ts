@@ -1,3 +1,4 @@
+import type { EventProviderState } from "@/modules/events/domain/event";
 import { getDistinctCineplexxProgrammeMovieCount } from "@/modules/events/presentation/cineplexx-programme-ui-model";
 import {
   filterEventsForUi,
@@ -181,10 +182,7 @@ function isCityEventsSummaryAvailable(
   return providers.some((provider) => provider.state === "fresh");
 }
 
-function isSnapshotSummaryAvailable(
-  state: "fresh" | "stale" | "unavailable" | undefined,
-  count: number,
-) {
+function isSnapshotSummaryAvailable(state: EventProviderState | undefined, count: number) {
   return state === "fresh" || (state === "stale" && count > 0);
 }
 
