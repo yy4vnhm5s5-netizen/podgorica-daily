@@ -17,6 +17,7 @@ import {
   getEventsPath,
   getFlightsPath,
   getGoingOutPath,
+  getSeaWaterQualityPath,
 } from "@/shared/config/public-routes";
 import { createPublicRouteMetadata } from "@/app/public-route-metadata";
 import { isFeatureEnabled, type Feature } from "@/shared/config/features";
@@ -36,6 +37,7 @@ interface CityDashboardSummaryAvailability {
 const publicFeatureByCityCapability: Partial<Record<CityCapability, Feature>> = {
   flights: "flights",
   goingOut: "goingOut",
+  seaWaterQuality: "seaWaterQuality",
 };
 
 function getCityLandingTitle(context: CityContext) {
@@ -108,6 +110,9 @@ function getCitySitemapPaths(city: City, options: CityRouteAvailabilityOptions =
     ...(isCityPublicFeatureRouteAvailable(city, "flights", options) ? [getFlightsPath(city)] : []),
     ...(isCityPublicFeatureRouteAvailable(city, "goingOut", options)
       ? [getGoingOutPath(city)]
+      : []),
+    ...(isCityPublicFeatureRouteAvailable(city, "seaWaterQuality", options)
+      ? [getSeaWaterQualityPath(city)]
       : []),
   ];
 }

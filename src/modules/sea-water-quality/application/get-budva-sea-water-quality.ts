@@ -21,4 +21,8 @@ async function getBudvaSeaWaterQuality(
   return getCachedBudvaSeaWaterQuality(env.SEA_WATER_QUALITY_CACHE_PATH);
 }
 
-export { canReadBudvaSeaWaterQuality, getBudvaSeaWaterQuality };
+export {
+  canReadBudvaSeaWaterQuality,
+  getBudvaSeaWaterQuality,
+  type BudvaSeaWaterQualityCacheResult,
+};

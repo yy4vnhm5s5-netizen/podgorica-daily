@@ -18,6 +18,7 @@ const snapshot = () => ({
   summary: {
     gradeCounts: { excellent: 27, good: 2, poor: 2, satisfactory: 3 },
     latestSamplingDate: "2026-07-23",
+    locations: [{ grade: "excellent" as const, id: 36, name: "Jaz 01" }],
     municipality: "budva" as const,
     totalLocations: 34,
   },

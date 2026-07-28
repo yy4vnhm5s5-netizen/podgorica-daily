@@ -48,7 +48,7 @@ test("surfaces a parser warning via the diagnostic emitter without failing the r
   await withTempCachePath(async (cachePath) => {
     const calendarBody = await readFixture("morskodobro-calendar-data.json");
     const mapBody = JSON.stringify({
-      mjerenja: [{ datumUzorkovanja: "24.07.2026", opstina: "Budva", tezina: 1 }],
+      mjerenja: [{ datumUzorkovanja: "24.07.2026", id: 1, naziv: "Jaz 01", opstina: "Budva", tezina: 1 }],
       sumarno: [
         [1, 30],
         [5, 2],

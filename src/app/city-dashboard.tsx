@@ -84,6 +84,7 @@ async function CityDashboard({ context }: CityDashboardProps) {
         ) : null}
         {seaWaterQuality ? (
           <SeaWaterQualityCard
+            city={city}
             lastSuccessfulRefreshAt={seaWaterQuality.lastSuccessfulRefreshAt}
             locale={locale}
             state={seaWaterQuality.state}

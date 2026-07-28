@@ -39,6 +39,10 @@ function getGoingOutPath(city: CityRouteTarget) {
   return `${getCityPath(city)}/izlasci`;
 }
 
+function getSeaWaterQualityPath(city: CityRouteTarget) {
+  return `${getCityPath(city)}/plaze`;
+}
+
 function getPrivacyPolicyPath() {
   return "/politika-privatnosti";
 }
@@ -58,5 +62,6 @@ export {
   getFlightsPath,
   getGoingOutPath,
   getPrivacyPolicyPath,
+  getSeaWaterQualityPath,
   getTermsOfUsePath,
 };

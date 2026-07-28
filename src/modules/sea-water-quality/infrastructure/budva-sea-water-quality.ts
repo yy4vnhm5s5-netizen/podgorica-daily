@@ -3,6 +3,7 @@ import { z } from "zod";
 import {
   createEmptySeaWaterQualityGradeCounts,
   type SeaWaterQualityGrade,
+  type SeaWaterQualityLocation,
   type SeaWaterQualitySummary,
 } from "../domain/sea-water-quality.ts";
 import { morskodobroOrigin } from "./morskodobro-http-client.ts";
@@ -37,6 +38,8 @@ const mapResponseSchema = z
       z
         .object({
           datumUzorkovanja: z.string(),
+          id: z.number(),
+          naziv: z.string(),
           opstina: z.string(),
           tezina: z.number(),
         })
@@ -107,10 +110,25 @@ function parseBudvaSeaWaterQualitySummary(body: string): BudvaSeaWaterQualityPar
     .sort()
     .at(-1);
 
+  const locations: SeaWaterQualityLocation[] = [];
+  for (const measurement of result.data.mjerenja) {
+    const grade = gradeByTezina[measurement.tezina];
+    if (!grade) continue; // Already recorded as a warning above.
+
+    const samplingDate = toIsoDate(measurement.datumUzorkovanja);
+    locations.push({
+      grade,
+      id: measurement.id,
+      name: measurement.naziv,
+      ...(samplingDate ? { samplingDate } : {}),
+    });
+  }
+
   return {
     summary: {
       gradeCounts,
       ...(latestSamplingDate ? { latestSamplingDate } : {}),
+      locations,
       municipality: "budva",
       totalLocations: result.data.ukupno,
     },

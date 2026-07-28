@@ -34,12 +34,16 @@ test("normalizes a real Budva crtajMapu response into a sea water quality summar
   const body = await readFixture("morskodobro-budva-map-data.json");
   const parsed = parseBudvaSeaWaterQualitySummary(body);
 
-  assert.deepEqual(parsed?.summary, {
-    gradeCounts: { excellent: 27, good: 2, poor: 2, satisfactory: 3 },
-    latestSamplingDate: "2026-07-23",
-    municipality: "budva",
-    totalLocations: 34,
-  });
+  assert.deepEqual(parsed?.summary.gradeCounts, { excellent: 27, good: 2, poor: 2, satisfactory: 3 });
+  assert.equal(parsed?.summary.latestSamplingDate, "2026-07-23");
+  assert.equal(parsed?.summary.municipality, "budva");
+  assert.equal(parsed?.summary.totalLocations, 34);
+  assert.deepEqual(parsed?.summary.locations, [
+    { grade: "excellent", id: 36, name: "Jaz 01", samplingDate: "2026-07-21" },
+    { grade: "poor", id: 30, name: "Slovenska plaža 01", samplingDate: "2026-07-23" },
+    { grade: "satisfactory", id: 28, name: "Slovenska plaža 03", samplingDate: "2026-07-21" },
+    { grade: "good", id: 40, name: "Sv. Stefan plaža 02", samplingDate: "2026-07-21" },
+  ]);
   assert.deepEqual(parsed?.warnings, []);
 });
 
@@ -50,18 +54,22 @@ test("returns undefined for a map response that cannot be recognized", () => {
 
 test("omits latestSamplingDate when no measurement has a parseable date", () => {
   const body = JSON.stringify({
-    mjerenja: [{ datumUzorkovanja: "not-a-date", opstina: "Budva", tezina: 1 }],
+    mjerenja: [{ datumUzorkovanja: "not-a-date", id: 1, naziv: "Jaz 01", opstina: "Budva", tezina: 1 }],
     sumarno: [[1, 1]],
     ukupno: 1,
   });
   const parsed = parseBudvaSeaWaterQualitySummary(body);
   assert.equal(parsed?.summary.latestSamplingDate, undefined);
   assert.deepEqual(parsed?.summary.gradeCounts, { excellent: 1, good: 0, poor: 0, satisfactory: 0 });
+  assert.deepEqual(parsed?.summary.locations, [{ grade: "excellent", id: 1, name: "Jaz 01" }]);
 });
 
-test("surfaces a warning and keeps processing when sumarno contains an unrecognized tezina", () => {
+test("surfaces a warning, excludes the location, and keeps processing when sumarno contains an unrecognized tezina", () => {
   const body = JSON.stringify({
-    mjerenja: [{ datumUzorkovanja: "01.08.2026", opstina: "Budva", tezina: 1 }],
+    mjerenja: [
+      { datumUzorkovanja: "01.08.2026", id: 1, naziv: "Jaz 01", opstina: "Budva", tezina: 1 },
+      { datumUzorkovanja: "01.08.2026", id: 2, naziv: "Mystery Beach", opstina: "Budva", tezina: 5 },
+    ],
     sumarno: [
       [1, 30],
       [5, 2],
@@ -72,6 +80,9 @@ test("surfaces a warning and keeps processing when sumarno contains an unrecogni
 
   assert.deepEqual(parsed?.summary.gradeCounts, { excellent: 30, good: 0, poor: 0, satisfactory: 0 });
   assert.equal(parsed?.summary.totalLocations, 32);
+  assert.deepEqual(parsed?.summary.locations, [
+    { grade: "excellent", id: 1, name: "Jaz 01", samplingDate: "2026-08-01" },
+  ]);
   assert.deepEqual(parsed?.warnings, ["sea-water-quality-unknown-tezina:5"]);
 });
 

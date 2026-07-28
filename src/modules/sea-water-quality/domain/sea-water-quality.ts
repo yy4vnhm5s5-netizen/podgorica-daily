@@ -7,9 +7,17 @@ interface SeaWaterQualityGradeCounts {
   satisfactory: number;
 }
 
+interface SeaWaterQualityLocation {
+  grade: SeaWaterQualityGrade;
+  id: number;
+  name: string;
+  samplingDate?: string;
+}
+
 interface SeaWaterQualitySummary {
   gradeCounts: SeaWaterQualityGradeCounts;
   latestSamplingDate?: string;
+  locations: SeaWaterQualityLocation[];
   municipality: "budva";
   totalLocations: number;
 }
@@ -22,5 +30,6 @@ export {
   createEmptySeaWaterQualityGradeCounts,
   type SeaWaterQualityGrade,
   type SeaWaterQualityGradeCounts,
+  type SeaWaterQualityLocation,
   type SeaWaterQualitySummary,
 };
