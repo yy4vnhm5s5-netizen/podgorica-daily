@@ -72,21 +72,28 @@ function PageContourMotif() {
 function CityAtmosphere() {
   const maskImage = "linear-gradient(to bottom, black 0%, black 50%, transparent 85%)";
 
-  // Background plane: broad, soft, lower-saturation — sets the bright central reading area and
-  // the overall airy sky behind the foreground hills.
+  // Background plane: broad, soft, lower-saturation — sets the bright reading area and the airy
+  // sky behind the foreground hills. The main glow is offset left-of-center (44%, not 50%) and
+  // very wide/shallow so it reads as a horizon, not a bright vertical corridor down the middle;
+  // the upper-left corner (behind the logo/nav) is deliberately the calmest, lowest-alpha spot.
   const sky = [
-    "radial-gradient(100% 65% at 50% -12%, hsl(200 55% 93% / 0.32) 0%, transparent 76%)",
-    "radial-gradient(85% 62% at 6% -4%, hsl(196 62% 84% / 0.3) 0%, transparent 74%)",
-    "radial-gradient(80% 68% at 102% 8%, hsl(214 60% 84% / 0.28) 0%, transparent 74%)",
+    "radial-gradient(130% 45% at 44% -8%, hsl(200 55% 93% / 0.28) 0%, transparent 78%)",
+    "radial-gradient(70% 50% at 4% -2%, hsl(198 45% 90% / 0.16) 0%, transparent 72%)",
+    "radial-gradient(70% 55% at 100% 4%, hsl(214 50% 86% / 0.2) 0%, transparent 72%)",
   ].join(", ");
 
-  // Foreground plane: fewer, more saturated masses with a tighter fade — these read as sitting
-  // in front of the sky plane, giving the composition depth instead of one flat blend.
+  // Foreground plane: repositioned so nothing sits in a plain corner-glow arrangement — cyan
+  // rises diagonally from the lower-left instead of pooling in the top-left corner, blue sweeps
+  // across the upper-middle instead of sitting in the top-right, and indigo is pushed to a
+  // narrow, vertical band at the far-right edge instead of a broad top-right mass. A soft diagonal
+  // linear "bridge" ties the lower-left to the upper-right, and a small off-axis accent keeps the
+  // composition asymmetric rather than a mirrored two-corner layout.
   const hills = [
-    "radial-gradient(68% 55% at 0% 42%, hsl(190 80% 72% / 0.55) 0%, hsl(190 80% 72% / 0.55) 34%, transparent 68%)",
-    "radial-gradient(64% 58% at 100% 46%, hsl(231 58% 66% / 0.46) 0%, hsl(231 58% 66% / 0.46) 32%, transparent 66%)",
-    "radial-gradient(58% 48% at 28% 96%, hsl(210 72% 70% / 0.4) 0%, hsl(210 72% 70% / 0.4) 30%, transparent 68%)",
-    "radial-gradient(42% 38% at 94% 90%, hsl(240 46% 64% / 0.32) 0%, hsl(240 46% 64% / 0.32) 26%, transparent 65%)",
+    "radial-gradient(62% 100% at -2% 66%, hsl(190 78% 72% / 0.5) 0%, hsl(190 78% 72% / 0.5) 30%, transparent 68%)",
+    "radial-gradient(115% 48% at 42% 2%, hsl(210 70% 70% / 0.42) 0%, hsl(210 70% 70% / 0.42) 28%, transparent 66%)",
+    "radial-gradient(30% 100% at 104% 50%, hsl(234 55% 64% / 0.4) 0%, hsl(234 55% 64% / 0.4) 26%, transparent 65%)",
+    "radial-gradient(38% 34% at 82% 92%, hsl(242 42% 62% / 0.28) 0%, hsl(242 42% 62% / 0.28) 24%, transparent 64%)",
+    "linear-gradient(52deg, transparent 12%, hsl(205 60% 88% / 0.22) 45%, transparent 76%)",
   ].join(", ");
 
   return (
