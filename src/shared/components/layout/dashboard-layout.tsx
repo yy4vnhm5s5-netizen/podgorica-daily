@@ -55,6 +55,42 @@ function PageContourMotif() {
   );
 }
 
+// City-page-only atmosphere: several very large elliptical radial gradients on one layer, each
+// given a flat color plateau before it fades (not a fade starting at the very center) so every
+// mass has a genuinely readable core instead of looking hazy everywhere at once. Positions and
+// aspect ratios are deliberately irregular and asymmetric — different radii, different corners,
+// one mass anchored mid-edge rather than in a corner — so they read as one organic landscape
+// rather than a repeated or mirrored motif. A very light directional layer adds cohesion without
+// re-flattening the composition. This root shell div isn't nested inside the padded ResponsiveContainer
+// (that only wraps `main`), so `inset-0` here already spans the true page width — no full-bleed
+// breakout trick is needed, unlike the homepage's atmosphere. A mask fades the whole thing out by
+// the lower half of the band so it resolves into the plain shell background before scrolling far.
+// Independent of, and unrelated to, the homepage's HomepageAtmosphere — no code or values shared.
+function CityAtmosphere() {
+  const maskImage = "linear-gradient(to bottom, black 0%, black 50%, transparent 85%)";
+
+  const landscape = [
+    "radial-gradient(80% 65% at 4% 2%, hsl(190 75% 80% / 0.5) 0%, hsl(190 75% 80% / 0.5) 30%, transparent 76%)",
+    "radial-gradient(70% 80% at 100% 6%, hsl(205 78% 76% / 0.48) 0%, hsl(205 78% 76% / 0.48) 28%, transparent 74%)",
+    "radial-gradient(55% 100% at -4% 55%, hsl(214 65% 80% / 0.35) 0%, hsl(214 65% 80% / 0.35) 26%, transparent 72%)",
+    "radial-gradient(75% 85% at 98% 60%, hsl(238 50% 70% / 0.32) 0%, hsl(238 50% 70% / 0.32) 26%, transparent 74%)",
+    "radial-gradient(90% 50% at 15% 100%, hsl(200 55% 92% / 0.2) 0%, transparent 78%)",
+  ].join(", ");
+  const directional =
+    "linear-gradient(135deg, hsl(200 60% 97% / 0.12) 0%, transparent 45%, transparent 100%)";
+
+  return (
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-x-0 top-0 h-[44rem] overflow-hidden sm:h-[38rem]"
+      style={{ WebkitMaskImage: maskImage, maskImage }}
+    >
+      <div className="absolute inset-0" style={{ backgroundImage: landscape }} />
+      <div className="absolute inset-0" style={{ backgroundImage: directional }} />
+    </div>
+  );
+}
+
 function DashboardLayout({ children, city, homeHref, translations }: DashboardLayoutProps) {
   const isCityScoped = homeHref === undefined;
   // The platform homepage carries its own hero atmosphere layer (see HomepageAtmosphere), which
@@ -70,7 +106,7 @@ function DashboardLayout({ children, city, homeHref, translations }: DashboardLa
         shellTint,
       )}
     >
-      <PageContourMotif />
+      {isCityScoped ? <CityAtmosphere /> : <PageContourMotif />}
       <a
         className="absolute left-4 top-4 z-50 -translate-y-20 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-transform focus:translate-y-0"
         href="#main-content"
