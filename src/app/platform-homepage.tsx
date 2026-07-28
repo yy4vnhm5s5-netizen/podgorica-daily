@@ -117,18 +117,32 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
   );
 }
 
-// Homepage-only atmosphere: a handful of large, heavily blurred glows (rounded, blur-3xl divs —
-// no gradients-as-mesh, no SVG, no repeating pattern), asymmetrically placed and mostly off-canvas
-// so only their soft falloff shows. A single mask on the wrapper concentrates them in the upper
-// half of the page and dissolves them to fully transparent before the lower sections, and a single
-// opacity multiplier makes the whole composition slightly stronger on mobile than desktop. Full-
-// bleed breakout (left-1/2 + w-screen + -translate-x-1/2), same technique used elsewhere on this
-// page, so it spans the real viewport width, not the inner max-w content column, with no
+// Homepage-only atmosphere: a Firefox-style gradient "landscape" — a handful of very large,
+// irregular elliptical radial gradients (deliberately non-circular, different width/height radii
+// and aspect ratios per shape) layered on ONE full-size surface so they overlap heavily and merge
+// into a single continuous field, rather than reading as discrete blobs. A second, much fainter
+// full-size linear wash sits on top purely to unify the composition's overall light direction. A
+// mask on the wrapper concentrates the whole thing in the upper half of the page and dissolves it
+// to fully transparent by mid-page; a single opacity multiplier makes it slightly stronger on
+// mobile than desktop. The wrapper starts above the homepage content's own top edge (-top-24, with
+// height increased to match) so it reaches behind the header instead of cutting off beneath it.
+// Full-bleed breakout (left-1/2 + w-screen + -translate-x-1/2), same technique used elsewhere on
+// this page, so it spans the real viewport width, not the inner max-w content column, with no
 // horizontal/vertical overflow. Painted before all other homepage children so normal DOM paint
 // order keeps it behind every section — same convention as the shared shell's contour motif, which
 // stays layered underneath and unaffected by this.
 function HomepageAtmosphere() {
-  const maskImage = "linear-gradient(to bottom, black 0%, black 50%, transparent 85%)";
+  const maskImage = "linear-gradient(to bottom, black 0%, black 45%, transparent 82%)";
+
+  const landscape = [
+    "radial-gradient(125% 95% at 6% 4%, hsl(199 72% 86% / 0.42) 0%, transparent 92%)",
+    "radial-gradient(120% 88% at 96% 0%, hsl(212 64% 86% / 0.38) 0%, transparent 92%)",
+    "radial-gradient(95% 135% at -8% 48%, hsl(205 55% 90% / 0.32) 0%, transparent 90%)",
+    "radial-gradient(100% 130% at 104% 42%, hsl(233 45% 83% / 0.28) 0%, transparent 90%)",
+    "radial-gradient(145% 75% at 50% -8%, hsl(200 50% 95% / 0.24) 0%, transparent 92%)",
+  ].join(", ");
+  const wash =
+    "linear-gradient(160deg, hsl(200 55% 97% / 0.35) 0%, transparent 65%, transparent 100%)";
 
   return (
     <div
@@ -137,11 +151,8 @@ function HomepageAtmosphere() {
       style={{ WebkitMaskImage: maskImage, maskImage }}
     >
       <div className="absolute inset-0 opacity-100 sm:opacity-80 lg:opacity-65">
-        <div className="absolute -left-20 -top-16 size-72 rounded-full bg-sky-400/[0.14] blur-3xl sm:size-96" />
-        <div className="absolute -right-16 -top-24 size-80 rounded-full bg-blue-400/[0.12] blur-3xl sm:size-[26rem]" />
-        <div className="absolute -right-10 top-1/3 size-72 rounded-full bg-indigo-300/[0.1] blur-3xl sm:size-[22rem]" />
-        <div className="absolute -left-24 bottom-10 size-72 rounded-full bg-sky-300/[0.09] blur-3xl sm:size-96" />
-        <div className="absolute -right-14 bottom-0 size-64 rounded-full bg-indigo-400/[0.06] blur-3xl sm:size-80" />
+        <div className="absolute inset-0" style={{ backgroundImage: landscape }} />
+        <div className="absolute inset-0" style={{ backgroundImage: wash }} />
       </div>
     </div>
   );
