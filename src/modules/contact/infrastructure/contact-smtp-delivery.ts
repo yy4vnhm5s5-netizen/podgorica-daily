@@ -42,23 +42,43 @@ function createSmtpContactDelivery(
       configuration.username && configuration.password
         ? { pass: configuration.password, user: configuration.username }
         : undefined,
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
     host: configuration.host,
     port: configuration.port,
     secure: configuration.secure,
+    socketTimeout: 15_000,
   });
   console.log("[contact-debug] 5. after transporter created");
 
   return {
     async deliver({ inquiry, metadata }) {
       // TEMPORARY DEBUG LOGGING — remove once the "hangs on Slanje..." issue is diagnosed.
+      console.log("[contact-debug] 6. before transporter.verify()");
+      try {
+        await transporter.verify();
+        console.log("[contact-debug] 7. after transporter.verify()");
+      } catch (error) {
+        // Log the complete error, then let it propagate — the existing catch in
+        // submitContactInquiry already classifies any thrown error into the normal friendly
+        // delivery-failed response, so no new error-handling behavior is introduced here.
+        console.error("[contact-debug] caught error from transporter.verify()", error);
+        throw error;
+      }
+
       console.log("[contact-debug] 8. before transporter.sendMail()");
-      await transporter.sendMail({
-        from: configuration.from,
-        replyTo: inquiry.email,
-        subject: "Gradom — Contact inquiry",
-        text: formatContactInquiryMessage(inquiry, metadata),
-        to: configuration.contactEmail,
-      });
+      try {
+        await transporter.sendMail({
+          from: configuration.from,
+          replyTo: inquiry.email,
+          subject: "Gradom — Contact inquiry",
+          text: formatContactInquiryMessage(inquiry, metadata),
+          to: configuration.contactEmail,
+        });
+      } catch (error) {
+        console.error("[contact-debug] caught error from transporter.sendMail()", error);
+        throw error;
+      }
       console.log("[contact-debug] 9. after transporter.sendMail() resolved");
     },
   };
