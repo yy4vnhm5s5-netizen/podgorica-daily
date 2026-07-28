@@ -20,6 +20,7 @@ import {
   getMonteGigsCitySource,
 } from "@/modules/going-out/infrastructure/montegigs-going-out";
 import { initializeMonteGigsGoingOut } from "@/modules/going-out/infrastructure/montegigs-going-out-initialization";
+import { initializeBudvaSeaWaterQuality } from "@/modules/sea-water-quality/infrastructure/budva-sea-water-quality-initialization";
 import { initializeZpcgRailwayCache } from "@/modules/transport/infrastructure/zpcg-railway-initialization";
 
 export function register() {
@@ -65,6 +66,12 @@ export function register() {
   if (env.ENABLE_FLIGHTS) {
     void initializePodgoricaFlights({
       cachePath: env.PODGORICA_FLIGHTS_CACHE_PATH,
+    });
+  }
+
+  if (env.ENABLE_SEA_WATER_QUALITY) {
+    void initializeBudvaSeaWaterQuality({
+      cachePath: env.SEA_WATER_QUALITY_CACHE_PATH,
     });
   }
 

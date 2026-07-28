@@ -19,7 +19,7 @@ const cityRegistry: Record<string, City> = {
   },
   budva: {
     accusativeName: "Budvu",
-    capabilities: ["electricity", "weather", "goingOut"],
+    capabilities: ["electricity", "weather", "goingOut", "seaWaterQuality"],
     country: "Montenegro",
     description: "Događaji, izlasci i lokalne informacije za Budvu.",
     id: "budva",

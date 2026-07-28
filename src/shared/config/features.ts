@@ -13,6 +13,7 @@ const featureFlags = {
   goingOut: env.ENABLE_GOING_OUT,
   maps: false,
   search: false,
+  seaWaterQuality: env.ENABLE_SEA_WATER_QUALITY,
   weather: env.ENABLE_WEATHER,
 } as const;
 

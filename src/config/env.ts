@@ -46,6 +46,13 @@ const environmentSchema = z.object({
   VIKPG_CACHE_PATH: z.string().min(1).optional(),
   VIKPG_CACHE_FRESHNESS_MINUTES: z.coerce.number().int().positive().default(150),
   VIKPG_REFRESH_SECRET: z.string().min(32).optional(),
+  SEA_WATER_QUALITY_CACHE_PATH: z.string().min(1).optional(),
+  // Individual bathing locations are re-sampled roughly every 3 days during the season, so 3 days
+  // (4320 minutes) tracks the real update cadence — long enough that one missed daily refresh
+  // doesn't falsely flag genuinely current data as stale, short enough to surface an actually
+  // broken collector within a reasonable window.
+  SEA_WATER_QUALITY_CACHE_FRESHNESS_MINUTES: z.coerce.number().int().positive().default(4_320),
+  SEA_WATER_QUALITY_REFRESH_SECRET: z.string().min(32).optional(),
   CITY_ALERTS_REFRESH_SECRET: z.string().min(32).optional(),
   CONTACT_EMAIL: z.string().email().optional(),
   SMTP_FROM: z
@@ -68,6 +75,7 @@ const environmentSchema = z.object({
   ENABLE_FLIGHTS: z.enum(["false", "true"]).default("true"),
   ENABLE_GOING_OUT: z.enum(["false", "true"]).default("true"),
   ENABLE_WEATHER: z.enum(["false", "true"]).default("true"),
+  ENABLE_SEA_WATER_QUALITY: z.enum(["false", "true"]).default("true"),
   NEXT_PUBLIC_APP_ENV: z.string().min(1).default("development"),
   NEXT_PUBLIC_SITE_URL: z.string().url().optional(),
 });
@@ -131,6 +139,9 @@ const parsedEnvironment = environmentSchema.safeParse({
   VIKPG_CACHE_PATH: process.env.VIKPG_CACHE_PATH,
   VIKPG_CACHE_FRESHNESS_MINUTES: process.env.VIKPG_CACHE_FRESHNESS_MINUTES,
   VIKPG_REFRESH_SECRET: process.env.VIKPG_REFRESH_SECRET,
+  SEA_WATER_QUALITY_CACHE_PATH: process.env.SEA_WATER_QUALITY_CACHE_PATH,
+  SEA_WATER_QUALITY_CACHE_FRESHNESS_MINUTES: process.env.SEA_WATER_QUALITY_CACHE_FRESHNESS_MINUTES,
+  SEA_WATER_QUALITY_REFRESH_SECRET: process.env.SEA_WATER_QUALITY_REFRESH_SECRET,
   CITY_ALERTS_REFRESH_SECRET: process.env.CITY_ALERTS_REFRESH_SECRET,
   CONTACT_EMAIL: process.env.CONTACT_EMAIL,
   SMTP_FROM: process.env.SMTP_FROM,
@@ -147,6 +158,7 @@ const parsedEnvironment = environmentSchema.safeParse({
   ENABLE_FLIGHTS: process.env.ENABLE_FLIGHTS,
   ENABLE_GOING_OUT: process.env.ENABLE_GOING_OUT,
   ENABLE_WEATHER: process.env.ENABLE_WEATHER,
+  ENABLE_SEA_WATER_QUALITY: process.env.ENABLE_SEA_WATER_QUALITY,
   NEXT_PUBLIC_APP_ENV: process.env.NEXT_PUBLIC_APP_ENV,
   NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
 });
@@ -201,6 +213,9 @@ const resolvedEnvironment = {
   VIKPG_CACHE_PATH:
     parsedEnvironment.data.VIKPG_CACHE_PATH ??
     resolveRuntimeCachePath("vikpg-water-alerts.json", runtimeDataDirectory),
+  SEA_WATER_QUALITY_CACHE_PATH:
+    parsedEnvironment.data.SEA_WATER_QUALITY_CACHE_PATH ??
+    `${cacheDirectory}/budva-sea-water-quality.json`,
   RUNTIME_DATA_DIR: runtimeDataDirectory,
 };
 
@@ -217,6 +232,7 @@ export const env = {
   ENABLE_FLIGHTS: resolvedEnvironment.ENABLE_FLIGHTS === "true",
   ENABLE_GOING_OUT: resolvedEnvironment.ENABLE_GOING_OUT === "true",
   ENABLE_WEATHER: resolvedEnvironment.ENABLE_WEATHER === "true",
+  ENABLE_SEA_WATER_QUALITY: resolvedEnvironment.ENABLE_SEA_WATER_QUALITY === "true",
   EVENT_QUALITY_WARN_MISSING_DESCRIPTION:
     resolvedEnvironment.EVENT_QUALITY_WARN_MISSING_DESCRIPTION === "true",
   EVENT_QUALITY_WARN_MISSING_START_TIME:

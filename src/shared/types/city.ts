@@ -4,7 +4,14 @@ type CityId = string;
 type CityNameForm = "accusative" | "locative" | "nominative";
 
 type CityCapability =
-  "electricity" | "events" | "flights" | "goingOut" | "railway" | "water" | "weather";
+  | "electricity"
+  | "events"
+  | "flights"
+  | "goingOut"
+  | "railway"
+  | "seaWaterQuality"
+  | "water"
+  | "weather";
 
 interface City {
   accusativeName?: string;

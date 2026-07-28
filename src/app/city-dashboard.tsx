@@ -15,6 +15,7 @@ import {
 import { AirportFlightsCard } from "@/modules/flights/presentation/airport-flights-card";
 import { GoingOutSection } from "@/modules/going-out/presentation/going-out-section";
 import { getAvailableGoingOutEvents } from "@/modules/going-out/presentation/going-out-ui-model";
+import { SeaWaterQualityCard } from "@/modules/sea-water-quality/presentation/sea-water-quality-card";
 import { RailwayStationCard } from "@/modules/transport/presentation/railway-station-card";
 import {
   CityAlertsSection,
@@ -41,7 +42,7 @@ async function CityDashboard({ context }: CityDashboardProps) {
   const { city, locale } = context;
   const translations = getTranslations(locale);
   const { advertising, emergencyNumbers } = translations.dashboard;
-  const { capabilities, events, flights, goingOut, railway, weather } =
+  const { capabilities, events, flights, goingOut, railway, seaWaterQuality, weather } =
     await loadCityDashboardData(context);
   const cinemaEvents = events.events.filter((event) => event.sourceId === "cineplexx-podgorica");
   const cinemaProgramme = selectHomepageCinemaProgramme(cinemaEvents, {
@@ -80,6 +81,14 @@ async function CityDashboard({ context }: CityDashboardProps) {
           <Suspense fallback={<CityAlertsSectionLoading context={context} locale={locale} />}>
             <CityAlertsSection context={context} locale={locale} />
           </Suspense>
+        ) : null}
+        {seaWaterQuality ? (
+          <SeaWaterQualityCard
+            lastSuccessfulRefreshAt={seaWaterQuality.lastSuccessfulRefreshAt}
+            locale={locale}
+            state={seaWaterQuality.state}
+            summary={seaWaterQuality.summary}
+          />
         ) : null}
         {goingOut ? (
           <GoingOutSection

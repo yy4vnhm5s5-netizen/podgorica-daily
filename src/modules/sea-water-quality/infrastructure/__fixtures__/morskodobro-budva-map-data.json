@@ -1,0 +1,63 @@
+{
+  "ukupno": 34,
+  "sumarno": [
+    [1, 27],
+    [2, 2],
+    [3, 3],
+    [4, 2]
+  ],
+  "mjerenja": [
+    {
+      "id": 36,
+      "naziv": "Jaz 01",
+      "plaza": "JAZ",
+      "opstina": "Budva",
+      "kalendar": 5,
+      "datumUzorkovanja": "21.07.2026",
+      "vrijemeUzorkovanja": "21.07.2026. 14:22",
+      "ocjena": "Odlična",
+      "tezina": 1,
+      "gSirina": null,
+      "gDuzina": null
+    },
+    {
+      "id": 30,
+      "naziv": "Slovenska plaža 01",
+      "plaza": "SLOVENSKA PLAZA",
+      "opstina": "Budva",
+      "kalendar": 5,
+      "datumUzorkovanja": "23.07.2026",
+      "vrijemeUzorkovanja": "23.07.2026. 09:10",
+      "ocjena": "Loša",
+      "tezina": 4,
+      "gSirina": null,
+      "gDuzina": null
+    },
+    {
+      "id": 28,
+      "naziv": "Slovenska plaža 03",
+      "plaza": "SLOVENSKA PLAZA",
+      "opstina": "Budva",
+      "kalendar": 5,
+      "datumUzorkovanja": "21.07.2026",
+      "vrijemeUzorkovanja": "21.07.2026. 06:15",
+      "ocjena": "Zadovoljavajuća",
+      "tezina": 3,
+      "gSirina": null,
+      "gDuzina": null
+    },
+    {
+      "id": 40,
+      "naziv": "Sv. Stefan plaža 02",
+      "plaza": "SVETOSTEFANSKA PLAZA",
+      "opstina": "Budva",
+      "kalendar": 5,
+      "datumUzorkovanja": "21.07.2026",
+      "vrijemeUzorkovanja": "21.07.2026. 07:31",
+      "ocjena": "Dobra",
+      "tezina": 2,
+      "gSirina": null,
+      "gDuzina": null
+    }
+  ]
+}

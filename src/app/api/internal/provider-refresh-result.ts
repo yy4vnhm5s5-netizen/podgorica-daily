@@ -2,6 +2,7 @@ import type { CityAlertCollectorResult } from "@/modules/city-alerts/infrastruct
 import type { EventRefreshSummary } from "@/modules/events/infrastructure/events-refresh-runner";
 import type { PodgoricaFlightsCollectorResult } from "@/modules/flights/infrastructure/collect-podgorica-flights";
 import type { GoingOutCollectorResult } from "@/modules/going-out/infrastructure/collect-montegigs-going-out";
+import type { BudvaSeaWaterQualityCollectorResult } from "@/modules/sea-water-quality/infrastructure/collect-budva-sea-water-quality";
 import type { ZpcgCollectorResult } from "@/modules/transport/infrastructure/collect-zpcg-railway";
 import type { RefreshEndpointState } from "./refresh-post-handler";
 
@@ -100,6 +101,16 @@ function toZpcgRefreshEndpointResult(result: ZpcgCollectorResult): ProviderRefre
   );
 }
 
+function toSeaWaterQualityRefreshEndpointResult(
+  result: BudvaSeaWaterQualityCollectorResult,
+): ProviderRefreshEndpointResult {
+  return toSingleProviderRefreshEndpointResult(
+    "budva-sea-water-quality",
+    result,
+    (refresh) => refresh.totalLocations,
+  );
+}
+
 function toSingleProviderRefreshEndpointResult<
   TRefresh extends {
     errorCode?: string;
@@ -187,6 +198,7 @@ export {
   toFlightsRefreshEndpointResult,
   toGoingOutRefreshEndpointResult,
   toMultiCityAlertRefreshEndpointResult,
+  toSeaWaterQualityRefreshEndpointResult,
   toZpcgRefreshEndpointResult,
   type EventRefreshEndpointResult,
   type MultiCityAlertRefreshEndpointResult,

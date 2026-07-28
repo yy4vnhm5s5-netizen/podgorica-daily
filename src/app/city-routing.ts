@@ -126,6 +126,7 @@ function getCityDashboardCapabilities(context: CityContext) {
     flights: supportsCityCapability(context.city, "flights"),
     goingOut: supportsCityCapability(context.city, "goingOut"),
     railway: supportsCityCapability(context.city, "railway"),
+    seaWaterQuality: supportsCityCapability(context.city, "seaWaterQuality"),
     weather: supportsCityCapability(context.city, "weather"),
   };
 }
