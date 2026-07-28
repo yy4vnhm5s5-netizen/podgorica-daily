@@ -55,8 +55,6 @@ async function submitContactInquiry({
 
   const parsed = parseContactInquiry(input);
   if (!parsed.success) return { fieldErrors: parsed.fieldErrors, status: "invalid" };
-  // TEMPORARY DEBUG LOGGING — remove once the "hangs on Slanje..." issue is diagnosed.
-  console.log("[contact-debug] 3. validation completed successfully");
 
   const rateLimit = rateLimiter.consume(clientId, now);
   if (!rateLimit.allowed) {
@@ -74,11 +72,11 @@ async function submitContactInquiry({
     });
     return { status: "success" };
   } catch (error) {
-    // TEMPORARY DEBUG LOGGING — this catch previously classified the error into a status
-    // without ever logging it, which is why Railway logs showed no SMTP errors even when
-    // delivery failed. Log the full error object (Node prints the stack for Error instances)
-    // before returning the same classification as before — no functional change.
-    console.error("[contact-debug] 10. caught error from delivery.deliver()", error);
+    // Generic delivery-failure logging, provider-agnostic. The delivery implementation itself
+    // (e.g. contact-resend-delivery.ts) already logs its own safe diagnostics before throwing;
+    // this is a final backstop so any delivery error — from any provider — is always visible in
+    // server logs, never silently swallowed into a response code.
+    console.error("[contact] delivery failed", error);
     if (error instanceof ContactDeliveryUnavailableError) return { status: "delivery-unavailable" };
     return { status: "delivery-failed" };
   }

@@ -33,7 +33,7 @@ Provider metadata is centrally registered for Weather, CEDIS, and VIK Podgorica.
 
 ## Contact boundary
 
-`src/modules/contact` owns contact-inquiry validation, a server-side submission use case, an in-memory request limiter for the current single-instance deployment, SMTP delivery, and localized presentation. The public route posts only to `/api/contact`; it never exposes a destination address, stores inquiries, or claims success before the SMTP transport accepts delivery. A multi-instance deployment requires a shared rate-limit adapter before the contact form can retain the same abuse-protection guarantee.
+`src/modules/contact` owns contact-inquiry validation, a server-side submission use case, an in-memory request limiter for the current single-instance deployment, Resend HTTPS API delivery, and localized presentation. The public route posts only to `/api/contact`; it never exposes a destination address, stores inquiries, or claims success before the Resend API accepts delivery. Zoho Mail EU remains the receiving mailbox; Resend is used only as the outbound sending transport, since Railway Hobby blocks outbound SMTP. A multi-instance deployment requires a shared rate-limit adapter before the contact form can retain the same abuse-protection guarantee.
 
 ## Event platform boundary
 

@@ -22,4 +22,4 @@ An API contract change requires ownership, compatibility review, test fixtures, 
 
 ## Contact submission
 
-`POST /api/contact` is a server-owned form boundary, not a general public API. It accepts only validated contact fields, rejects a hidden honeypot, applies the current single-instance in-memory request limit, and returns success only after SMTP accepts delivery. The route does not persist inquiries or expose the configured destination address. SMTP credentials and the destination address remain server-only environment variables.
+`POST /api/contact` is a server-owned form boundary, not a general public API. It accepts only validated contact fields, rejects a hidden honeypot, applies the current single-instance in-memory request limit, and returns success only after the Resend HTTPS API accepts delivery. The route does not persist inquiries or expose the configured destination address. The Resend API key and the destination address remain server-only environment variables.
