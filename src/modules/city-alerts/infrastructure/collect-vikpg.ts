@@ -2,10 +2,17 @@ import { dirname } from "node:path";
 
 import { env } from "../../../config/env.ts";
 import { acquireRefreshLock } from "../../../shared/lib/refresh-lock.ts";
-import type { CityAlertCollectorResult } from "./city-alerts-collector.ts";
+import type {
+  CityAlertCollectorResult,
+  CityAlertCollectorSummary,
+} from "./city-alerts-collector.ts";
 import { defaultVikpgCachePath, readVikpgCache, writeVikpgCache } from "./vikpg-cache.ts";
 import { createVikpgHttpClient } from "./vikpg-http-client.ts";
-import { refreshVikpg, type VikpgRefreshResult } from "./vikpg-refresh.ts";
+import {
+  refreshVikpg,
+  type VikpgFetchDiagnostics,
+  type VikpgRefreshResult,
+} from "./vikpg-refresh.ts";
 
 interface VikpgCollectorDependencies {
   cachePath?: string;
@@ -13,7 +20,15 @@ interface VikpgCollectorDependencies {
   writeOutput?: (line: string) => void;
 }
 
-type VikpgCollectorResult = CityAlertCollectorResult;
+// Extends the shared City Alerts collector summary with VIK-specific, already-sanitized fetch
+// diagnostics (see VikpgFetchDiagnostics) — CEDIS's summary shape and collector are untouched.
+interface VikpgCollectorSummary extends CityAlertCollectorSummary {
+  diagnostics?: VikpgFetchDiagnostics;
+}
+
+interface VikpgCollectorResult extends CityAlertCollectorResult {
+  summary: VikpgCollectorSummary;
+}
 
 async function runVikpgCollector({
   cachePath = env.VIKPG_CACHE_PATH ?? defaultVikpgCachePath,
@@ -54,6 +69,7 @@ async function runVikpgCollector({
       cachePath,
       cacheStatus: result.snapshot?.freshnessStatus ?? "unavailable",
       completedAt: new Date().toISOString(),
+      ...(result.diagnostics ? { diagnostics: result.diagnostics } : {}),
       ...(result.errorCode ? { errorCode: result.errorCode } : {}),
       retainedPreviousSnapshot: result.retainedPreviousSnapshot,
       status: result.success
@@ -76,4 +92,9 @@ if (process.argv[1]?.endsWith("collect-vikpg.ts")) {
   });
 }
 
-export { runVikpgCollector, type VikpgCollectorDependencies, type VikpgCollectorResult };
+export {
+  runVikpgCollector,
+  type VikpgCollectorDependencies,
+  type VikpgCollectorResult,
+  type VikpgCollectorSummary,
+};

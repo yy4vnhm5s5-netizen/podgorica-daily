@@ -1,6 +1,10 @@
 import type { CityAlert } from "../domain/city-alert.ts";
 import { calculateVikpgFreshness, type VikpgCacheSnapshot } from "./vikpg-cache.ts";
-import type { VikpgHttpClient } from "./vikpg-http-client.ts";
+import {
+  VikpgFetchError,
+  type VikpgHttpClient,
+  type VikpgNetworkErrorType,
+} from "./vikpg-http-client.ts";
 import {
   discoverVikpgNotices,
   parseVikpgNotice,
@@ -15,8 +19,21 @@ interface VikpgRefreshCache {
   write(snapshot: VikpgCacheSnapshot): Promise<void>;
 }
 
+// Safe-to-log diagnostics carried from a failed VikpgFetchError into the refresh/collector
+// summary: never the full HTML body, headers, cookies, query string, or a stack trace — only a
+// bounded set of fields already sanitized by vikpg-http-client.ts.
+interface VikpgFetchDiagnostics {
+  emptyBody?: boolean;
+  finalUrl?: string;
+  httpStatus?: number;
+  networkErrorType?: VikpgNetworkErrorType;
+  redirected?: boolean;
+  responseBodyPreview?: string;
+}
+
 interface VikpgRefreshResult {
   classification: VikpgRefreshClassification;
+  diagnostics?: VikpgFetchDiagnostics;
   error?: string;
   errorCode?: string;
   retainedPreviousSnapshot: boolean;
@@ -117,6 +134,7 @@ async function refreshVikpg({
       getErrorCode(error),
       "VIK refresh could not be completed.",
       [],
+      getVikpgFetchDiagnostics(error),
     );
   }
 }
@@ -131,9 +149,11 @@ function retainPrevious(
   errorCode: string,
   error: string,
   warnings: string[],
+  diagnostics?: VikpgFetchDiagnostics,
 ): VikpgRefreshResult {
   return {
     classification,
+    ...(diagnostics ? { diagnostics } : {}),
     error,
     errorCode,
     retainedPreviousSnapshot: Boolean(previous),
@@ -156,8 +176,29 @@ function getErrorCode(error: unknown) {
     : "vikpg-refresh-failed";
 }
 
+// Only VikpgFetchError instances (thrown by the HTTP client) carry structured diagnostics; a
+// cache-read/write failure or a classification decision elsewhere in this file has none to
+// report, which is correct — those are not fetch-layer failures. A plain timeout has no extra
+// fields either (see vikpg-http-client.ts), so this returns undefined rather than `{}` — the
+// errorCode alone already says "timeout."
+function getVikpgFetchDiagnostics(error: unknown): VikpgFetchDiagnostics | undefined {
+  if (!(error instanceof VikpgFetchError)) return undefined;
+  const { emptyBody, finalUrl, httpStatus, networkErrorType, redirected, responseBodyPreview } =
+    error;
+  const diagnostics: VikpgFetchDiagnostics = {
+    ...(emptyBody !== undefined ? { emptyBody } : {}),
+    ...(finalUrl !== undefined ? { finalUrl } : {}),
+    ...(httpStatus !== undefined ? { httpStatus } : {}),
+    ...(networkErrorType !== undefined ? { networkErrorType } : {}),
+    ...(redirected !== undefined ? { redirected } : {}),
+    ...(responseBodyPreview !== undefined ? { responseBodyPreview } : {}),
+  };
+  return Object.keys(diagnostics).length > 0 ? diagnostics : undefined;
+}
+
 export {
   refreshVikpg,
+  type VikpgFetchDiagnostics,
   type VikpgRefreshCache,
   type VikpgRefreshClassification,
   type VikpgRefreshResult,

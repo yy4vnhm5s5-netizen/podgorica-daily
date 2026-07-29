@@ -107,6 +107,103 @@ test("replaces a cache with a genuinely empty successful listing", async () => {
   assert.deepEqual(memory.snapshot()?.alerts, []);
 });
 
+test("propagates a granular HTTP errorCode and sanitized diagnostics through a failed refresh", async () => {
+  const memory = memoryCache(previousSnapshot());
+  const httpClient = createVikpgHttpClient({
+    fetchImplementation: async () => ({
+      ok: false,
+      status: 403,
+      text: async () => "<html><body>Forbidden</body></html>",
+      url: vikpgWaterNoticesUrl,
+    }),
+    retries: 0,
+  });
+
+  const result = await refreshVikpg({ cache: memory.cache, httpClient, now: fixedNow });
+
+  assert.equal(result.success, false);
+  assert.equal(result.errorCode, "vikpg-http-error");
+  assert.equal(result.retainedPreviousSnapshot, true);
+  assert.deepEqual(result.diagnostics, {
+    finalUrl: vikpgWaterNoticesUrl,
+    httpStatus: 403,
+    responseBodyPreview: "Forbidden",
+  });
+  // The retained snapshot itself must stay exactly what it was — diagnostics live only on the
+  // in-memory result, never written into the cache schema.
+  assert.equal(memory.snapshot()?.alerts[0]?.id, "previous");
+  assert.equal("diagnostics" in (memory.snapshot() ?? {}), false);
+});
+
+test("propagates vikpg-network-error and vikpg-empty-response distinctly (not the old generic vikpg-request-failed)", async () => {
+  const networkResult = await refreshVikpg({
+    cache: memoryCache(previousSnapshot()).cache,
+    httpClient: createVikpgHttpClient({
+      fetchImplementation: async () => {
+        throw new Error("connection reset");
+      },
+      retries: 0,
+    }),
+    now: fixedNow,
+  });
+  assert.equal(networkResult.errorCode, "vikpg-network-error");
+
+  const emptyResult = await refreshVikpg({
+    cache: memoryCache(previousSnapshot()).cache,
+    httpClient: createVikpgHttpClient({
+      fetchImplementation: async () => ({ ok: true, status: 200, text: async () => "", url: "" }),
+      retries: 0,
+    }),
+    now: fixedNow,
+  });
+  assert.equal(emptyResult.errorCode, "vikpg-empty-response");
+});
+
+test("leaves diagnostics entirely undefined for a timeout, instead of an empty object", async () => {
+  const result = await refreshVikpg({
+    cache: memoryCache(previousSnapshot()).cache,
+    httpClient: createVikpgHttpClient({
+      fetchImplementation: async () => {
+        const error = new Error("aborted");
+        error.name = "AbortError";
+        throw error;
+      },
+      retries: 0,
+    }),
+    now: fixedNow,
+  });
+
+  assert.equal(result.errorCode, "vikpg-request-timeout");
+  assert.equal(result.diagnostics, undefined);
+});
+
+test("does not attach diagnostics for a cache-read failure or a suspicious-empty classification", async () => {
+  const readFailure = await refreshVikpg({
+    cache: {
+      read: () => Promise.reject(new Error("disk error")),
+      write: async () => {},
+    },
+    // Never reached: cache.read() fails before any HTTP call would happen.
+    httpClient: fixtureClient({}),
+    now: fixedNow,
+  });
+  assert.equal(readFailure.errorCode, "cache-read-failed");
+  assert.equal(readFailure.diagnostics, undefined);
+
+  const memory = memoryCache(previousSnapshot());
+  const suspiciousResult = await refreshVikpg({
+    cache: memory.cache,
+    httpClient: fixtureClient({
+      [vikpgWaterNoticesUrl]:
+        "<main><h2>Servisne informacije</h2><a href='/index.php?id=2001'>Informacija o kvaru</a></main>",
+      "https://vikpg.me/index.php?id=2001": await fixture("vikpg-malformed.html"),
+    }),
+    now: fixedNow,
+  });
+  assert.equal(suspiciousResult.errorCode, "suspicious-empty-result");
+  assert.equal(suspiciousResult.diagnostics, undefined);
+});
+
 test("retries transient VIK HTTP failures but not permanent failures", async () => {
   let attempts = 0;
   const transient = createVikpgHttpClient({

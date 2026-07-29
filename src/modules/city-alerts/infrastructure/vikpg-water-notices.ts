@@ -3,7 +3,10 @@ import { createHash } from "node:crypto";
 import type { CityAlert } from "@/modules/city-alerts/domain/city-alert";
 
 const vikpgOrigin = "https://vikpg.me";
-const vikpgWaterNoticesUrl = "https://vikpg.me/me/mediji/servisne-informacije/obavjestenja.html";
+// Direct canonical URL. The former "/me/" path (ADR 0016) was a legacy URL that only reached this
+// same page via a 301 redirect Node's native fetch already followed transparently — removing the
+// hop avoids one unnecessary network round trip and point of failure, nothing more.
+const vikpgWaterNoticesUrl = "https://vikpg.me/mediji/servisne-informacije/obavjestenja.html";
 
 const servicePattern =
   /\b(?:vodosnabdijevanj\w*|obustav\w*|prekid\w*|kvar\w*|havarij\w*|sanacij\w*|radov\w*|pritis\w*|restrikc\w*|vodovodn\w*|cjevovod\w*|otklonjen\w*|normalizovan\w*|uspostavljen\w*)\b/i;
@@ -47,8 +50,7 @@ interface VikpgParseResult {
 }
 
 /**
- * Discovers water-service notices from the official VIK listing. The site currently
- * renders service entries on the home page after redirecting the legacy listing URL.
+ * Discovers water-service notices from the official VIK listing.
  */
 function discoverVikpgNotices(html: string, now = new Date()): VikpgNoticeLink[] {
   const links = [...html.matchAll(/<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a\s*>/gi)]
