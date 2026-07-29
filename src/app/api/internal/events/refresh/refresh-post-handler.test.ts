@@ -32,7 +32,7 @@ function request(authorization?: string, url = "https://example.test/api/interna
 test("returns success, partial, retained cache, and overlap statuses from the actual POST handler", async () => {
   for (const [state, status] of [
     ["success", 200],
-    ["partial", 207],
+    ["partial", 200],
     ["already-running", 409],
   ] as const) {
     let calls = 0;

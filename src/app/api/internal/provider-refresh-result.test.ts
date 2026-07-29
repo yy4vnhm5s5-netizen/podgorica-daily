@@ -6,9 +6,35 @@ import {
   toEventRefreshEndpointResult,
   toFlightsRefreshEndpointResult,
   toMultiCityAlertRefreshEndpointResult,
+  toMultiCityFlightsRefreshEndpointResult,
   toMultiCitySeaWaterQualityRefreshEndpointResult,
   toSeaWaterQualityRefreshEndpointResult,
 } from "./provider-refresh-result.ts";
+
+function flightsResult({
+  cityId = "podgorica",
+  errorCode,
+  retainedPreviousSnapshot = false,
+}: {
+  cityId?: string;
+  errorCode?: string;
+  retainedPreviousSnapshot?: boolean;
+}) {
+  return {
+    cityId,
+    exitCode: 1 as const,
+    output: "",
+    refresh: {
+      acceptedFlights: retainedPreviousSnapshot ? 4 : 0,
+      ...(errorCode ? { errorCode } : {}),
+      retainedPreviousSnapshot,
+      snapshot: null,
+      success: false,
+      warnings: [],
+    },
+    state: "failed" as const,
+  };
+}
 
 test("maps fixed-provider refresh outcomes without exposing cache paths", () => {
   const cedis = toCityAlertRefreshEndpointResult("cedis", {
@@ -198,4 +224,59 @@ test("maps a single sea water quality collector result with its city id", () => 
   assert.equal(result.acceptedCount, 10);
   assert.equal(result.provider, "sea-water-quality");
   assert.equal(result.state, "success");
+});
+
+test("classifies a cold-start Flights failure with no cache and a genuine upstream error as upstream-unavailable, not unavailable", () => {
+  const result = toFlightsRefreshEndpointResult(
+    flightsResult({ errorCode: "podgorica-flights-request-failed" }),
+  );
+
+  assert.equal(result.state, "upstream-unavailable");
+});
+
+test("classifies a Flights cache-write failure as an operational failure, even with no previous snapshot to retain", () => {
+  const result = toFlightsRefreshEndpointResult(
+    flightsResult({ errorCode: "podgorica-flights-cache-write-failed" }),
+  );
+
+  assert.equal(result.state, "operational-failure");
+});
+
+test("classifies a Flights cache-write failure as an operational failure even when a previous snapshot was retained", () => {
+  const result = toFlightsRefreshEndpointResult(
+    flightsResult({
+      errorCode: "podgorica-flights-cache-write-failed",
+      retainedPreviousSnapshot: true,
+    }),
+  );
+
+  assert.equal(result.state, "operational-failure");
+});
+
+test("classifies the generic Flights refresh-failed fallback (an exception that was not a PodgoricaFlightsFetchError) as an operational failure", () => {
+  const result = toFlightsRefreshEndpointResult(
+    flightsResult({ errorCode: "podgorica-flights-refresh-failed" }),
+  );
+
+  assert.equal(result.state, "operational-failure");
+});
+
+test("leaves a genuine upstream Flights failure as retained when a previous snapshot exists", () => {
+  const result = toFlightsRefreshEndpointResult(
+    flightsResult({ errorCode: "podgorica-flights-timeout", retainedPreviousSnapshot: true }),
+  );
+
+  assert.equal(result.state, "retained");
+});
+
+test("aggregates a multi-city Flights refresh: any operational failure wins over upstream-unavailable or retained", () => {
+  const operational = toMultiCityFlightsRefreshEndpointResult([
+    flightsResult({ cityId: "podgorica", errorCode: "podgorica-flights-cache-write-failed" }),
+  ]);
+  assert.equal(operational.state, "operational-failure");
+
+  const allUpstreamUnavailable = toMultiCityFlightsRefreshEndpointResult([
+    flightsResult({ cityId: "podgorica", errorCode: "podgorica-flights-request-failed" }),
+  ]);
+  assert.equal(allUpstreamUnavailable.state, "upstream-unavailable");
 });

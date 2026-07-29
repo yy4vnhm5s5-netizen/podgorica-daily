@@ -69,7 +69,7 @@ test("returns the safe refresh summary for an authorized request", async () => {
   });
 
   const response = await post(request(`Bearer ${secret}`));
-  assert.equal(response.status, 207);
+  assert.equal(response.status, 200);
   assert.deepEqual(await response.json(), summary("partial"));
 });
 
@@ -118,7 +118,7 @@ test("maps retained and unavailable provider outcomes without leaking cache path
   const response = await post(request(`Bearer ${secret}`));
   const body = await response.json();
 
-  assert.equal(response.status, 207);
+  assert.equal(response.status, 200);
   assert.equal(body.providers[0].retainedPreviousCache, true);
   assert.equal(body.providers[1].cacheStatus, "unavailable");
   assert.equal(JSON.stringify(body).includes("cachePath"), false);

@@ -15,7 +15,7 @@ export const POST = createRefreshPostHandler({
         errorCode: "montegigs-city-unsupported",
         provider: "montegigs-going-out",
         retainedPreviousSnapshot: false,
-        state: "unavailable" as const,
+        state: "bad-request" as const,
         warnings: ["montegigs-city-unsupported"],
       };
     }

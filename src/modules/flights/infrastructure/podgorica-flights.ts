@@ -34,7 +34,29 @@ const podgoricaFlightsUrl = buildMontenegroAirportsUrl("podgorica");
 const defaultPodgoricaFlightsCachePath = env.PODGORICA_FLIGHTS_CACHE_PATH;
 const maximumResponseLength = 2_000_000;
 const maximumDiagnosticBodyPreviewLength = 200;
-const retryDelayMs = 250;
+
+// The public montenegroairports.com feed is observably intermittent — live checks during
+// investigation of the cold-start failure showed several consecutive HTTP 500 responses
+// followed by a normal 200 within seconds. A single retry (the old behavior) is not enough to
+// survive an outage of that shape on a fresh deployment with no prior cache to fall back on.
+// 4 retries = 5 total attempts, with exponential backoff capped at 4s: gaps of 500ms, 1s, 2s,
+// 4s (7.5s of backoff total). Bounded and short enough for a one-time collector run at server
+// startup or a scheduled refresh, not a per-visitor-request path.
+const defaultFlightsHttpRetries = 4;
+const baseRetryDelayMs = 500;
+const maximumRetryDelayMs = 4_000;
+
+function getRetryDelayMs(attemptNumber: number) {
+  return Math.min(baseRetryDelayMs * 2 ** (attemptNumber - 1), maximumRetryDelayMs);
+}
+
+type SleepFunction = (delayMs: number) => Promise<void>;
+
+function defaultSleep(delayMs: number) {
+  return new Promise<void>((resolve) => {
+    setTimeout(resolve, delayMs);
+  });
+}
 
 function buildMontenegroAirportsUrl(cityId: FlightsSupportedCityId) {
   return `${montenegroAirportsBaseUrl}?airport=${montenegroAirportsCodes[cityId]}`;
@@ -207,11 +229,15 @@ class PodgoricaFlightsFetchError extends Error {
 
 function createPodgoricaFlightsHttpClient({
   fetchImplementation = fetch,
-  retries = 1,
+  onRetry = emitPodgoricaFlightsDiagnostic,
+  retries = defaultFlightsHttpRetries,
+  sleep = defaultSleep,
   timeoutMs = 10_000,
 }: {
   fetchImplementation?: FetchImplementation;
+  onRetry?: PodgoricaFlightsDiagnosticEmitter;
   retries?: number;
+  sleep?: SleepFunction;
   timeoutMs?: number;
 } = {}): PodgoricaFlightsHttpClient {
   return {
@@ -269,7 +295,13 @@ function createPodgoricaFlightsHttpClient({
               },
             );
             if (!isRetryableHttpStatus(response.status) || attempt === retries) break;
-            await waitForRetry();
+            await emitRetryDiagnosticAndWait({
+              attempt,
+              error: latestError,
+              onRetry,
+              retries,
+              sleep,
+            });
             continue;
           }
 
@@ -359,6 +391,18 @@ function createPodgoricaFlightsHttpClient({
               },
             );
           }
+          // Network/timeout failures (unlike the terminal codes above) are transient and
+          // retryable — mirrors the HTTP-status branch's retry decision, including the same
+          // backoff delay, which this path previously skipped entirely (it used to retry
+          // immediately with no gap at all).
+          if (attempt === retries) break;
+          await emitRetryDiagnosticAndWait({
+            attempt,
+            error: latestError,
+            onRetry,
+            retries,
+            sleep,
+          });
         }
       }
 
@@ -438,6 +482,48 @@ function parsePodgoricaFlights(payload: string): PodgoricaFlightsParseResult {
   };
 }
 
+// Error codes retainPrevious() can receive that are not backed by a PodgoricaFlightsFetchError
+// instance — parsePodgoricaFlights rejects structurally valid-but-unusable upstream content
+// (an unrecognized payload shape, or a well-formed-but-empty one) before any
+// PodgoricaFlightsFetchError is constructed, and a cache-write failure or an unclassified
+// exception are pipeline faults, not upstream feed behavior at all. Named here (not inline
+// string literals) so the classification helper below and the code that actually produces them
+// cannot silently drift apart.
+const podgoricaFlightsParserFailedErrorCode = "podgorica-flights-parser-failed";
+const podgoricaFlightsEmptyResponseErrorCode = "podgorica-flights-empty-response";
+const podgoricaFlightsCacheWriteFailedErrorCode = "podgorica-flights-cache-write-failed";
+const podgoricaFlightsRefreshFailedErrorCode = "podgorica-flights-refresh-failed";
+
+// One conscious true/false decision per PodgoricaFlightsFetchError code, not a bare string list:
+// Record<PodgoricaFlightsFetchError["code"], boolean> forces this object to have a key for every
+// member of that closed union, so adding a new FetchError code without updating this file is a
+// compile error rather than a silent classification gap.
+const podgoricaFlightsFetchErrorIsUpstream: Record<PodgoricaFlightsFetchError["code"], boolean> = {
+  "podgorica-flights-host-rejected": true,
+  "podgorica-flights-invalid-content-type": true,
+  "podgorica-flights-request-failed": true,
+  "podgorica-flights-response-too-large": true,
+  "podgorica-flights-timeout": true,
+};
+
+// Whether a failed refreshPodgoricaFlights() result reflects the upstream feed's own behavior
+// (safe to report as a routine, non-alerting outcome) rather than a fault in our own pipeline
+// (a cache write that threw, or an exception that isn't a PodgoricaFlightsFetchError at all —
+// both must keep surfacing as real failures). Used by the refresh-endpoint status mapping in
+// provider-refresh-result.ts instead of that file keeping its own separate, hardcoded list.
+function isPodgoricaFlightsUpstreamErrorCode(errorCode: string): boolean {
+  if (
+    errorCode === podgoricaFlightsParserFailedErrorCode ||
+    errorCode === podgoricaFlightsEmptyResponseErrorCode
+  ) {
+    return true;
+  }
+  return (
+    Object.hasOwn(podgoricaFlightsFetchErrorIsUpstream, errorCode) &&
+    podgoricaFlightsFetchErrorIsUpstream[errorCode as PodgoricaFlightsFetchError["code"]]
+  );
+}
+
 async function refreshPodgoricaFlights({
   cachePath,
   cacheWriter = writeJsonCache,
@@ -465,7 +551,7 @@ async function refreshPodgoricaFlights({
         attemptCount: response.attemptCount ?? 1,
         diagnostic,
         diagnosticNow: now(),
-        errorCode: "podgorica-flights-parser-failed",
+        errorCode: podgoricaFlightsParserFailedErrorCode,
         failureCategory: "response-format",
         finalHostname: getUrlHostname(response.finalUrl),
         httpStatus: response.status,
@@ -473,7 +559,30 @@ async function refreshPodgoricaFlights({
         responseMetadata: getSuccessfulResponseDiagnosticMetadata(response),
         upstreamHostname: getUrlHostname(response.requestedUrl) ?? "unknown",
       });
-      return retainPrevious(previous, "podgorica-flights-parser-failed", parsed.warnings);
+      return retainPrevious(previous, podgoricaFlightsParserFailedErrorCode, parsed.warnings);
+    }
+
+    // A structurally valid response reporting zero flights (an empty "value" array, distinct
+    // from "records present but all rejected" above) is treated the same as an unrecognized one
+    // when a non-empty previous snapshot exists — the montenegroairports.com feed is observably
+    // intermittent (it alternates between real data and empty/error responses within seconds),
+    // so an empty-but-well-formed reply must not silently wipe out a good cache. No previous
+    // snapshot, or a previous snapshot that was itself empty, still writes through normally —
+    // first-ever collection and a genuinely quiet schedule both proceed as before.
+    if (parsed.flights.length === 0 && previous && previous.flights.length > 0) {
+      emitPodgoricaFlightsFailureDiagnostic({
+        attemptCount: response.attemptCount ?? 1,
+        diagnostic,
+        diagnosticNow: now(),
+        errorCode: podgoricaFlightsEmptyResponseErrorCode,
+        failureCategory: "response-format",
+        finalHostname: getUrlHostname(response.finalUrl),
+        httpStatus: response.status,
+        previous,
+        responseMetadata: getSuccessfulResponseDiagnosticMetadata(response),
+        upstreamHostname: getUrlHostname(response.requestedUrl) ?? "unknown",
+      });
+      return retainPrevious(previous, podgoricaFlightsEmptyResponseErrorCode, parsed.warnings);
     }
 
     const timestamp = now().toISOString();
@@ -488,7 +597,7 @@ async function refreshPodgoricaFlights({
     try {
       await cacheWriter(snapshot, resolvedCachePath);
     } catch {
-      return retainPrevious(previous, "podgorica-flights-cache-write-failed", []);
+      return retainPrevious(previous, podgoricaFlightsCacheWriteFailedErrorCode, []);
     }
 
     return {
@@ -520,7 +629,9 @@ async function refreshPodgoricaFlights({
     }
     return retainPrevious(
       previous,
-      error instanceof PodgoricaFlightsFetchError ? error.code : "podgorica-flights-refresh-failed",
+      error instanceof PodgoricaFlightsFetchError
+        ? error.code
+        : podgoricaFlightsRefreshFailedErrorCode,
       [],
     );
   }
@@ -817,14 +928,40 @@ function getFailureType(
   return "network";
 }
 
+// 429 is the one 4xx status the existing architecture already treats as transient (rate
+// limiting); every other 4xx is a permanent client-side error and is never retried. Every 5xx is
+// retried — a third-party server error is assumed transient rather than allowlisting specific
+// codes, matching how the upstream has actually failed (plain 500s with an empty body).
 function isRetryableHttpStatus(status: number) {
-  return status === 429 || [500, 502, 503, 504].includes(status);
+  return status === 429 || (status >= 500 && status < 600);
 }
 
-function waitForRetry() {
-  return new Promise<void>((resolve) => {
-    setTimeout(resolve, retryDelayMs);
+async function emitRetryDiagnosticAndWait({
+  attempt,
+  error,
+  onRetry,
+  retries,
+  sleep,
+}: {
+  attempt: number;
+  error: PodgoricaFlightsFetchError | undefined;
+  onRetry: PodgoricaFlightsDiagnosticEmitter;
+  retries: number;
+  sleep: SleepFunction;
+}) {
+  const delayMs = getRetryDelayMs(attempt + 1);
+  onRetry({
+    attemptNumber: attempt + 1,
+    delayMs,
+    ...(error?.code ? { errorCode: error.code } : {}),
+    event: "podgorica-flights-retry-scheduled",
+    ...(error?.failureCategory ? { failureCategory: error.failureCategory } : {}),
+    ...(error?.httpStatus !== undefined ? { httpStatus: error.httpStatus } : {}),
+    nextAttemptNumber: attempt + 2,
+    provider: "podgorica-airport",
+    totalAttempts: retries + 1,
   });
+  await sleep(delayMs);
 }
 
 function parseJson(value: string): { success: true; value: unknown } | { success: false } {
@@ -877,6 +1014,7 @@ export {
   getCachedPodgoricaFlights,
   getFlightsCachePath,
   isFlightsSupportedCityId,
+  isPodgoricaFlightsUpstreamErrorCode,
   montenegroAirportsCodes,
   parsePodgoricaFlights,
   podgoricaFlightsUrl,

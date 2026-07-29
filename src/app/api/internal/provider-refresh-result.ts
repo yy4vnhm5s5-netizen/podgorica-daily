@@ -5,6 +5,7 @@ import type { GoingOutCollectorResult } from "@/modules/going-out/infrastructure
 import type { BudvaSeaWaterQualityCollectorResult } from "@/modules/sea-water-quality/infrastructure/collect-budva-sea-water-quality";
 import type { ZpcgCollectorResult } from "@/modules/transport/infrastructure/collect-zpcg-railway";
 import type { RefreshEndpointState } from "./refresh-post-handler";
+import { isPodgoricaFlightsUpstreamErrorCode } from "@/modules/flights/infrastructure/podgorica-flights";
 
 interface ProviderRefreshEndpointResult {
   acceptedCount: number;
@@ -37,15 +38,15 @@ interface MultiCitySeaWaterQualityRefreshEndpointResult {
 
 function aggregateMultiCityRefreshState(cities: readonly ProviderRefreshEndpointResult[]) {
   const states = cities.map(({ state }) => state);
-  return states.every((state) => state === "success")
-    ? "success"
-    : states.every((state) => state === "already-running")
-      ? "already-running"
-      : states.every((state) => state === "unavailable")
-        ? "unavailable"
-        : states.some((state) => state === "unavailable")
-          ? "partial"
-          : "retained";
+  if (states.some((state) => state === "operational-failure")) return "operational-failure";
+  if (states.every((state) => state === "success")) return "success";
+  if (states.every((state) => state === "already-running")) return "already-running";
+  if (states.every((state) => state === "unavailable")) return "unavailable";
+  if (states.every((state) => state === "upstream-unavailable")) return "upstream-unavailable";
+  if (states.some((state) => state === "unavailable" || state === "upstream-unavailable")) {
+    return "partial";
+  }
+  return "retained";
 }
 
 interface EventRefreshEndpointResult {
@@ -100,12 +101,28 @@ function toMultiCityAlertRefreshEndpointResult(
 function toFlightsRefreshEndpointResult(
   result: PodgoricaFlightsCollectorResult,
 ): ProviderRefreshEndpointResult {
-  return toSingleProviderRefreshEndpointResult(
+  const endpointResult = toSingleProviderRefreshEndpointResult(
     "podgorica-flights",
     result,
     (refresh) => refresh.acceptedFlights,
     result.cityId,
   );
+
+  if (endpointResult.state !== "unavailable" && endpointResult.state !== "retained") {
+    return endpointResult;
+  }
+  if (!endpointResult.errorCode) return endpointResult;
+
+  // The upstream-vs-operational classification is owned by podgorica-flights.ts (the module that
+  // actually produces these error codes), not duplicated here as a separate list that could drift
+  // out of sync with it.
+  if (!isPodgoricaFlightsUpstreamErrorCode(endpointResult.errorCode)) {
+    return { ...endpointResult, state: "operational-failure" };
+  }
+  if (endpointResult.state === "unavailable") {
+    return { ...endpointResult, state: "upstream-unavailable" };
+  }
+  return endpointResult;
 }
 
 function toMultiCityFlightsRefreshEndpointResult(
