@@ -56,6 +56,24 @@ test("derives generic city cards from every active registry city", () => {
   assert.equal(getCity("tivat")?.isActive, true);
 });
 
+test("Tivat's homepage card includes a Događaji shortcut pointing to /tivat/dogadjaji", () => {
+  const tivat = createPlatformCityCardData(createCityContext("tivat"), null);
+  const eventsShortcut = tivat.shortcuts.find((shortcut) => shortcut.key === "events");
+
+  assert.ok(eventsShortcut);
+  assert.equal(eventsShortcut.label, "Događaji");
+  assert.equal(eventsShortcut.href, "/tivat/dogadjaji");
+});
+
+test("a city without the events capability does not receive the Događaji shortcut", () => {
+  const budva = createPlatformCityCardData(createCityContext("budva"), null);
+
+  assert.equal(
+    budva.shortcuts.some((shortcut) => shortcut.key === "events"),
+    false,
+  );
+});
+
 test("creates platform metadata and structured data only from public city cards", () => {
   const cities = getActiveCities();
   const structuredData = createPlatformHomepageStructuredData([

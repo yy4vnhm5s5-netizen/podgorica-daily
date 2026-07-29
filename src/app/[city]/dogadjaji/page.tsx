@@ -14,9 +14,31 @@ import {
 import { ErrorState } from "@/shared/components/error-state";
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
 import { SectionTitle } from "@/shared/components/section-title";
+import { getCityName } from "@/shared/config/cities";
 import { getPageTitle } from "@/shared/config/site";
 import { getEventsPath } from "@/shared/config/public-routes";
 import { getTranslations } from "@/shared/lib/translations";
+import type { City } from "@/shared/types/city";
+
+// eventTranslations.heading is a single shared string ("Događaji u Podgorici") also used by
+// HomepageEventsCard's dashboard-card heading, which this page must not affect — so the page
+// title and H1 are built locally from the resolved city instead of reading .heading. The
+// locative form matches every other per-city page title in this app (see plaze/page.tsx,
+// filmovi/page.tsx) and reduces to the exact existing string for Podgorica.
+function getEventsPageHeading(cityName: string) {
+  return `Događaji u ${cityName}`;
+}
+
+// eventTranslations.supportingText is Podgorica's own existing description ("...zvaničnih
+// podgoričkih izvora.") — kept byte-identical for Podgorica rather than reused for other cities.
+// Every other city gets a generic description built from its own name instead of a copy of
+// Podgorica's, using the same safe locative-name construction as the heading above (no invented
+// per-city adjective, e.g. a guessed "tivatski").
+function getEventsPageDescription(city: City, podgoricaDescription: string) {
+  return city.id === "podgorica"
+    ? podgoricaDescription
+    : `Provjereni programi iz zvaničnih izvora u ${getCityName(city, "locative")}.`;
+}
 
 interface EventsPageProps {
   params: Promise<{ city: string }>;
@@ -32,11 +54,11 @@ async function generateMetadata({ params }: EventsPageProps): Promise<Metadata> 
   const context = resolveActiveCityFeatureRoute(slug, "events");
   if (!context) return {};
   const translations = getEventsTranslations("me");
-  const title = getPageTitle(translations.heading);
+  const title = getPageTitle(getEventsPageHeading(getCityName(context.city, "locative")));
 
   return createPublicRouteMetadata({
     canonical: getEventsPath(context.city),
-    description: translations.supportingText,
+    description: getEventsPageDescription(context.city, translations.supportingText),
     title,
   });
 }
@@ -49,6 +71,7 @@ async function EventsPage({ params, searchParams }: EventsPageProps) {
   const filters = parseEventsUiFilters(await searchParams);
   const context = resolveActiveCityFeatureRoute(slug, "events");
   if (!context) notFound();
+  const heading = getEventsPageHeading(getCityName(context.city, "locative"));
 
   try {
     const eventsReadModel = await getCityEvents(context);
@@ -67,7 +90,7 @@ async function EventsPage({ params, searchParams }: EventsPageProps) {
     return (
       <DashboardLayout city={context.city} translations={translations}>
         <section className="space-y-8" id="events">
-          <SectionTitle as="h1" title={eventTranslations.heading} />
+          <SectionTitle as="h1" title={heading} />
           {allUnavailable ? (
             <ErrorState
               description={eventTranslations.allEventsUnavailableDescription}
@@ -97,7 +120,7 @@ async function EventsPage({ params, searchParams }: EventsPageProps) {
     return (
       <DashboardLayout city={context.city} translations={translations}>
         <section className="space-y-8" id="events">
-          <SectionTitle as="h1" title={eventTranslations.heading} />
+          <SectionTitle as="h1" title={heading} />
           <ErrorState
             description={eventTranslations.allEventsUnavailableDescription}
             title={eventTranslations.allEventsUnavailable}
