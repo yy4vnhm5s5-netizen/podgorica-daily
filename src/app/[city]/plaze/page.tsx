@@ -39,6 +39,8 @@ async function PlazePage({ params }: PlazePageProps) {
   const context = resolveActiveCityFeatureRoute(slug, "seaWaterQuality");
   if (!context) notFound();
   if (!isCityPublicFeatureRouteAvailable(context.city, "seaWaterQuality")) notFound();
+  // getBudvaSeaWaterQuality is legacy-named but city-generic — it resolves context.city's own
+  // cache (Budva, Tivat, ...), not always Budva's.
   const result = await getBudvaSeaWaterQuality(context);
 
   return (

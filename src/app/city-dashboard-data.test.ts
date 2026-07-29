@@ -72,6 +72,50 @@ test("dashboard loader calls every capability-supported query for Podgorica", as
   assert.deepEqual(calls, { events: 1, flights: 1, goingOut: 1, railway: 1, weather: 1 });
 });
 
+test("dashboard loader calls sea water quality for Tivat but not flights or railway", async () => {
+  const context = createCityContext("tivat");
+  const calls = { events: 0, flights: 0, goingOut: 0, railway: 0, seaWaterQuality: 0, weather: 0 };
+
+  await loadCityDashboardData(context, {
+    async getBudvaSeaWaterQuality() {
+      calls.seaWaterQuality += 1;
+      return { state: "fresh", summary: undefined };
+    },
+    async getCityEvents() {
+      calls.events += 1;
+      return getEmptyCityEventsReadModel();
+    },
+    async getCurrentWeather() {
+      calls.weather += 1;
+      return { status: "empty" };
+    },
+    async getGoingOutEvents() {
+      calls.goingOut += 1;
+      return { events: [], state: "unavailable" };
+    },
+    async getPodgoricaFlights() {
+      calls.flights += 1;
+      return { flights: [], state: "unavailable" };
+    },
+    async getRailwayDepartures() {
+      calls.railway += 1;
+      return { departures: [], state: "unavailable" };
+    },
+    isFeatureEnabled() {
+      return true;
+    },
+  });
+
+  assert.deepEqual(calls, {
+    events: 1,
+    flights: 0,
+    goingOut: 1,
+    railway: 0,
+    seaWaterQuality: 1,
+    weather: 1,
+  });
+});
+
 test("dashboard loader keeps other city data available when one highlight source fails", async () => {
   const context = createCityContext("podgorica");
   const events = getEmptyCityEventsReadModel();

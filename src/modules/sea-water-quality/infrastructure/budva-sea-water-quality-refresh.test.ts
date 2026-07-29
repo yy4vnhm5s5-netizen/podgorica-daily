@@ -76,6 +76,61 @@ test("surfaces a parser warning via the diagnostic emitter without failing the r
   });
 });
 
+test("retains a non-empty previous snapshot when a structurally valid response reports zero locations", async () => {
+  await withTempCachePath(async (cachePath) => {
+    const calendarBody = await readFixture("morskodobro-calendar-data.json");
+    const budvaMapBody = await readFixture("morskodobro-budva-map-data.json");
+    const workingClient: MorskodobroHttpClient = {
+      post: async (url) => (url.includes("getCalendarData") ? calendarBody : budvaMapBody),
+    };
+    await refreshBudvaSeaWaterQuality({
+      cachePath,
+      httpClient: workingClient,
+      now: () => new Date("2026-07-24T10:00:00.000Z"),
+    });
+
+    const emptyMapBody = JSON.stringify({ mjerenja: [], sumarno: [], ukupno: 0 });
+    const emptyClient: MorskodobroHttpClient = {
+      post: async (url) => (url.includes("getCalendarData") ? calendarBody : emptyMapBody),
+    };
+    const result = await refreshBudvaSeaWaterQuality({
+      cachePath,
+      httpClient: emptyClient,
+      now: () => new Date("2026-07-25T10:00:00.000Z"),
+    });
+
+    assert.equal(result.success, false);
+    assert.equal(result.retainedPreviousSnapshot, true);
+    assert.equal(result.errorCode, "sea-water-quality-empty-response");
+    assert.equal(result.totalLocations, 34);
+    assert.equal(result.snapshot?.summary.totalLocations, 34);
+    assert.equal(result.snapshot?.summary.gradeCounts.excellent, 27);
+    assert.equal(result.snapshot?.lastRefreshError, "sea-water-quality-empty-response");
+  });
+});
+
+test("writes an empty response through when there is no previous snapshot to protect", async () => {
+  await withTempCachePath(async (cachePath) => {
+    const calendarBody = await readFixture("morskodobro-calendar-data.json");
+    const emptyMapBody = JSON.stringify({ mjerenja: [], sumarno: [], ukupno: 0 });
+    const httpClient: MorskodobroHttpClient = {
+      post: async (url) => (url.includes("getCalendarData") ? calendarBody : emptyMapBody),
+    };
+
+    const result = await refreshBudvaSeaWaterQuality({
+      cachePath,
+      httpClient,
+      now: () => new Date("2026-07-24T10:00:00.000Z"),
+    });
+
+    assert.equal(result.success, true);
+    assert.equal(result.retainedPreviousSnapshot, false);
+    assert.equal(result.totalLocations, 0);
+    assert.equal(result.snapshot?.summary.totalLocations, 0);
+    assert.deepEqual(result.snapshot?.summary.locations, []);
+  });
+});
+
 test("retains the previous snapshot when the upstream request fails", async () => {
   await withTempCachePath(async (cachePath) => {
     const calendarBody = await readFixture("morskodobro-calendar-data.json");
@@ -123,6 +178,32 @@ test("retains previous snapshot without throwing when there is no prior cache an
     assert.equal(result.retainedPreviousSnapshot, false);
     assert.equal(result.snapshot, null);
     assert.equal(result.totalLocations, 0);
+  });
+});
+
+test("refreshes Tivat independently of Budva, requesting Tivat's municipality id and stamping its own municipality", async () => {
+  await withTempCachePath(async (cachePath) => {
+    const calendarBody = await readFixture("morskodobro-calendar-data.json");
+    const mapBody = await readFixture("morskodobro-tivat-map-data.json");
+    const requestedBodies: string[] = [];
+    const httpClient: MorskodobroHttpClient = {
+      post: async (url, body) => {
+        if (!url.includes("getCalendarData")) requestedBodies.push(body.toString());
+        return url.includes("getCalendarData") ? calendarBody : mapBody;
+      },
+    };
+
+    const result = await refreshBudvaSeaWaterQuality({
+      cachePath,
+      cityId: "tivat",
+      httpClient,
+      now: () => new Date("2026-07-29T10:00:00.000Z"),
+    });
+
+    assert.equal(result.success, true);
+    assert.equal(result.totalLocations, 10);
+    assert.equal(result.snapshot?.summary.municipality, "tivat");
+    assert.match(requestedBodies[0] ?? "", /opstina=3/);
   });
 });
 

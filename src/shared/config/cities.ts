@@ -68,9 +68,9 @@ const cityRegistry: Record<string, City> = {
   // place; only the capability flag is pending that verification.
   tivat: {
     accusativeName: "Tivat",
-    capabilities: ["electricity", "events", "goingOut", "weather"],
+    capabilities: ["electricity", "events", "goingOut", "seaWaterQuality", "weather"],
     country: "Montenegro",
-    description: "Struja, događaji, izlasci i lokalne informacije za Tivat.",
+    description: "Struja, događaji, izlasci, plaže i lokalne informacije za Tivat.",
     id: "tivat",
     isActive: true,
     isMain: false,

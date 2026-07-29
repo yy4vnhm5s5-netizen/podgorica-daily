@@ -33,6 +33,7 @@ test("publishes only canonical indexable public routes", async () => {
   assert.equal(urls.includes("/tivat/dogadjaji"), true);
   assert.equal(urls.includes("/tivat/izlasci"), true);
   assert.equal(urls.includes("/tivat/struja"), true);
+  assert.equal(urls.includes("/tivat/plaze"), true);
   // Tivat has the generic "events" capability (Tourism Tivat provider) but not Cineplexx, which
   // is Podgorica-only — it must not get a /filmovi sitemap entry that can only ever 404 or show
   // "no movies". See isCityCinemaRouteAvailable in city-routing.ts.

@@ -29,6 +29,12 @@ interface MultiCityFlightsRefreshEndpointResult {
   state: RefreshEndpointState;
 }
 
+interface MultiCitySeaWaterQualityRefreshEndpointResult {
+  cities: readonly ProviderRefreshEndpointResult[];
+  provider: "sea-water-quality";
+  state: RefreshEndpointState;
+}
+
 function aggregateMultiCityRefreshState(cities: readonly ProviderRefreshEndpointResult[]) {
   const states = cities.map(({ state }) => state);
   return states.every((state) => state === "success")
@@ -137,10 +143,23 @@ function toSeaWaterQualityRefreshEndpointResult(
   result: BudvaSeaWaterQualityCollectorResult,
 ): ProviderRefreshEndpointResult {
   return toSingleProviderRefreshEndpointResult(
-    "budva-sea-water-quality",
+    "sea-water-quality",
     result,
     (refresh) => refresh.totalLocations,
+    result.cityId,
   );
+}
+
+function toMultiCitySeaWaterQualityRefreshEndpointResult(
+  results: readonly BudvaSeaWaterQualityCollectorResult[],
+): MultiCitySeaWaterQualityRefreshEndpointResult {
+  const cities = results.map((result) => toSeaWaterQualityRefreshEndpointResult(result));
+
+  return {
+    cities,
+    provider: "sea-water-quality",
+    state: aggregateMultiCityRefreshState(cities),
+  };
 }
 
 function toSingleProviderRefreshEndpointResult<
@@ -231,10 +250,12 @@ export {
   toGoingOutRefreshEndpointResult,
   toMultiCityAlertRefreshEndpointResult,
   toMultiCityFlightsRefreshEndpointResult,
+  toMultiCitySeaWaterQualityRefreshEndpointResult,
   toSeaWaterQualityRefreshEndpointResult,
   toZpcgRefreshEndpointResult,
   type EventRefreshEndpointResult,
   type MultiCityAlertRefreshEndpointResult,
   type MultiCityFlightsRefreshEndpointResult,
+  type MultiCitySeaWaterQualityRefreshEndpointResult,
   type ProviderRefreshEndpointResult,
 };

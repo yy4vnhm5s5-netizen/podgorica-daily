@@ -7,12 +7,16 @@ import {
   parseCurrentRoundId,
 } from "./budva-sea-water-quality.ts";
 import {
-  defaultBudvaSeaWaterQualityCachePath,
+  getSeaWaterQualityCachePath,
   readBudvaSeaWaterQualityCache,
   writeBudvaSeaWaterQualityCache,
   type BudvaSeaWaterQualityCacheSnapshot,
 } from "./budva-sea-water-quality-cache.ts";
 import type { MorskodobroHttpClient } from "./morskodobro-http-client.ts";
+import {
+  getSeaWaterQualityMunicipality,
+  type SeaWaterQualitySupportedCityId,
+} from "./sea-water-quality-cities.ts";
 
 const seaWaterQualitySourceUrl = "https://monitoring.morskodobro.me";
 
@@ -28,17 +32,21 @@ interface BudvaSeaWaterQualityRefreshResult {
 }
 
 async function refreshBudvaSeaWaterQuality({
-  cachePath = defaultBudvaSeaWaterQualityCachePath,
+  cityId = "budva",
+  cachePath = getSeaWaterQualityCachePath(cityId),
   diagnostic = emitBudvaSeaWaterQualityDiagnostic,
   httpClient,
   now = () => new Date(),
 }: {
   cachePath?: string;
+  cityId?: SeaWaterQualitySupportedCityId;
   diagnostic?: BudvaSeaWaterQualityDiagnosticEmitter;
   httpClient: MorskodobroHttpClient;
   now?: () => Date;
 }): Promise<BudvaSeaWaterQualityRefreshResult> {
   const previous = await readBudvaSeaWaterQualityCache(cachePath);
+  // Type-safe by construction: every SeaWaterQualitySupportedCityId has a matching config entry.
+  const municipalityId = getSeaWaterQualityMunicipality(cityId)!.municipalityId;
 
   try {
     const calendarBody = await httpClient.post(
@@ -52,17 +60,26 @@ async function refreshBudvaSeaWaterQuality({
 
     const mapBody = await httpClient.post(
       morskodobroMapDataUrl,
-      buildMapDataRequestBody({ round, year: now().getFullYear() }),
+      buildMapDataRequestBody({ municipalityId, round, year: now().getFullYear() }),
     );
-    const parsed = parseBudvaSeaWaterQualitySummary(mapBody);
+    const parsed = parseBudvaSeaWaterQualitySummary(mapBody, cityId);
     if (!parsed) {
       return retainPrevious(previous, "sea-water-quality-response-unrecognized");
     }
     const { summary, warnings } = parsed;
+    // A structurally valid response reporting zero locations is treated the same as an
+    // unrecognized one when there's a non-empty previous snapshot to protect — otherwise a
+    // transient upstream blip (e.g. an off-season or momentarily empty crtajMapu response) would
+    // silently wipe out a city's real beach list. No hardcoded minimum: exactly zero is the
+    // trigger. When there is no previous snapshot, or the previous one was itself empty, this
+    // still writes normally — first-ever collection and genuinely empty sources both proceed.
+    if (summary.totalLocations === 0 && previous?.summary.totalLocations) {
+      return retainPrevious(previous, "sea-water-quality-empty-response");
+    }
     if (warnings.length > 0) {
       diagnostic({
         event: "sea-water-quality-parser-warning",
-        provider: "budva-sea-water-quality",
+        provider: `${cityId}-sea-water-quality`,
         totalLocations: summary.totalLocations,
         warnings,
       });

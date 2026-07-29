@@ -1,3 +1,5 @@
+import { dirname, join } from "node:path";
+
 import { env } from "../../../config/env.ts";
 import {
   calculateCacheFreshness,
@@ -9,6 +11,7 @@ import {
 } from "../../../shared/lib/cache.ts";
 
 import type { SeaWaterQualitySummary } from "../domain/sea-water-quality.ts";
+import type { SeaWaterQualitySupportedCityId } from "./sea-water-quality-cities.ts";
 
 interface BudvaSeaWaterQualityCacheSnapshot {
   fetchedAt: string;
@@ -28,6 +31,15 @@ interface BudvaSeaWaterQualityCacheResult {
 }
 
 const defaultBudvaSeaWaterQualityCachePath = env.SEA_WATER_QUALITY_CACHE_PATH;
+
+// Budva keeps its existing env-configured path unchanged; every other supported city derives a
+// sibling filename in the same cache directory instead of a new environment variable — the same
+// convention already used for CEDIS (getCedisCachePath) and MonteGigs (getGoingOutCachePath).
+function getSeaWaterQualityCachePath(cityId: SeaWaterQualitySupportedCityId) {
+  return cityId === "budva"
+    ? defaultBudvaSeaWaterQualityCachePath
+    : join(dirname(defaultBudvaSeaWaterQualityCachePath), `${cityId}-sea-water-quality.json`);
+}
 
 function calculateBudvaSeaWaterQualityFreshness(
   fetchedAt: Date | undefined,
@@ -83,6 +95,7 @@ export {
   calculateBudvaSeaWaterQualityFreshness,
   defaultBudvaSeaWaterQualityCachePath,
   getCachedBudvaSeaWaterQuality,
+  getSeaWaterQualityCachePath,
   readBudvaSeaWaterQualityCache,
   writeBudvaSeaWaterQualityCache,
   type BudvaSeaWaterQualityCacheResult,

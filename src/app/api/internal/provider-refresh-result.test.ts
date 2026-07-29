@@ -6,6 +6,8 @@ import {
   toEventRefreshEndpointResult,
   toFlightsRefreshEndpointResult,
   toMultiCityAlertRefreshEndpointResult,
+  toMultiCitySeaWaterQualityRefreshEndpointResult,
+  toSeaWaterQualityRefreshEndpointResult,
 } from "./provider-refresh-result.ts";
 
 test("maps fixed-provider refresh outcomes without exposing cache paths", () => {
@@ -133,4 +135,67 @@ test("keeps Cineplexx out of the standard-events endpoint result", () => {
     false,
   );
   assert.equal(result.state, "retained");
+});
+
+test("maps a multi-city sea water quality refresh to per-city results without exposing cache paths", () => {
+  const result = toMultiCitySeaWaterQualityRefreshEndpointResult([
+    {
+      cityId: "budva",
+      exitCode: 0,
+      output: "provider=sea-water-quality city=budva state=success",
+      refresh: {
+        retainedPreviousSnapshot: false,
+        snapshot: null,
+        success: true,
+        totalLocations: 34,
+        warnings: [],
+      },
+      state: "success",
+    },
+    {
+      cityId: "tivat",
+      exitCode: 1,
+      output: "provider=sea-water-quality city=tivat state=failed",
+      refresh: {
+        errorCode: "sea-water-quality-calendar-unrecognized",
+        retainedPreviousSnapshot: true,
+        snapshot: null,
+        success: false,
+        totalLocations: 10,
+        warnings: [],
+      },
+      state: "failed",
+    },
+  ]);
+
+  assert.equal(result.provider, "sea-water-quality");
+  assert.deepEqual(
+    result.cities.map(({ cityId }) => cityId),
+    ["budva", "tivat"],
+  );
+  assert.equal(result.cities[0]?.acceptedCount, 34);
+  assert.equal(result.cities[1]?.state, "retained");
+  assert.equal(result.state, "retained");
+  assert.equal(JSON.stringify(result).includes("/private/"), false);
+});
+
+test("maps a single sea water quality collector result with its city id", () => {
+  const result = toSeaWaterQualityRefreshEndpointResult({
+    cityId: "tivat",
+    exitCode: 0,
+    output: "provider=sea-water-quality city=tivat state=success",
+    refresh: {
+      retainedPreviousSnapshot: false,
+      snapshot: null,
+      success: true,
+      totalLocations: 10,
+      warnings: [],
+    },
+    state: "success",
+  });
+
+  assert.equal(result.cityId, "tivat");
+  assert.equal(result.acceptedCount, 10);
+  assert.equal(result.provider, "sea-water-quality");
+  assert.equal(result.state, "success");
 });

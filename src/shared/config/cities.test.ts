@@ -51,12 +51,19 @@ test("registers Tivat as a third active city with its launch-phase capability se
   assert.equal(tivat?.id, "tivat");
   assert.equal(tivat?.isActive, true);
   assert.equal(tivat?.isMain, false);
-  assert.deepEqual(tivat?.capabilities, ["electricity", "events", "goingOut", "weather"]);
+  assert.deepEqual(tivat?.capabilities, [
+    "electricity",
+    "events",
+    "goingOut",
+    "seaWaterQuality",
+    "weather",
+  ]);
   assert.equal(supportsCityCapability(tivat!, "events"), true);
-  // Still excluded: water and seaWaterQuality by product decision (no approved provider
-  // coverage), flights (Airports of Montenegro's airport= code for Tivat is not yet verified —
-  // see podgorica-flights.ts).
-  for (const capability of ["water", "seaWaterQuality", "flights"] as const) {
+  assert.equal(supportsCityCapability(tivat!, "seaWaterQuality"), true);
+  // Still excluded: water by product decision (no approved provider coverage), flights
+  // (Airports of Montenegro's airport= code for Tivat is not yet verified — see
+  // podgorica-flights.ts).
+  for (const capability of ["water", "flights"] as const) {
     assert.equal(supportsCityCapability(tivat!, capability), false);
   }
   assert.equal(getCityName(tivat!, "locative"), "Tivtu");

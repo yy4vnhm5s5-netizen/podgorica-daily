@@ -27,7 +27,10 @@ import {
   getMonteGigsCitySource,
 } from "@/modules/going-out/infrastructure/montegigs-going-out";
 import { initializeMonteGigsGoingOut } from "@/modules/going-out/infrastructure/montegigs-going-out-initialization";
+import { getSeaWaterQualityCachePath } from "@/modules/sea-water-quality/infrastructure/budva-sea-water-quality-cache";
 import { initializeBudvaSeaWaterQuality } from "@/modules/sea-water-quality/infrastructure/budva-sea-water-quality-initialization";
+import { getActiveSeaWaterQualityContexts } from "@/modules/sea-water-quality/infrastructure/collect-budva-sea-water-quality";
+import { getSeaWaterQualityCityId } from "@/modules/sea-water-quality/infrastructure/sea-water-quality-cities";
 import { initializeZpcgRailwayCache } from "@/modules/transport/infrastructure/zpcg-railway-initialization";
 
 export function register() {
@@ -80,9 +83,14 @@ export function register() {
   }
 
   if (env.ENABLE_SEA_WATER_QUALITY) {
-    void initializeBudvaSeaWaterQuality({
-      cachePath: env.SEA_WATER_QUALITY_CACHE_PATH,
-    });
+    for (const context of getActiveSeaWaterQualityContexts()) {
+      const cityId = getSeaWaterQualityCityId(context);
+      if (!cityId) continue;
+      void initializeBudvaSeaWaterQuality({
+        cachePath: getSeaWaterQualityCachePath(cityId),
+        cityId,
+      });
+    }
   }
 
   if (env.ENABLE_GOING_OUT) {

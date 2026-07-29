@@ -8,6 +8,7 @@ import {
   parseBudvaSeaWaterQualitySummary,
   parseCurrentRoundId,
 } from "./budva-sea-water-quality.ts";
+import { seaWaterQualityMunicipalities } from "./sea-water-quality-cities.ts";
 
 async function readFixture(name: string) {
   return readFile(new URL(`./__fixtures__/${name}`, import.meta.url), "utf8");
@@ -87,9 +88,42 @@ test("surfaces a warning, excludes the location, and keeps processing when sumar
 });
 
 test("builds the Budva map-data request with the confirmed stable municipality id", () => {
-  const body = buildMapDataRequestBody({ round: 5, year: 2026 });
+  const body = buildMapDataRequestBody({ municipalityId: budvaMunicipalityId, round: 5, year: 2026 });
   assert.equal(budvaMunicipalityId, 2);
   assert.equal(body.get("opstina"), "2");
   assert.equal(body.get("godina"), "2026");
   assert.equal(body.get("rb"), "5");
+});
+
+test("builds the Tivat map-data request with the confirmed stable municipality id", () => {
+  const tivatMunicipalityId = seaWaterQualityMunicipalities.tivat.municipalityId;
+  const body = buildMapDataRequestBody({ municipalityId: tivatMunicipalityId, round: 5, year: 2026 });
+  assert.equal(tivatMunicipalityId, 3);
+  assert.equal(body.get("opstina"), "3");
+});
+
+test("normalizes a real Tivat crtajMapu response and stamps it with the Tivat municipality", async () => {
+  const body = await readFixture("morskodobro-tivat-map-data.json");
+  const parsed = parseBudvaSeaWaterQualitySummary(body, "tivat");
+
+  assert.equal(parsed?.summary.municipality, "tivat");
+  assert.equal(parsed?.summary.totalLocations, 10);
+  assert.deepEqual(parsed?.summary.gradeCounts, { excellent: 7, good: 1, poor: 0, satisfactory: 2 });
+  assert.equal(parsed?.summary.latestSamplingDate, "2026-07-21");
+  assert.deepEqual(
+    parsed?.summary.locations.map(({ grade, id, name }) => ({ grade, id, name })),
+    [
+      { grade: "satisfactory", id: 90, name: "Opatovo 01" },
+      { grade: "satisfactory", id: 89, name: "Donja Lastva 01" },
+      { grade: "good", id: 88, name: "Seljanovo 01" },
+      { grade: "excellent", id: 87, name: "Gradska plaža 01" },
+      { grade: "excellent", id: 86, name: "Kalardovo 01" },
+      { grade: "excellent", id: 85, name: "Solila 01" },
+      { grade: "excellent", id: 84, name: "Krašići 01" },
+      { grade: "excellent", id: 83, name: "Oblatno 01" },
+      { grade: "excellent", id: 124, name: "VELJA ŠPILJA" },
+      { grade: "excellent", id: 82, name: "Uvala Pržno" },
+    ],
+  );
+  assert.deepEqual(parsed?.warnings, []);
 });

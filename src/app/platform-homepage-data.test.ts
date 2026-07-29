@@ -46,11 +46,11 @@ test("derives generic city cards from every active registry city", () => {
   assert.ok(tivat);
   assert.deepEqual(
     tivat.shortcuts.map((shortcut) => shortcut.label),
-    ["Događaji", "Izlasci", "Struja"],
+    ["Događaji", "Izlasci", "Plaže", "Struja"],
   );
   assert.deepEqual(
     tivat.highlights.map((highlight) => highlight.key),
-    ["weather", "events", "going-out"],
+    ["weather", "events", "going-out", "sea-water-quality"],
   );
   assert.equal(getCity("budva")?.isActive, true);
   assert.equal(getCity("tivat")?.isActive, true);
@@ -218,6 +218,45 @@ test("derives Podgorica event and movie totals from the same displayable read mo
 
   assert.equal(card.highlights.find(({ key }) => key === "events")?.value, "1 događaj");
   assert.equal(card.highlights.find(({ key }) => key === "movies")?.value, "2 filma");
+});
+
+test("shows Tivat's own beach count in the sea water quality highlight, not Budva's", () => {
+  const context = createCityContext("tivat");
+  const card = createPlatformCityCardData(context, {
+    capabilities: {
+      cityAlerts: false,
+      events: true,
+      flights: false,
+      goingOut: true,
+      railway: false,
+      weather: true,
+    },
+    events: getEmptyCityEventsReadModel(),
+    flights: null,
+    goingOut: { events: [], state: "fresh" },
+    railway: null,
+    seaWaterQuality: {
+      state: "fresh",
+      summary: {
+        gradeCounts: { excellent: 7, good: 1, poor: 0, satisfactory: 2 },
+        locations: [],
+        municipality: "tivat",
+        totalLocations: 10,
+      },
+    },
+    weather: null,
+  });
+
+  assert.deepEqual(card.highlights.find(({ key }) => key === "sea-water-quality"), {
+    accessibilityLabel: "10 kupališta u Tivat",
+    href: "/tivat/plaze",
+    key: "sea-water-quality",
+    label: "Plaže",
+    priority: 5,
+    state: "available",
+    value: "10 kupališta",
+    visual: "waves",
+  });
 });
 
 test("never shows a movies highlight for Tivat, even if Cineplexx-shaped events appear in its read model", () => {

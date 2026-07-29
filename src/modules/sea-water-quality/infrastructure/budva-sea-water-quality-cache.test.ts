@@ -1,9 +1,12 @@
 import assert from "node:assert/strict";
+import { dirname } from "node:path";
 import test from "node:test";
 
 import {
   calculateBudvaSeaWaterQualityFreshness,
+  defaultBudvaSeaWaterQualityCachePath,
   getCachedBudvaSeaWaterQuality,
+  getSeaWaterQualityCachePath,
   readBudvaSeaWaterQualityCache,
 } from "./budva-sea-water-quality-cache.ts";
 import type { CacheFileSystem } from "../../../shared/lib/cache.ts";
@@ -77,4 +80,13 @@ test("getCachedBudvaSeaWaterQuality reports unavailable when no snapshot exists"
     new Date("2026-07-25T10:00:00Z"),
   );
   assert.deepEqual(result, { state: "unavailable" });
+});
+
+test("derives a distinct sibling cache path per supported city without a new env var", () => {
+  assert.equal(getSeaWaterQualityCachePath("budva"), defaultBudvaSeaWaterQualityCachePath);
+  assert.equal(
+    getSeaWaterQualityCachePath("tivat"),
+    `${dirname(defaultBudvaSeaWaterQualityCachePath)}/tivat-sea-water-quality.json`,
+  );
+  assert.notEqual(getSeaWaterQualityCachePath("tivat"), getSeaWaterQualityCachePath("budva"));
 });

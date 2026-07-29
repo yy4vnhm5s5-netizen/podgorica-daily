@@ -1,0 +1,140 @@
+{
+  "ukupno": 10,
+  "sumarno": [
+    [1, 7],
+    [2, 1],
+    [3, 2]
+  ],
+  "mjerenja": [
+    {
+      "id": 90,
+      "naziv": "Opatovo 01",
+      "plaza": "OPATOVO",
+      "opstina": "Tivat",
+      "kalendar": 5,
+      "datumUzorkovanja": "21.07.2026",
+      "vrijemeUzorkovanja": "21.07.2026. 05:50",
+      "ocjena": "Zadovoljavajuća",
+      "tezina": 3,
+      "gSirina": null,
+      "gDuzina": null
+    },
+    {
+      "id": 89,
+      "naziv": "Donja Lastva 01",
+      "plaza": "DONJA LASTVA",
+      "opstina": "Tivat",
+      "kalendar": 5,
+      "datumUzorkovanja": "21.07.2026",
+      "vrijemeUzorkovanja": "21.07.2026. 05:57",
+      "ocjena": "Zadovoljavajuća",
+      "tezina": 3,
+      "gSirina": null,
+      "gDuzina": null
+    },
+    {
+      "id": 88,
+      "naziv": "Seljanovo 01",
+      "plaza": "SELJANOVO",
+      "opstina": "Tivat",
+      "kalendar": 5,
+      "datumUzorkovanja": "21.07.2026",
+      "vrijemeUzorkovanja": "21.07.2026. 06:00",
+      "ocjena": "Dobra",
+      "tezina": 2,
+      "gSirina": null,
+      "gDuzina": null
+    },
+    {
+      "id": 87,
+      "naziv": "Gradska plaža 01",
+      "plaza": "GRADSKA PLAZA TIVAT",
+      "opstina": "Tivat",
+      "kalendar": 5,
+      "datumUzorkovanja": "21.07.2026",
+      "vrijemeUzorkovanja": "21.07.2026. 06:07",
+      "ocjena": "Odlična",
+      "tezina": 1,
+      "gSirina": null,
+      "gDuzina": null
+    },
+    {
+      "id": 86,
+      "naziv": "Kalardovo 01",
+      "plaza": "KALARDOVO",
+      "opstina": "Tivat",
+      "kalendar": 5,
+      "datumUzorkovanja": "21.07.2026",
+      "vrijemeUzorkovanja": "21.07.2026. 06:22",
+      "ocjena": "Odlična",
+      "tezina": 1,
+      "gSirina": null,
+      "gDuzina": null
+    },
+    {
+      "id": 85,
+      "naziv": "Solila 01",
+      "plaza": "SOLILA",
+      "opstina": "Tivat",
+      "kalendar": 5,
+      "datumUzorkovanja": "21.07.2026",
+      "vrijemeUzorkovanja": "21.07.2026. 08:43",
+      "ocjena": "Odlična",
+      "tezina": 1,
+      "gSirina": null,
+      "gDuzina": null
+    },
+    {
+      "id": 84,
+      "naziv": "Krašići 01",
+      "plaza": "Krašići",
+      "opstina": "Tivat",
+      "kalendar": 5,
+      "datumUzorkovanja": "21.07.2026",
+      "vrijemeUzorkovanja": "21.07.2026. 08:29",
+      "ocjena": "Odlična",
+      "tezina": 1,
+      "gSirina": null,
+      "gDuzina": null
+    },
+    {
+      "id": 83,
+      "naziv": "Oblatno 01",
+      "plaza": "OBLATNO",
+      "opstina": "Tivat",
+      "kalendar": 5,
+      "datumUzorkovanja": "21.07.2026",
+      "vrijemeUzorkovanja": "21.07.2026. 07:04",
+      "ocjena": "Odlična",
+      "tezina": 1,
+      "gSirina": null,
+      "gDuzina": null
+    },
+    {
+      "id": 124,
+      "naziv": "VELJA ŠPILJA",
+      "plaza": "VELJA ŠPILJA",
+      "opstina": "Tivat",
+      "kalendar": 5,
+      "datumUzorkovanja": "21.07.2026",
+      "vrijemeUzorkovanja": "21.07.2026. 06:50",
+      "ocjena": "Odlična",
+      "tezina": 1,
+      "gSirina": null,
+      "gDuzina": null
+    },
+    {
+      "id": 82,
+      "naziv": "Uvala Pržno",
+      "plaza": "UVALA PRZNO",
+      "opstina": "Tivat",
+      "kalendar": 5,
+      "datumUzorkovanja": "21.07.2026",
+      "vrijemeUzorkovanja": "21.07.2026. 06:40",
+      "ocjena": "Odlična",
+      "tezina": 1,
+      "gSirina": null,
+      "gDuzina": null
+    }
+  ]
+}

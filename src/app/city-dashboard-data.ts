@@ -13,6 +13,7 @@ import type { CityContext } from "@/shared/types/city";
 import { getCityDashboardCapabilities } from "./city-routing.ts";
 
 interface CityDashboardDependencies {
+  // Legacy-named but city-generic: it resolves data from context.city, not just Budva.
   getBudvaSeaWaterQuality: typeof getBudvaSeaWaterQuality;
   getCityEvents: typeof getCityEvents;
   getCurrentWeather: typeof getCurrentWeather;

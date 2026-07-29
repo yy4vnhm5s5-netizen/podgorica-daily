@@ -4,14 +4,15 @@ import {
   createEmptySeaWaterQualityGradeCounts,
   type SeaWaterQualityGrade,
   type SeaWaterQualityLocation,
+  type SeaWaterQualityMunicipality,
   type SeaWaterQualitySummary,
 } from "../domain/sea-water-quality.ts";
 import { morskodobroOrigin } from "./morskodobro-http-client.ts";
+import { seaWaterQualityMunicipalities } from "./sea-water-quality-cities.ts";
 
-// Municipality id used by the official Morsko dobro monitoring API's "opstina" filter — confirmed
-// by reading the populated <select id="opstina"> options on the public monitoring page. This is a
-// small, fixed government-administrative list, not something derived from user input.
-const budvaMunicipalityId = 2;
+// Kept for backward compatibility with existing callers/tests; sourced from the shared
+// multi-city config in sea-water-quality-cities.ts so the confirmed id (2) is defined once.
+const budvaMunicipalityId = seaWaterQualityMunicipalities.budva.municipalityId;
 
 const morskodobroCalendarDataUrl = `${morskodobroOrigin}/javna/getCalendarData`;
 const morskodobroMapDataUrl = `${morskodobroOrigin}/javna/crtajMapu`;
@@ -54,10 +55,18 @@ function buildCalendarDataRequestBody() {
   return new URLSearchParams();
 }
 
-function buildMapDataRequestBody({ round, year }: { round: number; year: number }) {
+function buildMapDataRequestBody({
+  municipalityId,
+  round,
+  year,
+}: {
+  municipalityId: number;
+  round: number;
+  year: number;
+}) {
   return new URLSearchParams({
     godina: String(year),
-    opstina: String(budvaMunicipalityId),
+    opstina: String(municipalityId),
     q: "",
     rb: String(round),
   });
@@ -82,7 +91,10 @@ interface BudvaSeaWaterQualityParseResult {
   warnings: string[];
 }
 
-function parseBudvaSeaWaterQualitySummary(body: string): BudvaSeaWaterQualityParseResult | undefined {
+function parseBudvaSeaWaterQualitySummary(
+  body: string,
+  municipality: SeaWaterQualityMunicipality = "budva",
+): BudvaSeaWaterQualityParseResult | undefined {
   const parsed = safeJsonParse(body);
   if (parsed === undefined) return undefined;
 
@@ -129,7 +141,7 @@ function parseBudvaSeaWaterQualitySummary(body: string): BudvaSeaWaterQualityPar
       gradeCounts,
       ...(latestSamplingDate ? { latestSamplingDate } : {}),
       locations,
-      municipality: "budva",
+      municipality,
       totalLocations: result.data.ukupno,
     },
     warnings: [...warnings],
