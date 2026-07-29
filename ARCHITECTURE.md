@@ -108,7 +108,7 @@ sequenceDiagram
         Col->>Cache: write temp file, then atomic rename
         Cache-->>Col: success
         Col-->>EP: summary (counts, state)
-        EP-->>T: 200 success / 207 partial (retained previous cache)
+        EP-->>T: 200 (success, partial, or retained — see state in body; Flights also returns 200 for a verified-upstream outage, others return 500 until audited the same way)
     end
 ```
 

@@ -19,11 +19,19 @@ interface FlightsPageProps {
   params: Promise<{ city: string }>;
 }
 
+// "Letovi {name}" reads as a location label, not a full sentence, so the nominative city name
+// needs no case inflection here — unlike inserting it after "za" ("Letovi za Podgorica"), which
+// reads as grammatically incomplete (za wants the accusative case). This also generalizes
+// correctly if a future city (e.g. Tivat, once its airport code is verified) enables flights.
+function getFlightsPageTitle(cityName: string) {
+  return `Letovi ${cityName}`;
+}
+
 async function generateMetadata({ params }: FlightsPageProps): Promise<Metadata> {
   const { city: slug } = await params;
   const context = resolveActiveCityFeatureRoute(slug, "flights");
   if (!context || !isCityPublicFeatureRouteAvailable(context.city, "flights")) return {};
-  const title = `Letovi za ${context.city.name}`;
+  const title = getFlightsPageTitle(context.city.name);
   const description = `Dolasci i odlasci za ${context.city.name} iz zvaničnih podataka aerodroma.`;
   const metadataTitle = getPageTitle(title);
 

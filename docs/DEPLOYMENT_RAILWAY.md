@@ -13,7 +13,7 @@ The Web service serves cached application data only. Visitor requests never scra
 3. Attach a persistent volume to `web` at `/app/.runtime`. Railway mounts volumes only at runtime, so do not try to create cache data during build. The runtime entrypoint creates and assigns `/app/.runtime/cache` to `nextjs:nodejs` after the mount is present, before starting the web server.
 4. Set `NODE_ENV=production`, `NEXT_PUBLIC_APP_ENV=production`, `DEFAULT_CITY=podgorica`, and `RUNTIME_DATA_DIR=/app/.runtime`. Leave cache-path overrides unset unless a deliberate migration requires them. Set `ENABLE_EVENTS=true` and `EVENT_PROVIDER_MODE=live` only after the refresh mechanism is configured.
 5. Generate Railway's public `*.up.railway.app` domain in Networking. Set `NEXT_PUBLIC_SITE_URL` to that exact HTTPS origin and redeploy. Verify `/api/health`, `/`, `/podgorica`, `/podgorica/dogadjaji`, and a city-prefixed event detail URL.
-6. Configure the fixed authenticated recurring jobs below. Do not put a secret in a URL. Interpret `200` as success, `207` as a retained previous cache or partial result, `401` as authentication failure, `409` as overlap, and `500` as configuration or unusable-refresh failure.
+6. Configure the fixed authenticated recurring jobs below. Do not put a secret in a URL. Interpret `200` as a full success, a partial result, or a retained previous snapshot; read the JSON body's `state` field to tell these apart. For Flights specifically, `200` also covers a fully unavailable provider whose failure was verified upstream (state `upstream-unavailable` — the collector reached the point of classifying the exact upstream error and confirmed it was not a local fault); every other provider still reports an undifferentiated `unavailable`/`failure` state as `500`, because a cache-write fault or an unexpected exception is not yet distinguished from a routine upstream outage for them — this is a known gap, not a guarantee that a `500` from those endpoints always means routine degradation. Interpret `400` as a malformed request (e.g. an unsupported query parameter), `401` as authentication failure, `409` as an overlapping refresh already in progress, and `500` as either that undifferentiated failure or a real endpoint problem (missing/misconfigured secret, an unhandled exception, or state `operational-failure` — a Flights-specific cache-write/programming fault confirmed *not* to be upstream).
 7. Inspect build/runtime logs, trigger the first refresh through the approved dashboard mechanism, and confirm data remains after a redeploy. Test the Events UI on a real phone.
 8. Later add `example.com` in Railway Networking, publish Railway's DNS records at the registrar, wait for verification and managed HTTPS, update `NEXT_PUBLIC_SITE_URL`, redeploy, and verify canonical/Open Graph URLs. If using Cloudflare, begin with DNS-only mode for verification.
 
@@ -28,8 +28,10 @@ Boot initialization creates missing snapshots once; it is deliberately not a per
 For each job below, create a small Railway Cron trigger service from `curlimages/curl`. It has no Volume and only calls the Web service. Give the trigger the matching `*_REFRESH_URL` and secret through Railway secret-variable references. The URL is the Web service’s internal or public HTTPS origin plus the listed path. Its start command is:
 
 ```sh
-sh -c 'curl --fail-with-body --silent --show-error --max-time 120 --request POST --header "Authorization: Bearer $REFRESH_SECRET" "$REFRESH_URL"'
+sh -c 'curl --fail-with-body --silent --show-error --max-time 120 --write-out "\n" --request POST --header "Authorization: Bearer $REFRESH_SECRET" "$REFRESH_URL"'
 ```
+
+`--write-out "\n"` appends a trailing newline after curl prints the response body, so consecutive cron runs never leave two JSON responses concatenated on one log line.
 
 The trigger never mounts or writes `/app/.runtime`; the Web service owns the mounted cache, lock, and atomic cache writes. The request body, query string, and URL cannot choose a provider or source URL. The fixed CEDIS endpoint invokes the existing sequential collector for every active city with an electricity capability and approved CEDIS municipality mapping; its response includes one safe result per city.
 
@@ -49,31 +51,31 @@ Configure each trigger with its own explicit variables and command:
 ```sh
 # Flights: REFRESH_URL=https://<web>/api/internal/flights/refresh
 # REFRESH_SECRET references FLIGHTS_REFRESH_SECRET
-sh -c 'curl --fail-with-body --silent --show-error --max-time 120 --request POST --header "Authorization: Bearer $REFRESH_SECRET" "$REFRESH_URL"'
+sh -c 'curl --fail-with-body --silent --show-error --max-time 120 --write-out "\n" --request POST --header "Authorization: Bearer $REFRESH_SECRET" "$REFRESH_URL"'
 
 # VIK: REFRESH_URL=https://<web>/api/internal/vikpg/refresh
 # REFRESH_SECRET references VIKPG_REFRESH_SECRET
-sh -c 'curl --fail-with-body --silent --show-error --max-time 120 --request POST --header "Authorization: Bearer $REFRESH_SECRET" "$REFRESH_URL"'
+sh -c 'curl --fail-with-body --silent --show-error --max-time 120 --write-out "\n" --request POST --header "Authorization: Bearer $REFRESH_SECRET" "$REFRESH_URL"'
 
 # CEDIS: REFRESH_URL=https://<web>/api/internal/cedis/refresh
 # REFRESH_SECRET references CEDIS_REFRESH_SECRET
-sh -c 'curl --fail-with-body --silent --show-error --max-time 120 --request POST --header "Authorization: Bearer $REFRESH_SECRET" "$REFRESH_URL"'
+sh -c 'curl --fail-with-body --silent --show-error --max-time 120 --write-out "\n" --request POST --header "Authorization: Bearer $REFRESH_SECRET" "$REFRESH_URL"'
 
 # Standard Events: /api/internal/events/standard/refresh + STANDARD_EVENTS_REFRESH_SECRET
-sh -c 'curl --fail-with-body --silent --show-error --max-time 120 --request POST --header "Authorization: Bearer $REFRESH_SECRET" "$REFRESH_URL"'
+sh -c 'curl --fail-with-body --silent --show-error --max-time 120 --write-out "\n" --request POST --header "Authorization: Bearer $REFRESH_SECRET" "$REFRESH_URL"'
 
 # Going Out uses one allowlisted city per trigger. The endpoint defaults to
 # Podgorica only when no city query is present, so configure both active cities.
 # Podgorica: /api/internal/going-out/refresh?city=podgorica
 # Budva: /api/internal/going-out/refresh?city=budva
 # Both REFRESH_SECRET values reference GOING_OUT_REFRESH_SECRET.
-sh -c 'curl --fail-with-body --silent --show-error --max-time 120 --request POST --header "Authorization: Bearer $REFRESH_SECRET" "$REFRESH_URL"'
+sh -c 'curl --fail-with-body --silent --show-error --max-time 120 --write-out "\n" --request POST --header "Authorization: Bearer $REFRESH_SECRET" "$REFRESH_URL"'
 
 # Cineplexx: /api/internal/cineplexx/refresh + CINEPLEXX_REFRESH_SECRET
-sh -c 'curl --fail-with-body --silent --show-error --max-time 120 --request POST --header "Authorization: Bearer $REFRESH_SECRET" "$REFRESH_URL"'
+sh -c 'curl --fail-with-body --silent --show-error --max-time 120 --write-out "\n" --request POST --header "Authorization: Bearer $REFRESH_SECRET" "$REFRESH_URL"'
 
 # ŽPCG: /api/internal/zpcg/refresh + ZPCG_RAILWAY_REFRESH_SECRET
-sh -c 'curl --fail-with-body --silent --show-error --max-time 120 --request POST --header "Authorization: Bearer $REFRESH_SECRET" "$REFRESH_URL"'
+sh -c 'curl --fail-with-body --silent --show-error --max-time 120 --write-out "\n" --request POST --header "Authorization: Bearer $REFRESH_SECRET" "$REFRESH_URL"'
 ```
 
 Railway Cron schedules are UTC. A fixed UTC expression is not daylight-saving-safe for local-clock jobs. Either use a scheduler that supports `Europe/Podgorica`, or switch the two Railway expressions at each daylight-saving transition:

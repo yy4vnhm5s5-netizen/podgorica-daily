@@ -29,15 +29,19 @@ Nothing is added here speculatively. Every item is either directly observable in
 **What:** Event records have one required `cityId`, but `cityIds` is retained "for existing cross-city contracts," and legacy cache snapshots are backfilled from `cityIds` on read.
 **Why this belongs here:** Dual representation of the same concept in the domain model is classic migration debt — it's justified today for backward compatibility with existing cache snapshots, but it is a permanent complexity tax on the Event domain type and every piece of code that touches `cityId`/`cityIds` until a deliberate migration/cleanup removes the legacy field.
 
+### 6. Refresh-endpoint failure classification (upstream vs. operational) is only implemented for Flights
+**What:** `src/app/api/internal/refresh-post-handler.ts`'s `getRefreshResponseStatus` only returns `200` for a provider's `unavailable`/`retained` outcome when that provider has been audited to distinguish a genuine upstream failure from a local operational fault (a cache-write error, or an exception caught and turned into a result). Today only Flights has this audit (`isPodgoricaFlightsUpstreamErrorCode` in `podgorica-flights.ts`, consumed by `toFlightsRefreshEndpointResult` in `provider-refresh-result.ts`). Every other provider — going-out, zpcg, sea-water-quality, cedis, vikpg, and events (cnp/kic/glavni-grad/tourism/cineplexx) — has the identical `*-cache-write-failed`-style error code funneled into the same undifferentiated `unavailable`/`failure`/`retained` state as a routine upstream outage (verified directly: each module has its own `*-cache-write-failed` error code feeding the same generic result shape), so those endpoints still return `500` for a routine "collector reached the upstream and it was down" outcome, not just for a real fault.
+**Why this belongs here:** Extending the Flights classification to the other 7 providers is structurally the same problem repeated 7 times, but doing it safely requires enumerating each provider's own closed set of error codes the way Flights' was enumerated here — that's real, provider-by-provider work, not a config change. A more thorough fix (deferred, not attempted here to avoid a larger refactor) would replace the shared `errorCode?: string` field on `ProviderRefreshEndpointResult` with a structured `{ code: string; category: "upstream" | "operational" }` shape decided at the point each error is produced, which would remove the need for a separate classification function per provider entirely. Until either is done, a Railway cron `500` from any endpoint other than Flights should still be investigated, not assumed routine.
+
 ## Low
 
-### 6. Possible committed runtime cache seed file
+### 7. Possible committed runtime cache seed file
 **What:** `.runtime/cache/cedis-planned-outages.json` appears to be checked into the repository (observed during initial repo scan), even though `.runtime/cache/*` is generated collector output.
 **Why this belongs here:** Committing generated cache artifacts risks the repo silently diverging from `.gitignore` intent, or a stale/misleading snapshot being mistaken for real data by a new contributor running the app locally. This needs owner confirmation of intent (deliberate local-dev seed vs. accidental commit) before any action — it is flagged here, not assumed to be wrong.
 
 ## Nice to Have
 
-### 7. No Content Security Policy configured yet
+### 8. No Content Security Policy configured yet
 **What:** docs/DEPLOYMENT.md explicitly states a CSP "is intentionally not configured until the production source/image policy is finalized; introduce it with report-only validation first."
 **Why this belongs here:** This is a deliberately deferred hardening step with a stated rollout plan already in the docs — it's real future work, but explicitly not urgent by the project's own documentation, so it belongs in "nice to have" rather than a more urgent bucket.
 
