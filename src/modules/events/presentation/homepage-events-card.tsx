@@ -6,6 +6,7 @@ import type { CityEvent } from "../domain/event.ts";
 import { getEventsTranslations } from "./events-translations";
 import { getHomepageVenueName } from "./events-ui-model";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
+import { getCityName } from "@/shared/config/cities";
 import { getLocaleTag, type Locale } from "@/shared/config/locale";
 import { getEventDetailPath, getEventsPath } from "@/shared/config/public-routes";
 import type { City } from "@/shared/types/city";
@@ -27,6 +28,11 @@ function HomepageEventsCard({
   locale,
 }: HomepageEventsCardProps) {
   const translations = getEventsTranslations(locale);
+  // translations.heading is a single shared string ("Događaji u Podgorici") meant for the
+  // /[city]/dogadjaji listing page's own title/H1 (built the same way, locally, in that page's
+  // component) — it must not be reused here as-is, or every city's dashboard card would show
+  // Podgorica's heading. Reduces to the exact existing string for Podgorica.
+  const heading = `Događaji u ${getCityName(city, "locative")}`;
 
   return (
     <Card className="card-fog card-fog--events border-emerald-200/70 bg-emerald-50/35 transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-emerald-300/80 hover:shadow-[0_12px_24px_-20px_rgb(15_23_42_/_0.32)] dark:border-emerald-800/60 dark:bg-emerald-950/30 dark:hover:border-emerald-700/70">
@@ -35,7 +41,7 @@ function HomepageEventsCard({
           <CalendarDays aria-hidden="true" className="size-[1.125rem]" strokeWidth={1.8} />
         </div>
         <div className="min-w-0">
-          <h2 className="text-base font-semibold tracking-tight">{translations.heading}</h2>
+          <h2 className="text-base font-semibold tracking-tight">{heading}</h2>
           <p className="mt-0.5 text-xs leading-4 text-muted-foreground sm:text-sm">
             {translations.homepageSupportingText} <span aria-hidden="true">•</span>{" "}
             {translations.eventsCount(eventCount)}
