@@ -5,7 +5,7 @@ import { isCityCinemaRouteAvailable, resolveActiveCityFeatureRoute } from "@/app
 import { createPublicRouteMetadata } from "@/app/public-route-metadata";
 import { getCityEvents } from "@/modules/events/application/get-city-events";
 import { CineplexxProgrammeCard } from "@/modules/events/presentation/cineplexx-programme-card";
-import { selectHomepageCinemaProgramme } from "@/modules/events/presentation/cineplexx-programme-ui-model";
+import { selectUpcomingCineplexxScreenings } from "@/modules/events/presentation/cineplexx-programme-ui-model";
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
 import { SectionTitle } from "@/shared/components/section-title";
 import { getCinemaPath } from "@/shared/config/public-routes";
@@ -42,10 +42,10 @@ async function CinemaPage({ params }: CinemaPageProps) {
 
   const result = await getCityEvents(context);
   const cinemaEvents = result.events.filter((event) => event.sourceId === "cineplexx-podgorica");
-  const programme = selectHomepageCinemaProgramme(cinemaEvents, {
-    now: new Date(),
-    timeZone: context.timezone,
-  });
+  // Every screening with an upcoming startsAt, across every day (not the ≤3-item,
+  // today/tomorrow-only teaser selection used by the homepage card). No `limit` is passed to
+  // CineplexxProgrammeCard below, so every movie with an upcoming screening is shown.
+  const screenings = selectUpcomingCineplexxScreenings(cinemaEvents, { now: new Date() });
   const providerState = result.providers.find(
     (provider) => provider.id === "cineplexx-podgorica",
   )?.state;
@@ -54,12 +54,7 @@ async function CinemaPage({ params }: CinemaPageProps) {
     <DashboardLayout city={context.city} translations={getTranslations(locale)}>
       <section aria-labelledby="cinema-heading" className="space-y-6" id="filmovi">
         <SectionTitle as="h1" id="cinema-heading" title="Filmovi" />
-        <CineplexxProgrammeCard
-          day={programme.day}
-          events={programme.events}
-          locale={locale}
-          state={providerState}
-        />
+        <CineplexxProgrammeCard events={screenings} locale={locale} state={providerState} />
       </section>
     </DashboardLayout>
   );

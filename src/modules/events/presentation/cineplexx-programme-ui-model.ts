@@ -27,15 +27,17 @@ function getCineplexxProgrammeDisplayState({
   return providerState === "unavailable" ? "unavailable" : "empty";
 }
 
-function groupCineplexxProgramme(
-  events: readonly CityEvent[],
-  timeZone = "Europe/Podgorica",
-): readonly CineplexxMovieGroup[] {
+function groupCineplexxProgramme(events: readonly CityEvent[]): readonly CineplexxMovieGroup[] {
   const groups = new Map<string, CineplexxMovieGroup>();
 
   for (const event of events) {
-    const day = getEventCalendarDay(event, timeZone);
-    const key = `${normalizeText(event.title)}|${day}`;
+    // Prefer the stable per-movie tag over the title: the Cineplexx parser reuses the same
+    // movie-detail-page URL for every screening of one movie (parsed once per movie block), so
+    // it is a more reliable identity than title text and matches what
+    // selectMoviesWithUpcomingScreenings counts as "one movie." Not keyed by day, so the same
+    // movie playing across several days is one group with every screening, not a separate group
+    // per day.
+    const key = tagValue(event, "movie") ?? normalizeText(event.title);
     const existing = groups.get(key);
     if (existing) {
       groups.set(key, {
@@ -59,9 +61,44 @@ function groupCineplexxProgramme(
   return [...groups.values()];
 }
 
-function getDistinctCineplexxProgrammeMovieCount(events: readonly CityEvent[]) {
-  return new Set(events.map((event) => tagValue(event, "movie") ?? normalizeText(event.title)))
-    .size;
+// A screening is "upcoming" only while startsAt is still in the future (>=, inclusive of the
+// instant that equals `now`); once a screening starts it drops out here even if the film is still
+// playing in the hall — a viewer opening the site cannot act on a screening that already started.
+// Deliberately not using `endsAt`/duration or a grace period: Cineplexx never sets `endsAt`, and
+// `status` is computed once at collection time (twice daily), so it cannot be trusted to reflect
+// "in progress" at request time — only the confirmed "cancelled"/"postponed" overrides are safe to
+// read from it.
+function selectUpcomingCineplexxScreenings(
+  events: readonly CityEvent[],
+  { now }: { now: Date },
+): readonly CityEvent[] {
+  return events
+    .filter(
+      (event) =>
+        (event.status === "scheduled" || event.status === "active") &&
+        event.startsAt &&
+        new Date(event.startsAt) >= now,
+    )
+    .toSorted(
+      (left, right) =>
+        new Date(left.startsAt ?? 0).getTime() - new Date(right.startsAt ?? 0).getTime(),
+    );
+}
+
+// The canonical "unique movies with an upcoming screening" set: every distinct movie that has at
+// least one screening with startsAt >= now, across every day the cached programme covers (not
+// just today/tomorrow) — a screening that has already started (even if still playing) does not
+// keep its movie in this set unless that same movie also has a later screening. Filtering happens
+// before grouping, so a movie with one past and one future screening is counted once, and a movie
+// whose every screening has already started is dropped entirely. The homepage movie count and the
+// /filmovi listing page both derive their count/list from this same function so they cannot
+// disagree; only the homepage's compact teaser additionally slices its *display* down to a few
+// titles, via CineplexxProgrammeCard's own `limit` prop.
+function selectMoviesWithUpcomingScreenings(
+  events: readonly CityEvent[],
+  { now }: { now: Date },
+): readonly CineplexxMovieGroup[] {
+  return groupCineplexxProgramme(selectUpcomingCineplexxScreenings(events, { now }));
 }
 
 function selectHomepageCinemaProgramme(
@@ -70,12 +107,7 @@ function selectHomepageCinemaProgramme(
 ): HomepageCinemaProgramme {
   const today = getLocalDate(now, timeZone);
   const tomorrow = addCalendarDays(today, 1);
-  const upcoming = events
-    .filter((event) => event.startsAt && new Date(event.startsAt) >= now)
-    .toSorted(
-      (left, right) =>
-        new Date(left.startsAt ?? 0).getTime() - new Date(right.startsAt ?? 0).getTime(),
-    );
+  const upcoming = selectUpcomingCineplexxScreenings(events, { now });
   const remainingToday = upcoming.filter((event) => getEventCalendarDay(event, timeZone) === today);
 
   if (remainingToday.length > 0) return { day: "today", events: remainingToday.slice(0, 3) };
@@ -122,10 +154,11 @@ function tagValue(event: CityEvent, name: string) {
 }
 
 export {
-  getDistinctCineplexxProgrammeMovieCount,
   getCineplexxProgrammeDisplayState,
   groupCineplexxProgramme,
   selectHomepageCinemaProgramme,
+  selectMoviesWithUpcomingScreenings,
+  selectUpcomingCineplexxScreenings,
   type CineplexxMovieGroup,
   type CineplexxProgrammeDisplayState,
   type HomepageCinemaProgramme,

@@ -238,6 +238,59 @@ test("derives Podgorica event and movie totals from the same displayable read mo
   assert.equal(card.highlights.find(({ key }) => key === "movies")?.value, "2 filma");
 });
 
+// Regression test for the reported /podgorica-vs-/podgorica/filmovi mismatch: the homepage
+// "Filmovi" highlight used to count every cached Cineplexx screening record's distinct tag, which
+// inflated far beyond the /filmovi page's own (differently, more narrowly derived) count. Many
+// screenings of the same 2 movies spread across several days must still show "2 filma".
+test("counts many screenings of the same movies across several days as their unique movie count, not a screening count", () => {
+  const context = createCityContext("podgorica");
+  const movieTitles = ["Movie One", "Movie Two"];
+  const cinemaEvents: CityEvent[] = movieTitles.flatMap((title, movieIndex) =>
+    ["2099-12-30", "2099-12-31", "2100-01-01"].map((date, dayIndex) => ({
+      category: "movie" as const,
+      cityId: "podgorica" as const,
+      cityIds: ["podgorica" as const],
+      id: `cineplexx-movie-${movieIndex}-${dayIndex}`,
+      language: "me" as const,
+      sourceId: "cineplexx-podgorica",
+      sourceName: "Cineplexx",
+      sourceReferences: [],
+      sourceUrl: `https://example.test/cineplexx/${movieIndex}-${dayIndex}`,
+      startsAt: `${date}T18:00:00.000Z`,
+      status: "scheduled" as const,
+      tags: [`movie:https://example.test/film/movie-${movieIndex}`],
+      timezone: "Europe/Podgorica",
+      title,
+    })),
+  );
+  // Only `id`/`state` are read by the code under test; the full EventProviderStatusReadModel
+  // shape isn't needed for this fixture.
+  const cineplexxProvider = { id: "cineplexx-podgorica", state: "fresh" } as CityEventsReadModel["providers"][number];
+
+  const card = createPlatformCityCardData(context, {
+    capabilities: {
+      cityAlerts: true,
+      events: true,
+      flights: true,
+      goingOut: true,
+      railway: true,
+      weather: true,
+    },
+    events: {
+      ...getEmptyCityEventsReadModel(),
+      events: cinemaEvents,
+      providers: [cineplexxProvider],
+    },
+    flights: null,
+    goingOut: { events: [], state: "fresh" },
+    railway: null,
+    weather: null,
+  });
+
+  assert.equal(cinemaEvents.length, 6);
+  assert.equal(card.highlights.find(({ key }) => key === "movies")?.value, "2 filma");
+});
+
 test("shows Tivat's own beach count in the sea water quality highlight, not Budva's", () => {
   const context = createCityContext("tivat");
   const card = createPlatformCityCardData(context, {

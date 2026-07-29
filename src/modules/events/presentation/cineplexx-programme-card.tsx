@@ -18,6 +18,8 @@ const cineplexxProgrammeUrl = "https://www.cineplexx.me/cinemas/CINEPLEXX-PODGOR
 interface CineplexxProgrammeCardProps {
   day?: "today" | "tomorrow" | "none";
   events: readonly CityEvent[];
+  /** Maximum number of distinct movies to display. Omit to show every movie in `events`. */
+  limit?: number;
   locale: Locale;
   state: EventProviderState | undefined;
 }
@@ -25,11 +27,13 @@ interface CineplexxProgrammeCardProps {
 function CineplexxProgrammeCard({
   day = "today",
   events,
+  limit,
   locale,
   state,
 }: CineplexxProgrammeCardProps) {
   const translations = getCineplexxProgrammeTranslations(locale);
-  const movies = groupCineplexxProgramme(events).slice(0, 3);
+  // `.slice(0, undefined)` returns the full array, so an omitted `limit` shows every movie.
+  const movies = groupCineplexxProgramme(events).slice(0, limit);
   const displayState = getCineplexxProgrammeDisplayState({
     eventCount: movies.length,
     providerState: state,

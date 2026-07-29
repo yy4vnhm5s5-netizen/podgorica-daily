@@ -9,8 +9,8 @@ import {
   isHomepageEventsUnavailable,
 } from "@/modules/events/presentation/events-ui-model";
 import {
-  getDistinctCineplexxProgrammeMovieCount,
   selectHomepageCinemaProgramme,
+  selectMoviesWithUpcomingScreenings,
 } from "@/modules/events/presentation/cineplexx-programme-ui-model";
 import { AirportFlightsCard } from "@/modules/flights/presentation/airport-flights-card";
 import { GoingOutSection } from "@/modules/going-out/presentation/going-out-section";
@@ -45,8 +45,9 @@ async function CityDashboard({ context }: CityDashboardProps) {
   const { capabilities, events, flights, goingOut, railway, seaWaterQuality, weather } =
     await loadCityDashboardData(context);
   const cinemaEvents = events.events.filter((event) => event.sourceId === "cineplexx-podgorica");
+  const now = new Date();
   const cinemaProgramme = selectHomepageCinemaProgramme(cinemaEvents, {
-    now: new Date(),
+    now,
     timeZone: context.timezone,
   });
   const cityEvents = getCityEventsForPublicListing(events.events);
@@ -56,9 +57,11 @@ async function CityDashboard({ context }: CityDashboardProps) {
   const homepageCityEvents = getHomepageEvents(cityEvents, context);
   const cityEventsUnavailable = isHomepageEventsUnavailable(cityEventProviders);
   const goingOutCount = goingOut ? getAvailableGoingOutEvents(goingOut.events).length : 0;
-  const displayableCinemaMovieCount = getDistinctCineplexxProgrammeMovieCount(
-    cinemaProgramme.events,
-  );
+  // The full unique-movie count (matching /filmovi), not the ≤3 events selectHomepageCinemaProgramme
+  // picked for the compact teaser below — same pattern as eventsCount/homepageCityEvents.slice(0, 3).
+  const displayableCinemaMovieCount = selectMoviesWithUpcomingScreenings(cinemaEvents, {
+    now,
+  }).length;
   const summaryAvailability = getCityDashboardSummaryAvailability(city);
   const cinemaAvailable = isCityCinemaRouteAvailable(city);
 
@@ -115,6 +118,7 @@ async function CityDashboard({ context }: CityDashboardProps) {
                 <CineplexxProgrammeCard
                   day={cinemaProgramme.day}
                   events={cinemaProgramme.events}
+                  limit={3}
                   locale={locale}
                   state={
                     events.providers.find((provider) => provider.id === "cineplexx-podgorica")

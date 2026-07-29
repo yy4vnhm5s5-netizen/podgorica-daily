@@ -1,5 +1,5 @@
 import type { EventProviderState } from "@/modules/events/domain/event";
-import { getDistinctCineplexxProgrammeMovieCount } from "@/modules/events/presentation/cineplexx-programme-ui-model";
+import { selectMoviesWithUpcomingScreenings } from "@/modules/events/presentation/cineplexx-programme-ui-model";
 import {
   filterEventsForUi,
   getCityEventsForPublicListing,
@@ -170,7 +170,10 @@ function createPlatformCityCardData(
     const cinemaEvents = dashboardData
       ? dashboardData.events.events.filter((event) => event.sourceId === "cineplexx-podgorica")
       : [];
-    const count = getDistinctCineplexxProgrammeMovieCount(cinemaEvents);
+    // Same canonical selector as the /filmovi page and the city dashboard's own movie count —
+    // unique movies with a remaining screening, not a raw count of every cached Cineplexx record
+    // (which could include past screenings still sitting in the cache before the next refresh).
+    const count = selectMoviesWithUpcomingScreenings(cinemaEvents, { now: new Date() }).length;
     const cinemaProviderState = dashboardData?.events.providers.find(
       (provider) => provider.id === "cineplexx-podgorica",
     )?.state;
