@@ -12,6 +12,7 @@ import {
   type FlightDirectionGroup,
 } from "./podgorica-flights-ui-model";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
+import { InCardEmptyNote } from "@/shared/components/in-card-empty-note";
 import { StatusBadge } from "@/shared/components/status-badge";
 import type { Locale } from "@/shared/config/locale";
 import { getFlightsPath } from "@/shared/config/public-routes";
@@ -138,13 +139,13 @@ function AirportFlightsCard({
           </ul>
         ) : (
           <div aria-labelledby={`${panelId}-${selectedDirection}`} id={panelId} role="tabpanel">
-            <p className="text-sm leading-6 text-muted-foreground">
+            <InCardEmptyNote>
               {displayState === "unavailable"
                 ? copy.unavailable
                 : selectedDirection === "arrival"
                   ? copy.arrivalEmpty
                   : copy.departureEmpty}
-            </p>
+            </InCardEmptyNote>
           </div>
         )}
         {displayState === "stale" ? (

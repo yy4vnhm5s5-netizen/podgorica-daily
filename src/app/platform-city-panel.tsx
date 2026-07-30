@@ -99,7 +99,7 @@ function CityCard({ card }: { card: PlatformCityCardData }) {
     <article
       aria-labelledby={headingId}
       className={cn(
-        "group relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br via-background to-background shadow-md shadow-slate-950/[0.06] transition-shadow duration-200 hover:shadow-lg hover:shadow-slate-950/[0.09]",
+        "group relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br via-background to-background shadow-md shadow-slate-950/[0.06] transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-brand/30 hover:shadow-lg hover:shadow-slate-950/[0.09]",
         cityCardSurfaceTints[card.city.id] ?? defaultCityCardSurfaceTint,
       )}
     >
@@ -108,7 +108,7 @@ function CityCard({ card }: { card: PlatformCityCardData }) {
         className="absolute inset-0 z-20 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
         href={card.href}
       />
-      <div className="pointer-events-none relative z-10 space-y-4 p-5 sm:p-6">
+      <div className="pointer-events-none relative z-10 space-y-5 p-6 sm:p-7">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-start gap-3">
             <CityIdentityIcon cityId={card.city.id} />
@@ -124,7 +124,7 @@ function CityCard({ card }: { card: PlatformCityCardData }) {
               </p>
             </div>
           </div>
-          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-colors group-hover:bg-blue-700">
+          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-orange-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors group-hover:bg-orange-800">
             Otvori grad
             <ArrowRight
               aria-hidden="true"
@@ -167,7 +167,7 @@ function MetricTile({ highlight }: { highlight: CityHighlight }) {
           className={
             highlight.state === "unavailable"
               ? "block text-xs font-medium leading-4 text-muted-foreground"
-              : "block truncate text-sm font-semibold leading-5 text-foreground"
+              : "block truncate text-sm font-bold leading-5 text-foreground"
           }
         >
           {highlight.value}

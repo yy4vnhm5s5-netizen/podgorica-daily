@@ -9,6 +9,7 @@ import {
   type CineplexxMovieGroup,
 } from "./cineplexx-programme-ui-model";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
+import { InCardEmptyNote } from "@/shared/components/in-card-empty-note";
 import { NewTabNotice } from "@/shared/components/new-tab-notice";
 import type { Locale } from "@/shared/config/locale";
 import { formatDateTime } from "@/shared/lib/date";
@@ -60,16 +61,16 @@ function CineplexxProgrammeCard({
             ))}
           </ul>
         ) : displayState === "unavailable" ? (
-          <p className="text-sm leading-6 text-muted-foreground">{translations.unavailable}</p>
+          <InCardEmptyNote>{translations.unavailable}</InCardEmptyNote>
         ) : (
-          <p className="text-sm leading-6 text-muted-foreground">{translations.empty}</p>
+          <InCardEmptyNote>{translations.empty}</InCardEmptyNote>
         )}
         {displayState === "stale" ? (
           <p className="mt-3 text-xs leading-5 text-muted-foreground">{translations.stale}</p>
         ) : null}
         {displayState === "programme" || displayState === "stale" ? (
           <a
-            className="mt-4 inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="mt-4 inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-brand-foreground underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             href={cineplexxProgrammeUrl}
             rel="noreferrer"
             target="_blank"

@@ -27,7 +27,7 @@ function EventCard({ city, event, locale }: EventCardProps) {
   const detailHref = getEventDetailPath(city, event.id);
 
   return (
-    <Card className="group relative overflow-hidden transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[0_10px_22px_-18px_rgb(15_23_42_/_0.32)]">
+    <Card className="group relative overflow-hidden transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-[0_10px_22px_-18px_rgb(15_23_42_/_0.32)]">
       <Link
         aria-label={`${translations.details}: ${event.title}`}
         className="absolute inset-0 z-20 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
@@ -64,7 +64,7 @@ function EventCard({ city, event, locale }: EventCardProps) {
             ) : null}
           </div>
           <div className="min-w-0 space-y-1">
-            <h3 className="text-base font-semibold leading-snug text-foreground transition-colors group-hover:text-primary sm:text-lg">
+            <h3 className="text-base font-semibold leading-snug text-foreground transition-colors group-hover:text-brand-foreground sm:text-lg">
               {event.title}
             </h3>
             {event.venueName ? (
@@ -78,7 +78,7 @@ function EventCard({ city, event, locale }: EventCardProps) {
             <CalendarClock aria-hidden="true" className="size-4 shrink-0" />
             <EventTime event={event} locale={locale} />
           </div>
-          <span className="inline-flex w-fit items-center gap-1 text-sm font-medium text-primary transition-colors group-hover:text-blue-800">
+          <span className="inline-flex w-fit items-center gap-1 text-sm font-medium text-brand-foreground">
             {translations.details}
             <ArrowRight
               aria-hidden="true"

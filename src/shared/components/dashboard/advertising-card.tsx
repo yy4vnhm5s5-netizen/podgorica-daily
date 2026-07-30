@@ -16,7 +16,7 @@ function AdvertisingCard({ href, subtitle, title }: AdvertisingCardProps) {
         href={href}
       >
         <Card className="border border-dashed border-indigo-200/80 bg-indigo-50/40 shadow-none transition-[border-color,background-color,box-shadow] hover:border-indigo-300 hover:bg-indigo-50/60 hover:shadow-sm">
-          <div className="flex min-h-14 items-center gap-3 px-3 py-2 sm:min-h-[4.25rem] sm:px-4">
+          <div className="flex min-h-14 items-center gap-3 px-4 py-2.5 sm:min-h-[4.25rem] sm:px-5">
             <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-indigo-100/70 text-indigo-700">
               <Megaphone aria-hidden="true" className="size-4" strokeWidth={1.8} />
             </div>

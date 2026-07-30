@@ -53,7 +53,10 @@ function Navigation({
               <Link
                 aria-current={isCurrent ? "page" : undefined}
                 className={cn(
-                  "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                  "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                  isCurrent
+                    ? "bg-brand-soft text-foreground dark:bg-brand/15"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
                   mobile && "justify-center",
                 )}
                 href={href}

@@ -42,7 +42,7 @@ function AppFooter({ tagline, translations }: AppFooterProps) {
 function FooterLink({ children, href }: { children: string; href: string }) {
   return (
     <Link
-      className="rounded-md text-sm font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      className="rounded-md text-sm font-medium text-muted-foreground underline-offset-4 hover:text-brand-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       href={href}
     >
       {children}

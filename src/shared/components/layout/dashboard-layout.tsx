@@ -135,7 +135,7 @@ function DashboardLayout({ children, city, homeHref, translations }: DashboardLa
       </a>
       <AppHeader city={city} homeHref={homeHref} translations={translations} />
       <main id="main-content">
-        <ResponsiveContainer className="py-6 sm:py-10">
+        <ResponsiveContainer className="py-8 sm:py-12">
           {/* Default size, not sm: matches the 44px touch target every other "back" link in the
               app uses (e.g. the event detail page's "back to events" link), rather than the same
               navigational action being a smaller target here than elsewhere. */}

@@ -115,7 +115,7 @@ async function CityAlertsSection({ context, locale }: CityAlertsSectionProps) {
       />
       {otherAlerts.length > 0 ? (
         <div className="space-y-4 pt-2">
-          <SectionTitle title={translations.otherAlerts} />
+          <SectionTitle accent={false} title={translations.otherAlerts} />
           <div className="grid gap-4 lg:grid-cols-2">
             {otherAlerts.map((alert) => (
               <CityAlertCard

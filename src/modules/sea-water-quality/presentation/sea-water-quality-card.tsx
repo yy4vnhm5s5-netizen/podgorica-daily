@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { SeaWaterQualitySummary } from "../domain/sea-water-quality";
 import { gradeLabels, gradeOrder, gradeStyles } from "./sea-water-quality-grade-styles";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
+import { InCardEmptyNote } from "@/shared/components/in-card-empty-note";
 import { NewTabNotice } from "@/shared/components/new-tab-notice";
 import type { CacheFreshnessStatus } from "@/shared/lib/cache";
 import type { Locale } from "@/shared/config/locale";
@@ -85,9 +86,7 @@ function SeaWaterQualityCard({
             ) : null}
           </>
         ) : (
-          <p className="text-sm leading-6 text-muted-foreground">
-            Podaci trenutno nijesu dostupni.
-          </p>
+          <InCardEmptyNote>Podaci trenutno nijesu dostupni.</InCardEmptyNote>
         )}
         {state === "stale" ? (
           <p className="mt-3 text-xs leading-5 text-muted-foreground">

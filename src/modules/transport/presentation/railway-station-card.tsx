@@ -6,6 +6,7 @@ import {
 } from "../domain/railway-departure";
 import { getRailwayStationDisplayState, type RailwayCacheState } from "./railway-station-ui-model";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
+import { InCardEmptyNote } from "@/shared/components/in-card-empty-note";
 import { NewTabNotice } from "@/shared/components/new-tab-notice";
 import type { Locale } from "@/shared/config/locale";
 
@@ -49,9 +50,9 @@ function RailwayStationCard({ departures, locale, state }: RailwayStationCardPro
             ))}
           </ul>
         ) : (
-          <p className="text-sm leading-6 text-muted-foreground">
+          <InCardEmptyNote>
             {displayState === "unavailable" ? copy.unavailable : copy.empty}
-          </p>
+          </InCardEmptyNote>
         )}
         {state === "stale" ? (
           <p className="mt-3 text-xs leading-5 text-muted-foreground">{copy.stale}</p>

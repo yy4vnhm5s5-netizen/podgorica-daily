@@ -84,7 +84,7 @@ function PowerOutagesPage({ city, locale, result }: PowerOutagesPageProps) {
                       )
                     : translations.dateUnavailable}
                 </h2>
-                <div className="mt-4 grid items-start gap-4 lg:grid-cols-2">
+                <div className="mt-4 grid items-start gap-5 lg:grid-cols-2">
                   {group.outages.map((outage) => (
                     <PowerOutageCard alert={outage} city={city} key={outage.id} locale={locale} />
                   ))}

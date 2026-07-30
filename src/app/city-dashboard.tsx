@@ -71,7 +71,7 @@ async function CityDashboard({ context }: CityDashboardProps) {
         activeCityIds={getActiveCities().map((activeCity) => activeCity.id)}
         cityId={city.id}
       />
-      <section className="space-y-8 sm:space-y-10" id="dashboard">
+      <section className="space-y-10 sm:space-y-12" id="dashboard">
         <DailySummaryBar
           availability={summaryAvailability}
           city={city}
@@ -105,7 +105,7 @@ async function CityDashboard({ context }: CityDashboardProps) {
           />
         ) : null}
         {capabilities.events ? (
-          <div className={cinemaAvailable ? "grid items-start gap-5 lg:grid-cols-2" : undefined}>
+          <div className={cinemaAvailable ? "grid items-start gap-6 lg:grid-cols-2" : undefined}>
             <HomepageEventsCard
               city={city}
               eventCount={homepageCityEvents.length}
@@ -135,7 +135,7 @@ async function CityDashboard({ context }: CityDashboardProps) {
           title={advertising.title}
         />
         {flights || (isFeatureEnabled("busStation") && railway) ? (
-          <div className="grid items-start gap-5 lg:grid-cols-2">
+          <div className="grid items-start gap-6 lg:grid-cols-2">
             {flights ? (
               <AirportFlightsCard
                 city={city}

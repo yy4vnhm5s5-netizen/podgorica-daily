@@ -104,7 +104,7 @@ function AboutPlatformPage({ city }: { city: City }) {
         </aside>
 
         <Link
-          className="inline-flex rounded-md px-1 py-2 text-sm font-medium text-primary underline-offset-4 transition-colors hover:text-primary/80 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          className="inline-flex rounded-md px-1 py-2 text-sm font-medium text-brand-foreground underline-offset-4 transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           href={getCityPath(city)}
         >
           Pogledajte informacije za Podgoricu

@@ -10,6 +10,7 @@ import {
   getHomepageGoingOutEvents,
 } from "./going-out-ui-model";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
+import { InCardEmptyNote } from "@/shared/components/in-card-empty-note";
 import { NewTabNotice } from "@/shared/components/new-tab-notice";
 import type { Locale } from "@/shared/config/locale";
 import { getGoingOutPath } from "@/shared/config/public-routes";
@@ -57,9 +58,9 @@ function GoingOutSection({ city, events, locale, state }: GoingOutSectionProps) 
               ))}
             </ul>
           ) : (
-            <p className="text-sm leading-6 text-muted-foreground">
+            <InCardEmptyNote>
               {displayState === "unavailable" ? copy.unavailable : copy.empty}
-            </p>
+            </InCardEmptyNote>
           )}
           <Link
             className="mt-3 inline-flex min-h-10 items-center gap-1 rounded-md text-sm font-medium text-violet-800 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-600 dark:text-violet-200"

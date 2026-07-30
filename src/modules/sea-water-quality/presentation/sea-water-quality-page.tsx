@@ -1,6 +1,7 @@
 import type { BudvaSeaWaterQualityCacheResult } from "../application/get-budva-sea-water-quality";
 import { gradeLabels, gradeOrder, gradeStyles } from "./sea-water-quality-grade-styles";
 import { ErrorState } from "@/shared/components/error-state";
+import { InCardEmptyNote } from "@/shared/components/in-card-empty-note";
 import { NewTabNotice } from "@/shared/components/new-tab-notice";
 import { SectionTitle } from "@/shared/components/section-title";
 import { getLocaleTag, type Locale } from "@/shared/config/locale";
@@ -51,12 +52,12 @@ function SeaWaterQualityPage({ city, locale, result }: SeaWaterQualityPageProps)
             <h2 className="text-base font-semibold tracking-tight" id="plaze-pregled-heading">
               Pregled kvaliteta
             </h2>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-              <div className="rounded-xl border border-border bg-background/60 px-4 py-3">
-                <span className="block text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+              <div className="rounded-xl border border-brand/25 bg-brand-soft px-4 py-3 dark:border-brand/25 dark:bg-brand/10">
+                <span className="block text-[11px] font-medium uppercase tracking-wide text-brand-foreground/80">
                   Kupališta
                 </span>
-                <span className="block text-2xl font-bold leading-tight text-foreground">
+                <span className="block text-2xl font-bold leading-tight text-brand-foreground">
                   {summary.totalLocations}
                 </span>
               </div>
@@ -129,9 +130,9 @@ function BeachTable({
 }) {
   if (summary.locations.length === 0) {
     return (
-      <p className="text-sm leading-6 text-muted-foreground">
+      <InCardEmptyNote>
         Pojedinačni rezultati po kupalištima trenutno nijesu dostupni.
-      </p>
+      </InCardEmptyNote>
     );
   }
 

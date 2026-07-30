@@ -22,6 +22,14 @@
     --accent-budva-soft: 24 52% 96%;
     --accent-tivat: 165 55% 38%;
     --accent-tivat-soft: 165 45% 95%;
+
+    /* Gradom brand orange (the "G" mark), matching #f8634e — a narrow accent token, deliberately
+       separate from --primary. It is used only at specific, restrained touch points (active nav,
+       "read more" links, section-header accent marks, thin borders, badges), never as a
+       replacement for the primary interactive color or a large surface fill. */
+    --brand: 9 88% 64%;
+    --brand-foreground: 9 65% 26%;
+    --brand-soft: 14 100% 96%;
   }
 
   * {
@@ -32,6 +40,21 @@
     @apply text-foreground antialiased;
     background-attachment: fixed;
     background-image: linear-gradient(180deg, hsl(210 45% 98.5%) 0%, hsl(210 32% 96%) 100%);
+  }
+
+  /* No motion system in this app uses keyframe animations today (hover/focus effects are all
+     transition-based), so neutralizing transition/animation duration here is sufficient to make
+     every existing and future hover-lift/transform effect respect the user's OS-level preference,
+     without hand-auditing each className. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      scroll-behavior: auto !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
 

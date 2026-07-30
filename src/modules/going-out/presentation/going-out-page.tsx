@@ -9,6 +9,7 @@ import {
   getGoingOutPageEvents,
 } from "./going-out-ui-model";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
+import { EmptyState } from "@/shared/components/empty-state";
 import { NewTabNotice } from "@/shared/components/new-tab-notice";
 import { SectionTitle } from "@/shared/components/section-title";
 import { getCityName } from "@/shared/config/cities";
@@ -47,11 +48,10 @@ function GoingOutPage({ city, events, locale, state }: GoingOutPageProps) {
           ))}
         </ul>
       ) : (
-        <Card className="border-violet-200/65 bg-violet-50/45 dark:border-violet-800/55 dark:bg-violet-950/25">
-          <CardContent className="p-5 text-sm leading-6 text-muted-foreground">
-            {displayState === "unavailable" ? copy.unavailable : copy.empty}
-          </CardContent>
-        </Card>
+        <EmptyState
+          description={displayState === "unavailable" ? copy.unavailable : copy.empty}
+          title={copy.title.replace("{city}", cityName)}
+        />
       )}
       {displayState === "stale" ? (
         <p className="text-xs text-muted-foreground">{copy.stale}</p>

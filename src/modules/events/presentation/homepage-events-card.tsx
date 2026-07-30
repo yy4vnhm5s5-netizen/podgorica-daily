@@ -6,6 +6,7 @@ import type { CityEvent } from "../domain/event.ts";
 import { getEventsTranslations } from "./events-translations";
 import { getHomepageVenueName } from "./events-ui-model";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
+import { InCardEmptyNote } from "@/shared/components/in-card-empty-note";
 import { getCityName } from "@/shared/config/cities";
 import { getLocaleTag, type Locale } from "@/shared/config/locale";
 import { getEventDetailPath, getEventsPath } from "@/shared/config/public-routes";
@@ -56,14 +57,12 @@ function HomepageEventsCard({
             ))}
           </ul>
         ) : isUnavailable ? (
-          <p className="text-sm leading-6 text-muted-foreground">
-            {translations.homepageUnavailable}
-          </p>
+          <InCardEmptyNote>{translations.homepageUnavailable}</InCardEmptyNote>
         ) : (
-          <p className="text-sm leading-6 text-muted-foreground">{translations.homepageEmpty}</p>
+          <InCardEmptyNote>{translations.homepageEmpty}</InCardEmptyNote>
         )}
         <Link
-          className="mt-4 inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          className="mt-4 inline-flex min-h-11 items-center text-sm font-medium text-brand-foreground underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           href={getEventsPath(city)}
         >
           {translations.viewAllEvents}
@@ -93,7 +92,7 @@ function HomepageEvent({ city, event, locale }: { city: City; event: CityEvent; 
           />
         ) : null}
         <div className="min-w-0 flex-1">
-          <h3 className="text-sm font-semibold leading-5 group-hover:text-primary">
+          <h3 className="text-sm font-semibold leading-5 group-hover:text-brand-foreground">
             {event.title}
           </h3>
           <p className="mt-1 text-sm leading-5 text-muted-foreground">

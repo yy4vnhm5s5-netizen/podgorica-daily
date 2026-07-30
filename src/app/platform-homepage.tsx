@@ -21,7 +21,7 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
   const cityNames = formatCityNames(cards);
 
   return (
-    <div className="relative space-y-6 sm:space-y-8">
+    <div className="relative space-y-8 sm:space-y-10">
       <PlatformAtmosphere />
       <script
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
@@ -29,18 +29,18 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
       />
       <section
         aria-labelledby="platform-homepage-title"
-        className="card-fog card-fog--info overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-r from-white via-blue-50/70 to-sky-100/60 px-5 py-4 shadow-sm shadow-blue-950/[0.04] sm:px-6"
+        className="card-fog card-fog--info overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-r from-white via-orange-50/50 to-sky-100/60 px-6 py-5 shadow-sm shadow-blue-950/[0.04] sm:px-8 sm:py-6"
       >
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
           <PlatformMark />
-          <div className="max-w-2xl space-y-1 sm:border-l sm:border-blue-100/80 sm:pl-4">
+          <div className="max-w-2xl space-y-1.5 sm:border-l sm:border-border/60 sm:pl-6">
             <h1
-              className="text-xl font-semibold leading-tight tracking-tight text-slate-950 sm:text-2xl"
+              className="text-2xl font-semibold leading-tight tracking-tight text-slate-950 sm:text-3xl"
               id="platform-homepage-title"
             >
               Lokalne informacije za gradove Crne Gore
             </h1>
-            <p className="text-sm leading-6 text-muted-foreground">
+            <p className="text-sm leading-6 text-muted-foreground sm:text-base">
               Izaberite grad i odmah provjerite najvažnije lokalne informacije.
             </p>
           </div>
@@ -50,7 +50,9 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
       <section aria-labelledby="cities-heading" className="space-y-4">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div className="space-y-1">
-            <p className="text-sm font-medium text-primary">Izaberite grad</p>
+            <p className="text-sm font-semibold uppercase tracking-wide text-brand-foreground">
+              Izaberite grad
+            </p>
             <h2
               className="text-xl font-semibold tracking-tight text-slate-950 sm:text-2xl"
               id="cities-heading"
@@ -64,7 +66,7 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
       </section>
 
       <section aria-labelledby="how-it-works-heading">
-        <div className="rounded-xl border border-border bg-background px-4 py-3 sm:px-5 sm:py-3.5">
+        <div className="rounded-xl border border-border bg-background px-5 py-4 sm:px-6 sm:py-5">
           <p className="text-xs font-medium uppercase tracking-wide text-primary">
             Lokalno, po gradu
           </p>

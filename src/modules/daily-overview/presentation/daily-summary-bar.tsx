@@ -184,7 +184,7 @@ function SummaryItem({ children, href, icon: Icon, iconClassName, label }: Summa
           {label}
         </span>
         <span
-          className={`mt-0.5 block text-sm font-semibold text-foreground ${isInteractive ? "md:group-hover:text-primary" : ""}`}
+          className={`mt-0.5 block text-sm font-semibold text-foreground ${isInteractive ? "md:group-hover:text-brand-foreground" : ""}`}
         >
           {children}
         </span>
@@ -195,13 +195,13 @@ function SummaryItem({ children, href, icon: Icon, iconClassName, label }: Summa
   if (href) {
     return (
       <Link
-        className={`${dailySummaryLayout.itemClassName} group cursor-pointer rounded-md transition-[background-color,box-shadow] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary md:hover:bg-blue-100/70 md:hover:shadow-[0_2px_8px_-6px_rgb(30_64_175_/_0.45)]`}
+        className={`${dailySummaryLayout.itemClassName} group cursor-pointer rounded-md transition-[background-color,box-shadow] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary md:hover:bg-brand-soft md:hover:shadow-[0_2px_8px_-6px_rgb(154_52_18_/_0.25)]`}
         href={href}
       >
         {content}
         <ChevronRight
           aria-hidden="true"
-          className="ml-auto size-3.5 shrink-0 text-blue-700/60 transition-transform duration-200 ease-out md:group-hover:translate-x-1"
+          className="ml-auto size-3.5 shrink-0 text-brand-foreground/60 transition-transform duration-200 ease-out md:group-hover:translate-x-1"
           strokeWidth={1.8}
         />
       </Link>
