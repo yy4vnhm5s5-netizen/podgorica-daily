@@ -195,6 +195,14 @@ function extractArticleBody(html: string) {
 }
 
 function getArticleBodyScore(attributes: string) {
+  // VIK's current template repeats a "ba-item-text" widget block sitewide (a sidebar contact
+  // card, empty of article text) ahead of the real notice body in document order, and both share
+  // the same class the tiers below already look for — a tie extractArticleBody resolves by
+  // picking whichever comes first, i.e. the wrong one. "ba-item-blog-content" is the wrapper class
+  // unique to the real content area, so it must outrank every existing tier.
+  if (/\bba-item-blog-content\b/i.test(attributes)) {
+    return 4;
+  }
   if (
     /\b(?:article-body|ba-blog-post-body|ba-item-text-content|content-body|entry-content|post-body)\b/i.test(
       attributes,

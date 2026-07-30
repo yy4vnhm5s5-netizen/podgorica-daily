@@ -196,6 +196,31 @@ test("extracts only the article body and retains paragraph boundaries", async ()
   assert.equal(description.value.includes("Share"), false);
 });
 
+// Regression coverage for the production bug: VIK's current template repeats an empty
+// "ba-item-text ba-item" sidebar/contact widget ahead of the real notice body, which lives inside
+// a later "ba-item-blog-content" wrapper but shares the same class the scorer already recognized.
+// Before the fix, the tie was resolved in document order, so every current notice's real content
+// was skipped in favor of the empty widget every time.
+test("prefers the real article body over an earlier same-class sidebar widget", async () => {
+  const result = parseVikpgNotice(
+    { title: "Informacija o kvaru, 29.07.2026.", url: "https://vikpg.me/index.php?id=3001" },
+    await fixture("vikpg-notice-duplicate-widget-class.html"),
+    new Date("2026-07-29T10:00:00.000Z"),
+  );
+
+  assert.equal(result.contentRecognized, true);
+  assert.equal(result.warnings.includes("article-content-unrecognized"), false);
+  const description = result.alert?.description;
+  assert.ok(description?.kind === "source");
+  // normalize() collapses the double space the live source has after "časova" to a single space.
+  assert.equal(
+    description.value,
+    "Obavještavamo potrošače u Brskutskoj ulici i u jednom dijelu naselja Park šuma u " +
+      "Zagoriču da će vodosnabdijevanje biti obustavljeno dana 29.07.2026.godine do 14.30 " +
+      "časova zbog sanacije kvara na vodovodnoj mreži.",
+  );
+});
+
 test("keeps future planned interruptions as scheduled", async () => {
   const result = parseVikpgNotice(
     {
