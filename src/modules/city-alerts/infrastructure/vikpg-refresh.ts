@@ -11,6 +11,7 @@ import {
   parseVikpgNotice,
   vikpgWaterNoticesUrl,
   type VikpgNoticeLink,
+  type VikpgParseResult,
 } from "./vikpg-water-notices.ts";
 
 type VikpgRefreshClassification =
@@ -99,9 +100,11 @@ async function refreshVikpg({
       if (firstFailure) throw firstFailure.error;
     }
 
-    const parsed = noticeOutcomes.flatMap((outcome) =>
-      "parsed" in outcome ? [outcome.parsed] : [],
+    const successfulOutcomes = noticeOutcomes.filter(
+      (outcome): outcome is { notice: VikpgNoticeLink; parsed: VikpgParseResult } =>
+        "parsed" in outcome,
     );
+    const parsed = successfulOutcomes.map(({ parsed: parseResult }) => parseResult);
     const warnings = parsed.flatMap((notice) => notice.warnings);
     // Count only, never the notice URL itself (which could carry a query string) — enough for
     // operational diagnostics without leaking anything into logs or the aggregate endpoint.
