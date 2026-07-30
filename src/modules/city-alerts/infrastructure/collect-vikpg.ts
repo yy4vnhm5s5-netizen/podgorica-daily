@@ -24,6 +24,10 @@ interface VikpgCollectorDependencies {
 // diagnostics (see VikpgFetchDiagnostics) — CEDIS's summary shape and collector are untouched.
 interface VikpgCollectorSummary extends CityAlertCollectorSummary {
   diagnostics?: VikpgFetchDiagnostics;
+  // TEMPORARY (production write/read-back diagnostic — safe to remove once the cache write/read
+  // path is verified): the exact timestamp this run wrote, so the dedicated refresh endpoint can
+  // compare it against an independent read-back through the same function the UI/provider uses.
+  lastSuccessfulRefreshAt?: string;
 }
 
 interface VikpgCollectorResult extends CityAlertCollectorResult {
@@ -71,6 +75,9 @@ async function runVikpgCollector({
       completedAt: new Date().toISOString(),
       ...(result.diagnostics ? { diagnostics: result.diagnostics } : {}),
       ...(result.errorCode ? { errorCode: result.errorCode } : {}),
+      ...(result.snapshot?.lastSuccessfulRefreshAt
+        ? { lastSuccessfulRefreshAt: result.snapshot.lastSuccessfulRefreshAt }
+        : {}),
       retainedPreviousSnapshot: result.retainedPreviousSnapshot,
       status: result.success
         ? "success"
