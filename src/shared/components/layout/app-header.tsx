@@ -19,31 +19,28 @@ function AppHeader({ city, homeHref = getCityPath(city), translations }: AppHead
     <header className="sticky top-0 z-40 border-b border-blue-100/80 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/85">
       <ResponsiveContainer className="flex h-16 items-center justify-between gap-4">
         <Link
-          aria-label={siteConfig.name}
-          className="focus-visible:ring-ring shrink-0 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+          aria-label={`${siteConfig.name} – ${translations.shell.navigation.dashboard}`}
+          className="focus-visible:ring-ring flex shrink-0 items-center rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
           href={homeHref}
         >
-          <span aria-hidden="true" className="flex h-9 w-[136px] items-center overflow-hidden">
-            <span className="relative h-9 w-8 shrink-0 overflow-hidden">
-              <Image
-                alt=""
-                className="absolute left-0 top-0 h-9 w-auto max-w-none"
-                height={140}
-                priority
-                src={siteConfig.logoPath}
-                width={530}
-              />
-            </span>
-            <span className="relative ml-0.5 h-9 w-[77px] shrink-0 overflow-hidden">
-              <Image
-                alt=""
-                className="absolute -left-[57px] top-0 h-9 w-auto max-w-none"
-                height={140}
-                src={siteConfig.logoPath}
-                width={530}
-              />
-            </span>
-          </span>
+          <Image
+            alt=""
+            aria-hidden="true"
+            className="hidden h-9 w-auto md:block"
+            height={133}
+            priority
+            src={siteConfig.logoWordmarkPath}
+            width={358}
+          />
+          <Image
+            alt=""
+            aria-hidden="true"
+            className="h-9 w-auto md:hidden"
+            height={316}
+            priority
+            src={siteConfig.logoMarkPath}
+            width={316}
+          />
         </Link>
         <div className="hidden flex-1 justify-center md:flex">
           <Navigation city={city} homeHref={homeHref} translations={translations} />
