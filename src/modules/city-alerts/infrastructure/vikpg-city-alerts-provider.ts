@@ -81,7 +81,7 @@ const vikpgProviderMetadata: ProviderMetadata = {
   displayName: "Vodovod i kanalizacija Podgorica water notices",
   enabled: true,
   id: "vikpg",
-  officialSource: "https://vikpg.me/me/mediji/servisne-informacije/obavjestenja.html",
+  officialSource: "https://vikpg.me/mediji/servisne-informacije/obavjestenja.html",
   refreshIntervalMinutes: 120,
   supportedCityIds: ["podgorica"],
   supportsMultipleCities: false,

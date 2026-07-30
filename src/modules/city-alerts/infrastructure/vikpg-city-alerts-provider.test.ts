@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import type { VikpgCacheSnapshot } from "./vikpg-cache.ts";
-import { getVikpgCityAlerts } from "./vikpg-city-alerts-provider.ts";
+import { getVikpgCityAlerts, vikpgProviderMetadata } from "./vikpg-city-alerts-provider.ts";
 
 const context = {
   city: {
@@ -74,6 +74,13 @@ test("keeps a stale VIK cache readable and isolates corrupt cache reads", async 
   assert.equal(unavailable.freshnessStatus, "unavailable");
   assert.equal(unavailable.lastSuccessfulUpdate, undefined);
   assert.deepEqual(unavailable.alerts, []);
+});
+
+test("advertises the canonical VIK notices URL as its official source", () => {
+  assert.equal(
+    vikpgProviderMetadata.officialSource,
+    "https://vikpg.me/mediji/servisne-informacije/obavjestenja.html",
+  );
 });
 
 test("does not expose yesterday's cached VIK notice as active", async () => {

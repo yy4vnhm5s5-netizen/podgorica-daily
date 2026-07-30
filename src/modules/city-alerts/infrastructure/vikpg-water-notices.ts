@@ -59,7 +59,11 @@ function discoverVikpgNotices(html: string, now = new Date()): VikpgNoticeLink[]
       title: normalize(stripHtml(match[2])),
       url: toVikpgUrl(match[1]),
     }))
-    .filter((link) => Boolean(link.url && link.title))
+    // Two independent checks, deliberately not combined into one: title relevance
+    // (servicePattern) says nothing about whether a URL is a specific notice versus a category
+    // index page, and vice versa. A link's visible text can legitimately match servicePattern
+    // (e.g. a category page simply labeled "Radovi") without pointing at an actual notice.
+    .filter((link) => Boolean(link.url && link.title && isIndividualNoticeUrl(link.url)))
     .map(toVikpgNoticeLink)
     .filter(({ title }) => servicePattern.test(title));
 
@@ -371,12 +375,72 @@ function getPodgoricaOffset(value: Date) {
     : 0;
 }
 
+const vikpgHostnames = ["vikpg.me", "www.vikpg.me"];
+
 function toVikpgUrl(value: string) {
   try {
     const url = new URL(value.replace(/&amp;/gi, "&"), vikpgOrigin);
-    return url.protocol === "https:" && ["vikpg.me", "www.vikpg.me"].includes(url.hostname)
+    return url.protocol === "https:" && vikpgHostnames.includes(url.hostname)
       ? url.toString()
       : null;
+  } catch {
+    return null;
+  }
+}
+
+// An individual notice sits one level below its category, e.g.
+// "/mediji/servisne-informacije/radovi/radovi,-22-jul,-2026.html" — exactly two non-empty
+// segments after the fixed prefix, only the second ending in ".html". A category/section landing
+// page (e.g. "/mediji/servisne-informacije/radovi.html") or the listing itself
+// ("/mediji/servisne-informacije/obavjestenja.html") has only one segment there and 404s when
+// fetched as a notice. This deliberately does not enumerate any category name, so it keeps
+// matching correctly for categories VIK has not created yet.
+const vikpgArticlePathPattern = /^\/mediji\/servisne-informacije\/[^/]+\/[^/]+\.html$/i;
+
+// Some older notices are still linked through VIK's previous Joomla URL scheme (see
+// __fixtures__/vikpg-listing.html) instead of the path above, e.g.
+// "/index.php?option=com_gridbox&view=page&id=2001&lang=me". option=com_gridbox, view=page, and a
+// numeric id are the only parameters every one of those confirmed article links shares — "lang"
+// varies and is not required. A Joomla index.php link missing any of the three (a different
+// component, a non-"page" view such as a category listing, or a non-numeric id) is some other VIK
+// page, not a notice.
+function isLegacyVikpgArticleUrl(url: URL) {
+  return (
+    url.pathname === "/index.php" &&
+    url.searchParams.get("option") === "com_gridbox" &&
+    url.searchParams.get("view") === "page" &&
+    /^\d+$/.test(url.searchParams.get("id") ?? "")
+  );
+}
+
+function isIndividualNoticeUrl(url: string) {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== "https:" || !vikpgHostnames.includes(parsed.hostname)) return false;
+    return vikpgArticlePathPattern.test(parsed.pathname) || isLegacyVikpgArticleUrl(parsed);
+  } catch {
+    return false;
+  }
+}
+
+// A comparison key only — never written back into a notice, an alert, or the cache (see the
+// partial-failure merge in vikpg-refresh.ts). Two hrefs that resolve to the same VIK resource but
+// differ in a "www." prefix, a trailing slash, a fragment, or legacy Joomla query-parameter order
+// must produce the same key here. Hostname and protocol case are already normalized by the URL
+// parser itself, so nothing extra is needed for those. Every query parameter is kept (only
+// reordered) since any of them may be part of what identifies the article. Returns null for
+// anything that isn't a valid vikpg.me/www.vikpg.me URL, so a malformed or unrelated sourceUrl can
+// only ever fail to match, never be silently miscompared.
+function canonicalizeVikpgSourceUrl(value: string): string | null {
+  try {
+    const url = new URL(value);
+    if (!vikpgHostnames.includes(url.hostname)) return null;
+    const hostname = url.hostname === "www.vikpg.me" ? "vikpg.me" : url.hostname;
+    const pathname = url.pathname.length > 1 ? url.pathname.replace(/\/+$/, "") : url.pathname;
+    const query = new URLSearchParams(
+      [...url.searchParams.entries()].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)),
+    ).toString();
+    return `${url.protocol}//${hostname}${pathname}${query ? `?${query}` : ""}`;
   } catch {
     return null;
   }
@@ -408,7 +472,9 @@ function addDays(value: Date, days: number) {
   return next;
 }
 export {
+  canonicalizeVikpgSourceUrl,
   discoverVikpgNotices,
+  isIndividualNoticeUrl,
   parseVikpgNotice,
   removeLeadingVikpgCategoryLabel,
   toVikpgUrl,
