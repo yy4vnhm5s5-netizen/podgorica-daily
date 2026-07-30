@@ -26,16 +26,7 @@ function AppHeader({ city, homeHref = getCityPath(city), translations }: AppHead
           <Image
             alt=""
             aria-hidden="true"
-            className="hidden h-9 w-auto md:block"
-            height={133}
-            priority
-            src={siteConfig.logoWordmarkPath}
-            width={358}
-          />
-          <Image
-            alt=""
-            aria-hidden="true"
-            className="h-9 w-auto md:hidden"
+            className="h-9 w-auto"
             height={316}
             priority
             src={siteConfig.logoMarkPath}

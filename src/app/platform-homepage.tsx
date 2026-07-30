@@ -32,7 +32,7 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
         className="card-fog card-fog--info overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-r from-white via-blue-50/70 to-sky-100/60 px-5 py-4 shadow-sm shadow-blue-950/[0.04] sm:px-6"
       >
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-          <PlatformWordmark />
+          <PlatformMark />
           <div className="max-w-2xl space-y-1 sm:border-l sm:border-blue-100/80 sm:pl-4">
             <h1
               className="text-xl font-semibold leading-tight tracking-tight text-slate-950 sm:text-2xl"
@@ -117,30 +117,17 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
   );
 }
 
-function PlatformWordmark() {
+function PlatformMark() {
   return (
-    <div aria-label={siteConfig.name} className="flex h-8 w-[116px] items-center overflow-hidden">
-      <span aria-hidden="true" className="relative h-8 w-7 shrink-0 overflow-hidden">
-        <Image
-          alt=""
-          className="absolute left-0 top-0 h-8 w-auto max-w-none"
-          height={140}
-          priority
-          src={siteConfig.logoPath}
-          width={530}
-        />
-      </span>
-      <span aria-hidden="true" className="relative ml-0.5 h-8 w-[70px] shrink-0 overflow-hidden">
-        <Image
-          alt=""
-          className="absolute -left-[51px] top-0 h-8 w-auto max-w-none"
-          height={140}
-          priority
-          src={siteConfig.logoPath}
-          width={530}
-        />
-      </span>
-    </div>
+    <Image
+      alt=""
+      aria-hidden="true"
+      className="h-12 w-auto shrink-0"
+      height={316}
+      priority
+      src={siteConfig.logoMarkPath}
+      width={316}
+    />
   );
 }
 
