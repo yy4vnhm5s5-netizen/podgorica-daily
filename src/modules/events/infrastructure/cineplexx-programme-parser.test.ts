@@ -83,13 +83,60 @@ test("keeps entries with optional Cineplexx metadata missing and skips malformed
   );
 });
 
-test("does not invent a screening date when the rendered programme lacks its Today marker", async () => {
+test("does not invent a screening date when a movie's own link date does not match today", async () => {
   const candidates = parseCineplexxProgramme(
-    (await readFile(fixturePath, "utf8")).replace("Danas", "Program"),
+    (await readFile(fixturePath, "utf8")).replace(/date=2026-07-20/g, "date=2026-07-19"),
     { today: "2026-07-20" },
   );
 
   assert.equal(candidates[0]?.startsAt, undefined);
   assert.equal(candidates[0]?.startDate, undefined);
   assert.ok(candidates[0]?.parserWarnings.includes("Cineplexx programme date was unavailable."));
+});
+
+test("does not invent a screening date when a movie's link has no date parameter at all", async () => {
+  const candidates = parseCineplexxProgramme(
+    (await readFile(fixturePath, "utf8")).replace(
+      "?date=2026-07-20&amp;location=all",
+      "?location=all",
+    ),
+    { today: "2026-07-20" },
+  );
+
+  assert.equal(candidates[0]?.startsAt, undefined);
+  assert.equal(candidates[0]?.startDate, undefined);
+  assert.ok(candidates[0]?.parserWarnings.includes("Cineplexx programme date was unavailable."));
+});
+
+// Regression guard for the missing-date production bug (CURRENT_STATUS.md Issue 2): the parser
+// used to confirm "this is today's programme" by scanning the whole rendered page for the literal
+// word "Danas", and attached no date to any screening when that text was absent — which is exactly
+// what caused every event to be rejected once that natural-language marker stopped reliably
+// appearing (wording/timing/redesign on Cineplexx's side, not a change this parser controls). Date
+// confirmation now reads each movie's own "/film/...?date=YYYY-MM-DD" link instead, so the page's
+// free text is irrelevant to date extraction — this test proves that independence directly rather
+// than relying on the absence of a regression to go unnoticed.
+test("still extracts screening dates when the page has no 'Danas' text anywhere", async () => {
+  const candidates = parseCineplexxProgramme(
+    (await readFile(fixturePath, "utf8")).replace("<div>Danas</div>", ""),
+    { today: "2026-07-20" },
+  );
+
+  assert.equal(candidates[0]?.startsAt, "2026-07-20T14:20:00.000Z");
+  assert.equal(candidates[1]?.startsAt, "2026-07-20T16:30:00.000Z");
+});
+
+// Regression test for a confirmed live-DOM mismatch: Cineplexx renders more than one element with
+// the ".b-title-with-poster__duration" class per movie card — a comma/separator placeholder
+// (empty, or "&nbsp;"-only) immediately before the element that actually holds the runtime. Taking
+// the first DOM match silently returned the separator's empty text instead of "1h 42m".
+test("extracts the real duration when a separator element shares the duration class ahead of it", async () => {
+  const html = (await readFile(fixturePath, "utf8")).replace(
+    '<p class="b-title-with-poster__duration">1h 42m</p>',
+    '<p class="b-title-with-poster__comma b-title-with-poster__duration">&nbsp;</p>\n' +
+      '        <p class="b-title-with-poster__duration">1h 42m</p>',
+  );
+  const candidates = parseCineplexxProgramme(html, { today: "2026-07-20" });
+
+  assert.ok(candidates[0]?.tags.includes("duration:1h 42m"));
 });

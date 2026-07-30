@@ -34,36 +34,48 @@ function parseCineplexxProgramme(
   { sourceUrl = cineplexxProgrammeUrl, today }: CineplexxProgrammeParseOptions,
 ) {
   const document = parseHtml(html);
-  const isTodayProgramme = includesTodayMarker(document);
 
   return findAll(document, (node) => hasClass(node, "l-sessions__item")).flatMap((movie) =>
-    parseMovieScreenings(movie, {
-      sourceUrl,
-      today: isTodayProgramme ? today : undefined,
-    }),
+    parseMovieScreenings(movie, { sourceUrl, today }),
   );
 }
 
 function parseMovieScreenings(
   movie: ParsedHtmlNode,
-  { sourceUrl, today }: { sourceUrl: string; today?: string },
+  { sourceUrl, today: expectedToday }: { sourceUrl: string; today?: string },
 ) {
   const title = getText(findFirst(movie, (node) => node.tag === "h2"));
-  const movieUrl = absoluteCineplexxUrl(
-    getAttribute(
-      findFirst(movie, (node) => node.tag === "a" && hrefStartsWith(node, "/film/")),
-      "href",
-    ),
-    sourceUrl,
+  const movieLinkHref = getAttribute(
+    findFirst(movie, (node) => node.tag === "a" && hrefStartsWith(node, "/film/")),
+    "href",
   );
+  const movieUrl = absoluteCineplexxUrl(movieLinkHref, sourceUrl);
+  // Cineplexx stamps each movie card's own "/film/...?date=YYYY-MM-DD" link with the day that
+  // listing belongs to. Confirming per movie against that machine-readable parameter replaced a
+  // page-wide scan for the literal word "Danas" ("today"): that natural-language marker was
+  // fragile to wording/locale/redesign changes and to its own rendering timing relative to the
+  // movie list (it previously caused every screening to be rejected as missing-date even while
+  // the movie list itself had rendered correctly), and a page-wide substring match could also
+  // false-positive if "Danas" appeared anywhere else on the page while a different day's listing
+  // was actually showing. This keeps the same fail-safe behavior — no confirmation, no date.
+  const today =
+    expectedToday && extractLinkDateParam(movieLinkHref) === expectedToday
+      ? expectedToday
+      : undefined;
   const posterUrl = getAttribute(
     findFirst(movie, (node) => node.tag === "img"),
     "src",
   );
   const genre = getText(findFirst(movie, (node) => hasClass(node, "b-title-with-poster__genre")));
-  const duration = getText(
-    findFirst(movie, (node) => hasClass(node, "b-title-with-poster__duration")),
-  );
+  // Cineplexx renders more than one ".b-title-with-poster__duration" element per movie card: a
+  // comma/separator placeholder (empty, or "&nbsp;" only) ahead of the element that actually
+  // holds the runtime, so trusting DOM position (findFirst) silently returns the separator's
+  // empty text instead. Duration isn't validation-critical, but the extracted metadata should
+  // still be correct when Cineplexx actually renders one — scan every match and keep the first
+  // whose normalized text looks like a duration (contains a digit) rather than assuming order.
+  const duration = findAll(movie, (node) => hasClass(node, "b-title-with-poster__duration"))
+    .map((node) => getText(node))
+    .find(isDurationText);
   const ageRating = (getText(movie) ?? "").match(/\b(?:[1-9]|1[0-8])\+\b/)?.[0];
 
   return findAll(movie, (node) => hasClass(node, "l-tickets__item")).flatMap((screening) => {
@@ -225,8 +237,12 @@ function absoluteCineplexxUrl(value: string | undefined, sourceUrl: string) {
   }
 }
 
-function includesTodayMarker(root: ParsedHtmlNode) {
-  return /\bdanas\b/i.test(getText(root) ?? "");
+function extractLinkDateParam(href: string | undefined): string | undefined {
+  return href?.match(/[?&]date=(\d{4}-\d{2}-\d{2})(?:&|$)/)?.[1];
+}
+
+function isDurationText(value: string | undefined): value is string {
+  return value !== undefined && /\d/.test(value);
 }
 
 function isValidTime(value: string | undefined): value is string {
