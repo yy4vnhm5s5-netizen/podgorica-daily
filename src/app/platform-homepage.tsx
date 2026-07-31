@@ -28,23 +28,29 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
         type="application/ld+json"
       />
-      <section
-        aria-labelledby="platform-homepage-title"
-        className="card-fog card-fog--info relative overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-r from-white via-orange-50/50 to-sky-100/60 px-6 py-5 shadow-sm shadow-blue-950/[0.04] sm:px-8 sm:py-6"
-      >
-        <HeroIconBackdrop icons={platformHeroIcons} />
-        <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
-          <PlatformMark />
-          <div className="max-w-2xl space-y-1.5 sm:border-l sm:border-border/60 sm:pl-6">
-            <h1
-              className="text-2xl font-semibold leading-tight tracking-tight text-slate-950 sm:text-3xl"
-              id="platform-homepage-title"
-            >
-              Lokalne informacije za gradove Crne Gore
-            </h1>
-            <p className="text-sm leading-6 text-muted-foreground sm:text-base">
-              Izaberite grad i odmah provjerite najvažnije lokalne informacije.
-            </p>
+      {/* Hero SECTION: background → decorative icons → hero CARD → hero content. The icon
+          backdrop is a sibling of the card, not a child of it, so it never paints inside the
+          white card — it bleeds into the surrounding section margin instead. The bleed wrapper
+          reuses the same full-viewport-width breakout as PlatformAtmosphere above, so the icons
+          are clipped by the real viewport edge rather than the card's own rounded corners. */}
+      <section aria-labelledby="platform-homepage-title" className="relative">
+        <div className="pointer-events-none absolute inset-y-0 left-1/2 w-screen -translate-x-1/2 overflow-hidden">
+          <HeroIconBackdrop icons={platformHeroIcons} />
+        </div>
+        <div className="card-fog card-fog--info relative overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-r from-white via-orange-50/50 to-sky-100/60 px-6 py-5 shadow-sm shadow-blue-950/[0.04] sm:px-8 sm:py-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+            <PlatformMark />
+            <div className="max-w-2xl space-y-1.5 sm:border-l sm:border-border/60 sm:pl-6">
+              <h1
+                className="text-2xl font-semibold leading-tight tracking-tight text-slate-950 sm:text-3xl"
+                id="platform-homepage-title"
+              >
+                Lokalne informacije za gradove Crne Gore
+              </h1>
+              <p className="text-sm leading-6 text-muted-foreground sm:text-base">
+                Izaberite grad i odmah provjerite najvažnije lokalne informacije.
+              </p>
+            </div>
           </div>
         </div>
       </section>
