@@ -3,11 +3,9 @@
 import { Droplets, Zap } from "lucide-react";
 import { useId, useState, type KeyboardEvent } from "react";
 
-import { formatCompactPowerOutageLocations } from "@/modules/city-alerts/presentation/power-outages-ui-model";
 import type { CityAlertServiceId } from "@/modules/city-alerts/application/city-alert-service-capabilities";
-import { StatusBadge } from "@/shared/components/status-badge";
-import { Card, CardContent } from "@/shared/components/ui/card";
-import type { Locale } from "@/shared/config/locale";
+import { formatAdditionalAffectedAreas } from "@/modules/city-alerts/presentation/power-outages-ui-model";
+import { Card } from "@/shared/components/ui/card";
 import { getRovingTabIndex } from "@/shared/lib/roving-tab-index";
 import { cn } from "@/shared/lib/utils";
 
@@ -48,7 +46,6 @@ interface CityServicesTranslations {
 }
 
 interface CityServicesPanelProps {
-  locale: Locale;
   serviceIds: readonly CityAlertServiceId[];
   services: Partial<Record<CityAlertServiceId, CityServiceInfo>>;
   translations: CityServicesTranslations;
@@ -56,7 +53,7 @@ interface CityServicesPanelProps {
 
 const serviceIcons = { power: Zap, water: Droplets };
 
-function CityServicesPanel({ locale, serviceIds, services, translations }: CityServicesPanelProps) {
+function CityServicesPanel({ serviceIds, services, translations }: CityServicesPanelProps) {
   const [selectedService, setSelectedService] = useState<CityAlertServiceId>(
     serviceIds[0] ?? "power",
   );
@@ -67,7 +64,6 @@ function CityServicesPanel({ locale, serviceIds, services, translations }: CityS
   const service = services[activeServiceId];
   if (!service) return null;
 
-  const Icon = serviceIcons[activeServiceId];
   const labels = { power: translations.power, water: translations.water };
 
   function selectService(serviceId: CityAlertServiceId) {
@@ -104,169 +100,117 @@ function CityServicesPanel({ locale, serviceIds, services, translations }: CityS
     }
   }
 
-  return (
-    <Card className="border-border bg-background shadow-none lg:mx-auto lg:max-w-2xl">
-      <div
-        aria-label={translations.label}
-        className="flex gap-1 border-b border-slate-200/80 p-2"
-        role="tablist"
-      >
-        {serviceIds.map((serviceId) => {
-          const TabIcon = serviceIcons[serviceId];
-          const isSelected = activeServiceId === serviceId;
+  const primaryArea = service.locations?.[0] ?? service.area;
+  const stateLabel =
+    service.state === "none"
+      ? activeServiceId === "power"
+        ? translations.noPowerOutages
+        : translations.noWaterInterruptions
+      : service.state === "unavailable"
+        ? translations.unavailable
+        : undefined;
 
-          return (
-            <button
-              aria-controls={panelId}
-              aria-selected={isSelected}
-              className={cn(
-                "focus-visible:ring-ring flex min-h-10 flex-1 items-center justify-center gap-2 rounded-lg px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
-                isSelected
-                  ? cn(
-                      "card-fog border border-slate-200 bg-background text-foreground shadow-[0_2px_5px_-4px_rgb(15_23_42_/_0.3)]",
-                      serviceId === "power"
-                        ? "city-service-tab-fog--power"
-                        : "city-service-tab-fog--water",
-                    )
-                  : "text-muted-foreground hover:bg-background/60 hover:text-foreground",
-              )}
-              id={`${panelId}-${serviceId}`}
-              key={serviceId}
-              onClick={() => setSelectedService(serviceId)}
-              onKeyDown={(event) => handleTabKeyDown(event, serviceId)}
-              role="tab"
-              tabIndex={getRovingTabIndex(isSelected)}
-              type="button"
-            >
-              <TabIcon
-                aria-hidden="true"
-                className={cn("size-4", serviceId === "power" ? "text-amber-600" : "text-blue-600")}
-                strokeWidth={1.8}
-              />
-              {labels[serviceId]}
-            </button>
-          );
-        })}
-      </div>
-      <CardContent
-        aria-labelledby={`${panelId}-${activeServiceId}`}
-        className="p-4 sm:p-5"
-        id={panelId}
-        role="tabpanel"
-      >
-        <div className="flex items-start gap-3">
-          <div
-            className={cn(
-              "flex size-9 shrink-0 items-center justify-center rounded-xl",
-              activeServiceId === "power"
-                ? "bg-amber-100/80 text-amber-800"
-                : "bg-blue-100/80 text-blue-800",
-            )}
-          >
-            <Icon aria-hidden="true" className="size-[1.125rem]" strokeWidth={1.8} />
-          </div>
-          <div className="min-w-0 flex-1">
-            {service.state === "none" ? (
-              <div>
-                <p className="pt-1 text-sm font-semibold text-foreground">
-                  {activeServiceId === "power"
-                    ? translations.noPowerOutages
-                    : translations.noWaterInterruptions}
-                </p>
-                {service.detailsHref && service.detailsLabel ? (
-                  <a
-                    className="mt-2 inline-flex min-h-10 items-center text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                    href={service.detailsHref}
-                  >
-                    {service.detailsLabel}
-                  </a>
-                ) : null}
-              </div>
-            ) : service.state === "unavailable" ? (
-              <div>
-                <p className="pt-1 text-sm text-muted-foreground">{translations.unavailable}</p>
-                {service.detailsHref && service.detailsLabel ? (
-                  <a
-                    className="mt-2 inline-flex min-h-10 items-center text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                    href={service.detailsHref}
-                  >
-                    {service.detailsLabel}
-                  </a>
-                ) : null}
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">{service.title}</p>
-                    {service.description ? (
-                      <p className="mt-1 whitespace-pre-line text-sm leading-6 text-muted-foreground">
-                        {service.description}
-                      </p>
-                    ) : null}
-                  </div>
-                  <StatusBadge tone="warning">
-                    {service.statusLabel ?? translations.scheduled}
-                  </StatusBadge>
-                </div>
-                <dl className="grid gap-2 text-sm sm:grid-cols-2">
-                  {service.locations && service.locations.length > 0 ? (
-                    <div className="sm:col-span-2">
-                      <dt className="text-xs text-muted-foreground">{translations.area}</dt>
-                      <dd className="mt-1 text-sm font-medium leading-6 text-foreground">
-                        {formatCompactPowerOutageLocations(
-                          service.locations,
-                          service.additionalLocationCount,
-                          translations.moreLocations,
-                          locale,
-                        )}
-                      </dd>
-                    </div>
-                  ) : service.area ? (
-                    <ServiceDetail label={translations.area} value={service.area} />
-                  ) : null}
-                  {service.time ? (
-                    <ServiceDetail label={translations.time} value={service.time} />
-                  ) : null}
-                </dl>
-                {service.detailsHref && service.detailsLabel ? (
-                  <a
-                    className="inline-flex min-h-10 items-center text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                    href={service.detailsHref}
-                  >
-                    {service.detailsLabel}
-                  </a>
-                ) : null}
-                {service.sourceUrl || service.publicationContext ? (
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t pt-3 text-xs text-muted-foreground">
-                    {service.sourceUrl ? (
-                      <a
-                        className="font-medium text-primary underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                        href={service.sourceUrl}
-                      >
-                        {translations.officialSource}
-                      </a>
-                    ) : null}
-                    {service.publicationContext ? <p>{service.publicationContext}</p> : null}
-                  </div>
-                ) : null}
-              </div>
-            )}
-            {service.freshnessLabel ? (
-              <p className="mt-3 text-xs text-muted-foreground">{service.freshnessLabel}</p>
-            ) : null}
-          </div>
+  return (
+    <Card className="overflow-hidden border-border bg-background shadow-none">
+      <div className="flex flex-col lg:flex-row lg:items-stretch">
+        <div
+          aria-label={translations.label}
+          className="flex shrink-0 gap-1 border-b border-slate-200/80 p-2 lg:border-b-0 lg:border-r"
+          role="tablist"
+        >
+          {serviceIds.map((serviceId) => {
+            const TabIcon = serviceIcons[serviceId];
+            const isSelected = activeServiceId === serviceId;
+
+            return (
+              <button
+                aria-controls={panelId}
+                aria-selected={isSelected}
+                className={cn(
+                  "focus-visible:ring-ring flex min-h-10 flex-1 items-center justify-center gap-2 rounded-lg px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 lg:flex-none",
+                  isSelected
+                    ? cn(
+                        "card-fog border border-slate-200 bg-background text-foreground shadow-[0_2px_5px_-4px_rgb(15_23_42_/_0.3)]",
+                        serviceId === "power"
+                          ? "city-service-tab-fog--power"
+                          : "city-service-tab-fog--water",
+                      )
+                    : "text-muted-foreground hover:bg-background/60 hover:text-foreground",
+                )}
+                id={`${panelId}-${serviceId}`}
+                key={serviceId}
+                onClick={() => setSelectedService(serviceId)}
+                onKeyDown={(event) => handleTabKeyDown(event, serviceId)}
+                role="tab"
+                tabIndex={getRovingTabIndex(isSelected)}
+                type="button"
+              >
+                <TabIcon
+                  aria-hidden="true"
+                  className={cn(
+                    "size-4",
+                    serviceId === "power" ? "text-amber-600" : "text-blue-600",
+                  )}
+                  strokeWidth={1.8}
+                />
+                {labels[serviceId]}
+              </button>
+            );
+          })}
         </div>
-      </CardContent>
+        <div
+          aria-labelledby={`${panelId}-${activeServiceId}`}
+          className="flex min-w-0 flex-1 flex-col gap-2 p-3 sm:p-4 lg:flex-row lg:items-center lg:gap-0"
+          id={panelId}
+          role="tabpanel"
+        >
+          {stateLabel ? (
+            <p className="min-w-0 text-sm font-semibold text-foreground lg:pr-5">{stateLabel}</p>
+          ) : (
+            <>
+              {primaryArea ? (
+                <ServiceStripDetail label={translations.area} value={primaryArea} />
+              ) : null}
+              {service.time ? (
+                <ServiceStripDetail label={translations.time} value={service.time} />
+              ) : null}
+              {service.additionalLocationCount ? (
+                <ServiceStripDetail
+                  label={formatAdditionalAffectedAreas(service.additionalLocationCount)}
+                />
+              ) : null}
+            </>
+          )}
+          {service.freshnessLabel ? <ServiceStripDetail label={service.freshnessLabel} /> : null}
+          {service.sourceUrl ? (
+            <a
+              className="focus-visible:ring-ring inline-flex min-h-10 items-center text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 lg:ml-auto lg:border-l lg:border-slate-200/80 lg:pl-5"
+              href={service.sourceUrl}
+            >
+              {translations.officialSource}
+            </a>
+          ) : null}
+          {service.detailsHref && service.detailsLabel ? (
+            <a
+              className="focus-visible:ring-ring inline-flex min-h-10 items-center text-sm font-semibold text-primary underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 lg:ml-auto lg:border-l lg:border-slate-200/80 lg:pl-5"
+              href={service.detailsHref}
+            >
+              {service.detailsLabel}
+            </a>
+          ) : null}
+        </div>
+      </div>
     </Card>
   );
 }
 
-function ServiceDetail({ label, value }: { label: string; value: string }) {
+function ServiceStripDetail({ label, value }: { label: string; value?: string }) {
   return (
-    <div>
-      <dt className="text-xs text-muted-foreground">{label}</dt>
-      <dd className="mt-0.5 font-medium text-foreground">{value}</dd>
+    <div className="min-w-0 text-sm lg:border-l lg:border-slate-200/80 lg:pl-5">
+      {value ? <span className="text-muted-foreground">{label}: </span> : null}
+      <span className={cn(value ? "font-medium text-foreground" : "text-muted-foreground")}>
+        {value ?? label}
+      </span>
     </div>
   );
 }

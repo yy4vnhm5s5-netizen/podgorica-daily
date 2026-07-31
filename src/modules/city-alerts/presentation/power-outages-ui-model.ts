@@ -73,6 +73,10 @@ function getPowerOutageDetailsLabel(locale: "en" | "me") {
   return powerOutageDetailsLabels[locale];
 }
 
+function formatAdditionalAffectedAreas(count: number) {
+  return `Ostalih područja: ${count}`;
+}
+
 function formatPowerOutageSummary(
   outageCount: number,
   dayCount: number,
@@ -168,6 +172,7 @@ function getGroupTime(value: Date | undefined) {
 
 export {
   formatAdditionalLocations,
+  formatAdditionalAffectedAreas,
   formatCompactPowerOutageLocations,
   formatPowerOutageSummary,
   getPowerOutageDetailsLabel,

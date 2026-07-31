@@ -28,6 +28,28 @@ function getHomepagePowerOutageLocations(alert: CityAlert) {
   };
 }
 
+/**
+ * The dashboard service strip has room for one named area only. Keep that
+ * area first, then report every other affected area from the already selected
+ * relevant outages. The full collection remains available to the detail page.
+ */
+function getStatusStripPowerOutageLocations(
+  primaryAlert: CityAlert,
+  relevantOutages: readonly CityAlert[],
+) {
+  const locations = [
+    ...getPowerOutageLocations(primaryAlert),
+    ...relevantOutages
+      .filter((alert) => alert.id !== primaryAlert.id)
+      .flatMap((alert) => getPowerOutageLocations(alert)),
+  ].filter((location, index, values) => values.indexOf(location) === index);
+
+  return {
+    additionalLocationCount: Math.max(0, locations.length - 1),
+    locations: locations.slice(0, 1),
+  };
+}
+
 function getAlertTime(alert: CityAlert) {
   return alert.startsAt?.getTime() ?? alert.publishedAt?.getTime() ?? Number.POSITIVE_INFINITY;
 }
@@ -36,5 +58,6 @@ export {
   getHomepagePowerOutageLocations,
   getPowerOutageLocations,
   getRelevantPowerOutages,
+  getStatusStripPowerOutageLocations,
   homepageLocationLimit,
 };

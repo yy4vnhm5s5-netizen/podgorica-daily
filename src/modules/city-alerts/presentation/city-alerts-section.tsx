@@ -18,7 +18,10 @@ import {
   getCityAlertServiceIds,
   type CityAlertServiceId,
 } from "@/modules/city-alerts/application/city-alert-service-capabilities";
-import { getHomepagePowerOutageLocations } from "@/modules/city-alerts/application/power-outage-selection";
+import {
+  getRelevantPowerOutages,
+  getStatusStripPowerOutageLocations,
+} from "@/modules/city-alerts/application/power-outage-selection";
 import { selectNextPowerOutage } from "@/modules/city-alerts/application/select-next-power-outage";
 import type { AlertSeverity, AlertType, CityAlert } from "@/modules/city-alerts/domain/city-alert";
 import {
@@ -124,7 +127,6 @@ async function CityAlertsSection({ context, locale }: CityAlertsSectionProps) {
         description={cityServicesDescription}
       />
       <CityServicesPanel
-        locale={locale}
         serviceIds={serviceIds}
         services={services}
         translations={{ ...translations, label: translations.cityServices }}
@@ -158,7 +160,8 @@ function getCityServices(
   serviceIds: readonly CityAlertServiceId[],
 ): Partial<Record<CityAlertServiceId, CityServiceInfo>> {
   const alerts = result.status === "success" ? result.data : [];
-  const powerAlert = selectNextPowerOutage(alerts);
+  const relevantPowerOutages = getRelevantPowerOutages(alerts);
+  const powerAlert = selectNextPowerOutage(relevantPowerOutages);
   const waterAlert = alerts.find(({ type }) => type === "waterOutage");
   const cedisSource = metadata.sources.find(({ id }) => id === "cedis");
   const vikpgSource = metadata.sources.find(({ id }) => id === "vikpg");
@@ -167,7 +170,14 @@ function getCityServices(
     ...(serviceIds.includes("power")
       ? {
           power: powerAlert
-            ? toCityServiceInfo(powerAlert, context, cedisSource, locale, translations)
+            ? toCityServiceInfo(
+                powerAlert,
+                context,
+                cedisSource,
+                locale,
+                translations,
+                relevantPowerOutages,
+              )
             : {
                 ...toEmptyCityServiceInfo(cedisSource, locale, translations),
                 detailsHref: getElectricityPath(context.city),
@@ -210,6 +220,7 @@ function toCityServiceInfo(
   source: CityAlertsMetadata["sources"][number] | undefined,
   locale: Locale,
   translations: CityAlertsTranslations,
+  relevantPowerOutages: readonly CityAlert[] = [],
 ): CityServiceInfo {
   const localeTag = getLocaleTag(locale);
   const time = [alert.startsAt, alert.expectedEndAt]
@@ -220,7 +231,7 @@ function toCityServiceInfo(
   return {
     ...(alert.type === "powerOutage"
       ? {
-          ...getHomepagePowerOutageLocations(alert),
+          ...getStatusStripPowerOutageLocations(alert, relevantPowerOutages),
           detailsHref: getElectricityPath(context.city),
           detailsLabel: getPowerOutageDetailsLabel(locale),
         }
