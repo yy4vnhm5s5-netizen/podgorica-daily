@@ -15,4 +15,8 @@ test("derives footer city links from the active city registry and keeps global l
   assert.match(source, /getTermsOfUsePath\(\)/u);
   assert.match(source, /href="\/#faq-heading"/u);
   assert.match(source, /Podaci se prikupljaju iz zvaničnih i javno dostupnih izvora/u);
+  assert.match(source, /space-y-1\.5/u);
+  assert.match(source, /text-center/u);
+  assert.match(source, /justify-center/u);
+  assert.match(source, /italic/u);
 });
