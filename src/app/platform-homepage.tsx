@@ -26,6 +26,48 @@ interface PlatformHomepageProps {
 function PlatformHomepage({ cards }: PlatformHomepageProps) {
   const structuredData = createPlatformHomepageStructuredData(cards);
   const cityNames = formatCityNames(cards);
+  const faqItems: readonly { answer: ReactNode; question: string }[] = [
+    {
+      answer: (
+        <>
+          Gradom.me je lokalna informativna platforma za gradove Crne Gore. Na jednom mjestu okuplja
+          provjerene svakodnevne informacije, uz vidljive izvore i status podataka.
+        </>
+      ),
+      question: "Šta je Gradom.me?",
+    },
+    {
+      answer: (
+        <>
+          Gradom.me trenutno podržava {cityNames}. Novi gradovi će biti dodati tek kada imaju
+          dovoljno pouzdanih lokalnih izvora i korisnih usluga.
+        </>
+      ),
+      question: "Koje gradove Gradom.me trenutno podržava?",
+    },
+    {
+      answer: (
+        <>
+          Podaci dolaze iz javno dostupnih izvora gradskih institucija, javnih preduzeća i drugih
+          jasno označenih lokalnih servisa. Svaki modul čuva izvor uz relevantan sadržaj.
+        </>
+      ),
+      question: "Odakle dolaze podaci?",
+    },
+    {
+      answer: (
+        <>
+          Učestalost zavisi od izvora i vrste podatka. Gradom.me koristi periodično osvježene snimke
+          podataka, a ne obećava prikaz u realnom vremenu.
+        </>
+      ),
+      question: "Koliko često se informacije osvježavaju?",
+    },
+    {
+      answer: <>Da. Javne informacije na Gradom.me dostupne su bez naloga i bez naknade.</>,
+      question: "Da li je korišćenje Gradom.me besplatno?",
+    },
+  ];
 
   return (
     <div className="relative">
@@ -104,37 +146,28 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
 
       {/* Tighter gap here — how-it-works and FAQ are both lighter, closely related supporting
           content, so they share one rhythm beat instead of each getting the full section gap. */}
-      <section aria-labelledby="faq-heading" className="relative mt-6 space-y-3 sm:mt-8">
+      <section
+        aria-labelledby="faq-heading"
+        className="relative mt-6 space-y-5 sm:mt-8 sm:space-y-6"
+      >
         <DecorativeIconBleed icons={platformFaqSectionIcons} />
-        <div className="space-y-1">
-          <p className="text-xs font-medium uppercase tracking-wide text-primary">Česta pitanja</p>
+        <div className="space-y-1.5">
+          <p className="text-xs font-semibold uppercase tracking-widest text-brand-foreground">
+            FAQ
+          </p>
           <h2
-            className="text-lg font-semibold tracking-tight text-slate-950 sm:text-xl"
+            className="font-display text-xl font-semibold leading-snug tracking-normal text-slate-950 sm:text-2xl"
             id="faq-heading"
           >
             Gradom.me ukratko
           </h2>
         </div>
-        <div className="divide-y rounded-xl border bg-background">
-          <FaqItem question="Šta je Gradom.me?">
-            Gradom.me je lokalna informativna platforma za gradove Crne Gore. Na jednom mjestu
-            okuplja provjerene svakodnevne informacije, uz vidljive izvore i status podataka.
-          </FaqItem>
-          <FaqItem question="Koje gradove Gradom.me trenutno podržava?">
-            Gradom.me trenutno podržava {cityNames}. Novi gradovi će biti dodati tek kada imaju
-            dovoljno pouzdanih lokalnih izvora i korisnih usluga.
-          </FaqItem>
-          <FaqItem question="Odakle dolaze podaci?">
-            Podaci dolaze iz javno dostupnih izvora gradskih institucija, javnih preduzeća i drugih
-            jasno označenih lokalnih servisa. Svaki modul čuva izvor uz relevantan sadržaj.
-          </FaqItem>
-          <FaqItem question="Koliko često se informacije osvježavaju?">
-            Učestalost zavisi od izvora i vrste podatka. Gradom.me koristi periodično osvježene
-            snimke podataka, a ne obećava prikaz u realnom vremenu.
-          </FaqItem>
-          <FaqItem question="Da li je korišćenje Gradom.me besplatno?">
-            Da. Javne informacije na Gradom.me dostupne su bez naloga i bez naknade.
-          </FaqItem>
+        <div>
+          {faqItems.map(({ answer, question }, index) => (
+            <FaqItem index={index + 1} key={question} question={question}>
+              {answer}
+            </FaqItem>
+          ))}
         </div>
       </section>
     </div>
@@ -155,13 +188,39 @@ function PlatformMark() {
   );
 }
 
-function FaqItem({ children, question }: { children: ReactNode; question: string }) {
+function FaqItem({
+  children,
+  index,
+  question,
+}: {
+  children: ReactNode;
+  index: number;
+  question: string;
+}) {
   return (
-    <details className="group px-5 py-4 sm:px-6">
-      <summary className="cursor-pointer list-none pr-8 font-medium text-slate-950 marker:content-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-        {question}
+    <details className="group border-b border-border/70 first:border-t">
+      <summary
+        aria-controls={`faq-answer-${index}`}
+        className="grid min-h-16 cursor-pointer list-none grid-cols-[2.5rem_minmax(0,1fr)_1.5rem] items-center gap-3 px-1 py-5 transition-colors marker:content-none hover:text-primary focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:grid-cols-[3rem_minmax(0,1fr)_2rem] sm:px-2 sm:py-6"
+      >
+        <span className="text-xs font-medium tabular-nums text-muted-foreground">
+          {String(index).padStart(2, "0")}
+        </span>
+        <span className="font-medium text-slate-950">{question}</span>
+        <span
+          aria-hidden="true"
+          className="justify-self-end text-xl font-light leading-none text-muted-foreground"
+        >
+          <span className="group-open:hidden">+</span>
+          <span className="hidden group-open:inline">−</span>
+        </span>
       </summary>
-      <p className="mt-3 max-w-3xl text-sm leading-6 text-muted-foreground">{children}</p>
+      <p
+        className="max-w-3xl pb-5 pl-[3.5rem] pr-8 text-sm leading-6 text-muted-foreground sm:pb-6 sm:pl-[4.25rem] sm:pr-10"
+        id={`faq-answer-${index}`}
+      >
+        {children}
+      </p>
     </details>
   );
 }

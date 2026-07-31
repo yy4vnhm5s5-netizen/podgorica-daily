@@ -5,23 +5,28 @@ import test from "node:test";
 import { createPlatformCityCardData, formatCityNames } from "./platform-homepage-data.ts";
 import { createCityContext } from "@/shared/config/cities";
 
-test("uses semantic, keyboard-accessible city-card links without nested controls", async () => {
-  const source = await readFile(new URL("./platform-homepage.tsx", import.meta.url), "utf8");
+test("keeps city cards and the FAQ semantically accessible", async () => {
+  const [cityCardSource, homepageSource] = await Promise.all([
+    readFile(new URL("./platform-city-panel.tsx", import.meta.url), "utf8"),
+    readFile(new URL("./platform-homepage.tsx", import.meta.url), "utf8"),
+  ]);
 
-  assert.match(source, /<article className=/u);
-  assert.match(source, /aria-label=\{`Otvori grad \$\{card\.city\.name\}`\}/u);
-  assert.match(source, /focus-visible:ring-2 focus-visible:ring-primary/u);
-  assert.match(source, /card\.highlights\.map/u);
-  assert.match(source, /card\.shortcuts\.map/u);
-  assert.match(source, /function PlatformMark/u);
-  assert.match(source, /lg:grid-cols-\[minmax\(12rem,0\.72fr\)_minmax\(0,1\.65fr\)_auto\]/u);
-  assert.match(source, /highlightGridClass/u);
-  assert.match(source, /sm:grid-cols-4/u);
-  assert.match(source, /const highlightSurfaceStyles/u);
-  assert.match(source, /bg-indigo-50\/75|bg-fuchsia-50\/75|bg-sky-50\/80/u);
-  assert.match(source, /<details/u);
-  assert.doesNotMatch(source, />Crna Gora</u);
-  assert.match(source, /Gradom\.me trenutno podržava \{cityNames\}/u);
+  assert.match(cityCardSource, /<article/u);
+  assert.match(cityCardSource, /aria-label=\{`Otvori grad \$\{card\.city\.name\}`\}/u);
+  assert.match(cityCardSource, /focus-visible:ring-2 focus-visible:ring-primary/u);
+  assert.match(cityCardSource, /card\.highlights\.map/u);
+  assert.match(cityCardSource, /card\.shortcuts\.map/u);
+  assert.match(cityCardSource, /sm:grid-cols-4/u);
+  assert.match(homepageSource, /function PlatformMark/u);
+  assert.match(homepageSource, /<details/u);
+  assert.match(homepageSource, /faqItems\.map/u);
+  assert.match(homepageSource, /String\(index\)\.padStart\(2, "0"\)/u);
+  assert.match(homepageSource, /aria-controls=\{`faq-answer-\$\{index\}`\}/u);
+  assert.match(homepageSource, /group-open:hidden/u);
+  assert.match(homepageSource, /group-open:inline/u);
+  assert.match(homepageSource, /font-display text-xl font-semibold leading-snug tracking-normal/u);
+  assert.doesNotMatch(homepageSource, />Crna Gora</u);
+  assert.match(homepageSource, /Gradom\.me trenutno podržava \{cityNames\}/u);
 });
 
 test("lists all active public cities in the FAQ sentence", () => {
