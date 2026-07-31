@@ -41,10 +41,13 @@ function GoingOutSection({ city, events, locale, state }: GoingOutSectionProps) 
               <Music2 aria-hidden="true" className="size-[1.125rem]" strokeWidth={2} />
             </div>
             <div>
-              <h2 className="text-base font-semibold tracking-tight" id="going-out-heading">
+              <h2
+                className="text-sm font-medium uppercase leading-5 tracking-[0.22em] text-slate-800 sm:text-[0.9375rem]"
+                id="going-out-heading"
+              >
                 {copy.title}
               </h2>
-              <p className="mt-0.5 text-sm text-muted-foreground">{copy.subtitle}</p>
+              <p className="mt-0.5 text-xs leading-5 text-muted-foreground">{copy.subtitle}</p>
             </div>
           </div>
         </CardHeader>

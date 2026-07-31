@@ -63,10 +63,10 @@ function SectionTitle({
               className="mt-1 h-5 w-1 shrink-0 rounded-full bg-brand sm:h-6"
             />
           ) : null}
-          <div className="space-y-2">
+          <div className={isDashboard ? "space-y-1" : "space-y-2"}>
             <Heading
               className={cn(
-                "font-semibold",
+                isDashboard ? "font-medium" : "font-semibold",
                 isDashboard
                   ? "text-sm uppercase leading-5 tracking-[0.22em] text-slate-800 sm:text-[0.9375rem]"
                   : "text-xl leading-tight tracking-tight sm:text-2xl",

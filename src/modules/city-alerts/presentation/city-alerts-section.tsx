@@ -83,12 +83,14 @@ function CityAlertsSectionLoading({ context, locale }: CityAlertsSectionProps) {
   const translations = getCityAlertsTranslations(locale, context.city);
 
   return (
-    <section aria-labelledby="city-alerts-heading" className="space-y-4">
+    <section aria-labelledby="city-alerts-heading" className="space-y-2">
       <SectionTitle
+        description={translations.cityServicesDescription}
         icon={Gauge}
         iconClassName="bg-gradient-to-br from-slate-400 to-slate-600 text-white shadow-slate-900/20"
         id="city-alerts-heading"
         title={translations.cityServices}
+        variant="dashboard"
       />
       <Card className="border-border bg-background shadow-none lg:mx-auto lg:max-w-2xl">
         <CardContent className="p-4">
@@ -111,12 +113,14 @@ async function CityAlertsSection({ context, locale }: CityAlertsSectionProps) {
       : [];
 
   return (
-    <section aria-labelledby="city-alerts-heading" className="space-y-4">
+    <section aria-labelledby="city-alerts-heading" className="space-y-2">
       <SectionTitle
         icon={Gauge}
         iconClassName="bg-gradient-to-br from-slate-400 to-slate-600 text-white shadow-slate-900/20"
         id="city-alerts-heading"
         title={translations.cityServices}
+        variant="dashboard"
+        description={translations.cityServicesDescription}
       />
       <CityServicesPanel
         locale={locale}

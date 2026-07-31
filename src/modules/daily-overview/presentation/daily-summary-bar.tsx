@@ -62,11 +62,13 @@ function DailySummaryBar({
     <section aria-labelledby="daily-summary-heading">
       <SectionTitle
         as="h1"
-        className="mb-5"
+        className="mb-3"
+        description={translations.summaryDescription}
         icon={CalendarDays}
         iconClassName="bg-brand text-white shadow-orange-900/20"
         id="daily-summary-heading"
         title={translations.summaryLabel}
+        variant="dashboard"
       />
       <Card className="border-border bg-background px-3 py-2 sm:px-4">
         <div className={gridClassName}>
