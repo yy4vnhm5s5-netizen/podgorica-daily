@@ -87,7 +87,7 @@ function DashboardLayout({ children, city, homeHref, translations }: DashboardLa
           {children}
         </ResponsiveContainer>
       </main>
-      <AppFooter tagline={translations.shell.tagline} translations={translations} />
+      <AppFooter translations={translations} />
       <MobileNavigation city={city} homeHref={homeHref} translations={translations} />
     </div>
   );
