@@ -1,10 +1,11 @@
 "use client";
 
-import { Droplets, Zap } from "lucide-react";
+import { Clock3, Droplets, MapPin, Zap, type LucideIcon } from "lucide-react";
 import { useId, useState, type KeyboardEvent } from "react";
 
 import type { CityAlertServiceId } from "@/modules/city-alerts/application/city-alert-service-capabilities";
 import { formatAdditionalAffectedAreas } from "@/modules/city-alerts/presentation/power-outages-ui-model";
+import { Badge } from "@/shared/components/ui/badge";
 import { Card } from "@/shared/components/ui/card";
 import { getRovingTabIndex } from "@/shared/lib/roving-tab-index";
 import { cn } from "@/shared/lib/utils";
@@ -168,16 +169,16 @@ function CityServicesPanel({ serviceIds, services, translations }: CityServicesP
             <p className="min-w-0 text-sm font-semibold text-foreground lg:pr-5">{stateLabel}</p>
           ) : (
             <>
-              {primaryArea ? (
-                <ServiceStripDetail label={translations.area} value={primaryArea} />
-              ) : null}
-              {service.time ? (
-                <ServiceStripDetail label={translations.time} value={service.time} />
-              ) : null}
+              {primaryArea ? <ServiceStripDetail icon={MapPin} value={primaryArea} /> : null}
+              {service.time ? <ServiceStripDetail icon={Clock3} value={service.time} /> : null}
               {service.additionalLocationCount ? (
-                <ServiceStripDetail
-                  label={formatAdditionalAffectedAreas(service.additionalLocationCount)}
-                />
+                <Badge
+                  aria-label={formatAdditionalAffectedAreas(service.additionalLocationCount)}
+                  className="w-fit self-start border-amber-200/80 bg-amber-50/70 text-amber-800 lg:ml-5 lg:self-auto"
+                  variant="outline"
+                >
+                  +{service.additionalLocationCount}
+                </Badge>
               ) : null}
             </>
           )}
@@ -204,10 +205,21 @@ function CityServicesPanel({ serviceIds, services, translations }: CityServicesP
   );
 }
 
-function ServiceStripDetail({ label, value }: { label: string; value?: string }) {
+function ServiceStripDetail({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon?: LucideIcon;
+  label?: string;
+  value?: string;
+}) {
   return (
-    <div className="min-w-0 text-sm lg:border-l lg:border-slate-200/80 lg:pl-5">
-      {value ? <span className="text-muted-foreground">{label}: </span> : null}
+    <div className="flex min-w-0 items-center gap-1.5 text-sm lg:border-l lg:border-slate-200/80 lg:pl-5">
+      {Icon ? (
+        <Icon aria-hidden="true" className="size-3.5 shrink-0 text-muted-foreground" />
+      ) : null}
+      {value && label ? <span className="text-muted-foreground">{label}: </span> : null}
       <span className={cn(value ? "font-medium text-foreground" : "text-muted-foreground")}>
         {value ?? label}
       </span>

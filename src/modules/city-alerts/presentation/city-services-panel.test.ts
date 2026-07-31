@@ -10,6 +10,9 @@ test("renders City Services as a compact desktop status strip while preserving t
   assert.match(source, /role="tablist"/u);
   assert.match(source, /role="tabpanel"/u);
   assert.match(source, /formatAdditionalAffectedAreas\(service\.additionalLocationCount\)/u);
+  assert.match(source, /<ServiceStripDetail icon=\{MapPin\} value=\{primaryArea\}/u);
+  assert.match(source, /<ServiceStripDetail icon=\{Clock3\} value=\{service\.time\}/u);
+  assert.match(source, /\+\{service\.additionalLocationCount\}/u);
   assert.match(source, /href=\{service\.detailsHref\}/u);
   assert.match(source, /href=\{service\.sourceUrl\}/u);
   assert.doesNotMatch(source, /<CardContent/u);

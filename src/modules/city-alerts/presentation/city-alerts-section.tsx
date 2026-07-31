@@ -35,7 +35,10 @@ import {
   type CityServiceInfo,
 } from "@/modules/city-alerts/presentation/city-services-panel";
 import { getCityServiceFreshnessLabel } from "@/modules/city-alerts/presentation/city-service-freshness";
-import { getPowerOutageDetailsLabel } from "@/modules/city-alerts/presentation/power-outages-ui-model";
+import {
+  formatCompactPowerOutageTimeRange,
+  getPowerOutageDetailsLabel,
+} from "@/modules/city-alerts/presentation/power-outages-ui-model";
 import { LoadingSkeleton } from "@/shared/components/loading-skeleton";
 import { SectionTitle } from "@/shared/components/section-title";
 import { StatusBadge, type StatusTone } from "@/shared/components/status-badge";
@@ -223,10 +226,14 @@ function toCityServiceInfo(
   relevantPowerOutages: readonly CityAlert[] = [],
 ): CityServiceInfo {
   const localeTag = getLocaleTag(locale);
-  const time = [alert.startsAt, alert.expectedEndAt]
+  const detailedTime = [alert.startsAt, alert.expectedEndAt]
     .filter((value): value is Date => value !== undefined)
     .map((value) => formatDateTime(value, { locale: localeTag }).label)
     .join(" – ");
+  const time =
+    alert.type === "powerOutage"
+      ? formatCompactPowerOutageTimeRange(alert.startsAt, alert.expectedEndAt)
+      : detailedTime || undefined;
 
   return {
     ...(alert.type === "powerOutage"
@@ -256,7 +263,7 @@ function toCityServiceInfo(
     state: "available",
     statusLabel:
       alert.status === "scheduled" ? translations.statuses.scheduled : translations.statuses.active,
-    time: time || undefined,
+    time,
     title: getCityAlertContent(alert.title, translations),
   };
 }

@@ -2,9 +2,24 @@ import type { CityAlert } from "@/modules/city-alerts/domain/city-alert";
 import type { Locale } from "@/shared/config/locale";
 
 const powerOutageDetailsLabels = {
-  en: "View details →",
-  me: "Pogledajte detalje →",
+  en: "Details →",
+  me: "Detalji →",
 } as const;
+
+const shortMonthNames = [
+  "jan",
+  "feb",
+  "mar",
+  "apr",
+  "maj",
+  "jun",
+  "jul",
+  "avg",
+  "sep",
+  "okt",
+  "nov",
+  "dec",
+] as const;
 
 interface PowerOutageDateGroup {
   date?: Date;
@@ -75,6 +90,24 @@ function getPowerOutageDetailsLabel(locale: "en" | "me") {
 
 function formatAdditionalAffectedAreas(count: number) {
   return `Ostalih područja: ${count}`;
+}
+
+function formatCompactPowerOutageTimeRange(
+  startsAt: Date | undefined,
+  expectedEndAt: Date | undefined,
+  timeZone = "Europe/Podgorica",
+) {
+  if (!startsAt && !expectedEndAt) return undefined;
+  if (!startsAt || !expectedEndAt) return formatLocalTime(startsAt ?? expectedEndAt!, timeZone);
+
+  const startTime = formatLocalTime(startsAt, timeZone);
+  const endTime = formatLocalTime(expectedEndAt, timeZone);
+
+  if (getLocalDateKey(startsAt, timeZone) === getLocalDateKey(expectedEndAt, timeZone)) {
+    return `${startTime}–${endTime}`;
+  }
+
+  return `${formatShortLocalDate(startsAt, timeZone)} • ${startTime}–${formatShortLocalDate(expectedEndAt, timeZone)} • ${endTime}`;
 }
 
 function formatPowerOutageSummary(
@@ -162,6 +195,28 @@ function getLocalDateKey(value: Date, timeZone: string) {
   return `${part("year")}-${part("month")}-${part("day")}`;
 }
 
+function formatLocalTime(value: Date, timeZone: string) {
+  return new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit",
+    hourCycle: "h23",
+    minute: "2-digit",
+    timeZone,
+  }).format(value);
+}
+
+function formatShortLocalDate(value: Date, timeZone: string) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone,
+  }).formatToParts(value);
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((item) => item.type === type)?.value ?? "";
+
+  const month = Number(part("month"));
+  return `${Number(part("day"))}. ${shortMonthNames[month - 1] ?? ""}`.trim();
+}
+
 function getOutageTime(alert: CityAlert) {
   return alert.startsAt?.getTime() ?? alert.publishedAt?.getTime() ?? Number.POSITIVE_INFINITY;
 }
@@ -173,6 +228,7 @@ function getGroupTime(value: Date | undefined) {
 export {
   formatAdditionalLocations,
   formatAdditionalAffectedAreas,
+  formatCompactPowerOutageTimeRange,
   formatCompactPowerOutageLocations,
   formatPowerOutageSummary,
   getPowerOutageDetailsLabel,
