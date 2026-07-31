@@ -53,15 +53,24 @@ test("derives the dashboard's movie count from the canonical selector, not the c
   assert.match(source, /<CineplexxProgrammeCard[\s\S]*?limit=\{3\}/u);
 });
 
-test("gives the content-heavy Going Out section its own dashboard row while compact cards share rows", async () => {
+test("prioritizes Going Out only for the main city while restoring sea water before it for other cities", async () => {
   const source = await readFile(new URL("./city-dashboard.tsx", import.meta.url), "utf8");
 
   const cityAlertsIndex = source.indexOf("<CityAlertsSection");
+  const seaWaterBeforeGoingOutIndex = source.indexOf(
+    "{showSeaWaterBeforeGoingOut ? seaWaterCard : null}",
+  );
   const goingOutIndex = source.indexOf("<GoingOutSection");
   const compactModulesIndex = source.indexOf("{compactModuleCount > 0 ? (");
 
-  assert.ok(cityAlertsIndex >= 0 && goingOutIndex > cityAlertsIndex);
+  assert.ok(cityAlertsIndex >= 0 && seaWaterBeforeGoingOutIndex > cityAlertsIndex);
+  assert.ok(goingOutIndex > seaWaterBeforeGoingOutIndex);
   assert.ok(compactModulesIndex > goingOutIndex);
+  assert.match(
+    source,
+    /const showSeaWaterBeforeGoingOut = !city\.isMain && seaWaterCard !== null;/u,
+  );
+  assert.match(source, /\{city\.isMain \? seaWaterCard : null\}/u);
   assert.match(
     source,
     /className=\{compactModuleCount > 1 \? "grid items-start gap-6 lg:grid-cols-2" : undefined\}/u,

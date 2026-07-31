@@ -68,7 +68,19 @@ async function CityDashboard({ context }: CityDashboardProps) {
   const summaryAvailability = getCityDashboardSummaryAvailability(city);
   const cinemaAvailable = isCityCinemaRouteAvailable(city);
   const railwayCard = isFeatureEnabled("busStation") && railway;
-  const compactModuleCount = [seaWaterQuality, flights, railwayCard].filter(Boolean).length;
+  const seaWaterCard = seaWaterQuality ? (
+    <SeaWaterQualityCard
+      city={city}
+      lastSuccessfulRefreshAt={seaWaterQuality.lastSuccessfulRefreshAt}
+      locale={locale}
+      state={seaWaterQuality.state}
+      summary={seaWaterQuality.summary}
+    />
+  ) : null;
+  const showSeaWaterBeforeGoingOut = !city.isMain && seaWaterCard !== null;
+  const compactModuleCount = [city.isMain ? seaWaterCard : null, flights, railwayCard].filter(
+    Boolean,
+  ).length;
 
   return (
     <DashboardLayout city={city} translations={translations}>
@@ -97,6 +109,7 @@ async function CityDashboard({ context }: CityDashboardProps) {
             </Suspense>
           ) : null}
         </div>
+        {showSeaWaterBeforeGoingOut ? seaWaterCard : null}
         {goingOut ? (
           <GoingOutSection
             city={city}
@@ -139,15 +152,7 @@ async function CityDashboard({ context }: CityDashboardProps) {
           <div
             className={compactModuleCount > 1 ? "grid items-start gap-6 lg:grid-cols-2" : undefined}
           >
-            {seaWaterQuality ? (
-              <SeaWaterQualityCard
-                city={city}
-                lastSuccessfulRefreshAt={seaWaterQuality.lastSuccessfulRefreshAt}
-                locale={locale}
-                state={seaWaterQuality.state}
-                summary={seaWaterQuality.summary}
-              />
-            ) : null}
+            {city.isMain ? seaWaterCard : null}
             {flights ? (
               <AirportFlightsCard
                 city={city}
