@@ -166,14 +166,12 @@ function MetricTile({ highlight }: { highlight: CityHighlight }) {
           className={
             highlight.state === "unavailable"
               ? "block text-sm font-semibold leading-5 text-muted-foreground"
-              : "block truncate text-lg font-bold leading-tight text-foreground sm:text-xl"
+              : "block truncate text-2xl font-light leading-tight tracking-tight text-foreground sm:text-3xl"
           }
         >
           {highlight.value}
         </span>
-        <span className="block text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-          {highlight.label}
-        </span>
+        <span className="block text-xs font-normal text-muted-foreground">{highlight.label}</span>
       </span>
     </>
   );
