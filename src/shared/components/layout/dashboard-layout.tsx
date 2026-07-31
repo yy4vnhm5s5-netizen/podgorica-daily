@@ -10,6 +10,7 @@ import {
   HeroIconBackdrop,
   cityDashboardBackdropIcons,
 } from "@/shared/components/hero-icon-backdrop";
+import { PageAtmosphere } from "@/shared/components/page-atmosphere";
 import { Button } from "@/shared/components/ui/button";
 import type { City } from "@/shared/types/city";
 import type { Translations } from "@/shared/lib/translations";
@@ -56,12 +57,15 @@ function DashboardLayout({ children, city, homeHref, translations }: DashboardLa
     <div
       className={
         isCityScoped
-          ? "relative min-h-screen overflow-hidden bg-gradient-to-br from-[#fcfaf6] via-[#f9f7f2] to-[#f6f3ee] pb-[calc(5rem+env(safe-area-inset-bottom))] text-foreground md:pb-0"
+          ? "relative min-h-screen overflow-hidden bg-[#fbfaf7] pb-[calc(5rem+env(safe-area-inset-bottom))] text-foreground md:pb-0"
           : "relative min-h-screen overflow-hidden bg-background pb-[calc(5rem+env(safe-area-inset-bottom))] text-foreground md:pb-0"
       }
     >
       {isCityScoped ? (
-        <HeroIconBackdrop icons={cityDashboardBackdropIcons} />
+        <>
+          <PageAtmosphere variant="city-dashboard" />
+          <HeroIconBackdrop icons={cityDashboardBackdropIcons} />
+        </>
       ) : (
         <PageContourMotif />
       )}
