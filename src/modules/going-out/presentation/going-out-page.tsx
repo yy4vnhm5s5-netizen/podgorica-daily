@@ -34,6 +34,8 @@ function GoingOutPage({ city, events, locale, state }: GoingOutPageProps) {
       <div className="space-y-2">
         <SectionTitle
           as="h1"
+          icon={Music2}
+          iconClassName="bg-gradient-to-br from-violet-400 to-violet-600 text-white shadow-violet-900/20"
           id="going-out-page-heading"
           title={copy.title.replace("{city}", cityName)}
         />

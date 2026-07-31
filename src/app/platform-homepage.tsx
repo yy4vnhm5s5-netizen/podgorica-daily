@@ -31,31 +31,18 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
         aria-labelledby="platform-homepage-title"
         className="card-fog card-fog--info relative overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-r from-white via-orange-50/50 to-sky-100/60 px-6 py-5 shadow-sm shadow-blue-950/[0.04] sm:px-8 sm:py-6"
       >
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
-            <PlatformMark />
-            <div className="max-w-2xl space-y-1.5 sm:border-l sm:border-border/60 sm:pl-6">
-              <h1
-                className="text-2xl font-semibold leading-tight tracking-tight text-slate-950 sm:text-3xl"
-                id="platform-homepage-title"
-              >
-                Lokalne informacije za gradove Crne Gore
-              </h1>
-              <p className="text-sm leading-6 text-muted-foreground sm:text-base">
-                Izaberite grad i odmah provjerite najvažnije lokalne informacije.
-              </p>
-            </div>
-          </div>
-          {/* Reserved for future artwork (city skyline / landmark illustration) — deliberately
-              left as an abstract gradient placeholder rather than invented clip-art, so real
-              artwork can be dropped in later without a layout change. Decorative only, hidden
-              below lg: where there isn't room for it without crowding the actual content. */}
-          <div
-            aria-hidden="true"
-            className="relative hidden h-28 w-44 shrink-0 overflow-hidden rounded-xl border border-white/60 bg-white/30 lg:block xl:h-32 xl:w-56"
-          >
-            <div className="absolute -right-10 -top-10 size-32 rounded-full bg-gradient-to-br from-orange-200/60 via-orange-100/30 to-transparent blur-2xl" />
-            <div className="absolute -bottom-12 -left-8 size-36 rounded-full bg-gradient-to-tr from-sky-200/50 via-sky-100/20 to-transparent blur-2xl" />
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+          <PlatformMark />
+          <div className="max-w-2xl space-y-1.5 sm:border-l sm:border-border/60 sm:pl-6">
+            <h1
+              className="text-2xl font-semibold leading-tight tracking-tight text-slate-950 sm:text-3xl"
+              id="platform-homepage-title"
+            >
+              Lokalne informacije za gradove Crne Gore
+            </h1>
+            <p className="text-sm leading-6 text-muted-foreground sm:text-base">
+              Izaberite grad i odmah provjerite najvažnije lokalne informacije.
+            </p>
           </div>
         </div>
       </section>

@@ -62,9 +62,9 @@ function DailySummaryBar({
     <section aria-labelledby="daily-summary-heading">
       <SectionTitle
         as="h1"
-        className="mb-4"
+        className="mb-5"
         icon={CalendarDays}
-        iconClassName="bg-brand/10 text-brand-foreground"
+        iconClassName="bg-brand text-white shadow-orange-900/20"
         id="daily-summary-heading"
         title={translations.summaryLabel}
       />
@@ -122,7 +122,7 @@ function getDailySummaryItem({
         children: translations.performancesCount(performancesCount),
         href: getGoingOutPath(city),
         icon: MicVocal,
-        iconClassName: "bg-violet-50/90 text-violet-700/70",
+        iconClassName: "bg-violet-100 text-violet-700",
         label: translations.performancesLabel,
       };
     case "events":
@@ -130,7 +130,7 @@ function getDailySummaryItem({
         children: translations.eventsCount(eventsCount),
         href: getEventsPath(city),
         icon: CalendarDays,
-        iconClassName: "bg-blue-50/90 text-blue-700/70",
+        iconClassName: "bg-indigo-100 text-indigo-700",
         label: translations.eventsLabel,
       };
     case "cinema":
@@ -138,7 +138,7 @@ function getDailySummaryItem({
         children: translations.moviesCount(moviesCount),
         href: getCinemaPath(city),
         icon: Clapperboard,
-        iconClassName: "bg-rose-50/90 text-rose-700/70",
+        iconClassName: "bg-blue-100 text-blue-700",
         label: translations.moviesLabel,
       };
     case "seaWaterQuality":
@@ -149,14 +149,14 @@ function getDailySummaryItem({
             : translations.seaWaterQualityCount(seaWaterQualityLocationCount),
         href: getSeaWaterQualityPath(city),
         icon: Waves,
-        iconClassName: "bg-sky-50/90 text-sky-700/70",
+        iconClassName: "bg-cyan-100 text-cyan-700",
         label: translations.seaWaterQualityLabel,
       };
     case "weather":
       return {
         children: temperatureCelsius === undefined ? "—" : `${temperatureCelsius.toFixed(0)}°C`,
         icon: Thermometer,
-        iconClassName: "bg-amber-50/90 text-amber-700/70",
+        iconClassName: "bg-amber-100 text-amber-700",
         label: translations.temperature,
       };
   }
@@ -176,9 +176,9 @@ function SummaryItem({ children, href, icon: Icon, iconClassName, label }: Summa
     <>
       <span
         aria-hidden="true"
-        className={`flex size-7 shrink-0 items-center justify-center rounded-lg ${iconClassName}`}
+        className={`flex size-7 shrink-0 items-center justify-center rounded-xl ${iconClassName}`}
       >
-        <Icon className="size-3.5" strokeWidth={1.8} />
+        <Icon className="size-3.5" strokeWidth={2} />
       </span>
       <span className="min-w-0">
         <span

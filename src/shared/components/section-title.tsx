@@ -12,11 +12,12 @@ interface SectionTitleProps extends Omit<HTMLAttributes<HTMLDivElement>, "title"
   action?: ReactNode;
   as?: "h1" | "h2";
   description?: ReactNode;
-  /** Optional leading icon chip for the handful of headings that need to read as the page's own
-   * anchor (e.g. a dashboard's daily-summary heading), not a general-purpose per-section icon. */
+  /** Optional leading icon chip for headings that should read as their section's own anchor.
+   * When set, the chip itself carries the color signal, so the accent bar is auto-suppressed
+   * (both together would be redundant, not richer). */
   icon?: LucideIcon;
-  /** Background/text tint classes for the icon chip, e.g. "bg-brand/10 text-brand-foreground".
-   * Only used when `icon` is set. */
+  /** Fill/text classes for the icon chip, e.g. "bg-gradient-to-br from-indigo-400 to-indigo-600
+   * text-white". Only used when `icon` is set. */
   iconClassName?: string;
   title: ReactNode;
 }
@@ -42,15 +43,15 @@ function SectionTitle({
           <span
             aria-hidden="true"
             className={cn(
-              "flex size-10 shrink-0 items-center justify-center rounded-xl sm:size-11",
+              "flex size-11 shrink-0 items-center justify-center rounded-2xl shadow-sm sm:size-12",
               iconClassName,
             )}
           >
-            <Icon className="size-5 sm:size-[1.375rem]" strokeWidth={1.8} />
+            <Icon className="size-5 sm:size-[1.375rem]" strokeWidth={2} />
           </span>
         ) : null}
         <div className="flex items-start gap-3">
-          {accent ? (
+          {accent && !Icon ? (
             <span
               aria-hidden="true"
               className="mt-1 h-5 w-1 shrink-0 rounded-full bg-brand sm:h-6"

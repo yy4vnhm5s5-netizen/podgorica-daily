@@ -25,14 +25,15 @@ function Navigation({
   translations,
 }: NavigationProps) {
   const pathname = usePathname();
-  // Each item carries its own permanent icon tint (not tied to active/hover state) so the nav
-  // reads as a small set of distinct destinations rather than one monochrome row — restrained on
-  // purpose: color lives only on the icon glyph, never as a background fill or on the label text.
+  // Each item carries its own small filled icon chip (not tied to active/hover state) so the nav
+  // reads as a set of distinct destinations with real character — the same solid-chip idiom used
+  // for section-anchor icons elsewhere, scaled down. The active-state pill background is what
+  // signals "current page"; the chip color is a permanent identity cue, not a state indicator.
   const navigationItems = [
     {
       href: homeHref,
       icon: House,
-      iconClassName: "text-brand",
+      iconClassName: "bg-brand text-white",
       label: translations.shell.navigation.dashboard,
     },
     ...(isFeatureEnabled("contact")
@@ -40,7 +41,7 @@ function Navigation({
           {
             href: getContactPath(),
             icon: Mail,
-            iconClassName: "text-sky-600",
+            iconClassName: "bg-sky-600 text-white",
             label: translations.shell.navigation.contact,
           },
         ]
@@ -72,7 +73,15 @@ function Navigation({
                 )}
                 href={href}
               >
-                <Icon aria-hidden="true" className={cn("size-4", iconClassName)} />
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    "flex size-7 shrink-0 items-center justify-center rounded-lg",
+                    iconClassName,
+                  )}
+                >
+                  <Icon className="size-4" strokeWidth={2} />
+                </span>
                 {label}
               </Link>
             </li>

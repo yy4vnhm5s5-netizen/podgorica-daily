@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Clapperboard } from "lucide-react";
 import { notFound } from "next/navigation";
 
 import { isCityCinemaRouteAvailable, resolveActiveCityFeatureRoute } from "@/app/city-routing";
@@ -53,7 +54,13 @@ async function CinemaPage({ params }: CinemaPageProps) {
   return (
     <DashboardLayout city={context.city} translations={getTranslations(locale)}>
       <section aria-labelledby="cinema-heading" className="space-y-6" id="filmovi">
-        <SectionTitle as="h1" id="cinema-heading" title="Filmovi" />
+        <SectionTitle
+          as="h1"
+          icon={Clapperboard}
+          iconClassName="bg-gradient-to-br from-blue-400 to-blue-600 text-white shadow-blue-900/20"
+          id="cinema-heading"
+          title="Filmovi"
+        />
         <CineplexxProgrammeCard events={screenings} locale={locale} state={providerState} />
       </section>
     </DashboardLayout>

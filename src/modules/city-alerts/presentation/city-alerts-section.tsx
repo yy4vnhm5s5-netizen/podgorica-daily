@@ -3,6 +3,7 @@ import {
   CircleAlert,
   CloudLightning,
   Droplets,
+  Gauge,
   Siren,
   Zap,
   type LucideIcon,
@@ -83,7 +84,12 @@ function CityAlertsSectionLoading({ context, locale }: CityAlertsSectionProps) {
 
   return (
     <section aria-labelledby="city-alerts-heading" className="space-y-4">
-      <SectionTitle id="city-alerts-heading" title={translations.cityServices} />
+      <SectionTitle
+        icon={Gauge}
+        iconClassName="bg-gradient-to-br from-slate-400 to-slate-600 text-white shadow-slate-900/20"
+        id="city-alerts-heading"
+        title={translations.cityServices}
+      />
       <Card className="border-blue-200/80 bg-blue-50/60 shadow-none">
         <CardContent className="p-4">
           <LoadingSkeleton label={translations.loading} lines={4} />
@@ -106,7 +112,12 @@ async function CityAlertsSection({ context, locale }: CityAlertsSectionProps) {
 
   return (
     <section aria-labelledby="city-alerts-heading" className="space-y-4">
-      <SectionTitle id="city-alerts-heading" title={translations.cityServices} />
+      <SectionTitle
+        icon={Gauge}
+        iconClassName="bg-gradient-to-br from-slate-400 to-slate-600 text-white shadow-slate-900/20"
+        id="city-alerts-heading"
+        title={translations.cityServices}
+      />
       <CityServicesPanel
         locale={locale}
         serviceIds={serviceIds}

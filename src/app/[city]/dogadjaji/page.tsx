@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { CalendarDays } from "lucide-react";
 import { notFound } from "next/navigation";
 
 import { createPublicRouteMetadata } from "@/app/public-route-metadata";
@@ -90,7 +91,12 @@ async function EventsPage({ params, searchParams }: EventsPageProps) {
     return (
       <DashboardLayout city={context.city} translations={translations}>
         <section className="space-y-8" id="events">
-          <SectionTitle as="h1" title={heading} />
+          <SectionTitle
+            as="h1"
+            icon={CalendarDays}
+            iconClassName="bg-gradient-to-br from-indigo-400 to-indigo-600 text-white shadow-indigo-900/20"
+            title={heading}
+          />
           {allUnavailable ? (
             <ErrorState
               description={eventTranslations.allEventsUnavailableDescription}
@@ -120,7 +126,12 @@ async function EventsPage({ params, searchParams }: EventsPageProps) {
     return (
       <DashboardLayout city={context.city} translations={translations}>
         <section className="space-y-8" id="events">
-          <SectionTitle as="h1" title={heading} />
+          <SectionTitle
+            as="h1"
+            icon={CalendarDays}
+            iconClassName="bg-gradient-to-br from-indigo-400 to-indigo-600 text-white shadow-indigo-900/20"
+            title={heading}
+          />
           <ErrorState
             description={eventTranslations.allEventsUnavailableDescription}
             title={eventTranslations.allEventsUnavailable}

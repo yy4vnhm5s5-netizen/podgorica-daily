@@ -140,9 +140,16 @@ function DashboardLayout({ children, city, homeHref, translations }: DashboardLa
               app uses (e.g. the event detail page's "back to events" link), rather than the same
               navigational action being a smaller target here than elsewhere. */}
           {isCityScoped ? (
-            <Button asChild className="mb-6 gap-2 rounded-lg" variant="outline">
+            <Button
+              asChild
+              className="group mb-6 gap-2 rounded-lg border-brand/25 bg-brand-soft text-brand-foreground hover:border-brand/40 hover:bg-brand/15 focus-visible:ring-brand dark:border-brand/30 dark:bg-brand/10 dark:hover:bg-brand/20"
+              variant="outline"
+            >
               <Link href="/">
-                <ArrowLeft aria-hidden="true" className="size-4" />
+                <ArrowLeft
+                  aria-hidden="true"
+                  className="size-4 transition-transform duration-200 group-hover:-translate-x-0.5"
+                />
                 Povratak na izbor gradova
               </Link>
             </Button>

@@ -1,4 +1,4 @@
-import { PlaneLanding, PlaneTakeoff } from "lucide-react";
+import { Plane, PlaneLanding, PlaneTakeoff } from "lucide-react";
 
 import type { Flight } from "../domain/flight";
 import type { FlightCacheState } from "../infrastructure/podgorica-flights";
@@ -40,7 +40,13 @@ function AirportFlightsPage({
   return (
     <section aria-labelledby="flights-heading" className="space-y-6" id="flights">
       <div className="space-y-2">
-        <SectionTitle as="h1" id="flights-heading" title={copy.title} />
+        <SectionTitle
+          as="h1"
+          icon={Plane}
+          iconClassName="bg-gradient-to-br from-sky-400 to-sky-600 text-white shadow-sky-900/20"
+          id="flights-heading"
+          title={copy.title}
+        />
         <p className="max-w-2xl text-sm leading-6 text-muted-foreground">{copy.description}</p>
       </div>
       {displayState === "unavailable" ? (

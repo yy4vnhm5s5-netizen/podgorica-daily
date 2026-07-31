@@ -34,8 +34,8 @@ function SeaWaterQualityCard({
   return (
     <Card className="card-fog card-fog--info border-primary/15 bg-slate-50/65">
       <CardHeader className="flex-row items-center gap-3 space-y-0 p-4 sm:p-5">
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-600 dark:bg-cyan-500/15 dark:text-cyan-300">
-          <Waves aria-hidden="true" className="size-[1.125rem]" strokeWidth={1.8} />
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 to-cyan-600 text-white shadow-sm shadow-cyan-900/20">
+          <Waves aria-hidden="true" className="size-[1.125rem]" strokeWidth={2} />
         </div>
         <div>
           <h2 className="text-base font-semibold tracking-tight">Kvalitet mora</h2>

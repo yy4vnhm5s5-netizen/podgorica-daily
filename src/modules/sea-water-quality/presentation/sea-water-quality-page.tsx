@@ -25,6 +25,8 @@ function SeaWaterQualityPage({ city, locale, result }: SeaWaterQualityPageProps)
       <div className="space-y-2">
         <SectionTitle
           as="h1"
+          icon={Waves}
+          iconClassName="bg-gradient-to-br from-cyan-400 to-cyan-600 text-white shadow-cyan-900/20"
           id="plaze-heading"
           title={`Plaže u ${city.locativeName ?? city.name} i kvalitet mora`}
         />
