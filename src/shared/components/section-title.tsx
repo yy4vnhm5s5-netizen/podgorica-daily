@@ -20,6 +20,9 @@ interface SectionTitleProps extends Omit<HTMLAttributes<HTMLDivElement>, "title"
    * text-white". Only used when `icon` is set. */
   iconClassName?: string;
   title: ReactNode;
+  /** A compact, all-caps treatment for dashboard regions. Other pages retain the display-heading
+   * treatment by default. */
+  variant?: "dashboard" | "default";
 }
 
 function SectionTitle({
@@ -32,9 +35,11 @@ function SectionTitle({
   iconClassName,
   id,
   title,
+  variant = "default",
   ...props
 }: SectionTitleProps) {
   const Heading = as;
+  const isDashboard = variant === "dashboard";
 
   return (
     <div className={cn("flex items-start justify-between gap-4", className)} {...props}>
@@ -43,7 +48,8 @@ function SectionTitle({
           <span
             aria-hidden="true"
             className={cn(
-              "flex size-11 shrink-0 items-center justify-center rounded-2xl shadow-sm sm:size-12",
+              "flex shrink-0 items-center justify-center shadow-sm",
+              isDashboard ? "size-9 rounded-xl" : "size-11 rounded-2xl sm:size-12",
               iconClassName,
             )}
           >
@@ -60,19 +66,29 @@ function SectionTitle({
           <div className="space-y-2">
             <Heading
               className={cn(
-                "text-xl font-semibold leading-tight tracking-tight sm:text-2xl",
+                "font-semibold",
+                isDashboard
+                  ? "text-sm uppercase leading-5 tracking-[0.22em] text-slate-800 sm:text-[0.9375rem]"
+                  : "text-xl leading-tight tracking-tight sm:text-2xl",
                 // The display serif is reserved for primary/anchor headings — exactly what
                 // `accent` already means (see the prop doc above). Serif letterforms read as
                 // cramped under the same tight tracking/leading tuned for the sans UI font, so
                 // both relax slightly whenever the serif is applied.
-                accent && "font-display font-semibold leading-snug tracking-normal",
+                accent && !isDashboard && "font-display font-semibold leading-snug tracking-normal",
               )}
               id={id}
             >
               {title}
             </Heading>
             {description ? (
-              <p className="text-sm leading-6 text-muted-foreground">{description}</p>
+              <p
+                className={cn(
+                  "text-muted-foreground",
+                  isDashboard ? "text-xs leading-5" : "text-sm leading-6",
+                )}
+              >
+                {description}
+              </p>
             ) : null}
           </div>
         </div>

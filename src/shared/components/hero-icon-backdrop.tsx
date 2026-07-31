@@ -1,8 +1,11 @@
 import {
   CalendarDays,
+  Building2,
   Clapperboard,
   CloudSun,
   Droplets,
+  FileText,
+  HeartPulse,
   MapPin,
   Music2,
   Plane,
@@ -157,9 +160,23 @@ const platformFaqSectionIcons: readonly HeroBackdropIcon[] = [
   },
 ];
 
+// City dashboards use the same backdrop primitive as the platform homepage, but distribute the
+// city-relevant motifs across the full dashboard height. The 2.5–3% opacity keeps them strictly
+// atmospheric while each section's translucent surface naturally softens them further.
+const cityDashboardPageIcons: readonly HeroBackdropIcon[] = [
+  { className: "-left-10 top-[6%] size-[150px] -rotate-6 opacity-[0.03]", icon: CalendarDays },
+  { className: "right-8 top-[14%] size-[112px] rotate-3 opacity-[0.025]", icon: Building2 },
+  { className: "-right-10 top-[28%] size-[156px] rotate-6 opacity-[0.03]", icon: MapPin },
+  { className: "left-8 top-[41%] size-[104px] -rotate-3 opacity-[0.025]", icon: FileText },
+  { className: "right-10 top-[55%] size-[128px] rotate-2 opacity-[0.03]", icon: Music2 },
+  { className: "-left-10 top-[69%] size-[154px] -rotate-6 opacity-[0.025]", icon: HeartPulse },
+  { className: "right-10 top-[83%] size-[112px] rotate-3 opacity-[0.03]", icon: TrainFront },
+];
+
 export {
   DecorativeIconBleed,
   HeroIconBackdrop,
+  cityDashboardPageIcons,
   platformCitiesSectionIcons,
   platformFaqSectionIcons,
   platformHeroSectionIcons,

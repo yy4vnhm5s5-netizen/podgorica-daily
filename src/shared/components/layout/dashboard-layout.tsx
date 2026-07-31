@@ -7,8 +7,8 @@ import { AppHeader } from "@/shared/components/layout/app-header";
 import { MobileNavigation } from "@/shared/components/layout/mobile-navigation";
 import { ResponsiveContainer } from "@/shared/components/layout/responsive-container";
 import {
+  cityDashboardPageIcons,
   DecorativeIconBleed,
-  platformHeroSectionIcons,
 } from "@/shared/components/hero-icon-backdrop";
 import { PageAtmosphere } from "@/shared/components/page-atmosphere";
 import { Button } from "@/shared/components/ui/button";
@@ -65,7 +65,7 @@ function DashboardLayout({ children, city, homeHref, translations }: DashboardLa
       <AppHeader city={city} homeHref={homeHref} translations={translations} />
       <main id="main-content">
         <ResponsiveContainer className={isCityScoped ? "relative py-8 sm:py-12" : "py-8 sm:py-12"}>
-          {isCityScoped ? <DecorativeIconBleed icons={platformHeroSectionIcons} /> : null}
+          {isCityScoped ? <DecorativeIconBleed icons={cityDashboardPageIcons} /> : null}
           {/* Default size, not sm: matches the 44px touch target every other "back" link in the
               app uses (e.g. the event detail page's "back to events" link), rather than the same
               navigational action being a smaller target here than elsewhere. */}

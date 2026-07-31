@@ -22,6 +22,7 @@ import {
   CityAlertsSectionLoading,
 } from "@/modules/city-alerts/presentation/city-alerts-section";
 import { AdvertisingCard } from "@/shared/components/dashboard/advertising-card";
+import { DashboardSection } from "@/shared/components/dashboard/dashboard-section";
 import { getEmergencyNumbers } from "@/shared/components/dashboard/emergency-numbers";
 import { EmergencyNumbersStrip } from "@/shared/components/dashboard/emergency-numbers-strip";
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
@@ -89,10 +90,7 @@ async function CityDashboard({ context }: CityDashboardProps) {
         cityId={city.id}
       />
       <section className="space-y-10 sm:space-y-12" id="dashboard">
-        {/* "Today" anchor: the summary bar and Gradske usluge are the two things that most
-            directly answer "what's important today," so they share one tighter internal gap
-            instead of each taking the same full section beat as the teaser modules below. */}
-        <div className="space-y-6">
+        <DashboardSection first>
           <DailySummaryBar
             availability={summaryAvailability}
             city={city}
@@ -103,45 +101,51 @@ async function CityDashboard({ context }: CityDashboardProps) {
             seaWaterQualityLocationCount={seaWaterQuality?.summary?.totalLocations}
             weather={weather}
           />
-          {isFeatureEnabled("cityAlerts") && capabilities.cityAlerts ? (
+        </DashboardSection>
+        {isFeatureEnabled("cityAlerts") && capabilities.cityAlerts ? (
+          <DashboardSection>
             <Suspense fallback={<CityAlertsSectionLoading context={context} locale={locale} />}>
               <CityAlertsSection context={context} locale={locale} />
             </Suspense>
-          ) : null}
-        </div>
-        {showSeaWaterBeforeGoingOut ? seaWaterCard : null}
+          </DashboardSection>
+        ) : null}
+        {showSeaWaterBeforeGoingOut ? <DashboardSection>{seaWaterCard}</DashboardSection> : null}
         {goingOut ? (
-          <GoingOutSection
-            city={city}
-            events={goingOut.events}
-            locale={locale}
-            state={goingOut.state}
-          />
+          <DashboardSection>
+            <GoingOutSection
+              city={city}
+              events={goingOut.events}
+              locale={locale}
+              state={goingOut.state}
+            />
+          </DashboardSection>
         ) : null}
         {capabilities.events ? (
-          <div className={cinemaAvailable ? "grid items-start gap-6 lg:grid-cols-2" : undefined}>
-            <HomepageEventsCard
-              city={city}
-              eventCount={homepageCityEvents.length}
-              events={homepageCityEvents.slice(0, 3)}
-              isUnavailable={cityEventsUnavailable}
-              locale={locale}
-            />
-            {cinemaAvailable ? (
-              <div id="bioskop">
-                <CineplexxProgrammeCard
-                  day={cinemaProgramme.day}
-                  events={cinemaProgramme.events}
-                  limit={3}
-                  locale={locale}
-                  state={
-                    events.providers.find((provider) => provider.id === "cineplexx-podgorica")
-                      ?.state
-                  }
-                />
-              </div>
-            ) : null}
-          </div>
+          <DashboardSection>
+            <div className={cinemaAvailable ? "grid items-start gap-6 lg:grid-cols-2" : undefined}>
+              <HomepageEventsCard
+                city={city}
+                eventCount={homepageCityEvents.length}
+                events={homepageCityEvents.slice(0, 3)}
+                isUnavailable={cityEventsUnavailable}
+                locale={locale}
+              />
+              {cinemaAvailable ? (
+                <div id="bioskop">
+                  <CineplexxProgrammeCard
+                    day={cinemaProgramme.day}
+                    events={cinemaProgramme.events}
+                    limit={3}
+                    locale={locale}
+                    state={
+                      events.providers.find((provider) => provider.id === "cineplexx-podgorica")
+                        ?.state
+                    }
+                  />
+                </div>
+              ) : null}
+            </div>
+          </DashboardSection>
         ) : null}
         <AdvertisingCard
           href={getContactPath()}
@@ -149,27 +153,31 @@ async function CityDashboard({ context }: CityDashboardProps) {
           title={advertising.title}
         />
         {compactModuleCount > 0 ? (
-          <div
-            className={compactModuleCount > 1 ? "grid items-start gap-6 lg:grid-cols-2" : undefined}
-          >
-            {city.isMain ? seaWaterCard : null}
-            {flights ? (
-              <AirportFlightsCard
-                city={city}
-                flights={flights.flights}
-                lastSuccessfulRefreshAt={flights.lastSuccessfulRefreshAt}
-                locale={locale}
-                state={flights.state}
-              />
-            ) : null}
-            {railwayCard ? (
-              <RailwayStationCard
-                departures={railwayCard.departures}
-                locale={locale}
-                state={railwayCard.state}
-              />
-            ) : null}
-          </div>
+          <DashboardSection>
+            <div
+              className={
+                compactModuleCount > 1 ? "grid items-start gap-6 lg:grid-cols-2" : undefined
+              }
+            >
+              {city.isMain ? seaWaterCard : null}
+              {flights ? (
+                <AirportFlightsCard
+                  city={city}
+                  flights={flights.flights}
+                  lastSuccessfulRefreshAt={flights.lastSuccessfulRefreshAt}
+                  locale={locale}
+                  state={flights.state}
+                />
+              ) : null}
+              {railwayCard ? (
+                <RailwayStationCard
+                  departures={railwayCard.departures}
+                  locale={locale}
+                  state={railwayCard.state}
+                />
+              ) : null}
+            </div>
+          </DashboardSection>
         ) : null}
         <EmergencyNumbersStrip
           items={getEmergencyNumbers(emergencyNumbers)}
