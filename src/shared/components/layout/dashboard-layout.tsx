@@ -6,7 +6,6 @@ import { AppFooter } from "@/shared/components/layout/app-footer";
 import { AppHeader } from "@/shared/components/layout/app-header";
 import { MobileNavigation } from "@/shared/components/layout/mobile-navigation";
 import { ResponsiveContainer } from "@/shared/components/layout/responsive-container";
-import { CitySignature } from "@/shared/components/city-signature";
 import { Button } from "@/shared/components/ui/button";
 import { cn } from "@/shared/lib/utils";
 import type { City } from "@/shared/types/city";
@@ -127,17 +126,7 @@ function DashboardLayout({ children, city, homeHref, translations }: DashboardLa
         shellTint,
       )}
     >
-      {isCityScoped ? (
-        <>
-          <CitySignature
-            cityId={city.id}
-            className="-right-24 top-12 h-[210px] w-[420px]"
-          />
-          <CityAtmosphere />
-        </>
-      ) : (
-        <PageContourMotif />
-      )}
+      {isCityScoped ? <CityAtmosphere /> : <PageContourMotif />}
       <a
         className="absolute left-4 top-4 z-50 -translate-y-20 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-transform focus:translate-y-0"
         href="#main-content"

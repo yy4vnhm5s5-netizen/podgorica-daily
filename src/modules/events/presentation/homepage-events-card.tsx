@@ -36,7 +36,7 @@ function HomepageEventsCard({
   const heading = `Događaji u ${getCityName(city, "locative")}`;
 
   return (
-    <Card className="card-fog card-fog--events border-emerald-200/70 bg-emerald-50/35 transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-emerald-300/80 hover:shadow-[0_12px_24px_-20px_rgb(15_23_42_/_0.32)] dark:border-emerald-800/60 dark:bg-emerald-950/30 dark:hover:border-emerald-700/70">
+    <Card className="border-border bg-background transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_24px_-20px_rgb(15_23_42_/_0.32)]">
       <CardHeader className="flex-row items-center gap-3 space-y-0 p-4 sm:p-5">
         <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-400 to-indigo-600 text-white shadow-sm shadow-indigo-900/20">
           <CalendarDays aria-hidden="true" className="size-[1.125rem]" strokeWidth={2} />

@@ -68,8 +68,7 @@ function DailySummaryBar({
         id="daily-summary-heading"
         title={translations.summaryLabel}
       />
-      <Card className="card-fog card-fog--summary border-blue-200/90 bg-blue-50/60 px-3 py-2 sm:px-4">
-        <span aria-hidden="true" className="absolute inset-x-0 top-0 h-px bg-blue-300/80" />
+      <Card className="border-border bg-background px-3 py-2 sm:px-4">
         <div className={gridClassName}>
           {itemIds.length === 4 ? (
             <>

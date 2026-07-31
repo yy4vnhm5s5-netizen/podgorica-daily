@@ -75,14 +75,6 @@ const cityIdentityStyles: Record<string, string> = {
 
 const defaultCityIdentityStyle = "bg-slate-100 text-slate-700";
 
-// Same accent tokens, used as the starting stop of the card's ambient background gradient.
-const cityCardSurfaceTints: Record<string, string> = {
-  budva: "from-[hsl(var(--accent-budva-soft))]",
-  podgorica: "from-[hsl(var(--accent-podgorica-soft))]",
-  tivat: "from-[hsl(var(--accent-tivat-soft))]",
-};
-const defaultCityCardSurfaceTint = "from-muted/60";
-
 function CityIdentityIcon({ cityId, size = "md" }: { cityId: string; size?: "md" | "sm" }) {
   const Icon = cityIdentityIcons[cityId] ?? Landmark;
   const style = cityIdentityStyles[cityId] ?? defaultCityIdentityStyle;
@@ -107,10 +99,11 @@ function CityCard({ card }: { card: PlatformCityCardData }) {
   return (
     <article
       aria-labelledby={headingId}
-      className={cn(
-        "group relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br via-background to-background shadow-md shadow-slate-950/[0.06] transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-brand/30 hover:shadow-lg hover:shadow-slate-950/[0.09]",
-        cityCardSurfaceTints[card.city.id] ?? defaultCityCardSurfaceTint,
-      )}
+      // This is the homepage's one "featured/selected" card, so it keeps a single distinguishing
+      // signal — a slightly more present shadow that lifts further on hover — instead of the
+      // gradient wash + colored border + double shadow jump it used to stack. Color still lives
+      // on the identity icon and the primary CTA; the card surface itself stays neutral.
+      className="group relative overflow-hidden rounded-2xl border border-border bg-background shadow-sm shadow-slate-950/[0.05] transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-md hover:shadow-slate-950/[0.08]"
     >
       <Link
         aria-label={`Otvori grad ${card.city.name}`}

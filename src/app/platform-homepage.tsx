@@ -42,7 +42,7 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
           percentage tying every icon to every section's combined height. */}
       <section aria-labelledby="platform-homepage-title" className="relative">
         <SectionIconBleed icons={platformHeroSectionIcons} />
-        <div className="card-fog card-fog--info relative overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-r from-white via-orange-50/50 to-sky-100/60 px-6 py-5 shadow-sm shadow-blue-950/[0.04] sm:px-8 sm:py-6">
+        <div className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-r from-white via-orange-50/30 to-sky-100/40 px-6 py-5 shadow-sm shadow-slate-950/[0.04] sm:px-8 sm:py-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
             <PlatformMark />
             <div className="max-w-2xl space-y-2 sm:border-l sm:border-border/60 sm:pl-6">

@@ -31,7 +31,10 @@ function GoingOutSection({ city, events, locale, state }: GoingOutSectionProps) 
 
   return (
     <section aria-labelledby="going-out-heading" className="w-full" id="izlasci">
-      <Card className="card-fog border-violet-200/65 bg-violet-50/50 shadow-sm shadow-violet-950/[0.025] transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-violet-300/80 hover:shadow-[0_12px_24px_-20px_rgb(76_29_149_/_0.24)] dark:border-violet-800/55 dark:bg-violet-950/25 dark:hover:border-violet-700/70">
+      {/* Going Out is allowed a touch more personality than the purely informational modules
+          (flights, railway) — a single light violet tint, not the border+bg+card-fog stack it
+          used to carry. */}
+      <Card className="border-violet-100 bg-violet-50/40 transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_24px_-20px_rgb(15_23_42_/_0.32)] dark:border-violet-900/40 dark:bg-violet-950/15">
         <CardHeader className="flex-row items-center justify-between gap-4 space-y-0 p-4 sm:p-5">
           <div className="flex min-w-0 items-center gap-3">
             <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-400 to-violet-600 text-white shadow-sm shadow-violet-900/20">

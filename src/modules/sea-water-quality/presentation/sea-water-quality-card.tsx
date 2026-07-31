@@ -32,7 +32,7 @@ function SeaWaterQualityCard({
   const hasData = state !== "unavailable" && summary !== undefined;
 
   return (
-    <Card className="card-fog card-fog--info border-primary/15 bg-slate-50/65">
+    <Card className="border-border bg-background">
       <CardHeader className="flex-row items-center gap-3 space-y-0 p-4 sm:p-5">
         <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 to-cyan-600 text-white shadow-sm shadow-cyan-900/20">
           <Waves aria-hidden="true" className="size-[1.125rem]" strokeWidth={2} />
