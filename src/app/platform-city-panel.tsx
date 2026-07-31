@@ -123,7 +123,7 @@ function CityCard({ card }: { card: PlatformCityCardData }) {
             <CityIdentityIcon cityId={card.city.id} />
             <div className="space-y-1">
               <h3
-                className="text-xl font-semibold tracking-tight text-slate-950 sm:text-2xl"
+                className="font-display text-xl font-semibold leading-snug tracking-normal text-slate-950 sm:text-2xl"
                 id={headingId}
               >
                 {card.city.name}

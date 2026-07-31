@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Source_Serif_4 } from "next/font/google";
 import Script from "next/script";
 import type { PropsWithChildren } from "react";
 
@@ -7,6 +8,20 @@ import { env } from "@/config/env";
 import { getLocaleTag } from "@/shared/config/locale";
 import { siteConfig } from "@/shared/config/site";
 import { getTranslations } from "@/shared/lib/translations";
+
+// Restrained editorial display face for major page anchors only (see `font-display` in
+// tailwind.config.ts and the `accent`-gated usage in SectionTitle) — everything else in the app
+// stays on the system sans stack. `latin-ext` is required for Montenegrin/Serbian Latin
+// characters (č, ć, š, ž, đ). Self-hosted at build time via next/font, so there is no runtime
+// request to a third-party font CDN and no font-swap layout shift beyond what next/font already
+// mitigates automatically. A single static weight (600) is loaded to keep this lean — it matches
+// the `font-semibold` weight already used on every heading in the app.
+const sourceSerif4 = Source_Serif_4({
+  display: "swap",
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-serif",
+  weight: ["600"],
+});
 
 export const metadata: Metadata = {
   appleWebApp: {
@@ -48,7 +63,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<PropsWithChildren>) {
   return (
-    <html lang={getLocaleTag("me")} data-app-environment={env.NEXT_PUBLIC_APP_ENV}>
+    <html
+      className={sourceSerif4.variable}
+      lang={getLocaleTag("me")}
+      data-app-environment={env.NEXT_PUBLIC_APP_ENV}
+    >
       <body>
         {children}
         <Script

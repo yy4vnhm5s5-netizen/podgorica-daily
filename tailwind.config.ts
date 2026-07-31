@@ -10,6 +10,12 @@ const config: Config = {
       screens: { "2xl": "1280px" },
     },
     extend: {
+      fontFamily: {
+        // Major page anchors only (see SectionTitle's `accent`-gated usage) — everything else
+        // stays on Tailwind's default sans stack. Falls back to the platform serif if the
+        // webfont hasn't loaded yet, matching next/font's own layout-shift mitigation.
+        display: ["var(--font-serif)", "ui-serif", "Georgia", "Cambria", "Times New Roman", "serif"],
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",

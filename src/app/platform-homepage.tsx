@@ -45,9 +45,9 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
         <div className="card-fog card-fog--info relative overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-r from-white via-orange-50/50 to-sky-100/60 px-6 py-5 shadow-sm shadow-blue-950/[0.04] sm:px-8 sm:py-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
             <PlatformMark />
-            <div className="max-w-2xl space-y-1.5 sm:border-l sm:border-border/60 sm:pl-6">
+            <div className="max-w-2xl space-y-2 sm:border-l sm:border-border/60 sm:pl-6">
               <h1
-                className="text-2xl font-semibold leading-tight tracking-tight text-slate-950 sm:text-3xl"
+                className="font-display text-2xl font-semibold leading-snug tracking-normal text-slate-950 sm:text-3xl"
                 id="platform-homepage-title"
               >
                 Lokalne informacije za gradove Crne Gore
@@ -60,15 +60,15 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
         </div>
       </section>
 
-      <section aria-labelledby="cities-heading" className="relative space-y-4">
+      <section aria-labelledby="cities-heading" className="relative space-y-3">
         <SectionIconBleed icons={platformCitiesSectionIcons} />
         <div className="flex flex-wrap items-end justify-between gap-3">
-          <div className="space-y-1">
-            <p className="text-sm font-semibold uppercase tracking-wide text-brand-foreground">
+          <div className="space-y-1.5">
+            <p className="text-xs font-semibold uppercase tracking-widest text-brand-foreground">
               Izaberite grad
             </p>
             <h2
-              className="text-xl font-semibold tracking-tight text-slate-950 sm:text-2xl"
+              className="font-display text-xl font-semibold leading-snug tracking-normal text-slate-950 sm:text-2xl"
               id="cities-heading"
             >
               Vaš gradski pregled

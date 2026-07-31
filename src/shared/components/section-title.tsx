@@ -57,9 +57,16 @@ function SectionTitle({
               className="mt-1 h-5 w-1 shrink-0 rounded-full bg-brand sm:h-6"
             />
           ) : null}
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             <Heading
-              className="text-xl font-semibold leading-tight tracking-tight sm:text-2xl"
+              className={cn(
+                "text-xl font-semibold leading-tight tracking-tight sm:text-2xl",
+                // The display serif is reserved for primary/anchor headings — exactly what
+                // `accent` already means (see the prop doc above). Serif letterforms read as
+                // cramped under the same tight tracking/leading tuned for the sans UI font, so
+                // both relax slightly whenever the serif is applied.
+                accent && "font-display font-semibold leading-snug tracking-normal",
+              )}
               id={id}
             >
               {title}
