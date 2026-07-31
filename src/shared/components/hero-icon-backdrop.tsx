@@ -152,15 +152,15 @@ const platformFaqSectionIcons: readonly HeroBackdropIcon[] = [
 // a little locality and depth without competing with dashboard data or card content.
 const cityDashboardBackdropIcons: readonly HeroBackdropIcon[] = [
   {
-    className: "-left-20 top-36 size-[220px] -rotate-6 opacity-[0.035]",
+    className: "-left-20 top-36 size-[220px] -rotate-6 opacity-[0.025]",
     icon: CalendarDays,
   },
   {
-    className: "top-52 -right-16 size-[190px] rotate-6 opacity-[0.04]",
+    className: "top-52 -right-16 size-[190px] rotate-6 opacity-[0.03]",
     icon: MapPin,
   },
   {
-    className: "bottom-20 -left-14 size-[180px] -rotate-12 opacity-[0.035]",
+    className: "bottom-20 -left-14 size-[180px] -rotate-12 opacity-[0.025]",
     icon: Music2,
   },
 ];

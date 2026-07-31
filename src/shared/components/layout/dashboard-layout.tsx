@@ -56,7 +56,7 @@ function DashboardLayout({ children, city, homeHref, translations }: DashboardLa
     <div
       className={
         isCityScoped
-          ? "relative min-h-screen overflow-hidden bg-[#faf8f5] pb-[calc(5rem+env(safe-area-inset-bottom))] text-foreground md:pb-0"
+          ? "relative min-h-screen overflow-hidden bg-gradient-to-br from-[#fcfaf6] via-[#f9f7f2] to-[#f6f3ee] pb-[calc(5rem+env(safe-area-inset-bottom))] text-foreground md:pb-0"
           : "relative min-h-screen overflow-hidden bg-background pb-[calc(5rem+env(safe-area-inset-bottom))] text-foreground md:pb-0"
       }
     >
