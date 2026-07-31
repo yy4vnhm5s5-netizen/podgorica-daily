@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { getCityAlertsTranslations } from "./city-alerts-translations.ts";
+import { cityServicesDescription, getCityAlertsTranslations } from "./city-alerts-translations.ts";
 import { getCity } from "@/shared/config/cities";
 
 test("provides localized stale-data copy", () => {
@@ -30,15 +30,8 @@ test("provides localized provider freshness prefixes", () => {
   assert.equal(getCityAlertsTranslations("en").lastAvailableUpdate, "Last available update:");
 });
 
-test("provides the City Services section subtitle in every locale", () => {
-  assert.equal(
-    getCityAlertsTranslations("me").cityServicesDescription,
-    "Planirana isključenja i stanje gradskih usluga.",
-  );
-  assert.equal(
-    getCityAlertsTranslations("en").cityServicesDescription,
-    "Planned interruptions and service status.",
-  );
+test("provides the single-language City Services section subtitle", () => {
+  assert.equal(cityServicesDescription, "Planirana isključenja i stanje servisa.");
 });
 
 test("uses the successful empty-state copy for planned power outages", () => {

@@ -9,7 +9,10 @@ import {
 import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 
-import { getDailyOverviewTranslations } from "@/modules/daily-overview/presentation/daily-overview-translations";
+import {
+  dailySummaryDescription,
+  getDailyOverviewTranslations,
+} from "@/modules/daily-overview/presentation/daily-overview-translations";
 import {
   getDailySummaryItemIds,
   type DailySummaryAvailability,
@@ -63,7 +66,7 @@ function DailySummaryBar({
       <SectionTitle
         as="h1"
         className="mb-3"
-        description={translations.summaryDescription}
+        description={dailySummaryDescription}
         icon={CalendarDays}
         iconClassName="bg-brand text-white shadow-orange-900/20"
         id="daily-summary-heading"

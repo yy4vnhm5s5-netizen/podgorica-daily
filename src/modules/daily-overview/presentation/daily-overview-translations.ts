@@ -35,6 +35,8 @@ const dailyOverviewTranslations: Record<Locale, DailyOverviewTranslations> = {
   },
 };
 
+const dailySummaryDescription = "Pregled događaja, usluga i obavještenja u gradu.";
+
 function getDailyOverviewTranslations(locale: Locale, city?: City) {
   const translations = dailyOverviewTranslations[locale];
   if (!city) return translations;
@@ -48,4 +50,4 @@ function getDailyOverviewTranslations(locale: Locale, city?: City) {
   };
 }
 
-export { getDailyOverviewTranslations, type DailyOverviewTranslations };
+export { dailySummaryDescription, getDailyOverviewTranslations, type DailyOverviewTranslations };

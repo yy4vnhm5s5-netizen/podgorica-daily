@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { getDailyOverviewTranslations } from "./daily-overview-translations.ts";
+import {
+  dailySummaryDescription,
+  getDailyOverviewTranslations,
+} from "./daily-overview-translations.ts";
 import { getCity } from "@/shared/config/cities";
 
 test("uses grammatically correct bare noun forms (no digit attached)", () => {
@@ -41,13 +44,6 @@ test("uses the current city in the summary label", () => {
   assert.equal(getDailyOverviewTranslations("me", budva).summaryLabel, "Danas u Budvi");
 });
 
-test("provides the dashboard summary subtitle in every locale", () => {
-  assert.equal(
-    getDailyOverviewTranslations("me").summaryDescription,
-    "Pregled događaja, usluga i obavještenja u gradu.",
-  );
-  assert.equal(
-    getDailyOverviewTranslations("en").summaryDescription,
-    "An overview of local information for the day.",
-  );
+test("provides the single-language dashboard summary subtitle", () => {
+  assert.equal(dailySummaryDescription, "Pregled događaja, usluga i obavještenja u gradu.");
 });

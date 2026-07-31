@@ -22,6 +22,7 @@ import { getHomepagePowerOutageLocations } from "@/modules/city-alerts/applicati
 import { selectNextPowerOutage } from "@/modules/city-alerts/application/select-next-power-outage";
 import type { AlertSeverity, AlertType, CityAlert } from "@/modules/city-alerts/domain/city-alert";
 import {
+  cityServicesDescription,
   getCityAlertContent,
   getCityAlertsTranslations,
   type CityAlertsTranslations,
@@ -85,7 +86,7 @@ function CityAlertsSectionLoading({ context, locale }: CityAlertsSectionProps) {
   return (
     <section aria-labelledby="city-alerts-heading" className="space-y-2">
       <SectionTitle
-        description={translations.cityServicesDescription}
+        description={cityServicesDescription}
         icon={Gauge}
         iconClassName="bg-gradient-to-br from-slate-400 to-slate-600 text-white shadow-slate-900/20"
         id="city-alerts-heading"
@@ -120,7 +121,7 @@ async function CityAlertsSection({ context, locale }: CityAlertsSectionProps) {
         id="city-alerts-heading"
         title={translations.cityServices}
         variant="dashboard"
-        description={translations.cityServicesDescription}
+        description={cityServicesDescription}
       />
       <CityServicesPanel
         locale={locale}
