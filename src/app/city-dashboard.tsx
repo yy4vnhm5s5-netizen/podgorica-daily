@@ -90,18 +90,16 @@ async function CityDashboard({ context }: CityDashboardProps) {
         cityId={city.id}
       />
       <section className="space-y-10 sm:space-y-12" id="dashboard">
-        <DashboardSection first>
-          <DailySummaryBar
-            availability={summaryAvailability}
-            city={city}
-            eventsCount={homepageCityEvents.length}
-            locale={locale}
-            moviesCount={displayableCinemaMovieCount}
-            performancesCount={goingOutCount}
-            seaWaterQualityLocationCount={seaWaterQuality?.summary?.totalLocations}
-            weather={weather}
-          />
-        </DashboardSection>
+        <DailySummaryBar
+          availability={summaryAvailability}
+          city={city}
+          eventsCount={homepageCityEvents.length}
+          locale={locale}
+          moviesCount={displayableCinemaMovieCount}
+          performancesCount={goingOutCount}
+          seaWaterQualityLocationCount={seaWaterQuality?.summary?.totalLocations}
+          weather={weather}
+        />
         {isFeatureEnabled("cityAlerts") && capabilities.cityAlerts ? (
           <DashboardSection>
             <Suspense fallback={<CityAlertsSectionLoading context={context} locale={locale} />}>

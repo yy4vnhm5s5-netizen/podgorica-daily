@@ -55,13 +55,14 @@ test("derives the dashboard's movie count from the canonical selector, not the c
 
 test("prioritizes Going Out only for the main city while restoring sea water before it for other cities", async () => {
   const source = await readFile(new URL("./city-dashboard.tsx", import.meta.url), "utf8");
+  const dashboardMarkup = source.slice(source.indexOf("return ("));
 
-  const cityAlertsIndex = source.indexOf("<CityAlertsSection");
-  const seaWaterBeforeGoingOutIndex = source.indexOf(
-    "{showSeaWaterBeforeGoingOut ? seaWaterCard : null}",
+  const cityAlertsIndex = dashboardMarkup.indexOf("<CityAlertsSection");
+  const seaWaterBeforeGoingOutIndex = dashboardMarkup.indexOf(
+    "{showSeaWaterBeforeGoingOut ? <DashboardSection>{seaWaterCard}</DashboardSection> : null}",
   );
-  const goingOutIndex = source.indexOf("<GoingOutSection");
-  const compactModulesIndex = source.indexOf("{compactModuleCount > 0 ? (");
+  const goingOutIndex = dashboardMarkup.indexOf("<GoingOutSection");
+  const compactModulesIndex = dashboardMarkup.indexOf("{compactModuleCount > 0 ? (");
 
   assert.ok(cityAlertsIndex >= 0 && seaWaterBeforeGoingOutIndex > cityAlertsIndex);
   assert.ok(goingOutIndex > seaWaterBeforeGoingOutIndex);
@@ -73,12 +74,24 @@ test("prioritizes Going Out only for the main city while restoring sea water bef
   assert.match(source, /\{city\.isMain \? seaWaterCard : null\}/u);
   assert.match(
     source,
-    /className=\{compactModuleCount > 1 \? "grid items-start gap-6 lg:grid-cols-2" : undefined\}/u,
+    /className=\{\s*compactModuleCount > 1 \? "grid items-start gap-6 lg:grid-cols-2" : undefined\s*\}/u,
   );
 
-  const goingOutRow = source.slice(
+  const goingOutRow = dashboardMarkup.slice(
     goingOutIndex,
-    source.indexOf("{capabilities.events ? (", goingOutIndex),
+    dashboardMarkup.indexOf("{capabilities.events ? (", goingOutIndex),
   );
   assert.doesNotMatch(goingOutRow, /SeaWaterQualityCard/u);
+});
+
+test("keeps the Daily Summary as an unwrapped dashboard hero", async () => {
+  const source = await readFile(new URL("./city-dashboard.tsx", import.meta.url), "utf8");
+  const dashboardMarkup = source.slice(
+    source.indexOf('<section className="space-y-10 sm:space-y-12"'),
+  );
+  const dailySummaryIndex = dashboardMarkup.indexOf("<DailySummaryBar");
+  const firstRegionIndex = dashboardMarkup.indexOf("<DashboardSection>");
+
+  assert.doesNotMatch(source, /<DashboardSection first>/u);
+  assert.ok(dailySummaryIndex >= 0 && firstRegionIndex > dailySummaryIndex);
 });

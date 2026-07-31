@@ -68,7 +68,7 @@ function SectionTitle({
               className={cn(
                 isDashboard ? "font-medium" : "font-semibold",
                 isDashboard
-                  ? "text-sm uppercase leading-5 tracking-[0.22em] text-slate-800 sm:text-[0.9375rem]"
+                  ? "text-sm uppercase leading-5 tracking-[0.16em] text-slate-800 sm:text-[0.9375rem]"
                   : "text-xl leading-tight tracking-tight sm:text-2xl",
                 // The display serif is reserved for primary/anchor headings — exactly what
                 // `accent` already means (see the prop doc above). Serif letterforms read as

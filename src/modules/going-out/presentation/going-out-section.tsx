@@ -42,7 +42,7 @@ function GoingOutSection({ city, events, locale, state }: GoingOutSectionProps) 
             </div>
             <div>
               <h2
-                className="text-sm font-medium uppercase leading-5 tracking-[0.22em] text-slate-800 sm:text-[0.9375rem]"
+                className="text-sm font-medium uppercase leading-5 tracking-[0.16em] text-slate-800 sm:text-[0.9375rem]"
                 id="going-out-heading"
               >
                 {copy.title}
