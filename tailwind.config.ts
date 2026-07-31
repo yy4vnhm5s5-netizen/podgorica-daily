@@ -36,13 +36,18 @@ const config: Config = {
       keyframes: {
         float: {
           "0%, 100%": { transform: "translateY(0)" },
-          "50%": { transform: "translateY(-6px)" },
+          "50%": { transform: "translateY(-10px)" },
+        },
+        drift: {
+          "0%, 100%": { transform: "translate(0, 0)" },
+          "50%": { transform: "translate(4px, -8px)" },
         },
       },
       animation: {
-        float: "float 14s ease-in-out infinite",
-        "float-slow": "float 18s ease-in-out infinite",
-        "float-slower": "float 22s ease-in-out infinite",
+        float: "float 16s ease-in-out infinite",
+        "float-slow": "float 20s ease-in-out infinite",
+        "float-slower": "float 26s ease-in-out infinite",
+        drift: "drift 22s ease-in-out infinite",
       },
     },
   },

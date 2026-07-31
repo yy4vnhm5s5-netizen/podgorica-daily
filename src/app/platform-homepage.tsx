@@ -10,7 +10,13 @@ import { CityCard } from "@/app/platform-city-panel";
 import { PlatformAtmosphere } from "@/app/platform-atmosphere";
 import { PlatformCitySelector } from "@/app/platform-city-selector";
 import { LastCityContinuation } from "@/app/platform-last-city";
-import { HeroIconBackdrop, platformHeroIcons } from "@/shared/components/hero-icon-backdrop";
+import {
+  HeroIconBackdrop,
+  platformCitiesSectionIcons,
+  platformFaqSectionIcons,
+  platformHeroSectionIcons,
+  platformHowItWorksSectionIcons,
+} from "@/shared/components/hero-icon-backdrop";
 import { siteConfig } from "@/shared/config/site";
 
 interface PlatformHomepageProps {
@@ -28,15 +34,14 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
         type="application/ld+json"
       />
-      {/* Hero SECTION: background → decorative icons → hero CARD → hero content. The icon
-          backdrop is a sibling of the card, not a child of it, so it never paints inside the
-          white card — it bleeds into the surrounding section margin instead. The bleed wrapper
-          reuses the same full-viewport-width breakout as PlatformAtmosphere above, so the icons
-          are clipped by the real viewport edge rather than the card's own rounded corners. */}
+      {/* Hero SECTION: background → decorative icons → hero CARD → hero content. Each major
+          section below carries its OWN small icon group, anchored to that section's own edges
+          (see hero-icon-backdrop.tsx for why: it keeps every icon's position independent of how
+          tall any OTHER section on the page happens to be) — together they still read as one
+          page-wide, non-clustered atmosphere, just without a single fragile page-height
+          percentage tying every icon to every section's combined height. */}
       <section aria-labelledby="platform-homepage-title" className="relative">
-        <div className="pointer-events-none absolute inset-y-0 left-1/2 w-screen -translate-x-1/2 overflow-hidden">
-          <HeroIconBackdrop icons={platformHeroIcons} />
-        </div>
+        <SectionIconBleed icons={platformHeroSectionIcons} />
         <div className="card-fog card-fog--info relative overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-r from-white via-orange-50/50 to-sky-100/60 px-6 py-5 shadow-sm shadow-blue-950/[0.04] sm:px-8 sm:py-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
             <PlatformMark />
@@ -55,7 +60,8 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
         </div>
       </section>
 
-      <section aria-labelledby="cities-heading" className="space-y-4">
+      <section aria-labelledby="cities-heading" className="relative space-y-4">
+        <SectionIconBleed icons={platformCitiesSectionIcons} />
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div className="space-y-1">
             <p className="text-sm font-semibold uppercase tracking-wide text-brand-foreground">
@@ -73,7 +79,8 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
         <PlatformCitySelector cards={cards} />
       </section>
 
-      <section aria-labelledby="how-it-works-heading">
+      <section aria-labelledby="how-it-works-heading" className="relative">
+        <SectionIconBleed icons={platformHowItWorksSectionIcons} />
         <div className="rounded-xl border border-border bg-background px-5 py-4 sm:px-6 sm:py-5">
           <p className="text-xs font-medium uppercase tracking-wide text-primary">
             Lokalno, po gradu
@@ -91,7 +98,8 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
         </div>
       </section>
 
-      <section aria-labelledby="faq-heading" className="space-y-3">
+      <section aria-labelledby="faq-heading" className="relative space-y-3">
+        <SectionIconBleed icons={platformFaqSectionIcons} />
         <div className="space-y-1">
           <p className="text-xs font-medium uppercase tracking-wide text-primary">Česta pitanja</p>
           <h2
@@ -123,6 +131,18 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
           </FaqItem>
         </div>
       </section>
+    </div>
+  );
+}
+
+// Wraps a section's decorative icon group in the same full-viewport-width breakout used by
+// PlatformAtmosphere, extended above/below the section's own box so icons anchored to its
+// top/bottom edges (up to `-top-16`/`-bottom-16`, the largest offset any preset uses) have room
+// to bleed without being clipped away entirely by the section's own boundary.
+function SectionIconBleed({ icons }: { icons: Parameters<typeof HeroIconBackdrop>[0]["icons"] }) {
+  return (
+    <div className="pointer-events-none absolute -top-16 -bottom-16 left-1/2 w-screen -translate-x-1/2 overflow-hidden">
+      <HeroIconBackdrop icons={icons} />
     </div>
   );
 }
