@@ -5,16 +5,21 @@ import { getContactTranslations } from "./contact-translations.ts";
 import { getContactPath } from "../../../shared/config/public-routes.ts";
 import { getTranslations } from "../../../shared/lib/translations.ts";
 
-test("provides localized contact labels and navigation destinations", () => {
-  assert.equal(getContactTranslations("me").heading, "Kontakt");
-  assert.equal(getContactTranslations("me").submit, "Pošalji upit");
+test("provides the single-language partnership contact copy and navigation destination", () => {
   assert.equal(
-    getContactTranslations("me").intro,
-    "Zainteresovani ste za oglašavanje ili saradnju sa servisom Gradom.me? Pošaljite nam upit putem forme i javićemo vam se u najkraćem roku.",
+    getContactTranslations().heading,
+    "Povežimo građane sa informacijama koje su im zaista važne.",
   );
-  assert.equal(getContactTranslations("en").heading, "Contact");
-  assert.equal(getContactTranslations("en").submit, "Send inquiry");
+  assert.equal(getContactTranslations().submit, "Pošalji upit");
+  assert.equal(
+    getContactTranslations().intro,
+    "Gradom.me sarađuje sa opštinama, turističkim organizacijama, javnim ustanovama, komunalnim preduzećima, organizatorima događaja i lokalnim kompanijama kako bi važne gradske informacije bile tačne, ažurne i lako dostupne građanima.",
+  );
+  assert.equal(getContactTranslations().metadataTitle, "Partnerstva i saradnja | Gradom.me");
+  assert.equal(
+    getContactTranslations().messagePlaceholder,
+    "Opišite vašu organizaciju, projekat ili ideju i navedite kako Gradom.me može pomoći.",
+  );
   assert.equal(getTranslations("me").shell.navigation.contact, "Kontakt");
-  assert.equal(getTranslations("en").shell.navigation.contact, "Contact");
   assert.equal(getContactPath(), "/kontakt");
 });

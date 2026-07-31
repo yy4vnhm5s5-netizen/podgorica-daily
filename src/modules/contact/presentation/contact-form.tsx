@@ -16,7 +16,7 @@ import { getContactTranslations } from "./contact-translations";
 type ContactFormStatus = "idle" | "loading" | "success" | "error";
 
 function ContactForm({ locale }: { locale: Locale }) {
-  const translations = getContactTranslations(locale);
+  const translations = getContactTranslations();
   const formId = useId();
   const errorSummaryRef = useRef<HTMLDivElement>(null);
   const shouldFocusErrorSummary = useRef(false);
@@ -76,7 +76,7 @@ function ContactForm({ locale }: { locale: Locale }) {
   }
 
   return (
-    <form className="space-y-5" onSubmit={handleSubmit}>
+    <form className="mt-6 space-y-5" onSubmit={handleSubmit}>
       {errorSummaryItems.length > 0 ? (
         <div
           aria-labelledby={`${formId}-error-summary-heading`}
@@ -109,6 +109,7 @@ function ContactForm({ locale }: { locale: Locale }) {
         id={fieldIds.fullName}
         label={translations.fullName}
         name="fullName"
+        placeholder={translations.fullNamePlaceholder}
         required
       />
       <FormField
@@ -117,6 +118,7 @@ function ContactForm({ locale }: { locale: Locale }) {
         id={fieldIds.email}
         label={translations.email}
         name="email"
+        placeholder={translations.emailPlaceholder}
         required
         type="email"
       />
@@ -125,6 +127,7 @@ function ContactForm({ locale }: { locale: Locale }) {
         id={fieldIds.message}
         label={translations.message}
         name="message"
+        placeholder={translations.messagePlaceholder}
         required
         textarea
       />
@@ -161,6 +164,7 @@ function FormField({
   id,
   label,
   name,
+  placeholder,
   required = false,
   textarea = false,
   type = "text",
@@ -170,6 +174,7 @@ function FormField({
   id: string;
   label: string;
   name: ContactInquiryField;
+  placeholder?: string;
   required?: boolean;
   textarea?: boolean;
   type?: "email" | "text";
@@ -193,6 +198,7 @@ function FormField({
           className={`${className} min-h-32 resize-y`}
           id={id}
           name={name}
+          placeholder={placeholder}
           required={required}
         />
       ) : (
@@ -203,6 +209,7 @@ function FormField({
           className={`${className} h-11`}
           id={id}
           name={name}
+          placeholder={placeholder}
           required={required}
           type={type}
         />

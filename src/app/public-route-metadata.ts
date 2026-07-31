@@ -6,6 +6,7 @@ interface PublicRouteMetadataInput {
   canonical: string;
   description?: string;
   imageUrl?: string;
+  siteName?: string;
   title: string;
 }
 
@@ -13,6 +14,7 @@ function createPublicRouteMetadata({
   canonical,
   description,
   imageUrl,
+  siteName = siteConfig.name,
   title,
 }: PublicRouteMetadataInput): Metadata {
   const openGraphImages = imageUrl
@@ -27,7 +29,7 @@ function createPublicRouteMetadata({
       ...(description ? { description } : {}),
       images: openGraphImages,
       locale: "sr_Latn_ME",
-      siteName: siteConfig.name,
+      siteName,
       title,
       type: "website",
       url: canonical,

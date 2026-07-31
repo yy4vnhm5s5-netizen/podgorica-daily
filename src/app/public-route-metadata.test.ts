@@ -74,3 +74,14 @@ test("uses the default Gradom social image unless a route provides its own", () 
   assert.deepEqual(eventMetadata.openGraph?.images, [{ url: "https://example.test/event.jpg" }]);
   assert.deepEqual(eventMetadata.twitter?.images, ["https://example.test/event.jpg"]);
 });
+
+test("allows a public page to use its exact published brand name in social metadata", () => {
+  const metadata = createPublicRouteMetadata({
+    canonical: getContactPath(),
+    siteName: "Gradom.me",
+    title: "Partnerstva i saradnja | Gradom.me",
+  });
+
+  assert.match(JSON.stringify(metadata.openGraph), /"siteName":"Gradom\.me"/u);
+  assert.match(JSON.stringify(metadata.title), /Partnerstva i saradnja \| Gradom\.me/u);
+});

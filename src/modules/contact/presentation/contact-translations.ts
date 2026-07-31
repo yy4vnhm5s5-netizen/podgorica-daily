@@ -1,44 +1,37 @@
-import type { Locale } from "@/shared/config/locale";
-
 const contactTranslations = {
-  en: {
-    description:
-      "Contact Gradom.me for advertising, partnerships, or questions about the platform — send an inquiry and we'll reply as soon as possible.",
-    email: "Email",
-    error: "Your inquiry could not be sent. Please try again later.",
-    fullName: "Full name",
-    heading: "Contact",
-    honeypot: "Website",
-    intro:
-      "Interested in advertising or working with Gradom? Send us an inquiry through the form and we’ll get back to you as soon as possible.",
-    loading: "Sending…",
-    message: "Message",
-    shortIntro: "Questions, advertising, or partnership ideas — we read every message.",
-    submit: "Send inquiry",
-    success: "Thank you for your inquiry. We’ll get back to you as soon as possible.",
-    validationSummary: "Please correct the highlighted fields before sending your inquiry.",
-  },
-  me: {
-    description:
-      "Kontaktirajte Gradom.me za oglašavanje, saradnju ili pitanja o platformi — pošaljite upit i javljamo se u najkraćem roku.",
-    email: "E-mail",
-    error: "Upit trenutno nije moguće poslati. Pokušajte ponovo kasnije.",
-    fullName: "Ime i prezime",
-    heading: "Kontakt",
-    honeypot: "Web stranica",
-    intro:
-      "Zainteresovani ste za oglašavanje ili saradnju sa servisom Gradom.me? Pošaljite nam upit putem forme i javićemo vam se u najkraćem roku.",
-    loading: "Slanje…",
-    message: "Poruka",
-    shortIntro: "Pitanja, oglašavanje ili ideje za saradnju — čitamo svaku poruku.",
-    submit: "Pošalji upit",
-    success: "Hvala na upitu. Javićemo vam se u najkraćem roku.",
-    validationSummary: "Ispravite označena polja prije slanja upita.",
-  },
+  description:
+    "Partnerstva sa Gradom.me za pouzdane lokalne informacije, javne servise, događaje i sadržaje važne građanima.",
+  email: "E-mail",
+  emailPlaceholder: "ime@organizacija.me",
+  error: "Upit trenutno nije moguće poslati. Pokušajte ponovo kasnije.",
+  formDescription:
+    "Ostavite osnovne kontakt podatke i ukratko opišite temu. Gradom.me će se javiti u roku od par radnih dana.",
+  formHeading: "Pošaljite upit",
+  fullName: "Ime i prezime",
+  fullNamePlaceholder: "Ime i prezime",
+  heading: "Povežimo građane sa informacijama koje su im zaista važne.",
+  honeypot: "Web stranica",
+  intro:
+    "Gradom.me sarađuje sa opštinama, turističkim organizacijama, javnim ustanovama, komunalnim preduzećima, organizatorima događaja i lokalnim kompanijama kako bi važne gradske informacije bile tačne, ažurne i lako dostupne građanima.",
+  loading: "Slanje…",
+  message: "Kako možemo pomoći?",
+  messagePlaceholder:
+    "Opišite vašu organizaciju, projekat ili ideju i navedite kako Gradom.me može pomoći.",
+  metadataTitle: "Partnerstva i saradnja | Gradom.me",
+  partnershipLabel: "PARTNERSTVA",
+  submit: "Pošalji upit",
+  success: "Hvala na upitu. Javićemo vam se u roku od par radnih dana.",
+  trustItems: [
+    "Odgovor u roku od par radnih dana",
+    "Partnerstva sa gradovima, institucijama i lokalnim organizacijama",
+    "Promocija događaja, kulturnih programa i lokalnih sadržaja",
+    "Integracija javnih servisa, obavještenja i korisnih gradskih informacija",
+  ],
+  validationSummary: "Ispravite označena polja prije slanja upita.",
 } as const;
 
-function getContactTranslations(locale: Locale) {
-  return contactTranslations[locale];
+function getContactTranslations() {
+  return contactTranslations;
 }
 
 export { getContactTranslations };

@@ -4,15 +4,15 @@ import { createPublicRouteMetadata } from "@/app/public-route-metadata";
 import { getContactTranslations } from "@/modules/contact/presentation/contact-translations";
 import { getMainCity } from "@/shared/config/cities";
 import { getContactPath } from "@/shared/config/public-routes";
-import { getPageTitle } from "@/shared/config/site";
 
 function generateMetadata(): Metadata {
-  const translations = getContactTranslations("me");
+  const translations = getContactTranslations();
 
   return createPublicRouteMetadata({
     canonical: getContactPath(),
     description: translations.description,
-    title: getPageTitle(translations.heading),
+    siteName: "Gradom.me",
+    title: translations.metadataTitle,
   });
 }
 
