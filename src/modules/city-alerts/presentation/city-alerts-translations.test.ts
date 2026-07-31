@@ -30,6 +30,17 @@ test("provides localized provider freshness prefixes", () => {
   assert.equal(getCityAlertsTranslations("en").lastAvailableUpdate, "Last available update:");
 });
 
+test("provides the City Services section subtitle in every locale", () => {
+  assert.equal(
+    getCityAlertsTranslations("me").cityServicesDescription,
+    "Planirana isključenja i stanje gradskih usluga.",
+  );
+  assert.equal(
+    getCityAlertsTranslations("en").cityServicesDescription,
+    "Planned interruptions and service status.",
+  );
+});
+
 test("uses the successful empty-state copy for planned power outages", () => {
   assert.equal(getCityAlertsTranslations("me").noPowerOutages, "Bez planiranih isključenja.");
   assert.equal(getCityAlertsTranslations("me").moreLocations.one, "Još {count} lokacija");

@@ -11,6 +11,7 @@ interface CityAlertsTranslations {
   affectedArea: string;
   area: string;
   cityServices: string;
+  cityServicesDescription: string;
   content: Record<string, string>;
   emptyDescription: string;
   emptyTitle: string;
@@ -51,6 +52,7 @@ const cityAlertsTranslations: Record<Locale, CityAlertsTranslations> = {
     affectedArea: "Affected area",
     area: "Area",
     cityServices: "City services",
+    cityServicesDescription: "Planned interruptions and service status.",
     content: {
       centar: "City centre",
       citywide: "Across the city",
@@ -106,6 +108,7 @@ const cityAlertsTranslations: Record<Locale, CityAlertsTranslations> = {
     affectedArea: "Pogođeno područje",
     area: "Područje",
     cityServices: "Gradske usluge",
+    cityServicesDescription: "Planirana isključenja i stanje gradskih usluga.",
     content: {
       centar: "Centar grada",
       citywide: "Širom grada",

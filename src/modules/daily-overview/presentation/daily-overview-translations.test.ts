@@ -40,3 +40,14 @@ test("uses the current city in the summary label", () => {
 
   assert.equal(getDailyOverviewTranslations("me", budva).summaryLabel, "Danas u Budvi");
 });
+
+test("provides the dashboard summary subtitle in every locale", () => {
+  assert.equal(
+    getDailyOverviewTranslations("me").summaryDescription,
+    "Pregled događaja, usluga i obavještenja u gradu.",
+  );
+  assert.equal(
+    getDailyOverviewTranslations("en").summaryDescription,
+    "An overview of local information for the day.",
+  );
+});
