@@ -7,6 +7,7 @@ import { getCityAlertServiceIds } from "./city-alert-service-capabilities.ts";
 test("exposes only services backed by the current city's capabilities", () => {
   assert.deepEqual(getCityAlertServiceIds(createCityContext("podgorica").city), ["power", "water"]);
   assert.deepEqual(getCityAlertServiceIds(createCityContext("budva").city), ["power"]);
+  assert.deepEqual(getCityAlertServiceIds(createCityContext("kotor").city), ["power", "water"]);
   // Tivat has electricity but, like Budva, no approved water-notice provider — must not expose
   // "water" just because a third city exists.
   assert.deepEqual(getCityAlertServiceIds(createCityContext("tivat").city), ["power"]);

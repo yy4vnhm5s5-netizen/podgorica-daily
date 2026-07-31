@@ -4,6 +4,8 @@ import test from "node:test";
 import type { CityAlert } from "../domain/city-alert.ts";
 import {
   formatAdditionalLocations,
+  formatAdditionalAffectedAreas,
+  formatCompactPowerOutageTimeRange,
   formatCompactPowerOutageLocations,
   formatPowerOutageSummary,
   getPowerOutageDetailsLabel,
@@ -20,8 +22,30 @@ test("normalizes a duplicated outage-time preposition for the homepage", () => {
 });
 
 test("uses one explicit homepage power-outage CTA label", () => {
-  assert.equal(getPowerOutageDetailsLabel("me"), "Pogledajte detalje →");
-  assert.equal(getPowerOutageDetailsLabel("en"), "View details →");
+  assert.equal(getPowerOutageDetailsLabel("me"), "Detalji →");
+  assert.equal(getPowerOutageDetailsLabel("en"), "Details →");
+});
+
+test("labels remaining dashboard status-strip areas compactly", () => {
+  assert.equal(formatAdditionalAffectedAreas(1), "Ostalih područja: 1");
+  assert.equal(formatAdditionalAffectedAreas(10), "Ostalih područja: 10");
+});
+
+test("formats dashboard outage times without repeating a same-day date", () => {
+  assert.equal(
+    formatCompactPowerOutageTimeRange(
+      new Date("2026-08-03T06:00:00.000Z"),
+      new Date("2026-08-03T15:00:00.000Z"),
+    ),
+    "08:00–17:00",
+  );
+  assert.equal(
+    formatCompactPowerOutageTimeRange(
+      new Date("2026-08-03T20:00:00.000Z"),
+      new Date("2026-08-04T05:00:00.000Z"),
+    ),
+    "3. avg • 22:00–4. avg • 07:00",
+  );
 });
 
 test("uses correct Montenegrin singular and plural copy for additional locations", () => {

@@ -248,6 +248,17 @@ test("also recognizes the formal 'Opština Tivat' heading variant", () => {
   assert.match(extraction.sections[0]!.section, /Donja Lastva/u);
 });
 
+test("extracts Kotor outages without leaking neighboring municipality sections", () => {
+  const extraction = getMunicipalitySections(
+    "Budva\nOd 08 do 12 sati: Centar.\nKotor\nOd 10 do 14 sati: Škaljari.\nTivat\nOd 09 do 13 sati: Donja Lastva.",
+    "kotor",
+  );
+
+  assert.equal(extraction.state, "found");
+  assert.match(extraction.sections[0]!.section, /Škaljari/u);
+  assert.doesNotMatch(extraction.sections[0]!.section, /Donja Lastva/u);
+});
+
 test("returns a safe not-found result for an unavailable municipality section", async () => {
   const result = parseCedisArticleResult(
     {
@@ -280,10 +291,7 @@ test("rejects unsupported municipality extraction", async () => {
 });
 
 test("distinguishes no recognized municipality headings from a benign per-city mismatch", () => {
-  const otherCityFound = getMunicipalitySections(
-    "Nikšić\nOd 08 do 12 sati: Centar.",
-    "budva",
-  );
+  const otherCityFound = getMunicipalitySections("Nikšić\nOd 08 do 12 sati: Centar.", "budva");
   assert.equal(otherCityFound.state, "not-found");
 
   const noHeadingsAtAll = getMunicipalitySections(

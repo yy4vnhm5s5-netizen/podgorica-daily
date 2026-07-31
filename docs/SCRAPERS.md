@@ -18,7 +18,7 @@ Each collector has a named owner, monitoring for failure and staleness, alert th
 
 ## CEDIS planned outages
 
-CEDIS is the approved national HTML collection source for planned electricity outages. The collector uses only `https://cedis.me/servisne-informacije/` and validated official article URLs, with a clear product user agent, a 10-second timeout, one retry, and low request volume. One article can contain municipality sections for several cities; Gradom derives only explicitly allowlisted municipality read models (`Podgorica`/`Glavni grad Podgorica` and `Budva`/`Opština Budva`) from that source.
+CEDIS is the approved national HTML collection source for planned electricity outages. The collector uses only `https://cedis.me/servisne-informacije/` and validated official article URLs, with a clear product user agent, a 10-second timeout, one retry, and low request volume. One article can contain municipality sections for several cities; Gradom derives only explicitly allowlisted municipality read models (`Podgorica`/`Glavni grad Podgorica`, `Budva`/`Opština Budva`, and `Kotor`) from that source.
 
 `pnpm run collect:cedis` fetches each CEDIS document at most once per run, then sequentially processes every active city with the electricity capability and an approved municipality mapping. Each city keeps an isolated atomic snapshot and lock; the established Podgorica snapshot path remains compatible. A missing, malformed, ambiguous, or unexpectedly empty municipality section retains only that city's previous valid snapshot. Inactive cities are not scheduled. Pages only read their city snapshot.
 
@@ -27,6 +27,10 @@ The bundled VPS scheduler refreshes CEDIS every six hours. It uses local fixture
 ## VIK Podgorica water-service notices
 
 VIK Podgorica is the approved official water-service source at `https://vikpg.me/me/mediji/servisne-informacije/obavjestenja.html`. That legacy URL currently redirects to an official first-party page containing service entries and unrelated content. `pnpm run collect:vikpg` accepts only validated HTTPS VIK hosts, uses the established user agent, ten-second timeout, one transient retry, low request volume, and an on-disk refresh lock. It reads and atomically writes `.runtime/cache/vikpg-water-alerts.json`; visitor requests only read the cache.
+
+## Vodovod Kotor service information
+
+Vodovod i kanalizacija Kotor is the approved official source for Kotor water-service information at `https://vodovodkotor.com/servisne-informacije/`. The collector follows only validated HTTPS detail pages on the same official host, applies a 10-second timeout and 1 MB response bound, and stores a provider-specific atomic snapshot at `.runtime/cache/vodovod-kotor-water-alerts.json`. It distinguishes planned interruptions, water-tanker schedules, and drinking-water notices; schedules and notices are never presented as outages. An unavailable, malformed, or zero-valid-record refresh retains the previous valid snapshot. A local cache-write error remains an explicit failed refresh. `pnpm run collect:vodovod-kotor` deliberately does nothing until Kotor is active; after activation the local scheduler runs it every two hours, staggered from VIK. Visitor requests only read the cache.
 
 The parser uses local fixtures and injected HTTP in tests. It retains a valid snapshot on fetch failure, malformed content, or suspicious empty parses. Explicit end times determine expiry; restoration notices and notices older than one local day after publication are conservatively hidden. See ADR 0016.
 
@@ -40,7 +44,7 @@ Podgorica Airport flights are collected only from the public first-party feed us
 
 ## MonteGigs going out
 
-MonteGigs is the approved source for the separate `Izlasci` module, not an Event Platform provider. Its explicitly allow-listed listings currently cover Podgorica and Budva; no arbitrary city slug or source URL is accepted. `pnpm run collect:montegigs-going-out` requests a city-specific listing through an allow-listed HTTPS client with a ten-second timeout, one transient retry, a 1.5 MB response limit, and a clear product user agent. Each city has an isolated atomic snapshot and lock; the established Podgorica path remains `.runtime/cache/montegigs-going-out.json`, while other approved cities use a separate module-owned cache file. The collector retains that city's prior valid snapshot if its listing or parser fails. Tests use minimal saved fixtures and injected HTTP only. The public listing provides dates but may omit times; Gradom leaves those times unavailable. Visitor requests never fetch MonteGigs. See ADR 0020.
+MonteGigs is the approved source for the separate `Izlasci` module, not an Event Platform provider. Its explicitly allow-listed listings currently cover Podgorica, Budva, Tivat, and Kotor; no arbitrary city slug or source URL is accepted. `pnpm run collect:montegigs-going-out` requests a city-specific listing through an allow-listed HTTPS client with a ten-second timeout, one transient retry, a 1.5 MB response limit, and a clear product user agent. Each city has an isolated atomic snapshot and lock; the established Podgorica path remains `.runtime/cache/montegigs-going-out.json`, while other approved cities use a separate module-owned cache file. The collector retains that city's prior valid snapshot if its listing or parser fails. Tests use minimal saved fixtures and injected HTTP only. The public listing provides dates but may omit times; Gradom leaves those times unavailable. Visitor requests never fetch MonteGigs. See ADR 0020.
 
 ## Events
 

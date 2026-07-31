@@ -5,6 +5,7 @@ import {
   Droplets,
   Gauge,
   Siren,
+  Truck,
   Zap,
   type LucideIcon,
 } from "lucide-react";
@@ -53,8 +54,10 @@ import { cn } from "@/shared/lib/utils";
 
 const alertIcons: Record<AlertType, LucideIcon> = {
   emergency: Siren,
+  drinkingWaterNotice: Droplets,
   powerOutage: Zap,
   waterOutage: Droplets,
+  waterTankerSchedule: Truck,
   weatherWarning: CloudLightning,
 };
 
@@ -116,7 +119,13 @@ async function CityAlertsSection({ context, locale }: CityAlertsSectionProps) {
   const services = getCityServices(result, context, locale, translations, metadata, serviceIds);
   const otherAlerts =
     result.status === "success"
-      ? result.data.filter(({ type }) => type !== "powerOutage" && type !== "waterOutage")
+      ? result.data.filter(
+          ({ type }) =>
+            type !== "powerOutage" &&
+            type !== "waterOutage" &&
+            type !== "waterTankerSchedule" &&
+            type !== "drinkingWaterNotice",
+        )
       : [];
 
   return (
@@ -165,9 +174,12 @@ function getCityServices(
   const alerts = result.status === "success" ? result.data : [];
   const relevantPowerOutages = getRelevantPowerOutages(alerts);
   const powerAlert = selectNextPowerOutage(relevantPowerOutages);
-  const waterAlert = alerts.find(({ type }) => type === "waterOutage");
+  const waterAlert = alerts.find(
+    ({ type }) =>
+      type === "waterOutage" || type === "waterTankerSchedule" || type === "drinkingWaterNotice",
+  );
   const cedisSource = metadata.sources.find(({ id }) => id === "cedis");
-  const vikpgSource = metadata.sources.find(({ id }) => id === "vikpg");
+  const waterSource = metadata.sources.find(({ id }) => id !== "cedis");
 
   return {
     ...(serviceIds.includes("power")
@@ -191,8 +203,8 @@ function getCityServices(
     ...(serviceIds.includes("water")
       ? {
           water: waterAlert
-            ? toCityServiceInfo(waterAlert, context, vikpgSource, locale, translations)
-            : toEmptyCityServiceInfo(vikpgSource, locale, translations),
+            ? toCityServiceInfo(waterAlert, context, waterSource, locale, translations)
+            : toEmptyCityServiceInfo(waterSource, locale, translations),
         }
       : {}),
   };

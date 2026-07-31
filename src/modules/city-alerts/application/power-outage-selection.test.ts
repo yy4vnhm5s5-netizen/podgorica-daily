@@ -6,6 +6,7 @@ import {
   getHomepagePowerOutageLocations,
   getPowerOutageLocations,
   getRelevantPowerOutages,
+  getStatusStripPowerOutageLocations,
 } from "./power-outage-selection.ts";
 
 test("limits homepage power-outage locations and reports the exact remaining count", () => {
@@ -37,6 +38,16 @@ test("keeps all parsed locations and sorts every currently relevant outage", () 
     getRelevantPowerOutages([tomorrow, expired, laterToday]).map(({ id }) => id),
     ["today", "tomorrow"],
   );
+});
+
+test("keeps the status strip to one area and counts distinct remaining areas", () => {
+  const primary = powerOutage("first", "Dučići, Koći");
+  const next = powerOutage("second", "Koći, Medun");
+
+  assert.deepEqual(getStatusStripPowerOutageLocations(primary, [primary, next]), {
+    additionalLocationCount: 2,
+    locations: ["Dučići"],
+  });
 });
 
 function powerOutage(

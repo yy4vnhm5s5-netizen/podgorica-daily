@@ -6,6 +6,6 @@ import { providerRegistry } from "./providers.ts";
 test("registers only supported City Alerts providers", () => {
   assert.deepEqual(
     providerRegistry.map(({ id }) => id),
-    ["cedis", "vikpg", "weather"],
+    ["cedis", "vikpg", "vodovod-kotor", "weather"],
   );
 });

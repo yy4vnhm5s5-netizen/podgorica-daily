@@ -13,6 +13,7 @@
     "build": "next build",
     "collect:cedis": "node --experimental-strip-types src/modules/city-alerts/infrastructure/collect-cedis.ts",
     "collect:vikpg": "node --experimental-strip-types src/modules/city-alerts/infrastructure/collect-vikpg.ts",
+    "collect:vodovod-kotor": "node --experimental-strip-types src/modules/city-alerts/infrastructure/collect-vodovod-kotor.ts",
     "collect:zpcg-railway": "node --experimental-strip-types src/modules/transport/infrastructure/collect-zpcg-railway.ts",
     "collect:podgorica-flights": "node --experimental-strip-types src/modules/flights/infrastructure/collect-podgorica-flights.ts",
     "collect:montegigs-going-out": "node --experimental-strip-types src/modules/going-out/infrastructure/collect-montegigs-going-out.ts",

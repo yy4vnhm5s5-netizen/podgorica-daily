@@ -1,9 +1,11 @@
 import { env } from "../../../config/env.ts";
+import { getCity } from "@/shared/config/cities";
 import {
   runActiveCedisCollectors,
   type CollectorResult as CedisCollectorResult,
 } from "./collect-cedis.ts";
 import { runVikpgCollector } from "./collect-vikpg.ts";
+import { runVodovodKotorCollector } from "./vodovod-kotor.ts";
 import {
   runCityAlertsRefresh,
   type CityAlertsRefreshProvider,
@@ -56,6 +58,14 @@ function defaultProviders({
           {
             id: "vikpg" as const,
             refresh: () => runVikpgCollector({ cachePath: env.VIKPG_CACHE_PATH }),
+          },
+        ]
+      : []),
+    ...(env.ENABLE_VODOVOD_KOTOR && getCity("kotor")?.isActive
+      ? [
+          {
+            id: "vodovod-kotor" as const,
+            refresh: () => runVodovodKotorCollector(),
           },
         ]
       : []),

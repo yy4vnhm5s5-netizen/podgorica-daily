@@ -4,7 +4,7 @@ import { getCityAlertServiceIds } from "@/modules/city-alerts/application/city-a
 import type { CityAlert } from "@/modules/city-alerts/domain/city-alert";
 import type { CityContext } from "@/shared/types/city";
 
-type CityAlertsSourceId = "cedis" | "vikpg";
+type CityAlertsSourceId = "cedis" | "vikpg" | "vodovod-kotor";
 type CityAlertsProviderMode = "disabled" | "live" | "mock";
 
 interface CityAlertsSourceMetadata {
@@ -41,7 +41,7 @@ async function getActiveCityAlerts(
   context: CityContext = getDefaultCityContext(),
 ): Promise<CityAlertsResult> {
   try {
-    const [cedis, vikpg] = await getCityAlertProviderData(context);
+    const [cedis, water] = await getCityAlertProviderData(context);
     const serviceIds = getCityAlertServiceIds(context.city);
     const sources: CityAlertsSourceMetadata[] = [
       ...(serviceIds.includes("power")
@@ -57,10 +57,10 @@ async function getActiveCityAlerts(
       ...(serviceIds.includes("water")
         ? [
             {
-              freshnessStatus: vikpg.freshnessStatus,
-              id: "vikpg" as const,
-              lastSuccessfulUpdate: vikpg.lastSuccessfulUpdate,
-              providerMode: vikpg.mode,
+              freshnessStatus: water.freshnessStatus,
+              id: water.providerId,
+              lastSuccessfulUpdate: water.lastSuccessfulUpdate,
+              providerMode: water.mode,
             },
           ]
         : []),
@@ -68,7 +68,7 @@ async function getActiveCityAlerts(
     const metadata = { sources };
     const sourceAlerts = [
       ...(serviceIds.includes("power") ? cedis.alerts : []),
-      ...(serviceIds.includes("water") ? vikpg.alerts : []),
+      ...(serviceIds.includes("water") ? water.alerts : []),
     ];
     const activeAlerts = sourceAlerts.filter(
       ({ status }) => status === "active" || status === "scheduled",
@@ -99,7 +99,14 @@ async function getCityAlertsOverviewData(
 }
 
 function toOverviewAlert(alert: CityAlert): CityAlertsOverviewAlert[] {
-  if (alert.severity === "resolved" || alert.type === "emergency") return [];
+  if (
+    alert.severity === "resolved" ||
+    alert.type === "drinkingWaterNotice" ||
+    alert.type === "emergency" ||
+    alert.type === "waterTankerSchedule"
+  ) {
+    return [];
+  }
   return [
     {
       isActive: alert.status === "active",

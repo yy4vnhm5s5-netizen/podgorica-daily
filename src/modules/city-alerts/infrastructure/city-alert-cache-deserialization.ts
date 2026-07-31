@@ -106,6 +106,8 @@ function isAlertType(value: unknown): value is CityAlert["type"] {
     value === "emergency" ||
     value === "powerOutage" ||
     value === "waterOutage" ||
+    value === "waterTankerSchedule" ||
+    value === "drinkingWaterNotice" ||
     value === "weatherWarning"
   );
 }

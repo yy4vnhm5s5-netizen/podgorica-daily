@@ -9,6 +9,7 @@ import {
   toMultiCityFlightsRefreshEndpointResult,
   toMultiCitySeaWaterQualityRefreshEndpointResult,
   toSeaWaterQualityRefreshEndpointResult,
+  toVodovodKotorRefreshEndpointResult,
 } from "./provider-refresh-result.ts";
 
 function flightsResult({
@@ -91,6 +92,32 @@ test("includes the safe city identifier for a city-aware CEDIS refresh", () => {
   });
 
   assert.equal(result.cityId, "budva");
+  assert.equal(JSON.stringify(result).includes("/private/"), false);
+});
+
+test("maps the Vodovod Kotor fixed refresh endpoint without exposing its cache path", () => {
+  const result = toVodovodKotorRefreshEndpointResult({
+    exitCode: 0,
+    summary: {
+      alertCount: 2,
+      cachePath: "/private/runtime/vodovod-kotor-water-alerts.json",
+      cacheStatus: "fresh",
+      cityId: "kotor",
+      completedAt: "2026-07-22T10:00:00.000Z",
+      retainedPreviousSnapshot: false,
+      status: "success",
+      warnings: [],
+    },
+  });
+
+  assert.deepEqual(result, {
+    acceptedCount: 2,
+    cityId: "kotor",
+    provider: "vodovod-kotor",
+    retainedPreviousSnapshot: false,
+    state: "success",
+    warnings: [],
+  });
   assert.equal(JSON.stringify(result).includes("/private/"), false);
 });
 

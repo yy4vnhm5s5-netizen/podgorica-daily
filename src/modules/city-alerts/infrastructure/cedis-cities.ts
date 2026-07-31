@@ -5,6 +5,10 @@ const cedisMunicipalities = {
     cityId: "budva",
     headingVariants: ["Budva", "Opština Budva"],
   },
+  kotor: {
+    cityId: "kotor",
+    headingVariants: ["Kotor"],
+  },
   podgorica: {
     cityId: "podgorica",
     headingVariants: ["Podgorica", "Glavni grad Podgorica"],

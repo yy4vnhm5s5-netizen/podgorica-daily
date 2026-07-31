@@ -39,6 +39,7 @@ const environmentSchema = z.object({
   GOING_OUT_REFRESH_SECRET: z.string().min(32).optional(),
   ZPCG_RAILWAY_CACHE_PATH: z.string().min(1).optional(),
   ZPCG_RAILWAY_REFRESH_SECRET: z.string().min(32).optional(),
+  INTERNAL_REFRESH_TOKEN: z.string().min(32).optional(),
   SNAPSHOT_DIAGNOSTICS_SECRET: z.string().min(32).optional(),
   CEDIS_CACHE_PATH: z.string().min(1).optional(),
   CEDIS_CACHE_FRESHNESS_MINUTES: z.coerce.number().int().positive().default(420),
@@ -46,6 +47,8 @@ const environmentSchema = z.object({
   VIKPG_CACHE_PATH: z.string().min(1).optional(),
   VIKPG_CACHE_FRESHNESS_MINUTES: z.coerce.number().int().positive().default(150),
   VIKPG_REFRESH_SECRET: z.string().min(32).optional(),
+  VODOVOD_KOTOR_CACHE_PATH: z.string().min(1).optional(),
+  VODOVOD_KOTOR_CACHE_FRESHNESS_MINUTES: z.coerce.number().int().positive().default(150),
   SEA_WATER_QUALITY_CACHE_PATH: z.string().min(1).optional(),
   // Individual bathing locations are re-sampled roughly every 3 days during the season, so 3 days
   // (4320 minutes) tracks the real update cadence — long enough that one missed daily refresh
@@ -62,6 +65,7 @@ const environmentSchema = z.object({
   DEFAULT_CITY: z.string().default("podgorica"),
   ENABLE_CEDIS: z.enum(["false", "true"]).default("true"),
   ENABLE_VIKPG: z.enum(["false", "true"]).default("true"),
+  ENABLE_VODOVOD_KOTOR: z.enum(["false", "true"]).default("false"),
   ENABLE_EVENTS: z.enum(["false", "true"]).default("false"),
   ENABLE_FLIGHTS: z.enum(["false", "true"]).default("true"),
   ENABLE_GOING_OUT: z.enum(["false", "true"]).default("true"),
@@ -118,6 +122,7 @@ const parsedEnvironment = environmentSchema.safeParse({
   GOING_OUT_REFRESH_SECRET: process.env.GOING_OUT_REFRESH_SECRET,
   ZPCG_RAILWAY_CACHE_PATH: process.env.ZPCG_RAILWAY_CACHE_PATH,
   ZPCG_RAILWAY_REFRESH_SECRET: process.env.ZPCG_RAILWAY_REFRESH_SECRET,
+  INTERNAL_REFRESH_TOKEN: process.env.INTERNAL_REFRESH_TOKEN,
   SNAPSHOT_DIAGNOSTICS_SECRET: process.env.SNAPSHOT_DIAGNOSTICS_SECRET,
   CEDIS_CACHE_PATH: process.env.CEDIS_CACHE_PATH,
   CEDIS_CACHE_FRESHNESS_MINUTES: process.env.CEDIS_CACHE_FRESHNESS_MINUTES,
@@ -125,6 +130,8 @@ const parsedEnvironment = environmentSchema.safeParse({
   VIKPG_CACHE_PATH: process.env.VIKPG_CACHE_PATH,
   VIKPG_CACHE_FRESHNESS_MINUTES: process.env.VIKPG_CACHE_FRESHNESS_MINUTES,
   VIKPG_REFRESH_SECRET: process.env.VIKPG_REFRESH_SECRET,
+  VODOVOD_KOTOR_CACHE_PATH: process.env.VODOVOD_KOTOR_CACHE_PATH,
+  VODOVOD_KOTOR_CACHE_FRESHNESS_MINUTES: process.env.VODOVOD_KOTOR_CACHE_FRESHNESS_MINUTES,
   SEA_WATER_QUALITY_CACHE_PATH: process.env.SEA_WATER_QUALITY_CACHE_PATH,
   SEA_WATER_QUALITY_CACHE_FRESHNESS_MINUTES: process.env.SEA_WATER_QUALITY_CACHE_FRESHNESS_MINUTES,
   SEA_WATER_QUALITY_REFRESH_SECRET: process.env.SEA_WATER_QUALITY_REFRESH_SECRET,
@@ -136,6 +143,7 @@ const parsedEnvironment = environmentSchema.safeParse({
   DEFAULT_CITY: process.env.DEFAULT_CITY,
   ENABLE_CEDIS: process.env.ENABLE_CEDIS,
   ENABLE_VIKPG: process.env.ENABLE_VIKPG,
+  ENABLE_VODOVOD_KOTOR: process.env.ENABLE_VODOVOD_KOTOR,
   ENABLE_EVENTS: process.env.ENABLE_EVENTS,
   ENABLE_FLIGHTS: process.env.ENABLE_FLIGHTS,
   ENABLE_GOING_OUT: process.env.ENABLE_GOING_OUT,
@@ -195,6 +203,9 @@ const resolvedEnvironment = {
   VIKPG_CACHE_PATH:
     parsedEnvironment.data.VIKPG_CACHE_PATH ??
     resolveRuntimeCachePath("vikpg-water-alerts.json", runtimeDataDirectory),
+  VODOVOD_KOTOR_CACHE_PATH:
+    parsedEnvironment.data.VODOVOD_KOTOR_CACHE_PATH ??
+    resolveRuntimeCachePath("vodovod-kotor-water-alerts.json", runtimeDataDirectory),
   SEA_WATER_QUALITY_CACHE_PATH:
     parsedEnvironment.data.SEA_WATER_QUALITY_CACHE_PATH ??
     `${cacheDirectory}/budva-sea-water-quality.json`,
@@ -210,6 +221,7 @@ export const env = {
   DEFAULT_CITY: resolvedEnvironment.DEFAULT_CITY,
   ENABLE_CEDIS: resolvedEnvironment.ENABLE_CEDIS === "true",
   ENABLE_VIKPG: resolvedEnvironment.ENABLE_VIKPG === "true",
+  ENABLE_VODOVOD_KOTOR: resolvedEnvironment.ENABLE_VODOVOD_KOTOR === "true",
   ENABLE_EVENTS: resolvedEnvironment.ENABLE_EVENTS === "true",
   ENABLE_FLIGHTS: resolvedEnvironment.ENABLE_FLIGHTS === "true",
   ENABLE_GOING_OUT: resolvedEnvironment.ENABLE_GOING_OUT === "true",

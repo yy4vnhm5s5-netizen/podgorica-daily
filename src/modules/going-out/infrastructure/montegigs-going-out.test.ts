@@ -11,6 +11,7 @@ import {
   getGoingOutCachePath,
   getMonteGigsCitySource,
   parseMonteGigsEvents,
+  readGoingOutCacheSnapshot,
   refreshMonteGigsGoingOut,
 } from "./montegigs-going-out.ts";
 import { createCityContext } from "@/shared/config/cities";
@@ -21,9 +22,11 @@ const podgoricaFixturePath = join(
   "montegigs-podgorica-listing.html",
 );
 const budvaFixturePath = join(import.meta.dirname, "__fixtures__", "montegigs-budva-listing.html");
+const kotorFixturePath = join(import.meta.dirname, "__fixtures__", "montegigs-kotor-listing.html");
 const podgorica = createCityContext("podgorica");
 const budva = createCityContext("budva");
 const tivat = createCityContext("tivat");
+const kotor = createCityContext("kotor");
 
 test("parses only Podgorica events from the official-style listing fixture", async () => {
   const html = await readFile(podgoricaFixturePath, "utf8");
@@ -79,6 +82,29 @@ test("parses Budva events with the correct city assignment and preserves date-on
       },
     ],
   );
+});
+
+test("parses Kotor events through the shared city-aware MonteGigs parser", async () => {
+  const parsed = parseMonteGigsEvents(
+    await readFile(kotorFixturePath, "utf8"),
+    kotor,
+    new Date("2026-07-22T10:00:00.000Z"),
+  );
+
+  assert.equal(parsed.recognized, true);
+  assert.deepEqual(
+    parsed.events.map(({ city, startDate, title, venue }) => ({ city, startDate, title, venue })),
+    [
+      {
+        city: "kotor",
+        startDate: "2026-08-12",
+        title: "Kotor Sunset Session",
+        venue: "Pjaca od kina",
+      },
+      { city: "kotor", startDate: "2026-08-13", title: "Evening in Kotor", venue: "Stari grad" },
+    ],
+  );
+  assert.equal(parsed.events[0]?.imageUrl, "https://staging.montegigs.me/images/kotor-sunset.jpg");
 });
 
 test("retains a valid cache when the listing no longer exposes event links", async () => {
@@ -189,10 +215,15 @@ test("uses explicit city sources and independent city cache paths", () => {
     getMonteGigsCitySource("tivat")?.listingUrl,
     "https://staging.montegigs.me/me/events/tivat",
   );
+  assert.equal(
+    getMonteGigsCitySource("kotor")?.listingUrl,
+    "https://staging.montegigs.me/me/events/kotor",
+  );
   assert.equal(getMonteGigsCitySource("bar"), undefined);
   assert.notEqual(getGoingOutCachePath("podgorica"), getGoingOutCachePath("budva"));
   assert.notEqual(getGoingOutCachePath("podgorica"), getGoingOutCachePath("tivat"));
   assert.notEqual(getGoingOutCachePath("budva"), getGoingOutCachePath("tivat"));
+  assert.notEqual(getGoingOutCachePath("kotor"), getGoingOutCachePath("budva"));
 });
 
 test("keeps Budva and Podgorica snapshots isolated through independent retention and freshness", async () => {
@@ -277,7 +308,7 @@ test("retries a transient MonteGigs response through the injected client", async
   assert.equal(value.status, 200);
 });
 
-function response(body: string, city: "budva" | "podgorica" | "tivat" = "podgorica") {
+function response(body: string, city: "budva" | "kotor" | "podgorica" | "tivat" = "podgorica") {
   return {
     body,
     contentType: "text/html",

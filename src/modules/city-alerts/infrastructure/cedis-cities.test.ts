@@ -1,17 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import {
-  getCedisCityId,
-  getCedisMunicipality,
-  isCedisSupportedCityId,
-} from "./cedis-cities.ts";
+import { getCedisCityId, getCedisMunicipality, isCedisSupportedCityId } from "./cedis-cities.ts";
 import { createCityContext } from "@/shared/config/cities";
 
-test("recognizes Tivat as a CEDIS-supported municipality alongside Podgorica and Budva", () => {
+test("recognizes Kotor and existing CEDIS-supported municipalities", () => {
   assert.equal(isCedisSupportedCityId("podgorica"), true);
   assert.equal(isCedisSupportedCityId("budva"), true);
   assert.equal(isCedisSupportedCityId("tivat"), true);
+  assert.equal(isCedisSupportedCityId("kotor"), true);
   assert.equal(isCedisSupportedCityId("bar"), false);
 });
 
@@ -26,4 +23,9 @@ test("resolves the CEDIS city id from a Tivat context the same way as the other 
   assert.equal(getCedisCityId(createCityContext("tivat")), "tivat");
   assert.equal(getCedisCityId("tivat"), "tivat");
   assert.equal(getCedisCityId("bar"), undefined);
+});
+
+test("exposes the verified Kotor municipality heading", () => {
+  assert.deepEqual(getCedisMunicipality("kotor"), { cityId: "kotor", headingVariants: ["Kotor"] });
+  assert.equal(getCedisCityId(createCityContext("kotor")), "kotor");
 });

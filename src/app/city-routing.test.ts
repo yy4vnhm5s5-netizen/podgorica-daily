@@ -87,6 +87,7 @@ test("resolves active Budva routes but rejects inactive and unknown city routes"
   assert.equal(resolveActiveCityRoute("budva")?.city.id, "budva");
   assert.equal(resolveActiveCityRoute("bar"), undefined);
   assert.equal(resolveActiveCityRoute("unknown"), undefined);
+  assert.equal(resolveActiveCityRoute("kotor"), undefined);
 });
 
 test("feature routes require an explicit city capability", () => {
@@ -176,4 +177,15 @@ test("exposes only Budva's capability-supported feature routes", () => {
     "/budva/izlasci",
     "/budva/plaze",
   ]);
+});
+
+test("a future active Kotor exposes only its capability-supported public routes", () => {
+  const configuredKotor = createCityContext("kotor").city;
+  const kotor = { ...configuredKotor, isActive: true };
+
+  assert.deepEqual(getCitySitemapPaths(kotor), ["/kotor", "/kotor/struja", "/kotor/izlasci"]);
+  assert.equal(isCityPublicFeatureRouteAvailable(kotor, "events"), false);
+  assert.equal(isCityPublicFeatureRouteAvailable(kotor, "flights"), false);
+  assert.equal(isCityPublicFeatureRouteAvailable(kotor, "goingOut"), true);
+  assert.equal(isCityPublicFeatureRouteAvailable(kotor, "electricity"), true);
 });

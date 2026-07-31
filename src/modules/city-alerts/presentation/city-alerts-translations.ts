@@ -97,8 +97,10 @@ const cityAlertsTranslations: Record<Locale, CityAlertsTranslations> = {
     water: "Water",
     types: {
       emergency: "Emergency",
+      drinkingWaterNotice: "Drinking-water notice",
       powerOutage: "Power outage",
       waterOutage: "Water outage",
+      waterTankerSchedule: "Water-tanker schedule",
       weatherWarning: "Weather warning",
     },
   },
@@ -152,8 +154,10 @@ const cityAlertsTranslations: Record<Locale, CityAlertsTranslations> = {
     water: "Voda",
     types: {
       emergency: "Hitno stanje",
+      drinkingWaterNotice: "Obavještenje o pitkoj vodi",
       powerOutage: "Prekid napajanja električnom energijom",
       waterOutage: "Prekid vodosnabdijevanja",
+      waterTankerSchedule: "Raspored cisterni",
       weatherWarning: "Vremensko upozorenje",
     },
   },

@@ -44,16 +44,19 @@ test("rejects invalid Event Quality numeric, ratio, and boolean values", () => {
     assert.throws(() => parseEnvironment(value));
 });
 
-test("validates each provider-specific refresh secret independently", () => {
+test("validates refresh credentials independently", () => {
   assert.throws(() => parseEnvironment({ FLIGHTS_REFRESH_SECRET: "too-short" }));
+  assert.throws(() => parseEnvironment({ INTERNAL_REFRESH_TOKEN: "too-short" }));
   const values = parseEnvironment({
     CEDIS_REFRESH_SECRET: "cedis-refresh-secret-at-least-32-characters",
     CINEPLEXX_REFRESH_SECRET: "cineplexx-refresh-secret-at-least-32-char",
     FLIGHTS_REFRESH_SECRET: "flights-refresh-secret-at-least-32-characters",
     GOING_OUT_REFRESH_SECRET: "going-out-refresh-secret-at-least-32-chars",
+    INTERNAL_REFRESH_TOKEN: "internal-refresh-token-at-least-32-chars",
     STANDARD_EVENTS_REFRESH_SECRET: "standard-events-refresh-secret-at-least-32",
     VIKPG_REFRESH_SECRET: "vikpg-refresh-secret-at-least-32-characters",
     ZPCG_RAILWAY_REFRESH_SECRET: "zpcg-railway-refresh-secret-at-least-32",
   });
   assert.equal(values.CINEPLEXX_REFRESH_SECRET?.startsWith("cineplexx"), true);
+  assert.equal(values.INTERNAL_REFRESH_TOKEN?.startsWith("internal"), true);
 });

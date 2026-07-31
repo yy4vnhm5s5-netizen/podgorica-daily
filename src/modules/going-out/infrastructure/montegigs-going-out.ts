@@ -23,6 +23,10 @@ const monteGigsCitySources = {
     cityId: "budva",
     listingUrl: "https://staging.montegigs.me/me/events/budva",
   },
+  kotor: {
+    cityId: "kotor",
+    listingUrl: "https://staging.montegigs.me/me/events/kotor",
+  },
   podgorica: {
     cityId: "podgorica",
     listingUrl: "https://staging.montegigs.me/me/events/podgorica",
@@ -475,7 +479,7 @@ function extractVenue(value: string) {
 }
 
 const goingOutEventSchema = z.object({
-  city: z.enum(["podgorica", "budva", "tivat"]),
+  city: z.enum(["podgorica", "budva", "kotor", "tivat"]),
   id: z.string().min(1),
   imageUrl: z.string().url().optional(),
   sourceName: z.literal("MonteGigs"),
@@ -487,7 +491,7 @@ const goingOutEventSchema = z.object({
 });
 
 const goingOutCacheSnapshotSchema = z.object({
-  cityId: z.enum(["podgorica", "budva", "tivat"]).default("podgorica"),
+  cityId: z.enum(["podgorica", "budva", "kotor", "tivat"]).default("podgorica"),
   events: z.array(goingOutEventSchema),
   fetchedAt: z.string().datetime(),
   lastRefreshError: z.string().optional(),

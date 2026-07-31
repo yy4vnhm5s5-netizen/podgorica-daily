@@ -2,7 +2,13 @@ import type { CityId } from "@/shared/types/city";
 
 type AlertSeverity = "critical" | "information" | "resolved" | "warning";
 
-type AlertType = "emergency" | "powerOutage" | "waterOutage" | "weatherWarning";
+type AlertType =
+  | "drinkingWaterNotice"
+  | "emergency"
+  | "powerOutage"
+  | "waterOutage"
+  | "waterTankerSchedule"
+  | "weatherWarning";
 
 type CityAlertContent =
   | {
