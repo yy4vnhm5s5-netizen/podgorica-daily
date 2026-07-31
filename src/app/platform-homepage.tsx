@@ -10,6 +10,7 @@ import { CityCard } from "@/app/platform-city-panel";
 import { PlatformAtmosphere } from "@/app/platform-atmosphere";
 import { PlatformCitySelector } from "@/app/platform-city-selector";
 import { LastCityContinuation } from "@/app/platform-last-city";
+import { HeroIconBackdrop, platformHeroIcons } from "@/shared/components/hero-icon-backdrop";
 import { siteConfig } from "@/shared/config/site";
 
 interface PlatformHomepageProps {
@@ -31,7 +32,8 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
         aria-labelledby="platform-homepage-title"
         className="card-fog card-fog--info relative overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-r from-white via-orange-50/50 to-sky-100/60 px-6 py-5 shadow-sm shadow-blue-950/[0.04] sm:px-8 sm:py-6"
       >
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+        <HeroIconBackdrop icons={platformHeroIcons} />
+        <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
           <PlatformMark />
           <div className="max-w-2xl space-y-1.5 sm:border-l sm:border-border/60 sm:pl-6">
             <h1

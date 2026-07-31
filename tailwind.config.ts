@@ -33,6 +33,17 @@ const config: Config = {
           soft: "hsl(var(--brand-soft))",
         },
       },
+      keyframes: {
+        float: {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-6px)" },
+        },
+      },
+      animation: {
+        float: "float 14s ease-in-out infinite",
+        "float-slow": "float 18s ease-in-out infinite",
+        "float-slower": "float 22s ease-in-out infinite",
+      },
     },
   },
   plugins: [],
