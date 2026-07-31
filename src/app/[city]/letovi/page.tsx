@@ -9,6 +9,7 @@ import { createPublicRouteMetadata } from "@/app/public-route-metadata";
 import { getPodgoricaFlights } from "@/modules/flights/application/get-podgorica-flights";
 import { AirportFlightsPage } from "@/modules/flights/presentation/airport-flights-page";
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
+import { getCityName } from "@/shared/config/cities";
 import { getFlightsPath } from "@/shared/config/public-routes";
 import { getPageTitle } from "@/shared/config/site";
 import { getTranslations } from "@/shared/lib/translations";
@@ -32,7 +33,7 @@ async function generateMetadata({ params }: FlightsPageProps): Promise<Metadata>
   const context = resolveActiveCityFeatureRoute(slug, "flights");
   if (!context || !isCityPublicFeatureRouteAvailable(context.city, "flights")) return {};
   const title = getFlightsPageTitle(context.city.name);
-  const description = `Dolasci i odlasci za ${context.city.name} iz zvaničnih podataka aerodroma.`;
+  const description = `Dolasci i odlasci za ${getCityName(context.city, "accusative")} iz zvaničnih podataka aerodroma.`;
   const metadataTitle = getPageTitle(title);
 
   return createPublicRouteMetadata({

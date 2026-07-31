@@ -20,6 +20,7 @@ interface EventStructuredData {
   organizer?: { "@type": "Organization"; name: string };
   sameAs: string;
   startDate: string;
+  url: string;
 }
 
 // A cached event's date fields are not guaranteed to be a valid, parseable date (see
@@ -65,6 +66,7 @@ function createEventStructuredData(event: CityEvent): EventStructuredData | unde
       : {}),
     sameAs: event.sourceUrl,
     startDate,
+    url: new URL(getEventDetailPath(event.cityId, event.id), siteConfig.url).toString(),
   };
 }
 

@@ -29,6 +29,7 @@ test("builds Event structured data from known event fields only", () => {
     organizer: { "@type": "Organization", name: "KIC" },
     sameAs: "https://events.example.test/fixture",
     startDate: "2026-07-17T18:00:00.000Z",
+    url: "https://gradom.me/podgorica/dogadjaji/event_fixture",
   });
   assert.doesNotMatch(serializeStructuredData(structuredData!), /<strong>/);
 });

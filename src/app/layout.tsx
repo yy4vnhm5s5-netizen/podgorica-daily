@@ -7,7 +7,6 @@ import "@/app/globals.css";
 import { env } from "@/config/env";
 import { getLocaleTag } from "@/shared/config/locale";
 import { siteConfig } from "@/shared/config/site";
-import { getTranslations } from "@/shared/lib/translations";
 
 // Restrained editorial display face for major page anchors only (see `font-display` in
 // tailwind.config.ts and the `accent`-gated usage in SectionTitle) — everything else in the app
@@ -29,7 +28,7 @@ export const metadata: Metadata = {
     title: siteConfig.name,
   },
   applicationName: siteConfig.name,
-  description: getTranslations("me").metadata.description,
+  description: siteConfig.description,
   icons: {
     apple: [{ sizes: "180x180", type: "image/png", url: "/apple-touch-icon.png" }],
     icon: [
@@ -42,7 +41,7 @@ export const metadata: Metadata = {
   manifest: "/site.webmanifest",
   metadataBase: new URL(siteConfig.url),
   openGraph: {
-    description: getTranslations("me").metadata.description,
+    description: siteConfig.description,
     images: [{ height: 675, url: "/og-image.png", width: 1200 }],
     locale: "sr_Latn_ME",
     siteName: siteConfig.name,
@@ -55,7 +54,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    description: getTranslations("me").metadata.description,
+    description: siteConfig.description,
     images: ["/og-image.png"],
     title: siteConfig.homepageTitle,
   },

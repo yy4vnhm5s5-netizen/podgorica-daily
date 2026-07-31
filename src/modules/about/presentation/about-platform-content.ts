@@ -2,18 +2,18 @@ import { siteConfig } from "@/shared/config/site";
 
 const aboutPlatformContent = {
   description:
-    "Saznajte kako Gradom.me prikazuje lokalne informacije za Podgoricu — od vremenske prognoze, događaja i bioskopa do letova i gradskih obavještenja.",
+    "Saznajte kako Gradom.me objedinjuje lokalne informacije za Podgoricu, Budvu i Tivat — od vremena i servisnih obavještenja do događaja, izlazaka, plaža i prevoza.",
   heading: "O platformi Gradom.me",
   sections: [
     {
       body: [
-        "Gradom.me okuplja javno dostupne lokalne informacije koje se često mijenjaju, kako bi svakodnevne stvari u Podgorici bile lakše za praćenje. Platforma je trenutno usmjerena na Podgoricu, a njena struktura omogućava postepeno uključivanje drugih gradova u Crnoj Gori.",
+        "Gradom.me okuplja javno dostupne lokalne informacije koje se često mijenjaju za Podgoricu, Budvu i Tivat, kako bi svakodnevne stvari u svakom gradu bile lakše za praćenje.",
       ],
-      heading: "Lokalne informacije za Podgoricu",
+      heading: "Lokalne informacije po gradu",
     },
     {
       body: [
-        "Na Gradom.me možete pratiti vremensku prognozu za Podgoricu, planirane nestanke struje i prekide vodosnabdijevanja, letove, željezničke polaske, bioskopske projekcije, događaje i izlaske u gradu.",
+        "Dostupne informacije zavise od grada. Podgorica trenutno obuhvata vrijeme, planirana isključenja struje, prekide vodosnabdijevanja, letove, željezničke polaske, bioskopski program, događaje i izlaske. Budva i Tivat obuhvataju vrijeme, planirana isključenja struje, izlaske i kvalitet mora, dok Tivat ima i događaje.",
       ],
       heading: "Šta možete pronaći",
     },

@@ -14,18 +14,18 @@ test("provides the page heading and only currently public information categories
   assert.deepEqual(
     aboutPlatformContent.sections.map(({ heading }) => heading),
     [
-      "Lokalne informacije za Podgoricu",
+      "Lokalne informacije po gradu",
       "Šta možete pronaći",
       "Kako platforma radi",
       "Svježina i dostupnost podataka",
       "Nezavisnost i ispravke",
     ],
   );
-  assert.match(aboutPlatformContent.sections[1].body[0] ?? "", /vremensku prognozu/i);
+  assert.match(aboutPlatformContent.sections[1].body[0] ?? "", /vrijeme/i);
   assert.match(aboutPlatformContent.sections[1].body[0] ?? "", /letove/i);
-  assert.match(aboutPlatformContent.sections[1].body[0] ?? "", /bioskopske projekcije/i);
+  assert.match(aboutPlatformContent.sections[1].body[0] ?? "", /bioskopski program/i);
   assert.match(aboutPlatformContent.description, /Gradom\.me/i);
-  assert.match(aboutPlatformContent.description, /Podgoricu/i);
+  assert.match(aboutPlatformContent.description, /Podgoricu, Budvu i Tivat/i);
   assert.doesNotMatch(aboutPlatformContent.sections[1].body[0] ?? "", /saobraćaj/i);
 });
 
@@ -57,7 +57,7 @@ test("uses a self-referencing canonical with page-specific metadata", () => {
   const metadata = createPublicRouteMetadata({
     canonical: getAboutPlatformPath(),
     description: aboutPlatformContent.description,
-    title: getPageTitle(aboutPlatformContent.heading),
+    title: getPageTitle("O platformi"),
   });
 
   assert.equal(metadata.alternates?.canonical, "/o-platformi");
@@ -66,6 +66,6 @@ test("uses a self-referencing canonical with page-specific metadata", () => {
     typeof metadata.title === "object" && metadata.title !== null && "absolute" in metadata.title
       ? metadata.title.absolute
       : metadata.title;
-  assert.equal(title, "O platformi Gradom.me | Gradom");
+  assert.equal(title, "O platformi | Gradom.me");
   assert.equal(metadata.description, aboutPlatformContent.description);
 });

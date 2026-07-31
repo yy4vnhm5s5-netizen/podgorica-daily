@@ -11,7 +11,7 @@ function generateMetadata(): Metadata {
   return createPublicRouteMetadata({
     canonical: getAboutPlatformPath(),
     description: aboutPlatformContent.description,
-    title: getPageTitle(aboutPlatformContent.heading),
+    title: getPageTitle("O platformi"),
   });
 }
 

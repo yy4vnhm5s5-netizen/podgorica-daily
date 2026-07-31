@@ -37,7 +37,7 @@ test("uses self-referencing canonical and Open Graph URLs for every public route
 
     assert.equal(metadata.alternates?.canonical, canonical);
     assert.equal(metadata.openGraph?.url, canonical);
-    assert.match(JSON.stringify(metadata.openGraph), /"siteName":"Gradom"/u);
+    assert.match(JSON.stringify(metadata.openGraph), /"siteName":"Gradom\.me"/u);
     assert.match(JSON.stringify(metadata.openGraph), /"type":"website"/u);
     assert.match(JSON.stringify(metadata.twitter), /"card":"summary_large_image"/u);
     assert.notEqual(metadata.alternates?.canonical, "/");
@@ -48,7 +48,7 @@ test("keeps an event-detail fallback description page-specific", () => {
   const metadata = createPublicRouteMetadata({
     canonical: "/podgorica/dogadjaji/example-event",
     description: "Informacije o događaju Example event u Podgorici.",
-    title: "Example event | Gradom",
+    title: "Example event | Gradom.me",
   });
 
   assert.equal(metadata.description, "Informacije o događaju Example event u Podgorici.");
@@ -56,15 +56,15 @@ test("keeps an event-detail fallback description page-specific", () => {
   assert.equal(metadata.twitter?.description, metadata.description);
 });
 
-test("uses the default Gradom social image unless a route provides its own", () => {
+test("uses the default Gradom.me social image unless a route provides its own", () => {
   const defaultMetadata = createPublicRouteMetadata({
     canonical: "/podgorica/letovi",
-    title: "Letovi za Podgoricu | Gradom",
+    title: "Letovi za Podgoricu | Gradom.me",
   });
   const eventMetadata = createPublicRouteMetadata({
     canonical: "/podgorica/dogadjaji/example-event",
     imageUrl: "https://example.test/event.jpg",
-    title: "Example event | Gradom",
+    title: "Example event | Gradom.me",
   });
 
   assert.deepEqual(defaultMetadata.openGraph?.images, [

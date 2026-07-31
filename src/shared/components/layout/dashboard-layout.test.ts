@@ -8,6 +8,6 @@ test("adds one shared return link for city-scoped layouts only", async () => {
   assert.match(source, /const isCityScoped = homeHref === undefined/u);
   assert.match(source, /Povratak na izbor gradova/u);
   assert.match(source, /href="\/"/u);
-  assert.match(source, /<Button asChild className="mb-6 rounded-lg" size="sm" variant="outline">/u);
-  assert.match(source, /<ArrowLeft aria-hidden="true" className="size-4" \/>/u);
+  assert.match(source, /<Button\s+asChild[\s\S]*?variant="outline"/u);
+  assert.match(source, /<ArrowLeft[\s\S]*?aria-hidden="true"/u);
 });

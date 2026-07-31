@@ -43,7 +43,7 @@ test("the active city route uses its own canonical metadata", () => {
   assert.equal(cityContext?.city.id, "podgorica");
   assert.equal(
     getCityLandingTitle(rootContext),
-    "Podgorica — događaji, izlasci i informacije | Gradom",
+    "Podgorica — događaji, izlasci i informacije | Gradom.me",
   );
 
   const metadata = getCityLandingMetadata(rootContext);
@@ -59,7 +59,7 @@ test("uses capability-aware metadata and summary routes for a future city", () =
     city: { ...createCityContext("budva").city, isActive: true },
   };
 
-  assert.equal(getCityLandingTitle(budva), "Budva — lokalne informacije | Gradom");
+  assert.equal(getCityLandingTitle(budva), "Budva — lokalne informacije | Gradom.me");
   assert.match(getCityLandingMetadata(budva).description ?? "", /vremenu, izlascima/u);
   assert.deepEqual(getCityDashboardSummaryAvailability(budva.city), {
     cinema: false,
@@ -170,5 +170,10 @@ test("exposes only Budva's capability-supported feature routes", () => {
   assert.equal(isCityPublicFeatureRouteAvailable(budva, "electricity"), true);
   assert.equal(isCityPublicFeatureRouteAvailable(budva, "events"), false);
   assert.equal(isCityPublicFeatureRouteAvailable(budva, "flights"), false);
-  assert.deepEqual(getCitySitemapPaths(budva), ["/budva", "/budva/struja", "/budva/izlasci"]);
+  assert.deepEqual(getCitySitemapPaths(budva), [
+    "/budva",
+    "/budva/struja",
+    "/budva/izlasci",
+    "/budva/plaze",
+  ]);
 });

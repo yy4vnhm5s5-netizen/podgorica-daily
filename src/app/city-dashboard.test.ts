@@ -15,10 +15,10 @@ test("gates the Cineplexx cinema block behind isCityCinemaRouteAvailable, not th
     /className=\{cinemaAvailable \? "grid items-start gap-6 lg:grid-cols-2" : undefined\}/u,
   );
 
-  // The events section spans from the capabilities.events gate to the next sibling section, so
+  // The events section spans from the capabilities.events gate to the compact-modules section, so
   // this slice contains exactly HomepageEventsCard and the Cineplexx sub-block and nothing else.
   const eventsSectionStart = source.indexOf("{capabilities.events ? (");
-  const eventsSectionEnd = source.indexOf("<AdvertisingCard");
+  const eventsSectionEnd = source.indexOf("{compactModuleCount > 0 ? (");
   assert.ok(eventsSectionStart >= 0 && eventsSectionEnd > eventsSectionStart);
   const eventsSection = source.slice(eventsSectionStart, eventsSectionEnd);
 
@@ -94,4 +94,15 @@ test("keeps the Daily Summary as an unwrapped dashboard hero", async () => {
 
   assert.doesNotMatch(source, /<DashboardSection first>/u);
   assert.ok(dailySummaryIndex >= 0 && firstRegionIndex > dailySummaryIndex);
+});
+
+test("places the existing advertising banner directly after the Daily Summary", async () => {
+  const source = await readFile(new URL("./city-dashboard.tsx", import.meta.url), "utf8");
+  const dashboardMarkup = source.slice(source.indexOf("return ("));
+  const dailySummaryIndex = dashboardMarkup.indexOf("<DailySummaryBar");
+  const advertisingIndex = dashboardMarkup.indexOf("<AdvertisingCard");
+  const cityAlertsIndex = dashboardMarkup.indexOf("<CityAlertsSection");
+
+  assert.ok(dailySummaryIndex >= 0 && advertisingIndex > dailySummaryIndex);
+  assert.ok(cityAlertsIndex >= 0 && cityAlertsIndex > advertisingIndex);
 });

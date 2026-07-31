@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, type KeyboardEvent } from "react";
+import Link from "next/link";
+import { useEffect, useState, type KeyboardEvent, type MouseEvent } from "react";
 
 import { CityCard, CityIdentityIcon } from "@/app/platform-city-panel";
 import type { PlatformCityCardData } from "@/app/platform-homepage-data";
@@ -30,7 +31,15 @@ function PlatformCitySelector({ cards }: { cards: readonly PlatformCityCardData[
     document.getElementById(`platform-city-tab-${cityId}`)?.focus();
   }
 
-  function handleTabKeyDown(event: KeyboardEvent<HTMLButtonElement>, cityId: string) {
+  function handleTabClick(event: MouseEvent<HTMLAnchorElement>, cityId: string) {
+    // Normal clicks retain the existing in-place tab interaction. The city destinations still
+    // render as links on the server, and modifier clicks preserve standard link behaviour.
+    if (event.metaKey || event.altKey || event.ctrlKey || event.shiftKey) return;
+    event.preventDefault();
+    selectCity(cityId);
+  }
+
+  function handleTabKeyDown(event: KeyboardEvent<HTMLAnchorElement>, cityId: string) {
     const index = cityIds.indexOf(cityId);
     const nextId = cityIds[(index + 1) % cityIds.length];
     const previousId = cityIds[(index - 1 + cityIds.length) % cityIds.length];
@@ -64,7 +73,7 @@ function PlatformCitySelector({ cards }: { cards: readonly PlatformCityCardData[
             const isSelected = card.city.id === selectedCityId;
 
             return (
-              <button
+              <Link
                 aria-controls={platformCityPanelId}
                 aria-selected={isSelected}
                 className={cn(
@@ -75,15 +84,15 @@ function PlatformCitySelector({ cards }: { cards: readonly PlatformCityCardData[
                 )}
                 id={`platform-city-tab-${card.city.id}`}
                 key={card.city.id}
-                onClick={() => selectCity(card.city.id)}
+                href={card.href}
+                onClick={(event) => handleTabClick(event, card.city.id)}
                 onKeyDown={(event) => handleTabKeyDown(event, card.city.id)}
                 role="tab"
                 tabIndex={getRovingTabIndex(isSelected)}
-                type="button"
               >
                 <CityIdentityIcon cityId={card.city.id} size="sm" />
                 {card.city.name}
-              </button>
+              </Link>
             );
           })}
         </div>
