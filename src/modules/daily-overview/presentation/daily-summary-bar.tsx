@@ -118,45 +118,44 @@ function getDailySummaryItem({
   switch (itemId) {
     case "goingOut":
       return {
-        children: translations.performancesCount(performancesCount),
+        children: String(performancesCount),
         href: getGoingOutPath(city),
         icon: MicVocal,
         iconClassName: "bg-violet-100 text-violet-700",
-        label: translations.performancesLabel,
+        label: translations.performancesCount(performancesCount),
       };
     case "events":
       return {
-        children: translations.eventsCount(eventsCount),
+        children: String(eventsCount),
         href: getEventsPath(city),
         icon: CalendarDays,
         iconClassName: "bg-indigo-100 text-indigo-700",
-        label: translations.eventsLabel,
+        label: translations.eventsCount(eventsCount),
       };
     case "cinema":
       return {
-        children: translations.moviesCount(moviesCount),
+        children: String(moviesCount),
         href: getCinemaPath(city),
         icon: Clapperboard,
         iconClassName: "bg-blue-100 text-blue-700",
-        label: translations.moviesLabel,
+        label: translations.moviesCount(moviesCount),
       };
     case "seaWaterQuality":
       return {
         children:
-          seaWaterQualityLocationCount === undefined
-            ? "—"
-            : translations.seaWaterQualityCount(seaWaterQualityLocationCount),
+          seaWaterQualityLocationCount === undefined ? "—" : String(seaWaterQualityLocationCount),
         href: getSeaWaterQualityPath(city),
         icon: Waves,
         iconClassName: "bg-cyan-100 text-cyan-700",
-        label: translations.seaWaterQualityLabel,
+        label: translations.seaWaterQualityCount(seaWaterQualityLocationCount ?? 0),
       };
     case "weather":
+      // No label: the thermometer icon plus a self-explanatory "34°C" value is unambiguous on
+      // its own — a "temperatura"/"vrijeme" caption underneath would be pure restatement.
       return {
         children: temperatureCelsius === undefined ? "—" : `${temperatureCelsius.toFixed(0)}°C`,
         icon: Thermometer,
         iconClassName: "bg-amber-100 text-amber-700",
-        label: translations.temperature,
       };
   }
 }
@@ -166,7 +165,7 @@ interface SummaryItemProps {
   href?: string;
   icon: LucideIcon;
   iconClassName: string;
-  label: string;
+  label?: string;
 }
 
 function SummaryItem({ children, href, icon: Icon, iconClassName, label }: SummaryItemProps) {
@@ -185,11 +184,13 @@ function SummaryItem({ children, href, icon: Icon, iconClassName, label }: Summa
         >
           {children}
         </span>
-        <span
-          className={`block text-xs font-normal text-muted-foreground ${isInteractive ? "md:group-hover:text-foreground" : ""}`}
-        >
-          {label}
-        </span>
+        {label ? (
+          <span
+            className={`block text-xs font-normal text-muted-foreground ${isInteractive ? "md:group-hover:text-foreground" : ""}`}
+          >
+            {label}
+          </span>
+        ) : null}
       </span>
     </>
   );

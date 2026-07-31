@@ -171,7 +171,9 @@ function MetricTile({ highlight }: { highlight: CityHighlight }) {
         >
           {highlight.value}
         </span>
-        <span className="block text-xs font-normal text-muted-foreground">{highlight.label}</span>
+        {highlight.label ? (
+          <span className="block text-xs font-normal text-muted-foreground">{highlight.label}</span>
+        ) : null}
       </span>
     </>
   );

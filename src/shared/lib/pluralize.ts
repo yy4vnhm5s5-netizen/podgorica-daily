@@ -16,4 +16,17 @@ function formatBcsCount(count: number, singular: string, paucal: string, plural 
   return `${count} ${getBcsPluralForm(count, singular, paucal, plural)}`;
 }
 
-export { formatBcsCount, getBcsPluralForm };
+interface BcsNounForms {
+  few: string;
+  many: string;
+  one: string;
+}
+
+// Returns just the correctly-declined noun for a count — no digit attached — for UI that shows
+// the number and its label as two separate elements (e.g. a large value with a small caption
+// underneath) rather than one combined "count noun" phrase.
+function formatCountLabel(count: number, forms: BcsNounForms) {
+  return getBcsPluralForm(count, forms.one, forms.few, forms.many);
+}
+
+export { formatBcsCount, formatCountLabel, getBcsPluralForm };

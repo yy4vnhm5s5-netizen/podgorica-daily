@@ -158,10 +158,10 @@ test("uses the same available Going Out result as the city page and does not tur
       accessibilityLabel: "1 izlazak u Budva",
       href: "/budva/izlasci",
       key: "going-out",
-      label: "Izlasci",
+      label: "izlazak",
       priority: 3,
       state: "available",
-      value: "1 izlazak",
+      value: "1",
       visual: "music",
     },
   );
@@ -234,8 +234,10 @@ test("derives Podgorica event and movie totals from the same displayable read mo
     weather: null,
   });
 
-  assert.equal(card.highlights.find(({ key }) => key === "events")?.value, "1 događaj");
-  assert.equal(card.highlights.find(({ key }) => key === "movies")?.value, "2 filma");
+  assert.equal(card.highlights.find(({ key }) => key === "events")?.value, "1");
+  assert.equal(card.highlights.find(({ key }) => key === "events")?.label, "događaj");
+  assert.equal(card.highlights.find(({ key }) => key === "movies")?.value, "2");
+  assert.equal(card.highlights.find(({ key }) => key === "movies")?.label, "filma");
 });
 
 // Regression test for the reported /podgorica-vs-/podgorica/filmovi mismatch: the homepage
@@ -288,7 +290,8 @@ test("counts many screenings of the same movies across several days as their uni
   });
 
   assert.equal(cinemaEvents.length, 6);
-  assert.equal(card.highlights.find(({ key }) => key === "movies")?.value, "2 filma");
+  assert.equal(card.highlights.find(({ key }) => key === "movies")?.value, "2");
+  assert.equal(card.highlights.find(({ key }) => key === "movies")?.label, "filma");
 });
 
 test("shows Tivat's own beach count in the sea water quality highlight, not Budva's", () => {
@@ -322,10 +325,10 @@ test("shows Tivat's own beach count in the sea water quality highlight, not Budv
     accessibilityLabel: "10 kupališta u Tivat",
     href: "/tivat/plaze",
     key: "sea-water-quality",
-    label: "Plaže",
+    label: "kupališta",
     priority: 5,
     state: "available",
-    value: "10 kupališta",
+    value: "10",
     visual: "waves",
   });
 });
@@ -389,7 +392,8 @@ test("never shows a movies highlight for Tivat, even if Cineplexx-shaped events 
   });
 
   assert.equal(card.highlights.some((highlight) => highlight.key === "movies"), false);
-  assert.equal(card.highlights.find(({ key }) => key === "events")?.value, "1 događaj");
+  assert.equal(card.highlights.find(({ key }) => key === "events")?.value, "1");
+  assert.equal(card.highlights.find(({ key }) => key === "events")?.label, "događaj");
 });
 
 test("uses Montenegrin count forms for platform summaries", () => {

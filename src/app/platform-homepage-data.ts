@@ -15,7 +15,7 @@ import {
   getActiveCities,
   getCityName,
 } from "@/shared/config/cities";
-import { formatBcsCount } from "@/shared/lib/pluralize";
+import { formatBcsCount, formatCountLabel } from "@/shared/lib/pluralize";
 import {
   getCityPath,
   getElectricityPath,
@@ -33,7 +33,9 @@ interface CityHighlight {
   accessibilityLabel: string;
   href?: string;
   key: string;
-  label: string;
+  /** Omit for a metric whose icon + value are already self-explanatory (e.g. weather: a
+   * thermometer icon next to "34°C" doesn't need a "temperatura" caption underneath). */
+  label?: string;
   priority: number;
   state: "available" | "unavailable";
   value: string;
@@ -94,7 +96,6 @@ function createPlatformCityCardData(
       accessibilityLabel:
         temperature === undefined ? "Vrijeme nije dostupno" : `Temperatura ${temperature} stepeni`,
       key: "weather",
-      label: "Vrijeme",
       priority: 1,
       state: "available",
       value: temperature === undefined ? "Nije dostupno" : `${Math.round(temperature)} °C`,
@@ -117,9 +118,9 @@ function createPlatformCityCardData(
         city,
         href: getEventsPath(city),
         key: "events",
-        label: "Događaji",
+        label: formatCountLabel(events.length, { few: "događaja", many: "događaja", one: "događaj" }),
         priority: 2,
-        value: formatCount(events.length, "događaj", "događaja"),
+        value: String(events.length),
         visual: "calendar",
       }),
     );
@@ -137,9 +138,9 @@ function createPlatformCityCardData(
         city,
         href: getGoingOutPath(city),
         key: "going-out",
-        label: "Izlasci",
+        label: formatCountLabel(events.length, { few: "izlaska", many: "izlazaka", one: "izlazak" }),
         priority: 3,
-        value: formatCount(events.length, "izlazak", "izlaska", "izlazaka"),
+        value: String(events.length),
         visual: "music",
       }),
     );
@@ -155,9 +156,13 @@ function createPlatformCityCardData(
         city,
         href: getSeaWaterQualityPath(city),
         key: "sea-water-quality",
-        label: "Plaže",
+        label: formatCountLabel(totalLocations, {
+          few: "kupališta",
+          many: "kupališta",
+          one: "kupalište",
+        }),
         priority: 5,
-        value: formatCount(totalLocations, "kupalište", "kupališta"),
+        value: String(totalLocations),
         visual: "waves",
       }),
     );
@@ -183,9 +188,9 @@ function createPlatformCityCardData(
         city,
         href: getEventsPath(city),
         key: "movies",
-        label: "Filmovi",
+        label: formatCountLabel(count, { few: "filma", many: "filmova", one: "film" }),
         priority: 4,
-        value: formatCount(count, "film", "filma", "filmova"),
+        value: String(count),
         visual: "film",
       }),
     );
@@ -235,7 +240,11 @@ function createCountHighlight({
   visual: CityHighlightVisual;
 }): CityHighlight {
   return {
-    accessibilityLabel: available ? `${value} u ${city.name}` : `${label}: podaci nijesu dostupni`,
+    // `value` and `label` are the split "34 / temperatura" (or "3 / događaja") pair rendered as
+    // two separate elements — reconstruct the natural "3 događaja" phrase here for screen readers.
+    accessibilityLabel: available
+      ? `${value} ${label} u ${city.name}`
+      : `${label}: podaci nijesu dostupni`,
     href,
     key,
     label,
