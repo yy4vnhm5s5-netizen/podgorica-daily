@@ -90,7 +90,7 @@ function CityAlertsSectionLoading({ context, locale }: CityAlertsSectionProps) {
         id="city-alerts-heading"
         title={translations.cityServices}
       />
-      <Card className="border-border bg-background shadow-none">
+      <Card className="border-border bg-background shadow-none lg:max-w-2xl">
         <CardContent className="p-4">
           <LoadingSkeleton label={translations.loading} lines={4} />
         </CardContent>

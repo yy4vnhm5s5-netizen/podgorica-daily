@@ -14,7 +14,10 @@
 // both the platform homepage and the contact page — do not fork or duplicate it; import this
 // component wherever the same atmosphere is needed instead.
 function PlatformAtmosphere() {
-  const maskImage = "linear-gradient(to bottom, black 0%, black 55%, transparent 88%)";
+  // Reduced ~25% from its original weight (opacity multiplier below, plus an earlier/softer mask
+  // fade) so the atmosphere reads as ambient background rather than competing with content —
+  // same shapes/positions/colors, just quieter.
+  const maskImage = "linear-gradient(to bottom, black 0%, black 45%, transparent 80%)";
 
   const landscape = [
     "radial-gradient(85% 70% at 6% 4%, hsl(196 78% 78% / 0.55) 0%, hsl(196 78% 78% / 0.55) 32%, transparent 78%)",
@@ -32,7 +35,7 @@ function PlatformAtmosphere() {
       className="pointer-events-none absolute -top-24 left-1/2 h-[46rem] w-screen -translate-x-1/2 overflow-hidden sm:h-[40rem]"
       style={{ WebkitMaskImage: maskImage, maskImage }}
     >
-      <div className="absolute inset-0 opacity-100 sm:opacity-80 lg:opacity-65">
+      <div className="absolute inset-0 opacity-75 sm:opacity-60 lg:opacity-50">
         <div className="absolute inset-0" style={{ backgroundImage: landscape }} />
         <div className="absolute inset-0" style={{ backgroundImage: wash }} />
       </div>

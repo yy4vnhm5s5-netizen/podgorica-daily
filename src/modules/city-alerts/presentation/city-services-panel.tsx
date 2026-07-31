@@ -105,7 +105,7 @@ function CityServicesPanel({ locale, serviceIds, services, translations }: CityS
   }
 
   return (
-    <Card className="border-border bg-background shadow-none">
+    <Card className="border-border bg-background shadow-none lg:max-w-2xl">
       <div
         aria-label={translations.label}
         className="flex gap-1 border-b border-slate-200/80 p-2"

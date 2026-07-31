@@ -181,14 +181,14 @@ function SummaryItem({ children, href, icon: Icon, iconClassName, label }: Summa
       </span>
       <span className="min-w-0">
         <span
-          className={`block text-xs text-muted-foreground ${isInteractive ? "md:group-hover:text-foreground" : ""}`}
-        >
-          {label}
-        </span>
-        <span
-          className={`mt-0.5 block text-sm font-semibold text-foreground ${isInteractive ? "md:group-hover:text-brand-foreground" : ""}`}
+          className={`block text-base font-bold leading-tight text-foreground sm:text-lg ${isInteractive ? "md:group-hover:text-brand-foreground" : ""}`}
         >
           {children}
+        </span>
+        <span
+          className={`block text-[11px] text-muted-foreground ${isInteractive ? "md:group-hover:text-foreground" : ""}`}
+        >
+          {label}
         </span>
       </span>
     </>

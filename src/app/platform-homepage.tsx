@@ -28,7 +28,7 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
   const cityNames = formatCityNames(cards);
 
   return (
-    <div className="relative space-y-8 sm:space-y-10">
+    <div className="relative">
       <PlatformAtmosphere />
       <script
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
@@ -42,10 +42,10 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
           percentage tying every icon to every section's combined height. */}
       <section aria-labelledby="platform-homepage-title" className="relative">
         <SectionIconBleed icons={platformHeroSectionIcons} />
-        <div className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-r from-white via-orange-50/30 to-sky-100/40 px-6 py-5 shadow-sm shadow-slate-950/[0.04] sm:px-8 sm:py-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+        <div className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-r from-white via-orange-50/30 to-sky-100/40 px-5 py-4 shadow-sm shadow-slate-950/[0.04] sm:px-6 sm:py-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
             <PlatformMark />
-            <div className="max-w-2xl space-y-2 sm:border-l sm:border-border/60 sm:pl-6">
+            <div className="max-w-2xl space-y-1.5 sm:border-l sm:border-border/60 sm:pl-6">
               <h1
                 className="font-display text-2xl font-semibold leading-snug tracking-normal text-slate-950 sm:text-3xl"
                 id="platform-homepage-title"
@@ -60,7 +60,9 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
         </div>
       </section>
 
-      <section aria-labelledby="cities-heading" className="relative space-y-3">
+      {/* Tighter gap here than after this section: the city selector is the page's main event and
+          should follow the hero closely, not after the same beat every other section gets. */}
+      <section aria-labelledby="cities-heading" className="relative mt-6 space-y-3 sm:mt-8">
         <SectionIconBleed icons={platformCitiesSectionIcons} />
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div className="space-y-1.5">
@@ -79,9 +81,11 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
         <PlatformCitySelector cards={cards} />
       </section>
 
-      <section aria-labelledby="how-it-works-heading" className="relative">
+      {/* More generous gap before this section: it closes out the "decide which city" zone above
+          and opens the page's lighter, less time-sensitive supporting content. */}
+      <section aria-labelledby="how-it-works-heading" className="relative mt-10 sm:mt-12">
         <SectionIconBleed icons={platformHowItWorksSectionIcons} />
-        <div className="rounded-xl border border-border bg-background px-5 py-4 sm:px-6 sm:py-5">
+        <div className="rounded-xl border border-border bg-background px-5 py-3.5 sm:px-6 sm:py-4">
           <p className="text-xs font-medium uppercase tracking-wide text-primary">
             Lokalno, po gradu
           </p>
@@ -98,7 +102,9 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
         </div>
       </section>
 
-      <section aria-labelledby="faq-heading" className="relative space-y-3">
+      {/* Tighter gap here — how-it-works and FAQ are both lighter, closely related supporting
+          content, so they share one rhythm beat instead of each getting the full section gap. */}
+      <section aria-labelledby="faq-heading" className="relative mt-6 space-y-3 sm:mt-8">
         <SectionIconBleed icons={platformFaqSectionIcons} />
         <div className="space-y-1">
           <p className="text-xs font-medium uppercase tracking-wide text-primary">Česta pitanja</p>

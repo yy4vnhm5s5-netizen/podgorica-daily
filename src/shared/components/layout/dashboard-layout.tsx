@@ -72,7 +72,10 @@ function PageContourMotif() {
 // unrelated to, the shared PlatformAtmosphere used by the homepage/contact page — no code or
 // values shared.
 function CityAtmosphere() {
-  const maskImage = "linear-gradient(to bottom, black 0%, black 50%, transparent 85%)";
+  // Reduced ~25% from its original weight (opacity multiplier below, plus an earlier/softer mask
+  // fade), matching the same reduction applied to PlatformAtmosphere — same shapes/positions/
+  // colors, just quieter, so it reads as ambient rather than competing with page content.
+  const maskImage = "linear-gradient(to bottom, black 0%, black 40%, transparent 78%)";
 
   // Background plane: broad, soft, lower-saturation — sets the bright reading area and the airy
   // sky behind the foreground hills. The main glow is offset left-of-center (44%, not 50%) and
@@ -104,8 +107,8 @@ function CityAtmosphere() {
       className="pointer-events-none absolute inset-x-0 top-0 h-[46rem] overflow-hidden sm:h-[40rem]"
       style={{ WebkitMaskImage: maskImage, maskImage }}
     >
-      <div className="absolute inset-0" style={{ backgroundImage: sky }} />
-      <div className="absolute inset-0" style={{ backgroundImage: hills }} />
+      <div className="absolute inset-0 opacity-75" style={{ backgroundImage: sky }} />
+      <div className="absolute inset-0 opacity-75" style={{ backgroundImage: hills }} />
     </div>
   );
 }

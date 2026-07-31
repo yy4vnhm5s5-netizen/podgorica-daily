@@ -162,22 +162,22 @@ function MetricTile({ highlight }: { highlight: CityHighlight }) {
         className={`size-4 shrink-0 ${highlightIconTints[highlight.visual]}`}
       />
       <span className="min-w-0">
-        <span className="block text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-          {highlight.label}
-        </span>
         <span
           className={
             highlight.state === "unavailable"
-              ? "block text-xs font-medium leading-4 text-muted-foreground"
-              : "block truncate text-sm font-bold leading-5 text-foreground"
+              ? "block text-sm font-semibold leading-5 text-muted-foreground"
+              : "block truncate text-lg font-bold leading-tight text-foreground sm:text-xl"
           }
         >
           {highlight.value}
         </span>
+        <span className="block text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          {highlight.label}
+        </span>
       </span>
     </>
   );
-  const rowClassName = "flex min-h-[3.25rem] min-w-0 items-center gap-2 px-3 py-2";
+  const rowClassName = "flex min-h-[3.75rem] min-w-0 items-center gap-2 px-3 py-2.5";
 
   return highlight.href ? (
     <Link

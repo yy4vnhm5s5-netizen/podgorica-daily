@@ -72,37 +72,46 @@ async function CityDashboard({ context }: CityDashboardProps) {
         cityId={city.id}
       />
       <section className="space-y-10 sm:space-y-12" id="dashboard">
-        <DailySummaryBar
-          availability={summaryAvailability}
-          city={city}
-          eventsCount={homepageCityEvents.length}
-          locale={locale}
-          moviesCount={displayableCinemaMovieCount}
-          performancesCount={goingOutCount}
-          seaWaterQualityLocationCount={seaWaterQuality?.summary?.totalLocations}
-          weather={weather}
-        />
-        {isFeatureEnabled("cityAlerts") && capabilities.cityAlerts ? (
-          <Suspense fallback={<CityAlertsSectionLoading context={context} locale={locale} />}>
-            <CityAlertsSection context={context} locale={locale} />
-          </Suspense>
-        ) : null}
-        {seaWaterQuality ? (
-          <SeaWaterQualityCard
+        {/* "Today" anchor: the summary bar and Gradske usluge are the two things that most
+            directly answer "what's important today," so they share one tighter internal gap
+            instead of each taking the same full section beat as the teaser modules below. */}
+        <div className="space-y-6">
+          <DailySummaryBar
+            availability={summaryAvailability}
             city={city}
-            lastSuccessfulRefreshAt={seaWaterQuality.lastSuccessfulRefreshAt}
+            eventsCount={homepageCityEvents.length}
             locale={locale}
-            state={seaWaterQuality.state}
-            summary={seaWaterQuality.summary}
+            moviesCount={displayableCinemaMovieCount}
+            performancesCount={goingOutCount}
+            seaWaterQualityLocationCount={seaWaterQuality?.summary?.totalLocations}
+            weather={weather}
           />
-        ) : null}
-        {goingOut ? (
-          <GoingOutSection
-            city={city}
-            events={goingOut.events}
-            locale={locale}
-            state={goingOut.state}
-          />
+          {isFeatureEnabled("cityAlerts") && capabilities.cityAlerts ? (
+            <Suspense fallback={<CityAlertsSectionLoading context={context} locale={locale} />}>
+              <CityAlertsSection context={context} locale={locale} />
+            </Suspense>
+          ) : null}
+        </div>
+        {seaWaterQuality || goingOut ? (
+          <div className="grid items-start gap-6 lg:grid-cols-2">
+            {seaWaterQuality ? (
+              <SeaWaterQualityCard
+                city={city}
+                lastSuccessfulRefreshAt={seaWaterQuality.lastSuccessfulRefreshAt}
+                locale={locale}
+                state={seaWaterQuality.state}
+                summary={seaWaterQuality.summary}
+              />
+            ) : null}
+            {goingOut ? (
+              <GoingOutSection
+                city={city}
+                events={goingOut.events}
+                locale={locale}
+                state={goingOut.state}
+              />
+            ) : null}
+          </div>
         ) : null}
         {capabilities.events ? (
           <div className={cinemaAvailable ? "grid items-start gap-6 lg:grid-cols-2" : undefined}>
