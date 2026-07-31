@@ -5,6 +5,7 @@ import { useEffect, useState, type KeyboardEvent } from "react";
 import { CityCard, CityIdentityIcon } from "@/app/platform-city-panel";
 import type { PlatformCityCardData } from "@/app/platform-homepage-data";
 import { getStoredActiveCityId, lastCityStorageKey } from "@/app/platform-last-city-state";
+import { CitySignature } from "@/shared/components/city-signature";
 import { getRovingTabIndex } from "@/shared/lib/roving-tab-index";
 import { cn } from "@/shared/lib/utils";
 
@@ -54,7 +55,15 @@ function PlatformCitySelector({ cards }: { cards: readonly PlatformCityCardData[
   }
 
   return (
-    <div className="space-y-4">
+    <div className="relative space-y-4">
+      {/* City "signature" — a single, very faint landmark for whichever city is currently
+          selected in this tab panel (the only place on the homepage where "the selected city"
+          is actually known and reactive; the hero above is city-agnostic and stays untouched).
+          Same full-viewport-width breakout used elsewhere on this page, so it bleeds toward the
+          real page edge rather than being boxed in by this component's own padded column. */}
+      <div className="pointer-events-none absolute inset-y-0 left-1/2 w-screen -translate-x-1/2 overflow-hidden">
+        <CitySignature cityId={activeCard.city.id} className="-right-20 top-0 h-[220px] w-[440px]" />
+      </div>
       <nav aria-label="Izaberite grad" className="-mx-1 overflow-x-auto px-1 pb-1">
         <div
           className="flex min-w-max gap-1 rounded-xl border border-border/70 bg-muted/50 p-1"
