@@ -26,7 +26,10 @@ import { getEmergencyNumbers } from "@/shared/components/dashboard/emergency-num
 import { EmergencyNumbersStrip } from "@/shared/components/dashboard/emergency-numbers-strip";
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
 import { loadCityDashboardData } from "@/app/city-dashboard-data";
-import { getCityDashboardSummaryAvailability, isCityCinemaRouteAvailable } from "@/app/city-routing";
+import {
+  getCityDashboardSummaryAvailability,
+  isCityCinemaRouteAvailable,
+} from "@/app/city-routing";
 import { LastCityTracker } from "@/app/platform-last-city";
 import { isFeatureEnabled } from "@/shared/config/features";
 import { getActiveCities } from "@/shared/config/cities";
@@ -64,6 +67,8 @@ async function CityDashboard({ context }: CityDashboardProps) {
   }).length;
   const summaryAvailability = getCityDashboardSummaryAvailability(city);
   const cinemaAvailable = isCityCinemaRouteAvailable(city);
+  const railwayCard = isFeatureEnabled("busStation") && railway;
+  const compactModuleCount = [seaWaterQuality, flights, railwayCard].filter(Boolean).length;
 
   return (
     <DashboardLayout city={city} translations={translations}>
@@ -92,26 +97,13 @@ async function CityDashboard({ context }: CityDashboardProps) {
             </Suspense>
           ) : null}
         </div>
-        {seaWaterQuality || goingOut ? (
-          <div className="grid items-start gap-6 lg:grid-cols-2">
-            {seaWaterQuality ? (
-              <SeaWaterQualityCard
-                city={city}
-                lastSuccessfulRefreshAt={seaWaterQuality.lastSuccessfulRefreshAt}
-                locale={locale}
-                state={seaWaterQuality.state}
-                summary={seaWaterQuality.summary}
-              />
-            ) : null}
-            {goingOut ? (
-              <GoingOutSection
-                city={city}
-                events={goingOut.events}
-                locale={locale}
-                state={goingOut.state}
-              />
-            ) : null}
-          </div>
+        {goingOut ? (
+          <GoingOutSection
+            city={city}
+            events={goingOut.events}
+            locale={locale}
+            state={goingOut.state}
+          />
         ) : null}
         {capabilities.events ? (
           <div className={cinemaAvailable ? "grid items-start gap-6 lg:grid-cols-2" : undefined}>
@@ -143,8 +135,19 @@ async function CityDashboard({ context }: CityDashboardProps) {
           subtitle={advertising.subtitle}
           title={advertising.title}
         />
-        {flights || (isFeatureEnabled("busStation") && railway) ? (
-          <div className="grid items-start gap-6 lg:grid-cols-2">
+        {compactModuleCount > 0 ? (
+          <div
+            className={compactModuleCount > 1 ? "grid items-start gap-6 lg:grid-cols-2" : undefined}
+          >
+            {seaWaterQuality ? (
+              <SeaWaterQualityCard
+                city={city}
+                lastSuccessfulRefreshAt={seaWaterQuality.lastSuccessfulRefreshAt}
+                locale={locale}
+                state={seaWaterQuality.state}
+                summary={seaWaterQuality.summary}
+              />
+            ) : null}
             {flights ? (
               <AirportFlightsCard
                 city={city}
@@ -154,11 +157,11 @@ async function CityDashboard({ context }: CityDashboardProps) {
                 state={flights.state}
               />
             ) : null}
-            {isFeatureEnabled("busStation") && railway ? (
+            {railwayCard ? (
               <RailwayStationCard
-                departures={railway.departures}
+                departures={railwayCard.departures}
                 locale={locale}
-                state={railway.state}
+                state={railwayCard.state}
               />
             ) : null}
           </div>

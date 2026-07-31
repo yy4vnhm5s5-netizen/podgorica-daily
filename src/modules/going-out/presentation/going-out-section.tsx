@@ -50,7 +50,7 @@ function GoingOutSection({ city, events, locale, state }: GoingOutSectionProps) 
         </CardHeader>
         <CardContent className="p-4 pt-0 sm:p-5 sm:pt-0">
           {displayState === "events" || displayState === "stale" ? (
-            <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {upcoming.map((event, index) => (
                 <GoingOutCard
                   className={getResponsiveCardVisibilityClass(index)}
@@ -93,7 +93,7 @@ function GoingOutCard({
   return (
     <li className={cn("min-w-0", className)}>
       <a
-        className="group flex min-h-full flex-col overflow-hidden rounded-xl border border-violet-200/60 bg-background/80 transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-violet-300 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-600 dark:border-violet-800/55 dark:bg-background/70 dark:hover:border-violet-700 lg:flex-row"
+        className="group flex min-h-full flex-col overflow-hidden rounded-xl border border-violet-200/60 bg-background/80 transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-violet-300 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-600 dark:border-violet-800/55 dark:bg-background/70 dark:hover:border-violet-700 sm:flex-row"
         href={event.sourceUrl}
         rel="noreferrer"
         target="_blank"
@@ -101,19 +101,19 @@ function GoingOutCard({
         {event.imageUrl ? (
           <Image
             alt=""
-            className="aspect-[16/9] w-full shrink-0 object-cover lg:aspect-auto lg:h-full lg:w-24"
+            className="aspect-[16/9] w-full shrink-0 object-cover sm:aspect-auto sm:w-40 sm:self-stretch"
             height={180}
             src={event.imageUrl}
             unoptimized
             width={320}
           />
         ) : (
-          <div className="flex aspect-[16/9] w-full shrink-0 items-center justify-center bg-violet-100/65 text-violet-700 dark:bg-violet-900/35 dark:text-violet-300 lg:aspect-auto lg:h-full lg:w-24">
+          <div className="flex aspect-[16/9] w-full shrink-0 items-center justify-center bg-violet-100/65 text-violet-700 dark:bg-violet-900/35 dark:text-violet-300 sm:aspect-auto sm:w-40 sm:self-stretch">
             <CalendarDays aria-hidden="true" className="size-7" strokeWidth={1.5} />
           </div>
         )}
-        <div className="min-w-0 p-3.5 lg:flex-1">
-          <h3 className="line-clamp-2 text-sm font-semibold leading-5 group-hover:text-violet-800 dark:group-hover:text-violet-200">
+        <div className="min-w-0 p-3.5 sm:flex sm:flex-1 sm:flex-col sm:justify-center">
+          <h3 className="line-clamp-2 text-sm font-semibold leading-5 group-hover:text-violet-800 dark:group-hover:text-violet-200 sm:line-clamp-none">
             {event.title}
           </h3>
           <p className="mt-2 text-xs leading-5 text-muted-foreground">

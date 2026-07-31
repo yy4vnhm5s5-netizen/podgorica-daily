@@ -7,12 +7,12 @@ test("gates the Cineplexx cinema block behind isCityCinemaRouteAvailable, not th
 
   assert.match(
     source,
-    /import \{ getCityDashboardSummaryAvailability, isCityCinemaRouteAvailable \} from "@\/app\/city-routing";/u,
+    /import \{\s*getCityDashboardSummaryAvailability,\s*isCityCinemaRouteAvailable,\s*\} from "@\/app\/city-routing";/u,
   );
   assert.match(source, /const cinemaAvailable = isCityCinemaRouteAvailable\(city\);/u);
   assert.match(
     source,
-    /className=\{cinemaAvailable \? "grid items-start gap-5 lg:grid-cols-2" : undefined\}/u,
+    /className=\{cinemaAvailable \? "grid items-start gap-6 lg:grid-cols-2" : undefined\}/u,
   );
 
   // The events section spans from the capabilities.events gate to the next sibling section, so
@@ -51,4 +51,25 @@ test("derives the dashboard's movie count from the canonical selector, not the c
     /const displayableCinemaMovieCount = selectMoviesWithUpcomingScreenings\(cinemaEvents, \{\s*now,\s*\}\)\.length;/u,
   );
   assert.match(source, /<CineplexxProgrammeCard[\s\S]*?limit=\{3\}/u);
+});
+
+test("gives the content-heavy Going Out section its own dashboard row while compact cards share rows", async () => {
+  const source = await readFile(new URL("./city-dashboard.tsx", import.meta.url), "utf8");
+
+  const cityAlertsIndex = source.indexOf("<CityAlertsSection");
+  const goingOutIndex = source.indexOf("<GoingOutSection");
+  const compactModulesIndex = source.indexOf("{compactModuleCount > 0 ? (");
+
+  assert.ok(cityAlertsIndex >= 0 && goingOutIndex > cityAlertsIndex);
+  assert.ok(compactModulesIndex > goingOutIndex);
+  assert.match(
+    source,
+    /className=\{compactModuleCount > 1 \? "grid items-start gap-6 lg:grid-cols-2" : undefined\}/u,
+  );
+
+  const goingOutRow = source.slice(
+    goingOutIndex,
+    source.indexOf("{capabilities.events ? (", goingOutIndex),
+  );
+  assert.doesNotMatch(goingOutRow, /SeaWaterQualityCard/u);
 });
