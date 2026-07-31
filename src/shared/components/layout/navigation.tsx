@@ -25,14 +25,25 @@ function Navigation({
   translations,
 }: NavigationProps) {
   const pathname = usePathname();
+  // Each item carries its own permanent icon tint (not tied to active/hover state) so the nav
+  // reads as a small set of distinct destinations rather than one monochrome row — restrained on
+  // purpose: color lives only on the icon glyph, never as a background fill or on the label text.
   const navigationItems = [
     {
       href: homeHref,
       icon: House,
+      iconClassName: "text-brand",
       label: translations.shell.navigation.dashboard,
     },
     ...(isFeatureEnabled("contact")
-      ? [{ href: getContactPath(), icon: Mail, label: translations.shell.navigation.contact }]
+      ? [
+          {
+            href: getContactPath(),
+            icon: Mail,
+            iconClassName: "text-sky-600",
+            label: translations.shell.navigation.contact,
+          },
+        ]
       : []),
   ];
 
@@ -44,8 +55,8 @@ function Navigation({
           : translations.shell.primaryNavigationLabel
       }
     >
-      <ul className={cn(mobile ? "grid grid-cols-2 gap-2" : "flex items-center gap-1")}>
-        {navigationItems.map(({ href, icon: Icon, label }) => {
+      <ul className={cn(mobile ? "grid grid-cols-2 gap-2" : "flex items-center gap-1.5")}>
+        {navigationItems.map(({ href, icon: Icon, iconClassName, label }) => {
           const isCurrent = isNavigationItemCurrent(pathname, href);
 
           return (
@@ -53,7 +64,7 @@ function Navigation({
               <Link
                 aria-current={isCurrent ? "page" : undefined}
                 className={cn(
-                  "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                  "flex items-center gap-2.5 rounded-lg px-3.5 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
                   isCurrent
                     ? "bg-brand-soft text-foreground dark:bg-brand/15"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground",
@@ -61,7 +72,7 @@ function Navigation({
                 )}
                 href={href}
               >
-                <Icon aria-hidden="true" className="size-4" />
+                <Icon aria-hidden="true" className={cn("size-4", iconClassName)} />
                 {label}
               </Link>
             </li>

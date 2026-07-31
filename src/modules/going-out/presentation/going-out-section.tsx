@@ -58,7 +58,7 @@ function GoingOutSection({ city, events, locale, state }: GoingOutSectionProps) 
               ))}
             </ul>
           ) : (
-            <InCardEmptyNote>
+            <InCardEmptyNote icon={Music2}>
               {displayState === "unavailable" ? copy.unavailable : copy.empty}
             </InCardEmptyNote>
           )}

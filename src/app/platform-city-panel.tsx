@@ -44,8 +44,17 @@ const shortcutIcons = {
   "sea-water-quality": Waves,
 } as const;
 
-// One neutral pill style for every shortcut, regardless of capability — consistent with the
-// rest of the product's single-accent philosophy instead of a different color per feature.
+// The icon glyph carries a small semantic tint per capability (matching the same colors used on
+// the capability's own dashboard card), while the pill itself stays one neutral shape/background
+// — color as a small identity cue on the icon, not as a set of differently-colored backgrounds.
+const shortcutIconTints = {
+  electricity: "text-amber-600",
+  events: "text-indigo-600",
+  flights: "text-sky-600",
+  "going-out": "text-violet-600",
+  "sea-water-quality": "text-cyan-600",
+} as const;
+
 const shortcutStyle = "bg-muted text-foreground hover:bg-muted/70";
 
 // Dedicated city identity marks (see platform-city-icons.tsx), per city id. Supports more
@@ -191,14 +200,15 @@ function MetricTile({ highlight }: { highlight: CityHighlight }) {
 }
 
 function CityShortcut({ shortcut }: { shortcut: PlatformCityCardData["shortcuts"][number] }) {
-  const Icon = shortcutIcons[shortcut.key as keyof typeof shortcutIcons];
+  const key = shortcut.key as keyof typeof shortcutIcons;
+  const Icon = shortcutIcons[key];
 
   return (
     <Link
       className={`pointer-events-auto inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors focus-visible:relative focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${shortcutStyle}`}
       href={shortcut.href}
     >
-      <Icon aria-hidden="true" className="size-3.5" />
+      <Icon aria-hidden="true" className={`size-3.5 ${shortcutIconTints[key]}`} />
       {shortcut.label}
     </Link>
   );

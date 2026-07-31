@@ -17,6 +17,7 @@ import {
 } from "@/modules/daily-overview/presentation/daily-summary-items";
 import type { CurrentWeatherResult } from "@/modules/weather/application/get-current-weather";
 import { getWeatherTemperature } from "@/modules/weather/presentation/weather-temperature";
+import { SectionTitle } from "@/shared/components/section-title";
 import { Card } from "@/shared/components/ui/card";
 import type { Locale } from "@/shared/config/locale";
 import {
@@ -59,12 +60,14 @@ function DailySummaryBar({
 
   return (
     <section aria-labelledby="daily-summary-heading">
-      <h1
-        className="mb-2 text-sm font-semibold tracking-tight text-foreground sm:text-base"
+      <SectionTitle
+        as="h1"
+        className="mb-4"
+        icon={CalendarDays}
+        iconClassName="bg-brand/10 text-brand-foreground"
         id="daily-summary-heading"
-      >
-        {translations.summaryLabel}
-      </h1>
+        title={translations.summaryLabel}
+      />
       <Card className="card-fog card-fog--summary border-blue-200/90 bg-blue-50/60 px-3 py-2 sm:px-4">
         <span aria-hidden="true" className="absolute inset-x-0 top-0 h-px bg-blue-300/80" />
         <div className={gridClassName}>

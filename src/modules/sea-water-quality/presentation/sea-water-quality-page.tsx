@@ -1,3 +1,5 @@
+import { Waves } from "lucide-react";
+
 import type { BudvaSeaWaterQualityCacheResult } from "../application/get-budva-sea-water-quality";
 import { gradeLabels, gradeOrder, gradeStyles } from "./sea-water-quality-grade-styles";
 import { ErrorState } from "@/shared/components/error-state";
@@ -130,7 +132,7 @@ function BeachTable({
 }) {
   if (summary.locations.length === 0) {
     return (
-      <InCardEmptyNote>
+      <InCardEmptyNote icon={Waves}>
         Pojedinačni rezultati po kupalištima trenutno nijesu dostupni.
       </InCardEmptyNote>
     );

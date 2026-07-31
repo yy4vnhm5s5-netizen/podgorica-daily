@@ -30,7 +30,7 @@ function RailwayStationCard({ departures, locale, state }: RailwayStationCardPro
   return (
     <Card className="card-fog card-fog--neutral border-primary/15 bg-slate-50/65 transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-[0_12px_24px_-20px_rgb(15_23_42_/_0.32)]">
       <CardHeader className="flex-row items-center gap-3 space-y-0 p-4 sm:p-5">
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-slate-500/12 text-slate-600 dark:bg-slate-400/15 dark:text-slate-300">
           <TrainFront aria-hidden="true" className="size-[1.125rem]" strokeWidth={1.8} />
         </div>
         <div>
@@ -50,7 +50,7 @@ function RailwayStationCard({ departures, locale, state }: RailwayStationCardPro
             ))}
           </ul>
         ) : (
-          <InCardEmptyNote>
+          <InCardEmptyNote icon={TrainFront}>
             {displayState === "unavailable" ? copy.unavailable : copy.empty}
           </InCardEmptyNote>
         )}

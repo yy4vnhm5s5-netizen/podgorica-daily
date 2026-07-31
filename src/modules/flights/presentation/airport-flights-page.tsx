@@ -107,7 +107,7 @@ function FlightGroup({
   return (
     <section aria-labelledby={id} className="space-y-3">
       <div className="flex items-center gap-2">
-        <Icon aria-hidden="true" className="size-4 text-primary" strokeWidth={1.8} />
+        <Icon aria-hidden="true" className="size-4 text-sky-600" strokeWidth={1.8} />
         <h2 className="text-lg font-semibold tracking-tight" id={id}>
           {title}
         </h2>

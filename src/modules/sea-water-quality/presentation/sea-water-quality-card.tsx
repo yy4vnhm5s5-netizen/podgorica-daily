@@ -34,7 +34,7 @@ function SeaWaterQualityCard({
   return (
     <Card className="card-fog card-fog--info border-primary/15 bg-slate-50/65">
       <CardHeader className="flex-row items-center gap-3 space-y-0 p-4 sm:p-5">
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-600 dark:bg-cyan-500/15 dark:text-cyan-300">
           <Waves aria-hidden="true" className="size-[1.125rem]" strokeWidth={1.8} />
         </div>
         <div>
@@ -86,7 +86,7 @@ function SeaWaterQualityCard({
             ) : null}
           </>
         ) : (
-          <InCardEmptyNote>Podaci trenutno nijesu dostupni.</InCardEmptyNote>
+          <InCardEmptyNote icon={Waves}>Podaci trenutno nijesu dostupni.</InCardEmptyNote>
         )}
         {state === "stale" ? (
           <p className="mt-3 text-xs leading-5 text-muted-foreground">
