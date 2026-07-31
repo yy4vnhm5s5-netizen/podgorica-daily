@@ -11,7 +11,7 @@ import { PlatformAtmosphere } from "@/app/platform-atmosphere";
 import { PlatformCitySelector } from "@/app/platform-city-selector";
 import { LastCityContinuation } from "@/app/platform-last-city";
 import {
-  HeroIconBackdrop,
+  DecorativeIconBleed,
   platformCitiesSectionIcons,
   platformFaqSectionIcons,
   platformHeroSectionIcons,
@@ -41,7 +41,7 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
           page-wide, non-clustered atmosphere, just without a single fragile page-height
           percentage tying every icon to every section's combined height. */}
       <section aria-labelledby="platform-homepage-title" className="relative">
-        <SectionIconBleed icons={platformHeroSectionIcons} />
+        <DecorativeIconBleed icons={platformHeroSectionIcons} />
         <div className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-r from-white via-orange-50/30 to-sky-100/40 px-5 py-4 shadow-sm shadow-slate-950/[0.04] sm:px-6 sm:py-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
             <PlatformMark />
@@ -63,7 +63,7 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
       {/* Tighter gap here than after this section: the city selector is the page's main event and
           should follow the hero closely, not after the same beat every other section gets. */}
       <section aria-labelledby="cities-heading" className="relative mt-6 space-y-3 sm:mt-8">
-        <SectionIconBleed icons={platformCitiesSectionIcons} />
+        <DecorativeIconBleed icons={platformCitiesSectionIcons} />
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div className="space-y-1.5">
             <p className="text-xs font-semibold uppercase tracking-widest text-brand-foreground">
@@ -84,7 +84,7 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
       {/* More generous gap before this section: it closes out the "decide which city" zone above
           and opens the page's lighter, less time-sensitive supporting content. */}
       <section aria-labelledby="how-it-works-heading" className="relative mt-10 sm:mt-12">
-        <SectionIconBleed icons={platformHowItWorksSectionIcons} />
+        <DecorativeIconBleed icons={platformHowItWorksSectionIcons} />
         <div className="rounded-xl border border-border bg-background px-5 py-3.5 sm:px-6 sm:py-4">
           <p className="text-xs font-medium uppercase tracking-wide text-primary">
             Lokalno, po gradu
@@ -105,7 +105,7 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
       {/* Tighter gap here — how-it-works and FAQ are both lighter, closely related supporting
           content, so they share one rhythm beat instead of each getting the full section gap. */}
       <section aria-labelledby="faq-heading" className="relative mt-6 space-y-3 sm:mt-8">
-        <SectionIconBleed icons={platformFaqSectionIcons} />
+        <DecorativeIconBleed icons={platformFaqSectionIcons} />
         <div className="space-y-1">
           <p className="text-xs font-medium uppercase tracking-wide text-primary">Česta pitanja</p>
           <h2
@@ -137,18 +137,6 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
           </FaqItem>
         </div>
       </section>
-    </div>
-  );
-}
-
-// Wraps a section's decorative icon group in the same full-viewport-width breakout used by
-// PlatformAtmosphere, extended above/below the section's own box so icons anchored to its
-// top/bottom edges (up to `-top-16`/`-bottom-16`, the largest offset any preset uses) have room
-// to bleed without being clipped away entirely by the section's own boundary.
-function SectionIconBleed({ icons }: { icons: Parameters<typeof HeroIconBackdrop>[0]["icons"] }) {
-  return (
-    <div className="pointer-events-none absolute -top-16 -bottom-16 left-1/2 w-screen -translate-x-1/2 overflow-hidden">
-      <HeroIconBackdrop icons={icons} />
     </div>
   );
 }

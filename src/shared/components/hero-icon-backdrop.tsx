@@ -47,6 +47,16 @@ function HeroIconBackdrop({ icons }: HeroIconBackdropProps) {
   );
 }
 
+// Full-viewport bleed wrapper shared by the homepage hero and city dashboards. It preserves the
+// same clipping, stacking and viewport-relative positioning for every shared icon preset.
+function DecorativeIconBleed({ icons }: HeroIconBackdropProps) {
+  return (
+    <div className="pointer-events-none absolute -bottom-16 -top-16 left-1/2 w-screen -translate-x-1/2 overflow-hidden">
+      <HeroIconBackdrop icons={icons} />
+    </div>
+  );
+}
+
 // Spans every Gradom domain — used behind the platform homepage's major sections, which aren't
 // specific to any one capability. These read as environmental illustrations discovered while
 // scrolling, not as a decorative row announcing itself around the hero. One icon per requested
@@ -147,26 +157,8 @@ const platformFaqSectionIcons: readonly HeroBackdropIcon[] = [
   },
 ];
 
-// City dashboards reuse the same quiet outline-icon language as the platform homepage, but keep
-// the composition to three edge-bound marks. The icons sit in the shell gutters only, so they add
-// a little locality and depth without competing with dashboard data or card content.
-const cityDashboardBackdropIcons: readonly HeroBackdropIcon[] = [
-  {
-    className: "-left-20 top-36 size-[220px] -rotate-6 opacity-[0.025]",
-    icon: CalendarDays,
-  },
-  {
-    className: "top-52 -right-16 size-[190px] rotate-6 opacity-[0.03]",
-    icon: MapPin,
-  },
-  {
-    className: "bottom-20 -left-14 size-[180px] -rotate-12 opacity-[0.025]",
-    icon: Music2,
-  },
-];
-
 export {
-  cityDashboardBackdropIcons,
+  DecorativeIconBleed,
   HeroIconBackdrop,
   platformCitiesSectionIcons,
   platformFaqSectionIcons,

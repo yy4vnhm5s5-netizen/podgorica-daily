@@ -7,8 +7,8 @@ import { AppHeader } from "@/shared/components/layout/app-header";
 import { MobileNavigation } from "@/shared/components/layout/mobile-navigation";
 import { ResponsiveContainer } from "@/shared/components/layout/responsive-container";
 import {
-  HeroIconBackdrop,
-  cityDashboardBackdropIcons,
+  DecorativeIconBleed,
+  platformHeroSectionIcons,
 } from "@/shared/components/hero-icon-backdrop";
 import { PageAtmosphere } from "@/shared/components/page-atmosphere";
 import { Button } from "@/shared/components/ui/button";
@@ -54,21 +54,8 @@ function DashboardLayout({ children, city, homeHref, translations }: DashboardLa
   const isCityScoped = homeHref === undefined;
 
   return (
-    <div
-      className={
-        isCityScoped
-          ? "relative min-h-screen overflow-hidden bg-[#fbfaf7] pb-[calc(5rem+env(safe-area-inset-bottom))] text-foreground md:pb-0"
-          : "relative min-h-screen overflow-hidden bg-background pb-[calc(5rem+env(safe-area-inset-bottom))] text-foreground md:pb-0"
-      }
-    >
-      {isCityScoped ? (
-        <>
-          <PageAtmosphere variant="city-dashboard" />
-          <HeroIconBackdrop icons={cityDashboardBackdropIcons} />
-        </>
-      ) : (
-        <PageContourMotif />
-      )}
+    <div className="relative min-h-screen overflow-hidden bg-background pb-[calc(5rem+env(safe-area-inset-bottom))] text-foreground md:pb-0">
+      {isCityScoped ? <PageAtmosphere /> : <PageContourMotif />}
       <a
         className="absolute left-4 top-4 z-50 -translate-y-20 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-transform focus:translate-y-0"
         href="#main-content"
@@ -77,7 +64,8 @@ function DashboardLayout({ children, city, homeHref, translations }: DashboardLa
       </a>
       <AppHeader city={city} homeHref={homeHref} translations={translations} />
       <main id="main-content">
-        <ResponsiveContainer className="py-8 sm:py-12">
+        <ResponsiveContainer className={isCityScoped ? "relative py-8 sm:py-12" : "py-8 sm:py-12"}>
+          {isCityScoped ? <DecorativeIconBleed icons={platformHeroSectionIcons} /> : null}
           {/* Default size, not sm: matches the 44px touch target every other "back" link in the
               app uses (e.g. the event detail page's "back to events" link), rather than the same
               navigational action being a smaller target here than elsewhere. */}
