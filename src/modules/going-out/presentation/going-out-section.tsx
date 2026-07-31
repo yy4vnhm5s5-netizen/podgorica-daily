@@ -50,7 +50,7 @@ function GoingOutSection({ city, events, locale, state }: GoingOutSectionProps) 
         </CardHeader>
         <CardContent className="p-4 pt-0 sm:p-5 sm:pt-0">
           {displayState === "events" || displayState === "stale" ? (
-            <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {upcoming.map((event, index) => (
                 <GoingOutCard
                   className={getResponsiveCardVisibilityClass(index)}
@@ -101,14 +101,14 @@ function GoingOutCard({
         {event.imageUrl ? (
           <Image
             alt=""
-            className="aspect-[16/9] w-full shrink-0 object-cover lg:aspect-auto lg:h-full lg:w-36"
+            className="aspect-[16/9] w-full shrink-0 object-cover lg:aspect-auto lg:h-full lg:w-24"
             height={180}
             src={event.imageUrl}
             unoptimized
             width={320}
           />
         ) : (
-          <div className="flex aspect-[16/9] w-full shrink-0 items-center justify-center bg-violet-100/65 text-violet-700 dark:bg-violet-900/35 dark:text-violet-300 lg:aspect-auto lg:h-full lg:w-36">
+          <div className="flex aspect-[16/9] w-full shrink-0 items-center justify-center bg-violet-100/65 text-violet-700 dark:bg-violet-900/35 dark:text-violet-300 lg:aspect-auto lg:h-full lg:w-24">
             <CalendarDays aria-hidden="true" className="size-7" strokeWidth={1.5} />
           </div>
         )}
@@ -137,7 +137,7 @@ const montenegrinCopy = {
   empty: "Trenutno nema najavljenih izlazaka.",
   stale: "Prikazani su posljednji dostupni podaci.",
   subtitle: "Muzika, nastupi i noćni život",
-  title: "Izlasci",
+  title: "Predstojeći nastupi",
   unavailable: "Podaci trenutno nijesu dostupni.",
 } as const;
 
