@@ -89,7 +89,7 @@ async function CityDashboard({ context }: CityDashboardProps) {
         activeCityIds={getActiveCities().map((activeCity) => activeCity.id)}
         cityId={city.id}
       />
-      <section className="space-y-10 sm:space-y-12" id="dashboard">
+      <section className="space-y-8 sm:space-y-10" id="dashboard">
         <DailySummaryBar
           availability={summaryAvailability}
           city={city}
@@ -100,11 +100,6 @@ async function CityDashboard({ context }: CityDashboardProps) {
           seaWaterQualityLocationCount={seaWaterQuality?.summary?.totalLocations}
           weather={weather}
         />
-        <AdvertisingCard
-          href={getContactPath()}
-          subtitle={advertising.subtitle}
-          title={advertising.title}
-        />
         {isFeatureEnabled("cityAlerts") && capabilities.cityAlerts ? (
           <DashboardSection>
             <Suspense fallback={<CityAlertsSectionLoading context={context} locale={locale} />}>
@@ -112,9 +107,16 @@ async function CityDashboard({ context }: CityDashboardProps) {
             </Suspense>
           </DashboardSection>
         ) : null}
-        {showSeaWaterBeforeGoingOut ? <DashboardSection>{seaWaterCard}</DashboardSection> : null}
+        <AdvertisingCard
+          href={getContactPath()}
+          subtitle={advertising.subtitle}
+          title={advertising.title}
+        />
+        {showSeaWaterBeforeGoingOut ? (
+          <DashboardSection tone="cyan">{seaWaterCard}</DashboardSection>
+        ) : null}
         {goingOut ? (
-          <DashboardSection>
+          <DashboardSection tone="violet">
             <GoingOutSection
               city={city}
               events={goingOut.events}

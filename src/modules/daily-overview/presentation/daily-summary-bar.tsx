@@ -62,7 +62,11 @@ function DailySummaryBar({
       : dailySummaryLayout.gridClassName;
 
   return (
-    <section aria-labelledby="daily-summary-heading">
+    <section aria-labelledby="daily-summary-heading" className="relative isolate">
+      <span
+        aria-hidden="true"
+        className="absolute -inset-x-3 -inset-y-2 -z-10 rounded-2xl bg-sky-50/[0.24]"
+      />
       <SectionTitle
         as="h1"
         className="mb-3"
@@ -179,19 +183,19 @@ function SummaryItem({ children, href, icon: Icon, iconClassName, label }: Summa
     <>
       <span
         aria-hidden="true"
-        className={`flex size-7 shrink-0 items-center justify-center rounded-xl ${iconClassName}`}
+        className={`flex size-8 shrink-0 items-center justify-center rounded-xl ${iconClassName}`}
       >
-        <Icon className="size-3.5" strokeWidth={2} />
+        <Icon className="size-4" strokeWidth={2} />
       </span>
-      <span className="min-w-0">
+      <span className="flex min-w-0 items-baseline gap-1.5">
         <span
-          className={`block text-xl font-light leading-tight tracking-tight text-foreground sm:text-2xl ${isInteractive ? "md:group-hover:text-brand-foreground" : ""}`}
+          className={`shrink-0 text-[1.375rem] font-light leading-tight tracking-tight text-foreground sm:text-[1.65rem] ${isInteractive ? "md:group-hover:text-brand-foreground" : ""}`}
         >
           {children}
         </span>
         {label ? (
           <span
-            className={`block text-xs font-normal text-muted-foreground ${isInteractive ? "md:group-hover:text-foreground" : ""}`}
+            className={`min-w-0 text-xs font-normal leading-5 text-muted-foreground ${isInteractive ? "md:group-hover:text-foreground" : ""}`}
           >
             {label}
           </span>

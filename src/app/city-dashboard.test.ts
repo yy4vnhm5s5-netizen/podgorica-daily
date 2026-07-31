@@ -58,9 +58,7 @@ test("prioritizes Going Out only for the main city while restoring sea water bef
   const dashboardMarkup = source.slice(source.indexOf("return ("));
 
   const cityAlertsIndex = dashboardMarkup.indexOf("<CityAlertsSection");
-  const seaWaterBeforeGoingOutIndex = dashboardMarkup.indexOf(
-    "{showSeaWaterBeforeGoingOut ? <DashboardSection>{seaWaterCard}</DashboardSection> : null}",
-  );
+  const seaWaterBeforeGoingOutIndex = dashboardMarkup.indexOf('<DashboardSection tone="cyan">');
   const goingOutIndex = dashboardMarkup.indexOf("<GoingOutSection");
   const compactModulesIndex = dashboardMarkup.indexOf("{compactModuleCount > 0 ? (");
 
@@ -87,7 +85,7 @@ test("prioritizes Going Out only for the main city while restoring sea water bef
 test("keeps the Daily Summary as an unwrapped dashboard hero", async () => {
   const source = await readFile(new URL("./city-dashboard.tsx", import.meta.url), "utf8");
   const dashboardMarkup = source.slice(
-    source.indexOf('<section className="space-y-10 sm:space-y-12"'),
+    source.indexOf('<section className="space-y-8 sm:space-y-10"'),
   );
   const dailySummaryIndex = dashboardMarkup.indexOf("<DailySummaryBar");
   const firstRegionIndex = dashboardMarkup.indexOf("<DashboardSection>");
@@ -96,7 +94,7 @@ test("keeps the Daily Summary as an unwrapped dashboard hero", async () => {
   assert.ok(dailySummaryIndex >= 0 && firstRegionIndex > dailySummaryIndex);
 });
 
-test("places the existing advertising banner directly after the Daily Summary", async () => {
+test("places the existing advertising banner after Gradske usluge", async () => {
   const source = await readFile(new URL("./city-dashboard.tsx", import.meta.url), "utf8");
   const dashboardMarkup = source.slice(source.indexOf("return ("));
   const dailySummaryIndex = dashboardMarkup.indexOf("<DailySummaryBar");
@@ -104,5 +102,13 @@ test("places the existing advertising banner directly after the Daily Summary", 
   const cityAlertsIndex = dashboardMarkup.indexOf("<CityAlertsSection");
 
   assert.ok(dailySummaryIndex >= 0 && advertisingIndex > dailySummaryIndex);
-  assert.ok(cityAlertsIndex >= 0 && cityAlertsIndex > advertisingIndex);
+  assert.ok(cityAlertsIndex >= 0 && cityAlertsIndex < advertisingIndex);
+});
+
+test("uses only background-region tones for city services, sea water and Going Out", async () => {
+  const source = await readFile(new URL("./city-dashboard.tsx", import.meta.url), "utf8");
+
+  assert.match(source, /<DashboardSection tone="cyan">\{seaWaterCard\}<\/DashboardSection>/u);
+  assert.match(source, /<DashboardSection tone="violet">\s*<GoingOutSection/u);
+  assert.match(source, /<DashboardSection>\s*<Suspense/u);
 });

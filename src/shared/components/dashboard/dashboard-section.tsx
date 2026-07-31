@@ -2,18 +2,28 @@ import type { PropsWithChildren } from "react";
 
 import { cn } from "@/shared/lib/utils";
 
+type DashboardSectionTone = "cyan" | "neutral" | "violet";
+
 interface DashboardSectionProps extends PropsWithChildren {
   className?: string;
+  tone?: DashboardSectionTone;
 }
 
 // A light regional surface for a dashboard section. It deliberately sits behind the module cards
 // rather than altering them, so every data module keeps its own states, density and hierarchy.
 // The divider begins a region; the tint, rounded corners and page spacing provide its quiet end.
-function DashboardSection({ children, className }: DashboardSectionProps) {
+const surfaceStyles: Record<DashboardSectionTone, string> = {
+  cyan: "bg-cyan-50/[0.24]",
+  neutral: "bg-white/[0.34]",
+  violet: "bg-violet-50/[0.2]",
+};
+
+function DashboardSection({ children, className, tone = "neutral" }: DashboardSectionProps) {
   return (
     <div
       className={cn(
-        "relative isolate overflow-hidden rounded-2xl border border-white/60 bg-white/[0.34] p-3 backdrop-blur-[2px] sm:p-4",
+        "relative isolate overflow-hidden rounded-2xl border border-white/60 p-3 backdrop-blur-[2px] sm:p-4",
+        surfaceStyles[tone],
         className,
       )}
     >
@@ -26,4 +36,4 @@ function DashboardSection({ children, className }: DashboardSectionProps) {
   );
 }
 
-export { DashboardSection, type DashboardSectionProps };
+export { DashboardSection, type DashboardSectionProps, type DashboardSectionTone };

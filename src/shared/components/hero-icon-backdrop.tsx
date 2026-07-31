@@ -170,7 +170,9 @@ const cityDashboardPageIcons: readonly HeroBackdropIcon[] = [
   { className: "left-8 top-[41%] size-[104px] -rotate-3 opacity-[0.025]", icon: FileText },
   { className: "right-10 top-[55%] size-[128px] rotate-2 opacity-[0.03]", icon: Music2 },
   { className: "-left-10 top-[69%] size-[154px] -rotate-6 opacity-[0.025]", icon: HeartPulse },
-  { className: "right-10 top-[83%] size-[112px] rotate-3 opacity-[0.03]", icon: TrainFront },
+  { className: "right-10 top-[82%] size-[112px] rotate-3 opacity-[0.03]", icon: TrainFront },
+  { className: "-left-8 top-[92%] size-[124px] -rotate-3 opacity-[0.025]", icon: Waves },
+  { className: "right-8 top-[96%] size-[92px] rotate-6 opacity-[0.025]", icon: Clapperboard },
 ];
 
 export {
