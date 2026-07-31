@@ -41,7 +41,7 @@ function CineplexxProgrammeCard({
   });
 
   return (
-    <Card className="border-border bg-background transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_24px_-20px_rgb(15_23_42_/_0.32)]">
+    <Card className="border-border bg-background shadow-[0_18px_42px_-32px_rgb(37_99_235_/_0.28)] transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-[0_20px_44px_-30px_rgb(37_99_235_/_0.32)]">
       <CardHeader className="flex-row items-center gap-3 space-y-0 p-4 sm:p-5">
         <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 text-white shadow-sm shadow-blue-900/20">
           <Clapperboard aria-hidden="true" className="size-[1.125rem]" strokeWidth={2} />

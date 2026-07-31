@@ -32,7 +32,7 @@ function SeaWaterQualityCard({
   const hasData = state !== "unavailable" && summary !== undefined;
 
   return (
-    <Card className="border-border bg-background">
+    <Card className="border-border bg-background shadow-[0_18px_42px_-32px_rgb(8_145_178_/_0.3)]">
       <CardHeader className="flex-row items-center gap-3 space-y-0 p-4 sm:p-5">
         <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 to-cyan-600 text-white shadow-sm shadow-cyan-900/20">
           <Waves aria-hidden="true" className="size-[1.125rem]" strokeWidth={2} />
@@ -55,10 +55,7 @@ function SeaWaterQualityCard({
             </p>
             <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
               {gradeOrder.map((grade) => (
-                <div
-                  className={`rounded-lg border px-3 py-2 ${gradeStyles[grade]}`}
-                  key={grade}
-                >
+                <div className={`rounded-lg border px-3 py-2 ${gradeStyles[grade]}`} key={grade}>
                   <span className="block text-[11px] font-medium uppercase tracking-wide opacity-80">
                     {gradeLabels[grade]}
                   </span>
@@ -78,10 +75,12 @@ function SeaWaterQualityCard({
             {summary.latestSamplingDate ? (
               <p className="mt-3 text-xs leading-5 text-muted-foreground">
                 Uzorkovanje:{" "}
-                {formatDateTime(new Date(`${summary.latestSamplingDate}T12:00:00.000Z`), {
-                  formatOptions: { dateStyle: "medium" },
-                  locale: locale === "me" ? "sr-Latn-ME" : "en-US",
-                }).label}
+                {
+                  formatDateTime(new Date(`${summary.latestSamplingDate}T12:00:00.000Z`), {
+                    formatOptions: { dateStyle: "medium" },
+                    locale: locale === "me" ? "sr-Latn-ME" : "en-US",
+                  }).label
+                }
               </p>
             ) : null}
           </>

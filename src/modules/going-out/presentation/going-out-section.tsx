@@ -34,7 +34,7 @@ function GoingOutSection({ city, events, locale, state }: GoingOutSectionProps) 
       {/* Going Out is allowed a touch more personality than the purely informational modules
           (flights, railway) — a single light violet tint, not the border+bg+card-fog stack it
           used to carry. */}
-      <Card className="border-violet-100 bg-violet-50/40 transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_24px_-20px_rgb(15_23_42_/_0.32)] dark:border-violet-900/40 dark:bg-violet-950/15">
+      <Card className="border-violet-100 bg-violet-50/40 shadow-[0_18px_42px_-32px_rgb(124_58_237_/_0.34)] transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-[0_20px_44px_-30px_rgb(124_58_237_/_0.38)] dark:border-violet-900/40 dark:bg-violet-950/15">
         <CardHeader className="flex-row items-center justify-between gap-4 space-y-0 p-4 sm:p-5">
           <div className="flex min-w-0 items-center gap-3">
             <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-400 to-violet-600 text-white shadow-sm shadow-violet-900/20">

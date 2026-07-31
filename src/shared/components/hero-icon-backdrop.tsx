@@ -84,7 +84,8 @@ const platformHeroSectionIcons: readonly HeroBackdropIcon[] = [
   },
   // Medium, upper-right, fully visible — inset from the edge, not bleeding past it.
   {
-    className: "top-8 right-10 size-[160px] rotate-3 opacity-[0.05] animate-float [animation-delay:8s]",
+    className:
+      "top-8 right-10 size-[160px] rotate-3 opacity-[0.05] animate-float [animation-delay:8s]",
     icon: CloudSun,
   },
 ];
@@ -146,7 +147,26 @@ const platformFaqSectionIcons: readonly HeroBackdropIcon[] = [
   },
 ];
 
+// City dashboards reuse the same quiet outline-icon language as the platform homepage, but keep
+// the composition to three edge-bound marks. The icons sit in the shell gutters only, so they add
+// a little locality and depth without competing with dashboard data or card content.
+const cityDashboardBackdropIcons: readonly HeroBackdropIcon[] = [
+  {
+    className: "-left-20 top-36 size-[220px] -rotate-6 opacity-[0.035]",
+    icon: CalendarDays,
+  },
+  {
+    className: "top-52 -right-16 size-[190px] rotate-6 opacity-[0.04]",
+    icon: MapPin,
+  },
+  {
+    className: "bottom-20 -left-14 size-[180px] -rotate-12 opacity-[0.035]",
+    icon: Music2,
+  },
+];
+
 export {
+  cityDashboardBackdropIcons,
   HeroIconBackdrop,
   platformCitiesSectionIcons,
   platformFaqSectionIcons,
