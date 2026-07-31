@@ -103,6 +103,7 @@ test("places the existing advertising banner after Gradske usluge", async () => 
 
   assert.ok(dailySummaryIndex >= 0 && advertisingIndex > dailySummaryIndex);
   assert.ok(cityAlertsIndex >= 0 && cityAlertsIndex < advertisingIndex);
+  assert.match(source, /\? "space-y-4 sm:space-y-5"/u);
 });
 
 test("uses only background-region tones for city services, sea water and Going Out", async () => {

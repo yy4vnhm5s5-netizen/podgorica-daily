@@ -116,7 +116,7 @@ function CityServicesPanel({ serviceIds, services, translations }: CityServicesP
       <div className="flex flex-col lg:flex-row lg:items-stretch">
         <div
           aria-label={translations.label}
-          className="flex shrink-0 gap-1 border-b border-slate-200/80 p-2 lg:border-b-0 lg:border-r"
+          className="flex shrink-0 gap-1 border-b border-slate-200/80 p-2 lg:border-b-0 lg:border-r lg:p-1.5"
           role="tablist"
         >
           {serviceIds.map((serviceId) => {
@@ -128,7 +128,7 @@ function CityServicesPanel({ serviceIds, services, translations }: CityServicesP
                 aria-controls={panelId}
                 aria-selected={isSelected}
                 className={cn(
-                  "focus-visible:ring-ring flex min-h-10 flex-1 items-center justify-center gap-2 rounded-lg px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 lg:flex-none",
+                  "focus-visible:ring-ring flex min-h-10 flex-1 items-center justify-center gap-2 rounded-lg px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 lg:min-h-9 lg:flex-none",
                   isSelected
                     ? cn(
                         "card-fog border border-slate-200 bg-background text-foreground shadow-[0_2px_5px_-4px_rgb(15_23_42_/_0.3)]",
@@ -161,7 +161,7 @@ function CityServicesPanel({ serviceIds, services, translations }: CityServicesP
         </div>
         <div
           aria-labelledby={`${panelId}-${activeServiceId}`}
-          className="flex min-w-0 flex-1 flex-col gap-2 p-3 sm:p-4 lg:flex-row lg:items-center lg:gap-0"
+          className="flex min-w-0 flex-1 flex-col gap-2 p-3 sm:p-4 lg:grid lg:grid-cols-[minmax(7.5rem,0.8fr)_minmax(11rem,1.35fr)_auto_minmax(9.5rem,1fr)_auto] lg:items-center lg:gap-0 lg:px-3 lg:py-2"
           id={panelId}
           role="tabpanel"
         >
@@ -169,12 +169,21 @@ function CityServicesPanel({ serviceIds, services, translations }: CityServicesP
             <p className="min-w-0 text-sm font-semibold text-foreground lg:pr-5">{stateLabel}</p>
           ) : (
             <>
-              {primaryArea ? <ServiceStripDetail icon={MapPin} value={primaryArea} /> : null}
-              {service.time ? <ServiceStripDetail icon={Clock3} value={service.time} /> : null}
+              {primaryArea ? (
+                <ServiceStripDetail
+                  className="lg:col-start-1 lg:border-l-0 lg:pr-4"
+                  icon={MapPin}
+                  iconClassName="text-rose-500"
+                  value={primaryArea}
+                />
+              ) : null}
+              {service.time ? (
+                <ServiceStripDetail className="lg:col-start-2" icon={Clock3} value={service.time} />
+              ) : null}
               {service.additionalLocationCount ? (
                 <Badge
                   aria-label={formatAdditionalAffectedAreas(service.additionalLocationCount)}
-                  className="w-fit self-start border-amber-200/80 bg-amber-50/70 text-amber-800 lg:ml-5 lg:self-auto"
+                  className="w-fit self-start border-amber-200/80 bg-amber-50/70 text-amber-800 lg:col-start-3 lg:self-auto"
                   variant="outline"
                 >
                   +{service.additionalLocationCount}
@@ -182,10 +191,12 @@ function CityServicesPanel({ serviceIds, services, translations }: CityServicesP
               ) : null}
             </>
           )}
-          {service.freshnessLabel ? <ServiceStripDetail label={service.freshnessLabel} /> : null}
+          {service.freshnessLabel ? (
+            <ServiceStripDetail className="lg:col-start-4" label={service.freshnessLabel} />
+          ) : null}
           {service.sourceUrl ? (
             <a
-              className="focus-visible:ring-ring inline-flex min-h-10 items-center text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 lg:ml-auto lg:border-l lg:border-slate-200/80 lg:pl-5"
+              className="focus-visible:ring-ring inline-flex min-h-10 items-center text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 lg:col-start-5 lg:justify-self-end lg:border-l lg:border-slate-200/80 lg:pl-5"
               href={service.sourceUrl}
             >
               {translations.officialSource}
@@ -193,7 +204,7 @@ function CityServicesPanel({ serviceIds, services, translations }: CityServicesP
           ) : null}
           {service.detailsHref && service.detailsLabel ? (
             <a
-              className="focus-visible:ring-ring inline-flex min-h-10 items-center text-sm font-semibold text-primary underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 lg:ml-auto lg:border-l lg:border-slate-200/80 lg:pl-5"
+              className="focus-visible:ring-ring inline-flex min-h-10 items-center text-sm font-semibold text-primary underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 lg:col-start-5 lg:justify-self-end lg:border-l lg:border-slate-200/80 lg:pl-5"
               href={service.detailsHref}
             >
               {service.detailsLabel}
@@ -206,18 +217,30 @@ function CityServicesPanel({ serviceIds, services, translations }: CityServicesP
 }
 
 function ServiceStripDetail({
+  className,
   icon: Icon,
+  iconClassName,
   label,
   value,
 }: {
+  className?: string;
   icon?: LucideIcon;
+  iconClassName?: string;
   label?: string;
   value?: string;
 }) {
   return (
-    <div className="flex min-w-0 items-center gap-1.5 text-sm lg:border-l lg:border-slate-200/80 lg:pl-5">
+    <div
+      className={cn(
+        "flex min-w-0 items-center gap-1.5 text-sm lg:border-l lg:border-slate-200/80 lg:pl-5",
+        className,
+      )}
+    >
       {Icon ? (
-        <Icon aria-hidden="true" className="size-3.5 shrink-0 text-muted-foreground" />
+        <Icon
+          aria-hidden="true"
+          className={cn("size-3.5 shrink-0 text-muted-foreground", iconClassName)}
+        />
       ) : null}
       {value && label ? <span className="text-muted-foreground">{label}: </span> : null}
       <span className={cn(value ? "font-medium text-foreground" : "text-muted-foreground")}>
