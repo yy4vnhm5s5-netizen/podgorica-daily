@@ -100,6 +100,11 @@ async function CityDashboard({ context }: CityDashboardProps) {
           seaWaterQualityLocationCount={seaWaterQuality?.summary?.totalLocations}
           weather={weather}
         />
+        <AdvertisingCard
+          href={getContactPath()}
+          subtitle={advertising.subtitle}
+          title={advertising.title}
+        />
         {isFeatureEnabled("cityAlerts") && capabilities.cityAlerts ? (
           <DashboardSection>
             <Suspense fallback={<CityAlertsSectionLoading context={context} locale={locale} />}>
@@ -145,11 +150,6 @@ async function CityDashboard({ context }: CityDashboardProps) {
             </div>
           </DashboardSection>
         ) : null}
-        <AdvertisingCard
-          href={getContactPath()}
-          subtitle={advertising.subtitle}
-          title={advertising.title}
-        />
         {compactModuleCount > 0 ? (
           <DashboardSection>
             <div
