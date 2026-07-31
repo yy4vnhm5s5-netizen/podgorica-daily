@@ -31,7 +31,7 @@ function city(overrides: Partial<City> = {}): City {
   };
 }
 
-test("exposes Podgorica as the main city and Budva as a second active city", () => {
+test("exposes Podgorica as the main city and every active public city", () => {
   const mainCity = getMainCity();
 
   assert.equal(mainCity.id, "podgorica");
@@ -41,7 +41,7 @@ test("exposes Podgorica as the main city and Budva as a second active city", () 
   assert.equal(mainCity.isMain, true);
   assert.deepEqual(
     getActiveCities().map(({ slug }) => slug),
-    ["budva", "podgorica", "tivat"],
+    ["budva", "kotor", "podgorica", "tivat"],
   );
 });
 
@@ -75,9 +75,10 @@ test("registers Tivat as a third active city with its launch-phase capability se
   assert.equal(getMainCity().id, "podgorica");
 });
 
-test("resolves active city route slugs and retains inactive city configuration", () => {
+test("resolves active city route slugs and keeps Kotor's approved capability set explicit", () => {
   assert.equal(getActiveCityBySlug("podgorica")?.id, "podgorica");
   assert.equal(getActiveCityBySlug("budva")?.id, "budva");
+  assert.equal(getActiveCityBySlug("kotor")?.id, "kotor");
   assert.equal(getActiveCityBySlug("unknown"), undefined);
   assert.equal(getCityBySlug("budva")?.isActive, true);
   assert.deepEqual(getCityBySlug("budva")?.capabilities, [
@@ -93,14 +94,14 @@ test("resolves active city route slugs and retains inactive city configuration",
   assert.equal(getCityName(getCityBySlug("budva")!, "locative"), "Budvi");
   assert.equal(getCityName(getCityBySlug("podgorica")!, "locative"), "Podgorici");
   const kotor = getCityBySlug("kotor");
-  assert.equal(kotor?.isActive, false);
+  assert.equal(kotor?.isActive, true);
   assert.deepEqual(kotor?.capabilities, ["electricity", "goingOut", "water", "weather"]);
   assert.equal(getCityName(kotor!, "locative"), "Kotoru");
   assert.equal(getCityName(kotor!, "accusative"), "Kotor");
   assert.equal(kotor?.latitude, 42.4247);
   assert.equal(kotor?.longitude, 18.7712);
   assert.equal(kotor?.timezone, "Europe/Podgorica");
-  assert.equal(getActiveCityBySlug("kotor"), undefined);
+  assert.equal(getActiveCityBySlug("kotor")?.id, "kotor");
 });
 
 test("rejects prototype properties as city identifiers", () => {

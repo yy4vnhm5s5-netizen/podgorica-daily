@@ -74,7 +74,7 @@ test("constructs the existing weather request from the active Budva CityContext"
   assert.equal(requestedUrl?.searchParams.get("timezone"), "Europe/Podgorica");
 });
 
-test("constructs the existing weather request from the prepared Kotor CityContext", async () => {
+test("constructs the existing weather request from the active Kotor CityContext", async () => {
   let requestedUrl: URL | undefined;
   const client = createOpenMeteoWeatherClient({
     fetchImplementation: async (url) => {
@@ -86,7 +86,7 @@ test("constructs the existing weather request from the prepared Kotor CityContex
   const kotor = createCityContext("kotor");
   await client(kotor);
 
-  assert.equal(kotor.city.isActive, false);
+  assert.equal(kotor.city.isActive, true);
   assert.equal(kotor.timezone, "Europe/Podgorica");
   assert.equal(requestedUrl?.searchParams.get("latitude"), "42.4247");
   assert.equal(requestedUrl?.searchParams.get("longitude"), "18.7712");

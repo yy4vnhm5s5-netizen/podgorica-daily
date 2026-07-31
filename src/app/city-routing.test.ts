@@ -83,11 +83,11 @@ test("cinema route availability requires both the events capability and Cineplex
   });
 });
 
-test("resolves active Budva routes but rejects inactive and unknown city routes", () => {
+test("resolves active public city routes but rejects inactive and unknown city routes", () => {
   assert.equal(resolveActiveCityRoute("budva")?.city.id, "budva");
+  assert.equal(resolveActiveCityRoute("kotor")?.city.id, "kotor");
   assert.equal(resolveActiveCityRoute("bar"), undefined);
   assert.equal(resolveActiveCityRoute("unknown"), undefined);
-  assert.equal(resolveActiveCityRoute("kotor"), undefined);
 });
 
 test("feature routes require an explicit city capability", () => {
@@ -122,7 +122,7 @@ test("a city without capabilities does not enable Podgorica dashboard data sourc
 });
 
 test("sitemap paths contain only active canonical city paths", () => {
-  assert.deepEqual(getCanonicalCitySitemapPaths(), ["/budva", "/podgorica", "/tivat"]);
+  assert.deepEqual(getCanonicalCitySitemapPaths(), ["/budva", "/kotor", "/podgorica", "/tivat"]);
 });
 
 test("sitemap emits only capability-supported routes for active cities", () => {
@@ -179,13 +179,17 @@ test("exposes only Budva's capability-supported feature routes", () => {
   ]);
 });
 
-test("a future active Kotor exposes only its capability-supported public routes", () => {
-  const configuredKotor = createCityContext("kotor").city;
-  const kotor = { ...configuredKotor, isActive: true };
+test("Kotor exposes only its capability-supported public routes", () => {
+  const kotor = createCityContext("kotor").city;
 
   assert.deepEqual(getCitySitemapPaths(kotor), ["/kotor", "/kotor/struja", "/kotor/izlasci"]);
+  assert.equal(getCityLandingMetadata(createCityContext("kotor")).alternates?.canonical, "/kotor");
+  assert.equal(getCityLandingMetadata(createCityContext("kotor")).openGraph?.url, "/kotor");
   assert.equal(isCityPublicFeatureRouteAvailable(kotor, "events"), false);
   assert.equal(isCityPublicFeatureRouteAvailable(kotor, "flights"), false);
   assert.equal(isCityPublicFeatureRouteAvailable(kotor, "goingOut"), true);
   assert.equal(isCityPublicFeatureRouteAvailable(kotor, "electricity"), true);
+  assert.equal(isCityPublicFeatureRouteAvailable(kotor, "water"), true);
+  assert.equal(isCityPublicFeatureRouteAvailable(kotor, "railway"), false);
+  assert.equal(isCityPublicFeatureRouteAvailable(kotor, "seaWaterQuality"), false);
 });

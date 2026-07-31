@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { createVodovodKotorRefreshPostHandler } from "./route.ts";
+import { createVodovodKotorRefreshPostHandler } from "./vodovod-kotor-refresh-handler.ts";
 
 const token = "internal-refresh-token-at-least-32-characters";
 

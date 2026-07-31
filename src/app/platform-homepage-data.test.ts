@@ -20,7 +20,7 @@ test("derives generic city cards from every active registry city", () => {
 
   assert.deepEqual(
     cards.map((card) => card.city.id),
-    ["budva", "podgorica", "tivat"],
+    ["budva", "kotor", "podgorica", "tivat"],
   );
   const budva = cards.find((card) => card.city.id === "budva");
   assert.ok(budva);
@@ -30,7 +30,7 @@ test("derives generic city cards from every active registry city", () => {
   );
   assert.deepEqual(
     budva.highlights.map((highlight) => highlight.key),
-    ["weather", "going-out"],
+    ["weather", "going-out", "sea-water-quality"],
   );
   assert.deepEqual(
     cards.find((card) => card.city.id === "podgorica")?.shortcuts.map((shortcut) => shortcut.label),
@@ -52,8 +52,19 @@ test("derives generic city cards from every active registry city", () => {
     tivat.highlights.map((highlight) => highlight.key),
     ["weather", "events", "going-out", "sea-water-quality"],
   );
+  const kotor = cards.find((card) => card.city.id === "kotor");
+  assert.ok(kotor);
+  assert.deepEqual(
+    kotor.shortcuts.map((shortcut) => shortcut.label),
+    ["Izlasci", "Struja"],
+  );
+  assert.deepEqual(
+    kotor.highlights.map((highlight) => highlight.key),
+    ["weather", "going-out"],
+  );
   assert.equal(getCity("budva")?.isActive, true);
   assert.equal(getCity("tivat")?.isActive, true);
+  assert.equal(getCity("kotor")?.isActive, true);
 });
 
 test("Tivat's homepage card includes a Događaji shortcut pointing to /tivat/dogadjaji", () => {
@@ -96,18 +107,25 @@ test("creates platform metadata and structured data only from public city cards"
     },
     {
       "@type": "ListItem",
-      name: "Podgorica",
+      name: "Kotor",
       position: 2,
+      url: "https://gradom.me/kotor",
+    },
+    {
+      "@type": "ListItem",
+      name: "Podgorica",
+      position: 3,
       url: "https://gradom.me/podgorica",
     },
     {
       "@type": "ListItem",
       name: "Tivat",
-      position: 3,
+      position: 4,
       url: "https://gradom.me/tivat",
     },
   ]);
   assert.equal(JSON.stringify(structuredData).includes("budva"), true);
+  assert.equal(JSON.stringify(structuredData).includes("kotor"), true);
 });
 
 test("uses the same available Going Out result as the city page and does not turn unavailable data into zero", () => {

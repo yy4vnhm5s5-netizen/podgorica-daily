@@ -52,8 +52,8 @@ while true; do
     00:10|02:10|04:10|06:10|08:10|10:10|12:10|14:10|16:10|18:10|20:10|22:10)
       run_collector "vikpg" "pnpm run collect:vikpg"
       ;;
-    # Vodovod Kotor: every two hours, staggered from VIK. The Kotor collector is enabled only
-    # when the city is activated; this command remains a no-op until then.
+    # Vodovod Kotor: every two hours, staggered from VIK. The CLI preserves its active-city and
+    # water-capability guard before it can fetch or write a snapshot.
     00:20|02:20|04:20|06:20|08:20|10:20|12:20|14:20|16:20|18:20|20:20|22:20)
       run_collector "vodovod-kotor" "pnpm run collect:vodovod-kotor"
       ;;

@@ -38,7 +38,7 @@ const cityRegistry: Record<string, City> = {
     country: "Montenegro",
     description: "Vrijeme, izlasci i važne servisne informacije za Kotor.",
     id: "kotor",
-    isActive: false,
+    isActive: true,
     isMain: false,
     latitude: 42.4247,
     longitude: 18.7712,
