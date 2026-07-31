@@ -3,8 +3,10 @@ import {
   Clapperboard,
   CloudSun,
   Droplets,
+  MapPin,
   Music2,
   Plane,
+  Ticket,
   TrainFront,
   Waves,
   Zap,
@@ -47,49 +49,61 @@ function HeroIconBackdrop({ icons }: HeroIconBackdropProps) {
 
 // Spans every Gradom domain — used behind the platform homepage's major sections, which aren't
 // specific to any one capability. These read as environmental illustrations discovered while
-// scrolling, not as a decorative row announcing itself around the hero.
+// scrolling, not as a decorative row announcing itself around the hero. One icon per requested
+// motif (weather, calendar, events, cinema, water, sea, electricity, railway, flights, music,
+// location) — 11 total, no two from the same domain sit in the same section.
 //
-// Positioning strategy: each group below is meant to be rendered inside its OWN section's bleed
-// wrapper (see platform-homepage.tsx), not one wrapper spanning the whole page. Every icon is
-// anchored to that section's own top or bottom edge (`-top-N`/`top-N`/`-bottom-N`/`bottom-N`) —
-// never a percentage of a page-wide height. A percentage-of-total-page-height approach was tried
-// first and rejected: the denominator (hero + cities grid + how-it-works + FAQ, all together)
-// changes independently whenever any one of those grows, shrinks, wraps differently at a
-// breakpoint, or gains/loses content (more cities, more/fewer FAQ items) — so an icon meant to
-// sit near the FAQ could silently drift into the cities grid after an unrelated content change
-// elsewhere on the page. Anchoring each icon to its own section's edge instead means a change in
-// one section can only ever move icons that already belong to that section, never any other.
+// Visibility mix: most icons use a POSITIVE top/bottom offset, meaning they sit fully inside
+// their section's bleed area near its edge with no clipping at all. Only three use a NEGATIVE
+// offset that intentionally bleeds past the section's edge: CalendarDays and Droplets (the two
+// oversized "anchor" icons) and Clapperboard (a smaller partial clip on one edge only, for
+// texture). That keeps clipping rare and modest (roughly 15–25% of the icon's own footprint on
+// the icons that have it at all) rather than the every-icon-touches-an-edge treatment used
+// before, which read as over-clipped.
 //
-// Only the hero's own two icons (the large clipped corner icon and one medium icon) are visible
-// without scrolling; the rest belong to later sections and only come into view once scrolled to.
-// Left/right, size, opacity and rotation are varied throughout so nothing reads as a mirrored
-// pair or a repeating unit. Only 4 of the 9 move, on different keyframes/durations/delays spread
-// across sections so nothing drifts in sync and motion isn't bunched at the top either.
+// Positioning strategy (unchanged from the previous pass): each group is rendered inside its OWN
+// section's bleed wrapper (see platform-homepage.tsx), not one wrapper spanning the whole page.
+// Every offset is anchored to that section's own top or bottom edge — never a percentage of
+// page-wide height — so a content change in one section can only ever move icons that already
+// belong to it.
+//
+// Only the hero's own two icons are visible without scrolling; the rest belong to later sections
+// and only come into view once scrolled to. Size, opacity (mixed across 3%/5%/7%/9%) and rotation
+// are varied throughout so nothing reads as a mirrored pair or a repeating unit. Only 4 of the 11
+// move — unchanged from the previous pass, same keyframes/durations/delays — motion was not
+// increased this round.
 
-// Hero section — the only group visible in the first fold.
+// Hero section — the only group visible in the first fold. Unchanged from the previous pass.
 const platformHeroSectionIcons: readonly HeroBackdropIcon[] = [
-  // Large, partially clipped by the viewport's top-left corner.
+  // Very large, intentionally clipped by the viewport's top-left corner (~22–25% of its own
+  // footprint) — the strongest anchor of the whole composition.
   {
     className:
       "-left-16 -top-14 size-[250px] -rotate-6 opacity-[0.07] animate-float-slow [animation-delay:0s]",
     icon: CalendarDays,
   },
-  // Medium, upper-right, smaller and lower than the top-left icon — not a mirrored twin.
+  // Medium, upper-right, fully visible — inset from the edge, not bleeding past it.
   {
-    className: "-top-6 right-10 size-[150px] rotate-3 opacity-[0.05] animate-float [animation-delay:8s]",
+    className: "top-8 right-10 size-[160px] rotate-3 opacity-[0.05] animate-float [animation-delay:8s]",
     icon: CloudSun,
   },
 ];
 
-// Cities section — one near its top edge, one near its bottom edge, opposite sides.
+// Cities section — three icons, alternating sides, all but one fully visible.
 const platformCitiesSectionIcons: readonly HeroBackdropIcon[] = [
   {
-    className: "-top-8 left-10 size-[95px] -rotate-3 opacity-[0.04]",
+    className: "top-10 left-10 size-[100px] -rotate-3 opacity-[0.03]",
     icon: TrainFront,
   },
+  // Partial clip on the right edge only (top/bottom stay fully visible) — a lighter touch than
+  // the two large anchor icons.
   {
-    className: "-bottom-8 right-16 size-[115px] rotate-6 opacity-[0.04]",
+    className: "bottom-12 -right-6 size-[130px] rotate-6 opacity-[0.05]",
     icon: Clapperboard,
+  },
+  {
+    className: "bottom-16 left-20 size-[75px] -rotate-2 opacity-[0.03]",
+    icon: MapPin,
   },
 ];
 
@@ -97,32 +111,37 @@ const platformCitiesSectionIcons: readonly HeroBackdropIcon[] = [
 // to give the large Droplets icon room without being tightly clipped.
 const platformHowItWorksSectionIcons: readonly HeroBackdropIcon[] = [
   {
-    className: "-top-6 left-6 size-[85px] rotate-12 opacity-[0.05]",
+    className: "top-10 left-8 size-[90px] rotate-12 opacity-[0.05]",
     icon: Zap,
   },
-  // Large — the second clearly-oversized anchor, reached roughly mid-page.
+  // Very large — the second clearly-oversized anchor, reached roughly mid-page, intentionally
+  // clipped (~22–29% of its own footprint) to match the hero's own anchor icon.
   {
     className:
-      "-bottom-16 -right-12 size-[220px] -rotate-3 opacity-[0.08] animate-float-slower [animation-delay:5s]",
+      "-bottom-16 -right-12 size-[220px] -rotate-3 opacity-[0.09] animate-float-slower [animation-delay:5s]",
     icon: Droplets,
+  },
+  {
+    className: "bottom-10 right-10 size-[80px] rotate-2 opacity-[0.03]",
+    icon: Ticket,
   },
 ];
 
-// FAQ section — the last group reached, one near the top and two staggered near the bottom.
+// FAQ section — the last group reached, all fully visible.
 const platformFaqSectionIcons: readonly HeroBackdropIcon[] = [
-  // Small horizontal + vertical drift for a touch of variety in the motion, not just bobbing.
+  // Small horizontal + vertical drift for a touch of variety in the motion, not just bobbing —
+  // unchanged from the previous pass.
   {
     className:
-      "-top-10 -left-6 size-[140px] rotate-2 opacity-[0.04] animate-drift [animation-delay:2s]",
+      "top-10 left-10 size-[150px] rotate-2 opacity-[0.05] animate-drift [animation-delay:2s]",
     icon: Plane,
   },
   {
-    className: "-bottom-10 right-24 size-[75px] -rotate-2 opacity-[0.03]",
+    className: "bottom-12 right-24 size-[75px] -rotate-2 opacity-[0.03]",
     icon: Music2,
   },
-  // Smallest and faintest — the last thing to surface, near the end of the page content.
   {
-    className: "-bottom-4 left-20 size-[80px] rotate-1 opacity-[0.03]",
+    className: "bottom-8 left-16 size-[120px] rotate-1 opacity-[0.05]",
     icon: Waves,
   },
 ];
