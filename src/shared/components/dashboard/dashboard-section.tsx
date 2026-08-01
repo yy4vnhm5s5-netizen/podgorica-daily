@@ -22,7 +22,7 @@ function DashboardSection({ children, className, tone = "neutral" }: DashboardSe
   return (
     <div
       className={cn(
-        "relative isolate overflow-hidden rounded-2xl border border-white/60 p-3 backdrop-blur-[2px] sm:p-4",
+        "relative isolate overflow-hidden rounded-2xl border border-slate-200/75 p-3 shadow-sm shadow-slate-950/[0.025] backdrop-blur-[2px] sm:p-4",
         surfaceStyles[tone],
         className,
       )}
