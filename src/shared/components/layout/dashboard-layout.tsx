@@ -72,7 +72,7 @@ function DashboardLayout({ children, city, homeHref, translations }: DashboardLa
           {isCityScoped ? (
             <Button
               asChild
-              className="group mb-6 gap-2 rounded-lg border-brand/25 bg-brand-soft text-brand-foreground hover:border-brand/40 hover:bg-brand/15 focus-visible:ring-brand dark:border-brand/30 dark:bg-brand/10 dark:hover:bg-brand/20"
+              className="group mb-6 gap-2 rounded-lg border-border/80 bg-background/80 text-foreground shadow-sm shadow-slate-950/[0.03] hover:border-primary/30 hover:bg-muted/80"
               variant="outline"
             >
               <Link href="/">

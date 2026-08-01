@@ -11,4 +11,6 @@ test("adds one shared return link for city-scoped layouts only", async () => {
   assert.match(source, /href="\/"/u);
   assert.match(source, /<Button\s+asChild[\s\S]*?variant="outline"/u);
   assert.match(source, /<ArrowLeft[\s\S]*?aria-hidden="true"/u);
+  assert.match(source, /border-border\/80 bg-background\/80 text-foreground/u);
+  assert.doesNotMatch(source, /bg-brand-soft/u);
 });
