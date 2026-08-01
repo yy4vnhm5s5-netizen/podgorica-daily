@@ -206,6 +206,19 @@ test("maps a multi-city sea water quality refresh to per-city results without ex
       state: "success",
     },
     {
+      cityId: "kotor",
+      exitCode: 0,
+      output: "provider=sea-water-quality city=kotor state=success",
+      refresh: {
+        retainedPreviousSnapshot: false,
+        snapshot: null,
+        success: true,
+        totalLocations: 15,
+        warnings: [],
+      },
+      state: "success",
+    },
+    {
       cityId: "tivat",
       exitCode: 1,
       output: "provider=sea-water-quality city=tivat state=failed",
@@ -224,10 +237,11 @@ test("maps a multi-city sea water quality refresh to per-city results without ex
   assert.equal(result.provider, "sea-water-quality");
   assert.deepEqual(
     result.cities.map(({ cityId }) => cityId),
-    ["budva", "tivat"],
+    ["budva", "kotor", "tivat"],
   );
   assert.equal(result.cities[0]?.acceptedCount, 34);
-  assert.equal(result.cities[1]?.state, "retained");
+  assert.equal(result.cities[1]?.acceptedCount, 15);
+  assert.equal(result.cities[2]?.state, "retained");
   assert.equal(result.state, "retained");
   assert.equal(JSON.stringify(result).includes("/private/"), false);
 });

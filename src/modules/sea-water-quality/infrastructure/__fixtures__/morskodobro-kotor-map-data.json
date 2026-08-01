@@ -1,0 +1,54 @@
+{
+  "ukupno": 15,
+  "sumarno": [
+    [1, 10],
+    [2, 2],
+    [3, 3]
+  ],
+  "mjerenja": [
+    {
+      "id": 99,
+      "naziv": "Dobrota 01",
+      "plaza": "DOBROTA",
+      "opstina": "Kotor",
+      "kalendar": 5,
+      "datumUzorkovanja": "23.07.2026",
+      "vrijemeUzorkovanja": "23.07.2026. 06:10",
+      "ocjena": "Odlična",
+      "tezina": 1
+    },
+    {
+      "id": 100,
+      "naziv": "Dražin vrt 01",
+      "plaza": "DRAŽIN VRT",
+      "opstina": "Kotor",
+      "kalendar": 5,
+      "datumUzorkovanja": "23.07.2026",
+      "vrijemeUzorkovanja": "23.07.2026. 06:32",
+      "ocjena": "Dobra",
+      "tezina": 2
+    },
+    {
+      "id": 63,
+      "naziv": "Perast 01",
+      "plaza": "PERAST",
+      "opstina": "Kotor",
+      "kalendar": 5,
+      "datumUzorkovanja": "23.07.2026",
+      "vrijemeUzorkovanja": "23.07.2026. 06:47",
+      "ocjena": "Zadovoljavajuća",
+      "tezina": 3
+    },
+    {
+      "id": 65,
+      "naziv": "Risan 01",
+      "plaza": "RISAN",
+      "opstina": "Kotor",
+      "kalendar": 5,
+      "datumUzorkovanja": "23.07.2026",
+      "vrijemeUzorkovanja": "23.07.2026. 07:06",
+      "ocjena": "Odlična",
+      "tezina": 1
+    }
+  ]
+}

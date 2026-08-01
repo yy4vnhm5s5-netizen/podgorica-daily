@@ -2,12 +2,13 @@ import type { CityContext, CityId } from "@/shared/types/city";
 
 // Municipality ids used by the official Morsko dobro monitoring API's "opstina" filter —
 // confirmed by reading the populated <select id="opstina"> options on the public monitoring
-// page (https://monitoring.morskodobro.me): 2 = Budva, 3 = Tivat. This is a small, fixed
+// page (https://monitoring.morskodobro.me): 2 = Budva, 3 = Tivat, 4 = Kotor. This is a small, fixed
 // government-administrative list, not something derived from user input. Only municipalities
-// this app actually collects for are listed here — the live source also covers Bar, Kotor,
-// Herceg Novi, and Ulcinj, which are out of scope until separately approved.
+// this app actually collects for are listed here — the live source also covers Bar, Herceg Novi,
+// and Ulcinj, which are out of scope until separately approved.
 const seaWaterQualityMunicipalities = {
   budva: { cityId: "budva", municipalityId: 2 },
+  kotor: { cityId: "kotor", municipalityId: 4 },
   tivat: { cityId: "tivat", municipalityId: 3 },
 } as const;
 

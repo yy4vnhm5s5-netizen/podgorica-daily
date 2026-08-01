@@ -88,5 +88,11 @@ test("derives a distinct sibling cache path per supported city without a new env
     getSeaWaterQualityCachePath("tivat"),
     `${dirname(defaultBudvaSeaWaterQualityCachePath)}/tivat-sea-water-quality.json`,
   );
+  assert.equal(
+    getSeaWaterQualityCachePath("kotor"),
+    `${dirname(defaultBudvaSeaWaterQualityCachePath)}/kotor-sea-water-quality.json`,
+  );
   assert.notEqual(getSeaWaterQualityCachePath("tivat"), getSeaWaterQualityCachePath("budva"));
+  assert.notEqual(getSeaWaterQualityCachePath("kotor"), getSeaWaterQualityCachePath("budva"));
+  assert.notEqual(getSeaWaterQualityCachePath("kotor"), getSeaWaterQualityCachePath("tivat"));
 });

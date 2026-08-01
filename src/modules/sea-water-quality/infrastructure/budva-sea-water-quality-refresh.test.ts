@@ -25,8 +25,7 @@ test("writes a fresh snapshot on a successful refresh", async () => {
     const calendarBody = await readFixture("morskodobro-calendar-data.json");
     const mapBody = await readFixture("morskodobro-budva-map-data.json");
     const httpClient: MorskodobroHttpClient = {
-      post: async (url) =>
-        url.includes("getCalendarData") ? calendarBody : mapBody,
+      post: async (url) => (url.includes("getCalendarData") ? calendarBody : mapBody),
     };
 
     const result = await refreshBudvaSeaWaterQuality({
@@ -48,7 +47,9 @@ test("surfaces a parser warning via the diagnostic emitter without failing the r
   await withTempCachePath(async (cachePath) => {
     const calendarBody = await readFixture("morskodobro-calendar-data.json");
     const mapBody = JSON.stringify({
-      mjerenja: [{ datumUzorkovanja: "24.07.2026", id: 1, naziv: "Jaz 01", opstina: "Budva", tezina: 1 }],
+      mjerenja: [
+        { datumUzorkovanja: "24.07.2026", id: 1, naziv: "Jaz 01", opstina: "Budva", tezina: 1 },
+      ],
       sumarno: [
         [1, 30],
         [5, 2],
@@ -204,6 +205,32 @@ test("refreshes Tivat independently of Budva, requesting Tivat's municipality id
     assert.equal(result.totalLocations, 10);
     assert.equal(result.snapshot?.summary.municipality, "tivat");
     assert.match(requestedBodies[0] ?? "", /opstina=3/);
+  });
+});
+
+test("refreshes Kotor independently, requesting Kotor's municipality id and stamping its own municipality", async () => {
+  await withTempCachePath(async (cachePath) => {
+    const calendarBody = await readFixture("morskodobro-calendar-data.json");
+    const mapBody = await readFixture("morskodobro-kotor-map-data.json");
+    const requestedBodies: string[] = [];
+    const httpClient: MorskodobroHttpClient = {
+      post: async (url, body) => {
+        if (!url.includes("getCalendarData")) requestedBodies.push(body.toString());
+        return url.includes("getCalendarData") ? calendarBody : mapBody;
+      },
+    };
+
+    const result = await refreshBudvaSeaWaterQuality({
+      cachePath,
+      cityId: "kotor",
+      httpClient,
+      now: () => new Date("2026-07-29T10:00:00.000Z"),
+    });
+
+    assert.equal(result.success, true);
+    assert.equal(result.totalLocations, 15);
+    assert.equal(result.snapshot?.summary.municipality, "kotor");
+    assert.match(requestedBodies[0] ?? "", /opstina=4/);
   });
 });
 

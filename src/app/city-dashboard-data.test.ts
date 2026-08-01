@@ -72,8 +72,8 @@ test("dashboard loader calls every capability-supported query for Podgorica", as
   assert.deepEqual(calls, { events: 1, flights: 1, goingOut: 1, railway: 1, weather: 1 });
 });
 
-test("dashboard loader calls sea water quality for Tivat but not flights or railway", async () => {
-  const context = createCityContext("tivat");
+test("dashboard loader calls sea water quality for Kotor but not unsupported providers", async () => {
+  const context = createCityContext("kotor");
   const calls = { events: 0, flights: 0, goingOut: 0, railway: 0, seaWaterQuality: 0, weather: 0 };
 
   await loadCityDashboardData(context, {
@@ -107,7 +107,7 @@ test("dashboard loader calls sea water quality for Tivat but not flights or rail
   });
 
   assert.deepEqual(calls, {
-    events: 1,
+    events: 0,
     flights: 0,
     goingOut: 1,
     railway: 0,

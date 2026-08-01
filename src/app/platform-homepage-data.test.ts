@@ -56,11 +56,11 @@ test("derives generic city cards from every active registry city", () => {
   assert.ok(kotor);
   assert.deepEqual(
     kotor.shortcuts.map((shortcut) => shortcut.label),
-    ["Izlasci", "Struja"],
+    ["Izlasci", "Plaže", "Struja"],
   );
   assert.deepEqual(
     kotor.highlights.map((highlight) => highlight.key),
-    ["weather", "going-out"],
+    ["weather", "going-out", "sea-water-quality"],
   );
   assert.equal(getCity("budva")?.isActive, true);
   assert.equal(getCity("tivat")?.isActive, true);
@@ -230,7 +230,10 @@ test("derives Podgorica event and movie totals from the same displayable read mo
   }));
   // Only `id`/`state` are read by the code under test; the full EventProviderStatusReadModel
   // shape isn't needed for this fixture.
-  const cineplexxProvider = { id: "cineplexx-podgorica", state: "fresh" } as CityEventsReadModel["providers"][number];
+  const cineplexxProvider = {
+    id: "cineplexx-podgorica",
+    state: "fresh",
+  } as CityEventsReadModel["providers"][number];
 
   const card = createPlatformCityCardData(context, {
     capabilities: {
@@ -285,7 +288,10 @@ test("counts many screenings of the same movies across several days as their uni
   );
   // Only `id`/`state` are read by the code under test; the full EventProviderStatusReadModel
   // shape isn't needed for this fixture.
-  const cineplexxProvider = { id: "cineplexx-podgorica", state: "fresh" } as CityEventsReadModel["providers"][number];
+  const cineplexxProvider = {
+    id: "cineplexx-podgorica",
+    state: "fresh",
+  } as CityEventsReadModel["providers"][number];
 
   const card = createPlatformCityCardData(context, {
     capabilities: {
@@ -339,16 +345,19 @@ test("shows Tivat's own beach count in the sea water quality highlight, not Budv
     weather: null,
   });
 
-  assert.deepEqual(card.highlights.find(({ key }) => key === "sea-water-quality"), {
-    accessibilityLabel: "10 kupališta u Tivat",
-    href: "/tivat/plaze",
-    key: "sea-water-quality",
-    label: "kupališta",
-    priority: 5,
-    state: "available",
-    value: "10",
-    visual: "waves",
-  });
+  assert.deepEqual(
+    card.highlights.find(({ key }) => key === "sea-water-quality"),
+    {
+      accessibilityLabel: "10 kupališta u Tivat",
+      href: "/tivat/plaze",
+      key: "sea-water-quality",
+      label: "kupališta",
+      priority: 5,
+      state: "available",
+      value: "10",
+      visual: "waves",
+    },
+  );
 });
 
 test("never shows a movies highlight for Tivat, even if Cineplexx-shaped events appear in its read model", () => {
@@ -387,7 +396,10 @@ test("never shows a movies highlight for Tivat, even if Cineplexx-shaped events 
   };
   // Only `id`/`state` are read by the code under test; the full EventProviderStatusReadModel
   // shape isn't needed for this fixture.
-  const cineplexxProvider = { id: "cineplexx-podgorica", state: "fresh" } as CityEventsReadModel["providers"][number];
+  const cineplexxProvider = {
+    id: "cineplexx-podgorica",
+    state: "fresh",
+  } as CityEventsReadModel["providers"][number];
 
   const card = createPlatformCityCardData(context, {
     capabilities: {
@@ -409,7 +421,10 @@ test("never shows a movies highlight for Tivat, even if Cineplexx-shaped events 
     weather: null,
   });
 
-  assert.equal(card.highlights.some((highlight) => highlight.key === "movies"), false);
+  assert.equal(
+    card.highlights.some((highlight) => highlight.key === "movies"),
+    false,
+  );
   assert.equal(card.highlights.find(({ key }) => key === "events")?.value, "1");
   assert.equal(card.highlights.find(({ key }) => key === "events")?.label, "događaj");
 });

@@ -95,7 +95,13 @@ test("resolves active city route slugs and keeps Kotor's approved capability set
   assert.equal(getCityName(getCityBySlug("podgorica")!, "locative"), "Podgorici");
   const kotor = getCityBySlug("kotor");
   assert.equal(kotor?.isActive, true);
-  assert.deepEqual(kotor?.capabilities, ["electricity", "goingOut", "water", "weather"]);
+  assert.deepEqual(kotor?.capabilities, [
+    "electricity",
+    "goingOut",
+    "seaWaterQuality",
+    "water",
+    "weather",
+  ]);
   assert.equal(getCityName(kotor!, "locative"), "Kotoru");
   assert.equal(getCityName(kotor!, "accusative"), "Kotor");
   assert.equal(kotor?.latitude, 42.4247);

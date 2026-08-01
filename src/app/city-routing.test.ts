@@ -182,7 +182,12 @@ test("exposes only Budva's capability-supported feature routes", () => {
 test("Kotor exposes only its capability-supported public routes", () => {
   const kotor = createCityContext("kotor").city;
 
-  assert.deepEqual(getCitySitemapPaths(kotor), ["/kotor", "/kotor/struja", "/kotor/izlasci"]);
+  assert.deepEqual(getCitySitemapPaths(kotor), [
+    "/kotor",
+    "/kotor/struja",
+    "/kotor/izlasci",
+    "/kotor/plaze",
+  ]);
   assert.equal(getCityLandingMetadata(createCityContext("kotor")).alternates?.canonical, "/kotor");
   assert.equal(getCityLandingMetadata(createCityContext("kotor")).openGraph?.url, "/kotor");
   assert.equal(isCityPublicFeatureRouteAvailable(kotor, "events"), false);
@@ -191,5 +196,5 @@ test("Kotor exposes only its capability-supported public routes", () => {
   assert.equal(isCityPublicFeatureRouteAvailable(kotor, "electricity"), true);
   assert.equal(isCityPublicFeatureRouteAvailable(kotor, "water"), true);
   assert.equal(isCityPublicFeatureRouteAvailable(kotor, "railway"), false);
-  assert.equal(isCityPublicFeatureRouteAvailable(kotor, "seaWaterQuality"), false);
+  assert.equal(isCityPublicFeatureRouteAvailable(kotor, "seaWaterQuality"), true);
 });

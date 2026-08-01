@@ -25,7 +25,7 @@ test("provides the page heading and only currently public information categories
   assert.match(aboutPlatformContent.sections[1].body[0] ?? "", /letove/i);
   assert.match(aboutPlatformContent.sections[1].body[0] ?? "", /bioskopski program/i);
   assert.match(aboutPlatformContent.description, /Gradom\.me/i);
-  assert.match(aboutPlatformContent.description, /Podgoricu, Budvu i Tivat/i);
+  assert.match(aboutPlatformContent.description, /Podgoricu, Budvu, Kotor i Tivat/i);
   assert.doesNotMatch(aboutPlatformContent.sections[1].body[0] ?? "", /saobraćaj/i);
 });
 

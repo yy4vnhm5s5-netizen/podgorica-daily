@@ -34,7 +34,7 @@ const cityRegistry: Record<string, City> = {
   },
   kotor: {
     accusativeName: "Kotor",
-    capabilities: ["electricity", "goingOut", "water", "weather"],
+    capabilities: ["electricity", "goingOut", "seaWaterQuality", "water", "weather"],
     country: "Montenegro",
     description: "Vrijeme, izlasci i važne servisne informacije za Kotor.",
     id: "kotor",
