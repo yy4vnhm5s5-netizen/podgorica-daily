@@ -172,7 +172,7 @@ function getCityServices(
   serviceIds: readonly CityAlertServiceId[],
 ): Partial<Record<CityAlertServiceId, CityServiceInfo>> {
   const alerts = result.status === "success" ? result.data : [];
-  const relevantPowerOutages = getRelevantPowerOutages(alerts);
+  const relevantPowerOutages = getRelevantPowerOutages(alerts, context.city.id);
   const powerAlert = selectNextPowerOutage(relevantPowerOutages);
   const waterAlert = alerts.find(
     ({ type }) =>

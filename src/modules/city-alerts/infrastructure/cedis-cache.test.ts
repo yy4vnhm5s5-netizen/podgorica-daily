@@ -200,6 +200,36 @@ test("rejects a snapshot written for another city", async () => {
   assert.equal(result.error?.code, "cache-invalid-json");
 });
 
+test("rejects a city-specific snapshot containing an alert for another city", async () => {
+  const mixedCitySnapshot: CedisCacheSnapshot = {
+    ...snapshot(),
+    alerts: [
+      {
+        affectedArea: { kind: "source", value: "Glavatičići" },
+        cityIds: ["kotor", "budva"],
+        dataMode: "live",
+        description: { kind: "source", value: "Planirano isključenje." },
+        id: "cedis-kotor-budva-1",
+        severity: "information",
+        source: { kind: "source", value: "CEDIS" },
+        status: "scheduled",
+        title: { kind: "source", value: "Planirano isključenje struje" },
+        type: "powerOutage",
+      },
+    ],
+    cityId: "kotor",
+  };
+
+  const result = await readCedisCacheResult(
+    "kotor.json",
+    fileSystem({ readFile: async () => JSON.stringify(mixedCitySnapshot) }),
+    "kotor",
+  );
+
+  assert.equal(result.snapshot, null);
+  assert.equal(result.error?.code, "cache-invalid-json");
+});
+
 test("accepts a legacy Podgorica snapshot without a city identifier", async () => {
   const legacySnapshot: Record<string, unknown> = { ...snapshot() };
   delete legacySnapshot.cityId;

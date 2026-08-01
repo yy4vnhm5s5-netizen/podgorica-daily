@@ -71,7 +71,8 @@ async function getActiveCityAlerts(
       ...(serviceIds.includes("water") ? water.alerts : []),
     ];
     const activeAlerts = sourceAlerts.filter(
-      ({ status }) => status === "active" || status === "scheduled",
+      ({ cityIds, status }) =>
+        cityIds.includes(context.city.id) && (status === "active" || status === "scheduled"),
     );
 
     if (sources.every(({ freshnessStatus }) => freshnessStatus === "unavailable")) {

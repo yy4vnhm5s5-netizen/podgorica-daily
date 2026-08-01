@@ -236,3 +236,47 @@ test("reads only the matching Tivat snapshot when Tivat receives electricity sup
     [["tivat"]],
   );
 });
+
+test("does not surface a foreign alert from a Kotor CEDIS snapshot", async () => {
+  const kotorAlert = {
+    ...liveAlert,
+    affectedArea: { kind: "source" as const, value: "Glavatičići" },
+    cityIds: ["kotor"] as const,
+    id: "cedis-kotor-1",
+  };
+  const foreignAlert = {
+    ...liveAlert,
+    affectedArea: { kind: "source" as const, value: "Andrijevica" },
+    cityIds: ["budva"] as const,
+    id: "cedis-foreign-1",
+  };
+  const requestedCityIds: string[] = [];
+  const result = await getCedisCityAlerts({
+    context: {
+      ...context,
+      city: {
+        ...context.city,
+        capabilities: ["electricity"],
+        id: "kotor",
+        isMain: false,
+        name: "Kotor",
+        slug: "kotor",
+      },
+    },
+    mode: "live",
+    readCache: async (cityId) => {
+      requestedCityIds.push(cityId);
+      return { ...cache("fresh"), alerts: [kotorAlert, foreignAlert], cityId };
+    },
+  });
+
+  assert.deepEqual(requestedCityIds, ["kotor"]);
+  assert.deepEqual(
+    result.alerts.map(({ cityIds }) => cityIds),
+    [["kotor"]],
+  );
+  assert.equal(
+    result.alerts[0]?.affectedArea.kind === "source" && result.alerts[0].affectedArea.value,
+    "Glavatičići",
+  );
+});

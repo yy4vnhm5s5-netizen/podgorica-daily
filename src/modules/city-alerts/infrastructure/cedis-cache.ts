@@ -118,7 +118,12 @@ function deserializeCedisCacheSnapshot(
     return undefined;
   }
 
-  if (!alerts.every((alert) => alert.cityIds.includes(cityId))) return undefined;
+  // CEDIS snapshots are per-city files. Reject a mixed-city snapshot rather
+  // than allowing a bad refresh or legacy artifact to surface another
+  // municipality's outage in this city's dashboard.
+  if (!alerts.every((alert) => alert.cityIds.length === 1 && alert.cityIds[0] === cityId)) {
+    return undefined;
+  }
 
   return {
     alerts,

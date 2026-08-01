@@ -5,6 +5,7 @@ import test from "node:test";
 import {
   discoverCedisArticles,
   getMunicipalitySections,
+  getMunicipalitySectionsByHeadingVariants,
   getPodgoricaSection,
   parseCedisArticle,
   parseCedisArticleResult,
@@ -257,6 +258,33 @@ test("extracts Kotor outages without leaking neighboring municipality sections",
   assert.equal(extraction.state, "found");
   assert.match(extraction.sections[0]!.section, /Škaljari/u);
   assert.doesNotMatch(extraction.sections[0]!.section, /Donja Lastva/u);
+});
+
+test("treats Andrijevica as a municipality boundary around the Kotor section", async () => {
+  const article = {
+    publishedAt: new Date("2026-08-02T12:00:00.000Z"),
+    title: "Planirani radovi za 3. avgust",
+    url: "https://cedis.me/servisne-informacije/planirani-radovi-za-3-avgust/",
+  };
+  const html = await fixture("cedis-andrijevica-kotor-tivat.html");
+
+  const kotor = parseCedisArticle(article, html, "kotor", fixedNow());
+  const andrijevica = getMunicipalitySectionsByHeadingVariants(html.replace(/<[^>]+>/g, " "), [
+    "Andrijevica",
+  ]);
+
+  assert.deepEqual(
+    kotor.map((alert) => alert.affectedArea.kind === "source" && alert.affectedArea.value),
+    ["Glavatičići – dio korisnika."],
+  );
+  assert.ok(kotor.every((alert) => alert.cityIds.every((cityId) => cityId === "kotor")));
+  assert.ok(kotor.every((alert) => !alert.affectedArea.value.includes("Andrijevica")));
+  assert.ok(kotor.every((alert) => !alert.affectedArea.value.includes("Donja Lastva")));
+
+  assert.equal(andrijevica.state, "found");
+  assert.equal(andrijevica.sections.length, 1);
+  assert.match(andrijevica.sections[0]!.section, /Trešnjevik/u);
+  assert.doesNotMatch(andrijevica.sections[0]!.section, /Glavatičići|Donja Lastva/u);
 });
 
 test("returns a safe not-found result for an unavailable municipality section", async () => {

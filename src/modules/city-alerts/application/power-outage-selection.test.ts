@@ -40,6 +40,19 @@ test("keeps all parsed locations and sorts every currently relevant outage", () 
   );
 });
 
+test("does not select an outage assigned to a different city", () => {
+  const kotor = { ...powerOutage("kotor", "Glavatičići"), cityIds: ["kotor"] as const };
+  const budva = {
+    ...powerOutage("budva", "Trešnjevik"),
+    cityIds: ["budva"] as const,
+  };
+
+  assert.deepEqual(
+    getRelevantPowerOutages([kotor, budva], "kotor").map(({ id }) => id),
+    ["kotor"],
+  );
+});
+
 test("keeps the status strip to one area and counts distinct remaining areas", () => {
   const primary = powerOutage("first", "Dučići, Koći");
   const next = powerOutage("second", "Koći, Medun");

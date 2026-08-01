@@ -55,7 +55,9 @@ async function getCedisCityAlerts({
   }
 
   return {
-    alerts: cache.alerts.map((alert) => refreshCedisAlertStatus(alert, now())),
+    alerts: cache.alerts
+      .filter((alert) => alert.cityIds.length === 1 && alert.cityIds[0] === cityId)
+      .map((alert) => refreshCedisAlertStatus(alert, now())),
     freshnessStatus: cache.freshnessStatus,
     lastSuccessfulUpdate: new Date(cache.lastSuccessfulRefreshAt),
     mode,

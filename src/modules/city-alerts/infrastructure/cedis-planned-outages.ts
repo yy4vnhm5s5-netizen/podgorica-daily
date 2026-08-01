@@ -6,6 +6,7 @@ import { getCedisCityId, getCedisMunicipality, type CedisSupportedCityId } from 
 
 const cedisOrigin = "https://cedis.me";
 const municipalityNames = [
+  "Andrijevica",
   "Podgorica",
   "Glavni grad Podgorica",
   "Nikšić",
@@ -279,6 +280,19 @@ function getMunicipalitySections(text: string, cityId: CedisSupportedCityId) {
   const municipality = getCedisMunicipality(cityId);
   if (!municipality) return { sections: [], state: "not-found" as const };
 
+  return getMunicipalitySectionsByHeadingVariants(text, municipality.headingVariants);
+}
+
+/**
+ * CEDIS publishes one document with sections for many municipalities. Keep
+ * boundary detection independent from Gradom-supported cities so a heading for
+ * any municipality — including one Gradom does not currently expose — ends the
+ * preceding section instead of being parsed as outage-area text.
+ */
+function getMunicipalitySectionsByHeadingVariants(
+  text: string,
+  headingVariants: readonly string[],
+) {
   const headings = [...text.matchAll(municipalityPattern)];
   // No municipality heading of any kind was recognized anywhere in the article. This is
   // distinct from "this city's heading specifically wasn't found" and is not city-specific:
@@ -287,7 +301,7 @@ function getMunicipalitySections(text: string, cityId: CedisSupportedCityId) {
   if (headings.length === 0) return { sections: [], state: "no-headings" as const };
 
   const requestedHeadingPattern = new RegExp(
-    `^(?:${municipality.headingVariants.map(escapeRegularExpression).join("|")})\\s*(?:[-–—:]\\s*)?$`,
+    `^(?:${headingVariants.map(escapeRegularExpression).join("|")})\\s*(?:[-–—:]\\s*)?$`,
     "i",
   );
   const requested = headings.filter((heading) => requestedHeadingPattern.test(heading[0].trim()));
@@ -534,6 +548,7 @@ export {
   cedisOrigin,
   discoverCedisArticles,
   getMunicipalitySections,
+  getMunicipalitySectionsByHeadingVariants,
   getPodgoricaSection,
   parseCedisArticle,
   parseCedisArticleResult,

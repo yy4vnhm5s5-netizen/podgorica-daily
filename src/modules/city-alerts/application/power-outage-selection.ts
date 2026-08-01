@@ -2,11 +2,16 @@ import type { CityAlert } from "../domain/city-alert.ts";
 
 const homepageLocationLimit = 6;
 
-function getRelevantPowerOutages(alerts: readonly CityAlert[]) {
+function getRelevantPowerOutages(
+  alerts: readonly CityAlert[],
+  cityId?: CityAlert["cityIds"][number],
+) {
   return alerts
     .filter(
       (alert) =>
-        alert.type === "powerOutage" && (alert.status === "active" || alert.status === "scheduled"),
+        alert.type === "powerOutage" &&
+        (alert.status === "active" || alert.status === "scheduled") &&
+        (cityId === undefined || alert.cityIds.includes(cityId)),
     )
     .toSorted((left, right) => getAlertTime(left) - getAlertTime(right));
 }
