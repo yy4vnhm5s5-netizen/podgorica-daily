@@ -76,6 +76,14 @@ interface GoingOutParseResult {
   warnings: string[];
 }
 
+interface MonteGigsEventLink {
+  cityId: string;
+  content: string;
+  href: string;
+  index: number;
+  raw: string;
+}
+
 interface GoingOutRefreshResult {
   acceptedEvents: number;
   errorCode?: string;
@@ -222,30 +230,24 @@ function parseMonteGigsEvents(
     };
   }
 
-  const cityPath = escapeRegularExpression(source.cityId);
-  const eventLinks = [
-    ...html.matchAll(
-      new RegExp(
-        `<a\\b[^>]*href=["']([^"']*\\/me\\/events\\/${cityPath}\\/\\d+-\\d{8}-[^"']+)["'][^>]*>([\\s\\S]*?)<\\/a>`,
-        "gi",
-      ),
-    ),
-  ];
+  const listing = extractMonteGigsListingContent(html);
+  const allEventLinks = findMonteGigsEventLinks(listing);
+  const eventLinks = allEventLinks.filter(({ cityId }) => cityId === source.cityId);
   const recognized = eventLinks.length > 0;
   const events: GoingOutEvent[] = [];
   let rejected = 0;
 
-  for (const [index, match] of eventLinks.entries()) {
-    const nextIndex = eventLinks[index + 1]?.index ?? html.length;
-    const cardWindow = html.slice(
-      match.index ?? 0,
-      Math.min(nextIndex, (match.index ?? 0) + 6_000),
-    );
-    const sourceUrl = new URL(match[1], source.listingUrl).toString();
+  for (const eventLink of eventLinks) {
+    const cardWindow = extractMonteGigsEventWindow(listing, eventLink, allEventLinks);
+    const sourceUrl = new URL(eventLink.href, source.listingUrl).toString();
     const startDate = dateFromMonteGigsUrl(sourceUrl);
-    const title = plainText(match[2]) || firstHeading(cardWindow) || "";
+    const title =
+      firstHeading(eventLink.content) ||
+      plainText(eventLink.content) ||
+      firstHeading(cardWindow) ||
+      "";
     const imageUrl = monteGigsImageUrl(
-      firstImage(match[0]) || firstImage(cardWindow),
+      firstImage(eventLink.raw) || firstImage(cardWindow),
       source.listingUrl,
     );
     const event = normalizeGoingOutEvent({
@@ -434,8 +436,76 @@ function monteGigsImageUrl(value: string | undefined, sourceUrl: string) {
   }
 }
 
-function escapeRegularExpression(value: string) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+function findMonteGigsEventLinks(value: string): MonteGigsEventLink[] {
+  return [
+    ...value.matchAll(
+      /<a\b[^>]*href=["']([^"']*\/me\/events\/([a-z0-9-]+)\/\d+-\d{8}-[^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi,
+    ),
+  ].flatMap((match) => {
+    const index = match.index;
+    const href = match[1];
+    const cityId = match[2];
+    const content = match[3];
+    if (index === undefined || !href || !cityId || content === undefined) return [];
+    return [{ cityId, content, href, index, raw: match[0] }];
+  });
+}
+
+function extractMonteGigsListingContent(html: string) {
+  const main = /<main\b[^>]*>([\s\S]*?)<\/main>/i.exec(html)?.[1] ?? html;
+  return main.replace(
+    /<(aside|footer|nav|noscript|script|style|svg|template)\b[\s\S]*?<\/\1>/gi,
+    " ",
+  );
+}
+
+function extractMonteGigsEventWindow(
+  listing: string,
+  eventLink: MonteGigsEventLink,
+  eventLinks: readonly MonteGigsEventLink[],
+) {
+  const card = findContainingEventCard(listing, eventLink);
+  if (card) return card;
+
+  const eventIndex = eventLinks.indexOf(eventLink);
+  const nextIndex = eventLinks[eventIndex + 1]?.index ?? listing.length;
+  return listing.slice(eventLink.index, Math.min(nextIndex, eventLink.index + 6_000));
+}
+
+function findContainingEventCard(listing: string, eventLink: MonteGigsEventLink) {
+  const candidates = [
+    ...findElementBlocks(listing, "article"),
+    ...findElementBlocks(listing, "li"),
+    ...findClassEventCardBlocks(listing),
+  ]
+    .filter(({ end, start, value }) => {
+      const containsLink = start <= eventLink.index && eventLink.index < end;
+      return containsLink && findMonteGigsEventLinks(value).length === 1;
+    })
+    .sort((left, right) => left.value.length - right.value.length);
+  return candidates[0]?.value;
+}
+
+function findElementBlocks(value: string, tagName: "article" | "li") {
+  return [
+    ...value.matchAll(new RegExp(`<${tagName}\\b[^>]*>[\\s\\S]*?<\\/${tagName}>`, "gi")),
+  ].flatMap((match) => {
+    const start = match.index;
+    if (start === undefined) return [];
+    return [{ end: start + match[0].length, start, value: match[0] }];
+  });
+}
+
+function findClassEventCardBlocks(value: string) {
+  return [
+    ...value.matchAll(
+      /<div\b(?=[^>]*\bclass=["'][^"']*\b(?:event-card|event-item)\b[^"']*["'])[^>]*>[\s\S]*?<\/div>/gi,
+    ),
+  ].flatMap((match) => {
+    const start = match.index;
+    if (start === undefined) return [];
+    return [{ end: start + match[0].length, start, value: match[0] }];
+  });
 }
 
 function dateFromMonteGigsUrl(sourceUrl: string) {
@@ -465,17 +535,28 @@ function firstImage(value: string) {
 }
 
 function extractTime(value: string) {
-  const match = value.match(/\b(?:u|od)\s*(\d{1,2})[:.](\d{2})\b/i);
+  const match = extractEventMetadata(value).match(/\b(?:u|od)\s*(\d{1,2})[:.](\d{2})\b/i);
   return match ? `${match[1]}:${match[2]}` : undefined;
 }
 
 function extractVenue(value: string) {
-  const text = plainText(value);
+  const text = extractEventMetadata(value);
   return text
     .match(
       /\b\d{1,2}\.?\s+(?:jan|feb|mar|apr|maj|jun|jul|avg|sep|okt|nov|dec)[a-z]*\s*•\s*([^•]+)/i,
     )?.[1]
     ?.trim();
+}
+
+function extractEventMetadata(value: string) {
+  const elements = [...value.matchAll(/<(div|p|span|time)\b[^>]*>([\s\S]*?)<\/\1>/gi)].map(
+    (match) => plainText(match[2]),
+  );
+  return (
+    elements.find((text) =>
+      /\b\d{1,2}\.?\s+(?:jan|feb|mar|apr|maj|jun|jul|avg|sep|okt|nov|dec)[a-z]*\s*•/i.test(text),
+    ) ?? ""
+  );
 }
 
 const goingOutEventSchema = z.object({

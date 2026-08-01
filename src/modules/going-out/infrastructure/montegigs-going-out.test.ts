@@ -23,6 +23,11 @@ const podgoricaFixturePath = join(
 );
 const budvaFixturePath = join(import.meta.dirname, "__fixtures__", "montegigs-budva-listing.html");
 const kotorFixturePath = join(import.meta.dirname, "__fixtures__", "montegigs-kotor-listing.html");
+const kotorBoundariesFixturePath = join(
+  import.meta.dirname,
+  "__fixtures__",
+  "montegigs-kotor-event-boundaries.html",
+);
 const podgorica = createCityContext("podgorica");
 const budva = createCityContext("budva");
 const tivat = createCityContext("tivat");
@@ -105,6 +110,47 @@ test("parses Kotor events through the shared city-aware MonteGigs parser", async
     ],
   );
   assert.equal(parsed.events[0]?.imageUrl, "https://staging.montegigs.me/images/kotor-sunset.jpg");
+});
+
+test("keeps Kotor event metadata within its own card boundaries", async () => {
+  const parsed = parseMonteGigsEvents(
+    await readFile(kotorBoundariesFixturePath, "utf8"),
+    kotor,
+    new Date("2026-07-22T10:00:00.000Z"),
+  );
+
+  assert.equal(parsed.records, 2);
+  assert.deepEqual(
+    parsed.events.map(({ imageUrl, sourceUrl, startsAt, title, venue }) => ({
+      imageUrl,
+      sourceUrl,
+      startsAt,
+      title,
+      venue,
+    })),
+    [
+      {
+        imageUrl: "https://staging.montegigs.me/images/kotor-concert.jpg",
+        sourceUrl: "https://staging.montegigs.me/me/events/kotor/7465-20260812-koncert-u-kotoru",
+        startsAt: "2026-08-12T18:30:00.000Z",
+        title: "Koncert u Kotoru",
+        venue: "Pjaca od kina",
+      },
+      {
+        imageUrl: "https://staging.montegigs.me/images/kotor-evening.jpg",
+        sourceUrl: "https://staging.montegigs.me/me/events/kotor/7467-20260813-vecernji-program",
+        startsAt: undefined,
+        title: "Večernji program",
+        venue: "Stari grad",
+      },
+    ],
+  );
+  assert.ok(
+    parsed.events.every(
+      ({ title, venue = "" }) =>
+        !/(?:Andrijevica|Bar|Footer event|Legitiman opis)/iu.test(`${title} ${venue}`),
+    ),
+  );
 });
 
 test("retains a valid cache when the listing no longer exposes event links", async () => {
