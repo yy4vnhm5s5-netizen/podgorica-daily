@@ -1,5 +1,6 @@
 import {
   ArrowRight,
+  Castle,
   CalendarDays,
   CloudSun,
   Film,
@@ -62,6 +63,7 @@ const shortcutStyle = "bg-muted text-foreground hover:bg-muted/70";
 // landmark glyph and a neutral tint rather than requiring a code change to render at all.
 const cityIdentityIcons: Record<string, ComponentType<SVGProps<SVGSVGElement>>> = {
   budva: CitadelIcon,
+  kotor: Castle,
   podgorica: MillenniumBridgeIcon,
   tivat: MarinaSailIcon,
 };
@@ -69,6 +71,7 @@ const cityIdentityIcons: Record<string, ComponentType<SVGProps<SVGSVGElement>>> 
 // Restrained per-city identity accents (see globals.css) — a subtle surface tint, not a theme.
 const cityIdentityStyles: Record<string, string> = {
   budva: "bg-[hsl(var(--accent-budva-soft))] text-[hsl(var(--accent-budva))]",
+  kotor: "bg-slate-100 text-slate-700",
   podgorica: "bg-[hsl(var(--accent-podgorica-soft))] text-[hsl(var(--accent-podgorica))]",
   tivat: "bg-[hsl(var(--accent-tivat-soft))] text-[hsl(var(--accent-tivat))]",
 };

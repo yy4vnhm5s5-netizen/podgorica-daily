@@ -64,9 +64,9 @@ function PlatformCitySelector({ cards }: { cards: readonly PlatformCityCardData[
 
   return (
     <div className="space-y-4">
-      <nav aria-label="Izaberite grad" className="-mx-1 overflow-x-auto px-1 pb-1">
+      <nav aria-label="Izaberite grad" className="px-1 sm:-mx-1 sm:overflow-x-auto sm:px-1 sm:pb-1">
         <div
-          className="flex min-w-max gap-1 rounded-xl border border-border/70 bg-muted/50 p-1"
+          className="flex flex-wrap gap-1 rounded-xl border border-border/70 bg-muted/50 p-1 sm:min-w-max sm:flex-nowrap"
           role="tablist"
         >
           {cards.map((card) => {
@@ -77,7 +77,7 @@ function PlatformCitySelector({ cards }: { cards: readonly PlatformCityCardData[
                 aria-controls={platformCityPanelId}
                 aria-selected={isSelected}
                 className={cn(
-                  "flex min-h-11 items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+                  "flex min-h-11 items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:px-3",
                   isSelected
                     ? "bg-background text-foreground shadow-sm"
                     : "text-slate-700 hover:text-foreground",
