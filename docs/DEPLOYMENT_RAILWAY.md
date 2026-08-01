@@ -35,18 +35,16 @@ sh -c 'curl --fail-with-body --silent --show-error --max-time 120 --write-out "\
 
 The trigger never mounts or writes `/app/.runtime`; the Web service owns the mounted cache, lock, and atomic cache writes. The request body, query string, and URL cannot choose a provider or source URL. The fixed CEDIS endpoint invokes the existing sequential collector for every active city with an electricity capability and approved CEDIS municipality mapping; its response includes one safe result per city.
 
-| Job                                                | Railway cron (UTC)        | Endpoint                                         | Web secret                       |
-| -------------------------------------------------- | ------------------------- | ------------------------------------------------ | -------------------------------- |
-| Flights, every 15 minutes                          | `*/15 * * * *`            | `/api/internal/flights/refresh`                  | `FLIGHTS_REFRESH_SECRET`         |
-| VIK, every 30 minutes                              | `*/30 * * * *`            | `/api/internal/vikpg/refresh`                    | `VIKPG_REFRESH_SECRET`           |
-| Vodovod Kotor, every two hours                     | `20 */2 * * *`            | `/api/internal/vodovod-kotor/refresh`            | `INTERNAL_REFRESH_TOKEN`         |
-| CEDIS, every two hours for active supported cities | `25 */2 * * *`            | `/api/internal/cedis/refresh`                    | `CEDIS_REFRESH_SECRET`           |
-| Standard Events, every three hours                 | `5 */3 * * *`             | `/api/internal/events/standard/refresh`          | `STANDARD_EVENTS_REFRESH_SECRET` |
-| Going Out — Podgorica, every three hours           | `35 */3 * * *`            | `/api/internal/going-out/refresh?city=podgorica` | `GOING_OUT_REFRESH_SECRET`       |
-| Going Out — Budva, every three hours, staggered    | `40 */3 * * *`            | `/api/internal/going-out/refresh?city=budva`     | `GOING_OUT_REFRESH_SECRET`       |
-| Going Out — Kotor, every three hours, staggered    | `45 */3 * * *`            | `/api/internal/going-out/refresh?city=kotor`     | `GOING_OUT_REFRESH_SECRET`       |
-| Cineplexx, 05:00 and 17:00 Podgorica time          | see daylight-saving table | `/api/internal/cineplexx/refresh`                | `CINEPLEXX_REFRESH_SECRET`       |
-| ŽPCG, 06:45 and 18:45 Podgorica time               | see daylight-saving table | `/api/internal/zpcg/refresh`                     | `ZPCG_RAILWAY_REFRESH_SECRET`    |
+| Job                                                          | Railway cron (UTC)        | Endpoint                                | Web secret                       |
+| ------------------------------------------------------------ | ------------------------- | --------------------------------------- | -------------------------------- |
+| Flights, every 15 minutes                                    | `*/15 * * * *`            | `/api/internal/flights/refresh`         | `FLIGHTS_REFRESH_SECRET`         |
+| VIK, every 30 minutes                                        | `*/30 * * * *`            | `/api/internal/vikpg/refresh`           | `VIKPG_REFRESH_SECRET`           |
+| Vodovod Kotor, every two hours                               | `20 */2 * * *`            | `/api/internal/vodovod-kotor/refresh`   | `INTERNAL_REFRESH_TOKEN`         |
+| CEDIS, every two hours for active supported cities           | `25 */2 * * *`            | `/api/internal/cedis/refresh`           | `CEDIS_REFRESH_SECRET`           |
+| Standard Events, every three hours                           | `5 */3 * * *`             | `/api/internal/events/standard/refresh` | `STANDARD_EVENTS_REFRESH_SECRET` |
+| Going Out, every three hours for all active supported cities | `35 */3 * * *`            | `/api/internal/going-out/refresh`       | `GOING_OUT_REFRESH_SECRET`       |
+| Cineplexx, 05:00 and 17:00 Podgorica time                    | see daylight-saving table | `/api/internal/cineplexx/refresh`       | `CINEPLEXX_REFRESH_SECRET`       |
+| ŽPCG, 06:45 and 18:45 Podgorica time                         | see daylight-saving table | `/api/internal/zpcg/refresh`            | `ZPCG_RAILWAY_REFRESH_SECRET`    |
 
 Configure each trigger with its own explicit variables and command:
 
@@ -70,12 +68,13 @@ sh -c 'curl --fail-with-body --silent --show-error --max-time 120 --write-out "\
 # Standard Events: /api/internal/events/standard/refresh + STANDARD_EVENTS_REFRESH_SECRET
 sh -c 'curl --fail-with-body --silent --show-error --max-time 120 --write-out "\n" --request POST --header "Authorization: Bearer $REFRESH_SECRET" "$REFRESH_URL"'
 
-# Going Out uses one allowlisted city per trigger. The endpoint defaults to
-# Podgorica only when no city query is present, so configure each active approved city.
-# Podgorica: /api/internal/going-out/refresh?city=podgorica
-# Budva: /api/internal/going-out/refresh?city=budva
-# Kotor: /api/internal/going-out/refresh?city=kotor
-# Both REFRESH_SECRET values reference GOING_OUT_REFRESH_SECRET.
+# Going Out: /api/internal/going-out/refresh + GOING_OUT_REFRESH_SECRET.
+# With no `city` query this endpoint sequentially refreshes every active city that has the
+# `goingOut` capability and an approved MonteGigs source. New approved cities join this job through
+# the shared city registry; do not create one cron per city. `?city=podgorica`, `?city=budva`,
+# `?city=tivat`, and `?city=kotor` remain available only for targeted diagnostics or manual repair.
+# After deploying and verifying this combined endpoint, remove legacy city-specific Going Out cron
+# services (including any duplicate Budva trigger) so only this one Going Out cron remains.
 sh -c 'curl --fail-with-body --silent --show-error --max-time 120 --write-out "\n" --request POST --header "Authorization: Bearer $REFRESH_SECRET" "$REFRESH_URL"'
 
 # Cineplexx: /api/internal/cineplexx/refresh + CINEPLEXX_REFRESH_SECRET

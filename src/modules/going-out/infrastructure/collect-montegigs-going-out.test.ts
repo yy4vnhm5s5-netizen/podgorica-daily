@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  getActiveMonteGigsGoingOutContexts,
   runActiveMonteGigsGoingOutCollectors,
   runMonteGigsGoingOutCollector,
 } from "./collect-montegigs-going-out.ts";
@@ -133,5 +134,38 @@ test("sequentially refreshes every active city with an approved Going Out source
   assert.deepEqual(
     results.map(({ cityId }) => cityId),
     ["podgorica", "budva"],
+  );
+});
+
+test("derives the current active Going Out city set from the shared registry", () => {
+  const cityIds = getActiveMonteGigsGoingOutContexts()
+    .map((context) => context.city.id)
+    .sort();
+
+  assert.deepEqual(cityIds, ["budva", "kotor", "podgorica", "tivat"]);
+});
+
+test("keeps a failed city independent from successful active-city collector results", async () => {
+  const podgorica = createCityContext("podgorica");
+  const budva = createCityContext("budva");
+  const results = await runActiveMonteGigsGoingOutCollectors({
+    cities: [podgorica.city, budva.city],
+    createContext: (cityId) => (cityId === "budva" ? budva : podgorica),
+    runCollector: async (context) => ({
+      cityId: context.city.id,
+      exitCode: context.city.id === "budva" ? 1 : 0,
+      output: "",
+      refresh: null,
+      snapshotState: "not-run",
+      state: context.city.id === "budva" ? "failed" : "success",
+    }),
+  });
+
+  assert.deepEqual(
+    results.map(({ cityId, state }) => ({ cityId, state })),
+    [
+      { cityId: "podgorica", state: "success" },
+      { cityId: "budva", state: "failed" },
+    ],
   );
 });

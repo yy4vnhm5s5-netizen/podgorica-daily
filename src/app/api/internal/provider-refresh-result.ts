@@ -31,6 +31,12 @@ interface MultiCityFlightsRefreshEndpointResult {
   state: RefreshEndpointState;
 }
 
+interface MultiCityGoingOutRefreshEndpointResult {
+  cities: readonly ProviderRefreshEndpointResult[];
+  provider: "montegigs-going-out";
+  state: RefreshEndpointState;
+}
+
 interface MultiCitySeaWaterQualityRefreshEndpointResult {
   cities: readonly ProviderRefreshEndpointResult[];
   provider: "sea-water-quality";
@@ -155,6 +161,18 @@ function toGoingOutRefreshEndpointResult(
   );
 }
 
+function toMultiCityGoingOutRefreshEndpointResult(
+  results: readonly GoingOutCollectorResult[],
+): MultiCityGoingOutRefreshEndpointResult {
+  const cities = results.map((result) => toGoingOutRefreshEndpointResult(result));
+
+  return {
+    cities,
+    provider: "montegigs-going-out",
+    state: aggregateMultiCityRefreshState(cities),
+  };
+}
+
 function toZpcgRefreshEndpointResult(result: ZpcgCollectorResult): ProviderRefreshEndpointResult {
   return toSingleProviderRefreshEndpointResult(
     "zpcg-railway",
@@ -273,6 +291,7 @@ export {
   toEventRefreshEndpointResult,
   toFlightsRefreshEndpointResult,
   toGoingOutRefreshEndpointResult,
+  toMultiCityGoingOutRefreshEndpointResult,
   toMultiCityAlertRefreshEndpointResult,
   toMultiCityFlightsRefreshEndpointResult,
   toMultiCitySeaWaterQualityRefreshEndpointResult,
@@ -281,6 +300,7 @@ export {
   type EventRefreshEndpointResult,
   type MultiCityAlertRefreshEndpointResult,
   type MultiCityFlightsRefreshEndpointResult,
+  type MultiCityGoingOutRefreshEndpointResult,
   type MultiCitySeaWaterQualityRefreshEndpointResult,
   type ProviderRefreshEndpointResult,
 };
