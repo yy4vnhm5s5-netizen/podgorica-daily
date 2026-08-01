@@ -15,7 +15,7 @@ The parser consumes saved rendered HTML fixtures. It creates one normalized `mov
 
 The collector writes `.runtime/cache/cineplexx-events.json` atomically through the shared Event cache contract. It runs through the existing Event refresh runner and retains the previous valid snapshot when browser rendering, parsing, or quality validation fails. Cache reads remain the only application read path. `ENABLE_EVENTS=true` and `EVENT_PROVIDER_MODE=live` are required.
 
-The existing scheduler invokes `pnpm run collect:cineplexx-events` at approximately 05:00 and 17:00 host-local time. `CINEPLEXX_CACHE_FRESHNESS_MINUTES=780` keeps a successful programme fresh for thirteen hours, matching the cadence while allowing a bounded delay. It uses the same scheduler service and persistent cache volume as other collectors; no additional cron service is introduced.
+The scheduler invokes `pnpm run collect:cineplexx-events` once daily. Railway uses its separately configured daily 04:00 UTC trigger; the local Compose scheduler uses one local-time run. `CINEPLEXX_CACHE_FRESHNESS_MINUTES=780` keeps a successful programme fresh for thirteen hours while allowing a bounded delay. It uses the same scheduler service and persistent cache volume as other collectors; no additional cron service is introduced.
 
 ## Consequences
 

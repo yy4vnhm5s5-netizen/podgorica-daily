@@ -17,6 +17,7 @@
     "collect:zpcg-railway": "node --experimental-strip-types src/modules/transport/infrastructure/collect-zpcg-railway.ts",
     "collect:podgorica-flights": "node --experimental-strip-types src/modules/flights/infrastructure/collect-podgorica-flights.ts",
     "collect:montegigs-going-out": "node --experimental-strip-types src/modules/going-out/infrastructure/collect-montegigs-going-out.ts",
+    "collect:sea-water-quality": "node --experimental-strip-types src/modules/sea-water-quality/infrastructure/collect-budva-sea-water-quality.ts",
     "collect:budva-sea-water-quality": "node --experimental-strip-types src/modules/sea-water-quality/infrastructure/collect-budva-sea-water-quality.ts",
     "collect:kic-events": "node --experimental-strip-types src/modules/events/infrastructure/collect-kic-events.ts",
     "collect:cnp-events": "node --experimental-strip-types src/modules/events/infrastructure/collect-cnp-events.ts",
