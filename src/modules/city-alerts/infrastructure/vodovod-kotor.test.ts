@@ -64,6 +64,49 @@ test("normalizes interruption and drinking-water notices only when an explicit a
   assert.equal(drinkingWater.alerts[0]?.affectedArea.value, "Risna");
 });
 
+test("uses the municipality fallback for municipality-wide or ambiguous notices", async () => {
+  const municipalityWide = parseVodovodKotorNotice(
+    {
+      title: "Obavještenje o vodosnabdijevanju",
+      url: "https://vodovodkotor.com/servisne-informacije/93/",
+    },
+    await fixture("vodovod-kotor-municipality-wide.html"),
+    now,
+  );
+  const ambiguous = parseVodovodKotorNotice(
+    {
+      title: "Obavještenje o vodosnabdijevanju",
+      url: "https://vodovodkotor.com/servisne-informacije/94/",
+    },
+    "<main><h1>Obavještenje o vodosnabdijevanju</h1><p>Zbog otežanog vodosnabdijevanja preduzimaju se mjere.</p></main>",
+    now,
+  );
+
+  for (const result of [municipalityWide, ambiguous]) {
+    assert.equal(result.alerts.length, 1);
+    assert.equal(result.alerts[0]?.affectedArea.value, "Opština Kotor");
+    assert.deepEqual(result.warnings, []);
+    assert.ok(
+      result.alerts.every(
+        ({ affectedArea }) =>
+          !/(?:opštine\s+kotor|području\s+opštine\s+kotor)/i.test(affectedArea.value),
+      ),
+    );
+  }
+});
+
+test("keeps structured tanker locations ahead of the municipality fallback", async () => {
+  const [notice] = discoverVodovodKotorNotices(await fixture("vodovod-kotor-listing.html"), now);
+  assert.ok(notice);
+
+  const parsed = parseVodovodKotorNotice(notice, await fixture("vodovod-kotor-tanker.html"), now);
+
+  assert.deepEqual(
+    parsed.alerts.map(({ affectedArea }) => affectedArea.value),
+    ["Tabačina", "Plagenti"],
+  );
+});
+
 test("retains the previous snapshot when every discovered Kotor detail page is unavailable", async () => {
   const listing = await fixture("vodovod-kotor-listing.html");
   const tanker = await fixture("vodovod-kotor-tanker.html");

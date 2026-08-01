@@ -18,6 +18,7 @@ import type { ProviderMetadata } from "@/shared/types/provider";
 const vodovodKotorOrigin = "https://vodovodkotor.com";
 const vodovodKotorServiceInformationUrl = `${vodovodKotorOrigin}/servisne-informacije/`;
 const maximumResponseLength = 1_000_000;
+const vodovodKotorMunicipalityArea = "Opština Kotor";
 
 type VodovodKotorFreshnessStatus = "fresh" | "stale" | "unavailable";
 type VodovodKotorProviderMode = "disabled" | "live";
@@ -208,15 +209,15 @@ function parseVodovodKotorNotice(notice: VodovodKotorNoticeLink, html: string, n
           }),
         )
       : (() => {
-          const area = extractAffectedArea(content);
-          return area
-            ? [createVodovodKotorAlert({ area, content, notice, publishedAt, title, type, now })]
-            : [];
+          const area = extractAffectedArea(content) ?? vodovodKotorMunicipalityArea;
+          return [
+            createVodovodKotorAlert({ area, content, notice, publishedAt, title, type, now }),
+          ];
         })();
   return {
     alerts,
     contentRecognized: true,
-    warnings: alerts.length > 0 ? [] : ["affected-area-unrecognized"],
+    warnings: [],
   };
 }
 
@@ -308,7 +309,12 @@ function extractAffectedArea(value: string) {
     /\b(?:potrošač\w*|stanovnik\w*)\s+(?:u|na)\s+([^,.]+?)(?=[,.]|\s+(?:da|će|je|su|zbog|radi)\b|$)/i,
   ];
   const match = patterns.map((pattern) => pattern.exec(value)?.[1]).find(Boolean);
-  return match ? normalizeText(match) : undefined;
+  const area = match ? normalizeText(match) : undefined;
+  return area && !isKotorMunicipalityPhrase(area) ? area : undefined;
+}
+
+function isKotorMunicipalityPhrase(value: string) {
+  return /^(?:(?:na\s+)?području\s+)?opštine\s+kotor$/i.test(value);
 }
 
 function parseTimeRange(value: string) {
