@@ -54,7 +54,7 @@ function DashboardLayout({ children, city, homeHref, translations }: DashboardLa
   const isCityScoped = homeHref === undefined;
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-background pb-[calc(5rem+env(safe-area-inset-bottom))] text-foreground md:pb-0">
+    <div className="city-page-surface relative min-h-screen overflow-hidden pb-[calc(5rem+env(safe-area-inset-bottom))] text-foreground md:pb-0">
       {isCityScoped ? <PageAtmosphere /> : <PageContourMotif />}
       <a
         className="absolute left-4 top-4 z-50 -translate-y-20 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-transform focus:translate-y-0"

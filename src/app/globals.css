@@ -59,6 +59,13 @@
 }
 
 @layer components {
+  .city-page-surface {
+    background:
+      radial-gradient(ellipse at 15% 5%, rgb(96 165 250 / 0.1) 0%, rgb(96 165 250 / 0) 38%),
+      radial-gradient(ellipse at 85% 8%, rgb(139 92 246 / 0.08) 0%, rgb(139 92 246 / 0) 42%),
+      #f8fafc;
+  }
+
   .card-fog {
     isolation: isolate;
     overflow: hidden;
