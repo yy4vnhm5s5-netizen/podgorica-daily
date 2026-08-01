@@ -37,11 +37,16 @@ interface CityAlertsOverviewData {
   status: "available" | "unavailable";
 }
 
+interface ActiveCityAlertsDependencies {
+  getProviderData?: typeof getCityAlertProviderData;
+}
+
 async function getActiveCityAlerts(
   context: CityContext = getDefaultCityContext(),
+  { getProviderData = getCityAlertProviderData }: ActiveCityAlertsDependencies = {},
 ): Promise<CityAlertsResult> {
   try {
-    const [cedis, water] = await getCityAlertProviderData(context);
+    const [cedis, water] = await getProviderData(context);
     const serviceIds = getCityAlertServiceIds(context.city);
     const sources: CityAlertsSourceMetadata[] = [
       ...(serviceIds.includes("power")

@@ -454,7 +454,13 @@ async function readVodovodKotorCache(
   try {
     const value = JSON.parse(await fileSystem.readFile(cachePath, "utf8")) as unknown;
     if (!isVodovodKotorCacheSnapshot(value)) return null;
-    return { ...value, freshnessStatus: calculateVodovodKotorFreshness(new Date(value.fetchedAt)) };
+    const alerts = deserializeCityAlerts(value.alerts);
+    if (!alerts) return null;
+    return {
+      ...value,
+      alerts,
+      freshnessStatus: calculateVodovodKotorFreshness(new Date(value.fetchedAt)),
+    };
   } catch (error) {
     if (typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT")
       return null;
