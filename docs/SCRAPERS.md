@@ -64,6 +64,10 @@ Quality policy is server configuration; availability and quality health are sepa
 
 Future event sources require their own official-source, legal, attribution, cache, fixture, and disable-switch review before registration or activation.
 
+## JPMD sea-water-quality monitoring
+
+Javno preduzeće za upravljanje morskim dobrom Crne Gore (JPMD) is the approved official source for beach water-quality monitoring. The collector uses only the public monitoring calendar and `crtajMapu` endpoints on `monitoring.morskodobro.me`, requests an explicitly mapped municipality and current calendar round, and performs no collection during visitor requests. Current summaries and bounded, per-city seasonal history snapshots are atomically written separately. History is keyed by the official monitoring location id within the configured municipality; the first observed clean public slug is retained across later display-name changes, and repeating the same source round replaces that round's measurement rather than duplicating it. Public beach listing, detail metadata, sitemap generation, and detail pages read these local snapshots only. Full raw official round fixtures are retained only as parser/identity evidence and are never served publicly.
+
 ## Privacy
 
 Collectors must not gather personal data unless a documented lawful purpose, retention policy, access control, and deletion process are approved. Credentials and raw restricted content never appear in logs or test fixtures.

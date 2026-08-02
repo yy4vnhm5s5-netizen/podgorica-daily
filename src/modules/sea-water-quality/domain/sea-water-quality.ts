@@ -12,10 +12,41 @@ interface SeaWaterQualityGradeCounts {
 }
 
 interface SeaWaterQualityLocation {
+  beachName?: string;
   grade: SeaWaterQualityGrade;
   id: number;
   name: string;
+  samplingDateTime?: string;
   samplingDate?: string;
+}
+
+interface SeaWaterQualityHistoryMeasurement {
+  grade: SeaWaterQualityGrade;
+  samplingDate?: string;
+  samplingDateTime?: string;
+  sourceRound: number;
+}
+
+// A JPMD monitoring point is identified by the official source id within its municipality.
+// The human-facing canonicalSlug is deliberately stored once when the point is first observed:
+// a later editorial rename updates displayName without changing its public URL.
+interface SeaWaterQualityHistoryLocation {
+  beachName?: string;
+  canonicalSlug: string;
+  displayName: string;
+  firstSeenRound: number;
+  lastSeenRound: number;
+  measurements: SeaWaterQualityHistoryMeasurement[];
+  presentInLatestRound: boolean;
+  sourceLocationId: number;
+}
+
+interface SeaWaterQualityHistory {
+  latestRound: number;
+  locations: SeaWaterQualityHistoryLocation[];
+  municipality: SeaWaterQualityMunicipality;
+  sourceMunicipalityId: number;
+  year: number;
 }
 
 interface SeaWaterQualitySummary {
@@ -34,6 +65,9 @@ export {
   createEmptySeaWaterQualityGradeCounts,
   type SeaWaterQualityGrade,
   type SeaWaterQualityGradeCounts,
+  type SeaWaterQualityHistory,
+  type SeaWaterQualityHistoryLocation,
+  type SeaWaterQualityHistoryMeasurement,
   type SeaWaterQualityLocation,
   type SeaWaterQualityMunicipality,
   type SeaWaterQualitySummary,

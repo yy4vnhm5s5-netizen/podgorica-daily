@@ -8,7 +8,10 @@ import {
   type SeaWaterQualitySummary,
 } from "../domain/sea-water-quality.ts";
 import { morskodobroOrigin } from "./morskodobro-http-client.ts";
-import { seaWaterQualityMunicipalities } from "./sea-water-quality-cities.ts";
+import {
+  getSeaWaterQualityMunicipality,
+  seaWaterQualityMunicipalities,
+} from "./sea-water-quality-cities.ts";
 
 // Kept for backward compatibility with existing callers/tests; sourced from the shared
 // multi-city config in sea-water-quality-cities.ts so the confirmed id (2) is defined once.
@@ -40,9 +43,12 @@ const mapResponseSchema = z
         .object({
           datumUzorkovanja: z.string(),
           id: z.number(),
+          kalendar: z.number().optional(),
           naziv: z.string(),
           opstina: z.string(),
+          plaza: z.string().nullable().optional(),
           tezina: z.number(),
+          vrijemeUzorkovanja: z.string().optional(),
         })
         .passthrough(),
     ),
@@ -87,6 +93,7 @@ function parseCurrentRoundId(body: string): number | undefined {
 }
 
 interface BudvaSeaWaterQualityParseResult {
+  sourceRound?: number;
   summary: SeaWaterQualitySummary;
   warnings: string[];
 }
@@ -101,29 +108,47 @@ function parseBudvaSeaWaterQualitySummary(
   const result = mapResponseSchema.safeParse(parsed);
   if (!result.success) return undefined;
 
+  const sourceMunicipality = getSeaWaterQualityMunicipality(municipality);
+  if (!sourceMunicipality) return undefined;
+  const containsOtherMunicipalities = result.data.mjerenja.some(
+    (measurement) => measurement.opstina !== sourceMunicipality.sourceMunicipalityName,
+  );
+  const measurements = containsOtherMunicipalities
+    ? result.data.mjerenja.filter(
+        (measurement) => measurement.opstina === sourceMunicipality.sourceMunicipalityName,
+      )
+    : result.data.mjerenja;
   const gradeCounts = createEmptySeaWaterQualityGradeCounts();
   const warnings = new Set<string>();
-  for (const [tezina, count] of result.data.sumarno) {
-    const grade = gradeByTezina[tezina];
-    if (grade) {
-      gradeCounts[grade] += count;
-    } else {
-      // The provider's severity codes are a fixed 1-4 scale today. Surfacing an unrecognized
-      // code as a warning (rather than silently dropping it) means totalLocations diverging
-      // from the sum of the displayed grade counts gets noticed immediately instead of quietly
-      // producing a summary that no longer adds up.
-      warnings.add(`sea-water-quality-unknown-tezina:${tezina}`);
+  if (containsOtherMunicipalities) {
+    for (const measurement of measurements) {
+      const grade = gradeByTezina[measurement.tezina];
+      if (grade) gradeCounts[grade] += 1;
+      else warnings.add(`sea-water-quality-unknown-tezina:${measurement.tezina}`);
+    }
+  } else {
+    for (const [tezina, count] of result.data.sumarno) {
+      const grade = gradeByTezina[tezina];
+      if (grade) {
+        gradeCounts[grade] += count;
+      } else {
+        // The provider's severity codes are a fixed 1-4 scale today. Surfacing an unrecognized
+        // code as a warning (rather than silently dropping it) means totalLocations diverging
+        // from the sum of the displayed grade counts gets noticed immediately instead of quietly
+        // producing a summary that no longer adds up.
+        warnings.add(`sea-water-quality-unknown-tezina:${tezina}`);
+      }
     }
   }
 
-  const latestSamplingDate = result.data.mjerenja
+  const latestSamplingDate = measurements
     .map((measurement) => toIsoDate(measurement.datumUzorkovanja))
     .filter((value): value is string => value !== undefined)
     .sort()
     .at(-1);
 
   const locations: SeaWaterQualityLocation[] = [];
-  for (const measurement of result.data.mjerenja) {
+  for (const measurement of measurements) {
     const grade = gradeByTezina[measurement.tezina];
     if (!grade) continue; // Already recorded as a warning above.
 
@@ -132,20 +157,34 @@ function parseBudvaSeaWaterQualitySummary(
       grade,
       id: measurement.id,
       name: measurement.naziv,
+      ...(measurement.plaza ? { beachName: measurement.plaza } : {}),
+      ...(measurement.vrijemeUzorkovanja
+        ? { samplingDateTime: measurement.vrijemeUzorkovanja }
+        : {}),
       ...(samplingDate ? { samplingDate } : {}),
     });
   }
 
   return {
+    sourceRound: getSingleRound(measurements),
     summary: {
       gradeCounts,
       ...(latestSamplingDate ? { latestSamplingDate } : {}),
       locations,
       municipality,
-      totalLocations: result.data.ukupno,
+      totalLocations: containsOtherMunicipalities ? measurements.length : result.data.ukupno,
     },
     warnings: [...warnings],
   };
+}
+
+function getSingleRound(measurements: readonly { kalendar?: number }[]): number | undefined {
+  const rounds = new Set(
+    measurements
+      .map((measurement) => measurement.kalendar)
+      .filter((value): value is number => typeof value === "number"),
+  );
+  return rounds.size === 1 ? [...rounds][0] : undefined;
 }
 
 // Source dates look like "21.07.2026" (day.month.year, no leading zeros guaranteed).

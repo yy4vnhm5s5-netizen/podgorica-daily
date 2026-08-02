@@ -7,10 +7,10 @@ import type { CityContext, CityId } from "@/shared/types/city";
 // this app actually collects for are listed here — the live source also covers Herceg Novi and
 // Ulcinj, which are out of scope until separately approved.
 const seaWaterQualityMunicipalities = {
-  bar: { cityId: "bar", municipalityId: 1 },
-  budva: { cityId: "budva", municipalityId: 2 },
-  kotor: { cityId: "kotor", municipalityId: 4 },
-  tivat: { cityId: "tivat", municipalityId: 3 },
+  bar: { cityId: "bar", municipalityId: 1, sourceMunicipalityName: "Bar" },
+  budva: { cityId: "budva", municipalityId: 2, sourceMunicipalityName: "Budva" },
+  kotor: { cityId: "kotor", municipalityId: 4, sourceMunicipalityName: "Kotor" },
+  tivat: { cityId: "tivat", municipalityId: 3, sourceMunicipalityName: "Tivat" },
 } as const;
 
 type SeaWaterQualitySupportedCityId = keyof typeof seaWaterQualityMunicipalities;

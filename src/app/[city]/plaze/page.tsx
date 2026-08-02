@@ -7,6 +7,7 @@ import {
 } from "@/app/city-routing";
 import { createPublicRouteMetadata } from "@/app/public-route-metadata";
 import { getBudvaSeaWaterQuality } from "@/modules/sea-water-quality/application/get-budva-sea-water-quality";
+import { getSeaWaterQualityLocationSlugs } from "@/modules/sea-water-quality/application/get-sea-water-quality-history";
 import { SeaWaterQualityPage } from "@/modules/sea-water-quality/presentation/sea-water-quality-page";
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
 import { getSeaWaterQualityPath } from "@/shared/config/public-routes";
@@ -41,11 +42,19 @@ async function PlazePage({ params }: PlazePageProps) {
   if (!isCityPublicFeatureRouteAvailable(context.city, "seaWaterQuality")) notFound();
   // getBudvaSeaWaterQuality is legacy-named but city-generic — it resolves context.city's own
   // cache (Budva, Tivat, ...), not always Budva's.
-  const result = await getBudvaSeaWaterQuality(context);
+  const [result, locationSlugs] = await Promise.all([
+    getBudvaSeaWaterQuality(context),
+    getSeaWaterQualityLocationSlugs(context),
+  ]);
 
   return (
     <DashboardLayout city={context.city} translations={getTranslations(locale)}>
-      <SeaWaterQualityPage city={context.city} locale={locale} result={result} />
+      <SeaWaterQualityPage
+        city={context.city}
+        locale={locale}
+        locationSlugs={locationSlugs}
+        result={result}
+      />
     </DashboardLayout>
   );
 }

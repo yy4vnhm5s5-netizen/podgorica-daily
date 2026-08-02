@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import sitemap from "./sitemap.ts";
+import sitemap, { getSeaWaterQualitySitemapEntries } from "./sitemap.ts";
+import { getCity } from "@/shared/config/cities";
 
 test("publishes only canonical indexable public routes", async () => {
   const urls = (await sitemap()).map(({ url }) => new URL(url).pathname);
@@ -61,4 +62,38 @@ test("publishes only canonical indexable public routes", async () => {
   // "no movies". See isCityCinemaRouteAvailable in city-routing.ts.
   assert.equal(urls.includes("/tivat/filmovi"), false);
   assert.equal(urls.includes("/tivat/letovi"), false);
+});
+
+test("adds only capability-supported beach detail URLs from local history snapshots", async () => {
+  const budva = getCity("budva");
+  const podgorica = getCity("podgorica");
+  assert.ok(budva);
+  assert.ok(podgorica);
+
+  const entries = await getSeaWaterQualitySitemapEntries([budva, podgorica], async () => ({
+    history: {
+      latestRound: 5,
+      locations: [
+        {
+          canonicalSlug: "jaz-01",
+          displayName: "Jaz 01",
+          firstSeenRound: 4,
+          lastSeenRound: 5,
+          measurements: [{ grade: "excellent", sourceRound: 5 }],
+          presentInLatestRound: true,
+          sourceLocationId: 36,
+        },
+      ],
+      municipality: "budva",
+      sourceMunicipalityId: 2,
+      year: 2026,
+    },
+    lastSuccessfulRefreshAt: "2026-07-24T10:00:00.000Z",
+    state: "fresh",
+  }));
+
+  assert.deepEqual(
+    entries.map(({ url }) => new URL(url).pathname),
+    ["/budva/plaze/jaz-01"],
+  );
 });

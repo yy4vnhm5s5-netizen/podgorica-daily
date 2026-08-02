@@ -1,10 +1,11 @@
 import assert from "node:assert/strict";
 import { readFile, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import test from "node:test";
 
 import { refreshBudvaSeaWaterQuality } from "./budva-sea-water-quality-refresh.ts";
+import { readSeaWaterQualityHistoryCache } from "./sea-water-quality-history-cache.ts";
 import type { MorskodobroHttpClient } from "./morskodobro-http-client.ts";
 
 async function readFixture(name: string) {
@@ -40,6 +41,51 @@ test("writes a fresh snapshot on a successful refresh", async () => {
     assert.equal(result.snapshot?.summary.latestSamplingDate, "2026-07-23");
     assert.deepEqual(result.warnings, []);
     assert.deepEqual(result.snapshot?.parserWarnings, []);
+  });
+});
+
+test("builds an idempotent city-scoped history from complete official JPMD rounds", async () => {
+  await withTempCachePath(async (cachePath) => {
+    const calendarBody = await readFixture("morskodobro-calendar-data.json");
+    const round4 = await readFixture("jpmd-2026-round-4-full.json");
+    const round5 = await readFixture("jpmd-2026-round-5-full.json");
+    const historyPath = join(dirname(cachePath), "budva-sea-water-quality-history.json");
+    const clientFor = (mapBody: string): MorskodobroHttpClient => ({
+      post: async (url) => (url.includes("getCalendarData") ? calendarBody : mapBody),
+    });
+
+    await refreshBudvaSeaWaterQuality({
+      cachePath,
+      httpClient: clientFor(round4),
+      now: () => new Date("2026-07-20T10:00:00.000Z"),
+    });
+    await refreshBudvaSeaWaterQuality({
+      cachePath,
+      httpClient: clientFor(round5),
+      now: () => new Date("2026-07-27T10:00:00.000Z"),
+    });
+    await refreshBudvaSeaWaterQuality({
+      cachePath,
+      httpClient: clientFor(round5),
+      now: () => new Date("2026-07-27T10:05:00.000Z"),
+    });
+
+    const history = await readSeaWaterQualityHistoryCache(historyPath);
+    assert.equal(history?.history.municipality, "budva");
+    assert.equal(history?.history.locations.length, 34);
+    assert.equal(
+      history?.history.locations.every((location) => location.presentInLatestRound),
+      true,
+    );
+    assert.equal(
+      history?.history.locations.every((location) => location.measurements.length === 2),
+      true,
+    );
+    assert.equal(
+      history?.history.locations.find((location) => location.displayName === "Jaz 01")
+        ?.canonicalSlug,
+      "jaz-01",
+    );
   });
 });
 

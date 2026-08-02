@@ -3,15 +3,17 @@ import type { MetadataRoute } from "next";
 import { createCityContext, getActiveCities, supportsCityCapability } from "@/shared/config/cities";
 import { getCityEvents } from "@/modules/events/application/get-city-events";
 import { getCityEventsForPublicListing } from "@/modules/events/presentation/events-ui-model";
+import { getSeaWaterQualityHistory } from "@/modules/sea-water-quality/application/get-sea-water-quality-history";
 import {
   getAboutPlatformPath,
   getContactPath,
   getEventDetailPath,
   getPrivacyPolicyPath,
   getTermsOfUsePath,
+  getSeaWaterQualityLocationPath,
 } from "@/shared/config/public-routes";
 import { siteConfig } from "@/shared/config/site";
-import { getCitySitemapPaths } from "./city-routing.ts";
+import { getCitySitemapPaths, isCityPublicFeatureRouteAvailable } from "./city-routing.ts";
 
 function createEntry(
   path: string,
@@ -71,5 +73,35 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }),
   );
 
-  return [...cityEntries, ...globalEntries, ...eventEntries.flat()];
+  const seaWaterQualityEntries = await getSeaWaterQualitySitemapEntries(cities);
+
+  return [...cityEntries, ...globalEntries, ...eventEntries.flat(), ...seaWaterQualityEntries];
 }
+
+async function getSeaWaterQualitySitemapEntries(
+  cities = getActiveCities(),
+  readHistory: typeof getSeaWaterQualityHistory = getSeaWaterQualityHistory,
+): Promise<MetadataRoute.Sitemap> {
+  const entries = await Promise.all(
+    cities
+      .filter((city) => isCityPublicFeatureRouteAvailable(city, "seaWaterQuality"))
+      .map(async (city) => {
+        try {
+          const result = await readHistory(createCityContext(city.id, "me"));
+          if (!result.history) return [];
+          return result.history.locations.map((location) =>
+            createEntry(
+              getSeaWaterQualityLocationPath(city, location.canonicalSlug),
+              "weekly",
+              0.55,
+            ),
+          );
+        } catch {
+          return [];
+        }
+      }),
+  );
+  return entries.flat();
+}
+
+export { getSeaWaterQualitySitemapEntries };

@@ -43,6 +43,10 @@ function getSeaWaterQualityPath(city: CityRouteTarget) {
   return `${getCityPath(city)}/plaze`;
 }
 
+function getSeaWaterQualityLocationPath(city: CityRouteTarget, slug: string) {
+  return `${getSeaWaterQualityPath(city)}/${encodeURIComponent(slug)}`;
+}
+
 function getPrivacyPolicyPath() {
   return "/politika-privatnosti";
 }
@@ -63,5 +67,6 @@ export {
   getGoingOutPath,
   getPrivacyPolicyPath,
   getSeaWaterQualityPath,
+  getSeaWaterQualityLocationPath,
   getTermsOfUsePath,
 };

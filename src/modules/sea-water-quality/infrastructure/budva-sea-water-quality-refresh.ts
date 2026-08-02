@@ -1,3 +1,5 @@
+import { dirname, join } from "node:path";
+
 import {
   buildCalendarDataRequestBody,
   buildMapDataRequestBody,
@@ -12,6 +14,12 @@ import {
   writeBudvaSeaWaterQualityCache,
   type BudvaSeaWaterQualityCacheSnapshot,
 } from "./budva-sea-water-quality-cache.ts";
+import {
+  mergeSeaWaterQualityHistory,
+  readSeaWaterQualityHistoryCache,
+  writeSeaWaterQualityHistoryCache,
+  type SeaWaterQualityHistoryCacheSnapshot,
+} from "./sea-water-quality-history-cache.ts";
 import type { MorskodobroHttpClient } from "./morskodobro-http-client.ts";
 import {
   getSeaWaterQualityMunicipality,
@@ -34,6 +42,7 @@ interface BudvaSeaWaterQualityRefreshResult {
 async function refreshBudvaSeaWaterQuality({
   cityId = "budva",
   cachePath = getSeaWaterQualityCachePath(cityId),
+  historyCachePath,
   diagnostic = emitBudvaSeaWaterQualityDiagnostic,
   httpClient,
   now = () => new Date(),
@@ -41,10 +50,14 @@ async function refreshBudvaSeaWaterQuality({
   cachePath?: string;
   cityId?: SeaWaterQualitySupportedCityId;
   diagnostic?: BudvaSeaWaterQualityDiagnosticEmitter;
+  historyCachePath?: string;
   httpClient: MorskodobroHttpClient;
   now?: () => Date;
 }): Promise<BudvaSeaWaterQualityRefreshResult> {
+  const resolvedHistoryCachePath =
+    historyCachePath ?? join(dirname(cachePath), `${cityId}-sea-water-quality-history.json`);
   const previous = await readBudvaSeaWaterQualityCache(cachePath);
+  const previousHistory = await readSeaWaterQualityHistoryCache(resolvedHistoryCachePath);
   // Type-safe by construction: every SeaWaterQualitySupportedCityId has a matching config entry.
   const municipalityId = getSeaWaterQualityMunicipality(cityId)!.municipalityId;
 
@@ -95,8 +108,27 @@ async function refreshBudvaSeaWaterQuality({
       sourceUrl: seaWaterQualitySourceUrl,
       summary,
     };
+    const historySnapshot: SeaWaterQualityHistoryCacheSnapshot = {
+      fetchedAt: timestamp,
+      history: mergeSeaWaterQualityHistory({
+        cityId,
+        previous: previousHistory?.history,
+        round: parsed.sourceRound ?? round,
+        summaryLocations: summary.locations,
+        year: now().getFullYear(),
+      }),
+      lastSuccessfulRefreshAt: timestamp,
+      schemaVersion: 1,
+      source: "Javno preduzeće za upravljanje morskim dobrom Crne Gore",
+      sourceUrl: seaWaterQualitySourceUrl,
+    };
 
     try {
+      // History is a separate, atomically-written read model. Persist it before the current
+      // snapshot: a later current-snapshot write failure cannot corrupt or truncate retained
+      // history, and a later retry deterministically replaces the same round rather than
+      // appending a duplicate measurement.
+      await writeSeaWaterQualityHistoryCache(historySnapshot, resolvedHistoryCachePath);
       await writeBudvaSeaWaterQualityCache(snapshot, cachePath);
     } catch {
       return retainPrevious(previous, "sea-water-quality-cache-write-failed");
@@ -133,7 +165,10 @@ function retainPrevious(
 }
 
 function getErrorCode(error: unknown) {
-  return typeof error === "object" && error !== null && "code" in error && typeof error.code === "string"
+  return typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    typeof error.code === "string"
     ? error.code
     : "sea-water-quality-refresh-failed";
 }

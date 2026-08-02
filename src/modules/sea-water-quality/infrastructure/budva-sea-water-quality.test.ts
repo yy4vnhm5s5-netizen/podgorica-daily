@@ -44,13 +44,47 @@ test("normalizes a real Budva crtajMapu response into a sea water quality summar
   assert.equal(parsed?.summary.latestSamplingDate, "2026-07-23");
   assert.equal(parsed?.summary.municipality, "budva");
   assert.equal(parsed?.summary.totalLocations, 34);
-  assert.deepEqual(parsed?.summary.locations, [
-    { grade: "excellent", id: 36, name: "Jaz 01", samplingDate: "2026-07-21" },
-    { grade: "poor", id: 30, name: "Slovenska plaža 01", samplingDate: "2026-07-23" },
-    { grade: "satisfactory", id: 28, name: "Slovenska plaža 03", samplingDate: "2026-07-21" },
-    { grade: "good", id: 40, name: "Sv. Stefan plaža 02", samplingDate: "2026-07-21" },
-  ]);
+  assert.deepEqual(
+    parsed?.summary.locations.map(({ grade, id, name, samplingDate }) => ({
+      grade,
+      id,
+      name,
+      samplingDate,
+    })),
+    [
+      { grade: "excellent", id: 36, name: "Jaz 01", samplingDate: "2026-07-21" },
+      { grade: "poor", id: 30, name: "Slovenska plaža 01", samplingDate: "2026-07-23" },
+      { grade: "satisfactory", id: 28, name: "Slovenska plaža 03", samplingDate: "2026-07-21" },
+      { grade: "good", id: 40, name: "Sv. Stefan plaža 02", samplingDate: "2026-07-21" },
+    ],
+  );
   assert.deepEqual(parsed?.warnings, []);
+});
+
+test("safely scopes a complete national JPMD response to the requested municipality", async () => {
+  const body = await readFixture("jpmd-2026-round-5-full.json");
+  const parsed = parseBudvaSeaWaterQualitySummary(body, "kotor");
+
+  assert.equal(parsed?.sourceRound, 5);
+  assert.equal(parsed?.summary.municipality, "kotor");
+  assert.equal(parsed?.summary.totalLocations, 15);
+  assert.equal(
+    parsed?.summary.locations.every((location) => location.id !== 62),
+    true,
+  );
+  assert.equal(
+    parsed?.summary.locations.some((location) => location.name === "Sveti Stasija"),
+    true,
+  );
+  assert.equal(
+    parsed?.summary.locations.find((location) => location.name === "Sveti Stasija")?.beachName,
+    "DOBROTA",
+  );
+  assert.equal(
+    parsed?.summary.locations.find((location) => location.name === "Sveti Stasija")
+      ?.samplingDateTime,
+    "20.07.2026. 10:37",
+  );
 });
 
 test("returns undefined for a map response that cannot be recognized", () => {

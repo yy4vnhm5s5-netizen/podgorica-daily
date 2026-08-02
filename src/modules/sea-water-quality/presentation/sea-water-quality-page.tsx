@@ -1,4 +1,5 @@
 import { Waves } from "lucide-react";
+import Link from "next/link";
 
 import type { BudvaSeaWaterQualityCacheResult } from "../application/get-budva-sea-water-quality";
 import { gradeLabels, gradeOrder, gradeStyles } from "./sea-water-quality-grade-styles";
@@ -7,16 +8,18 @@ import { InCardEmptyNote } from "@/shared/components/in-card-empty-note";
 import { NewTabNotice } from "@/shared/components/new-tab-notice";
 import { SectionTitle } from "@/shared/components/section-title";
 import { getLocaleTag, type Locale } from "@/shared/config/locale";
+import { getSeaWaterQualityLocationPath } from "@/shared/config/public-routes";
 import { formatDateTime } from "@/shared/lib/date";
 import type { City } from "@/shared/types/city";
 
 interface SeaWaterQualityPageProps {
   city: City;
+  locationSlugs?: ReadonlyMap<number, string>;
   locale: Locale;
   result: BudvaSeaWaterQualityCacheResult;
 }
 
-function SeaWaterQualityPage({ city, locale, result }: SeaWaterQualityPageProps) {
+function SeaWaterQualityPage({ city, locale, locationSlugs, result }: SeaWaterQualityPageProps) {
   const { lastSuccessfulRefreshAt, state, summary } = result;
   const hasData = state !== "unavailable" && summary !== undefined;
 
@@ -31,16 +34,14 @@ function SeaWaterQualityPage({ city, locale, result }: SeaWaterQualityPageProps)
           title={`Plaže u ${city.locativeName ?? city.name} i kvalitet mora`}
         />
         <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-          Zvanično praćenje sanitarnog kvaliteta mora na javnim kupalištima u {city.locativeName ?? city.name} —
-          podaci Javnog preduzeća za upravljanje morskim dobrom Crne Gore.
+          Zvanično praćenje sanitarnog kvaliteta mora na javnim kupalištima u{" "}
+          {city.locativeName ?? city.name} — podaci Javnog preduzeća za upravljanje morskim dobrom
+          Crne Gore.
         </p>
       </div>
 
       {!hasData ? (
-        <ErrorState
-          description="Podaci trenutno nijesu dostupni."
-          title="Kvalitet mora"
-        />
+        <ErrorState description="Podaci trenutno nijesu dostupni." title="Kvalitet mora" />
       ) : (
         <div className="space-y-8">
           {state === "stale" ? (
@@ -107,7 +108,12 @@ function SeaWaterQualityPage({ city, locale, result }: SeaWaterQualityPageProps)
             <h2 className="text-base font-semibold tracking-tight" id="plaze-tabela-heading">
               Sva kupališta
             </h2>
-            <BeachTable locale={locale} summary={summary} />
+            <BeachTable
+              city={city}
+              locale={locale}
+              locationSlugs={locationSlugs}
+              summary={summary}
+            />
           </section>
         </div>
       )}
@@ -126,10 +132,14 @@ function SeaWaterQualityPage({ city, locale, result }: SeaWaterQualityPageProps)
 }
 
 function BeachTable({
+  city,
   locale,
+  locationSlugs,
   summary,
 }: {
+  city: City;
   locale: Locale;
+  locationSlugs?: ReadonlyMap<number, string>;
   summary: NonNullable<BudvaSeaWaterQualityCacheResult["summary"]>;
 }) {
   if (summary.locations.length === 0) {
@@ -157,26 +167,40 @@ function BeachTable({
           </tr>
         </thead>
         <tbody className="divide-y divide-border">
-          {summary.locations.map((location) => (
-            <tr key={location.id}>
-              <td className="px-4 py-3 font-medium text-foreground">{location.name}</td>
-              <td className="px-4 py-3">
-                <span
-                  className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${gradeStyles[location.grade]}`}
-                >
-                  {gradeLabels[location.grade]}
-                </span>
-              </td>
-              <td className="px-4 py-3 text-muted-foreground">
-                {location.samplingDate
-                  ? formatDateTime(new Date(`${location.samplingDate}T12:00:00.000Z`), {
-                      formatOptions: { dateStyle: "medium" },
-                      locale: getLocaleTag(locale),
-                    }).label
-                  : "—"}
-              </td>
-            </tr>
-          ))}
+          {summary.locations.map((location) => {
+            const locationSlug = locationSlugs?.get(location.id);
+            return (
+              <tr key={location.id}>
+                <td className="px-4 py-3 font-medium text-foreground">
+                  {locationSlug ? (
+                    <Link
+                      className="underline-offset-4 hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                      href={getSeaWaterQualityLocationPath(city, locationSlug)}
+                    >
+                      {location.name}
+                    </Link>
+                  ) : (
+                    location.name
+                  )}
+                </td>
+                <td className="px-4 py-3">
+                  <span
+                    className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${gradeStyles[location.grade]}`}
+                  >
+                    {gradeLabels[location.grade]}
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-muted-foreground">
+                  {location.samplingDate
+                    ? formatDateTime(new Date(`${location.samplingDate}T12:00:00.000Z`), {
+                        formatOptions: { dateStyle: "medium" },
+                        locale: getLocaleTag(locale),
+                      }).label
+                    : "—"}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
