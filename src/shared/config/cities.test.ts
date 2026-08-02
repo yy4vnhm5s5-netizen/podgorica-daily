@@ -45,24 +45,17 @@ test("exposes Podgorica as the main city and every active public city", () => {
   );
 });
 
-test("registers Bar as an active weather and electricity city", () => {
+test("registers Bar with its approved weather, electricity, Going Out, and sea-water capabilities", () => {
   const bar = getCityBySlug("bar");
 
   assert.equal(bar?.id, "bar");
   assert.equal(bar?.isActive, true);
-  assert.deepEqual(bar?.capabilities, ["electricity", "weather"]);
+  assert.deepEqual(bar?.capabilities, ["electricity", "goingOut", "seaWaterQuality", "weather"]);
   assert.equal(getCityName(bar!, "locative"), "Baru");
   assert.equal(bar?.timezone, "Europe/Podgorica");
   assert.equal(bar?.latitude, 42.0937);
   assert.equal(bar?.longitude, 19.1005);
-  for (const capability of [
-    "events",
-    "flights",
-    "goingOut",
-    "railway",
-    "seaWaterQuality",
-    "water",
-  ] as const) {
+  for (const capability of ["events", "flights", "railway", "water"] as const) {
     assert.equal(supportsCityCapability(bar!, capability), false);
   }
 });

@@ -75,15 +75,16 @@ sh -c 'curl --fail-with-body --silent --show-error --max-time 120 --write-out "\
 # Going Out: /api/internal/going-out/refresh + GOING_OUT_REFRESH_SECRET.
 # With no `city` query this endpoint sequentially refreshes every active city that has the
 # `goingOut` capability and an approved MonteGigs source. New approved cities join this job through
-# the shared city registry; do not create one cron per city. `?city=podgorica`, `?city=budva`,
-# `?city=tivat`, and `?city=kotor` remain available only for targeted diagnostics or manual repair.
+# the shared city registry; do not create one cron per city. `?city=bar`, `?city=podgorica`,
+# `?city=budva`, `?city=tivat`, and `?city=kotor` remain available only for targeted diagnostics or
+# manual repair.
 # After deploying and verifying this combined endpoint, remove legacy city-specific Going Out cron
 # services (including any duplicate Budva trigger) so only this one Going Out cron remains.
 sh -c 'curl --fail-with-body --silent --show-error --max-time 120 --write-out "\n" --request POST --header "Authorization: Bearer $REFRESH_SECRET" "$REFRESH_URL"'
 
 # Sea Water Quality: /api/internal/sea-water-quality/refresh +
 # SEA_WATER_QUALITY_REFRESH_SECRET. One request sequentially refreshes every active, mapped city
-# (Budva, Kotor, and Tivat today); do not create one cron per city.
+# (Bar, Budva, Kotor, and Tivat today); do not create one cron per city.
 sh -c 'curl --fail-with-body --silent --show-error --max-time 120 --write-out "\n" --request POST --header "Authorization: Bearer $REFRESH_SECRET" "$REFRESH_URL"'
 
 # Cineplexx: /api/internal/cineplexx/refresh + CINEPLEXX_REFRESH_SECRET, daily at 04:00 UTC.
@@ -103,6 +104,6 @@ Railway Cron schedules are UTC. A fixed UTC expression is not daylight-saving-sa
 
 ## Environment contract
 
-`PORT` is Railway-provided. `NODE_ENV`, `NEXT_PUBLIC_APP_ENV`, `DEFAULT_CITY`, `ENABLE_EVENTS`, `EVENT_PROVIDER_MODE`, and `ENABLE_SEA_WATER_QUALITY=true` are safe configuration. `NEXT_PUBLIC_SITE_URL` is public and required for absolute production metadata. All refresh secrets, `INTERNAL_REFRESH_TOKEN`, `CONTACT_EMAIL`, `CONTACT_FROM_EMAIL`, and `RESEND_API_KEY` are server-only and must never be committed or exposed to the browser. `RUNTIME_DATA_DIR=/app/.runtime` is the production cache root; any explicit provider-cache override must also stay below that mount. Set `EVENT_CACHE_FRESHNESS_MINUTES=240`, `GOING_OUT_CACHE_FRESHNESS_MINUTES=240`, `VIKPG_CACHE_FRESHNESS_MINUTES=150`, `VODOVOD_KOTOR_CACHE_FRESHNESS_MINUTES=150`, `CEDIS_CACHE_FRESHNESS_MINUTES=420`, and `SEA_WATER_QUALITY_CACHE_FRESHNESS_MINUTES=4320`; retain Flights at 90 minutes and Cineplexx at 780 minutes. Set `ENABLE_VODOVOD_KOTOR=true` with the shared internal refresh token configured before enabling the Vodovod Kotor cron. Sea Water Quality uses `SEA_WATER_QUALITY_REFRESH_SECRET`; its default isolated files are `/app/.runtime/cache/budva-sea-water-quality.json`, `/app/.runtime/cache/kotor-sea-water-quality.json`, and `/app/.runtime/cache/tivat-sea-water-quality.json`. Weather currently has no API key. `.env.example` contains safe defaults only.
+`PORT` is Railway-provided. `NODE_ENV`, `NEXT_PUBLIC_APP_ENV`, `DEFAULT_CITY`, `ENABLE_EVENTS`, `EVENT_PROVIDER_MODE`, and `ENABLE_SEA_WATER_QUALITY=true` are safe configuration. `NEXT_PUBLIC_SITE_URL` is public and required for absolute production metadata. All refresh secrets, `INTERNAL_REFRESH_TOKEN`, `CONTACT_EMAIL`, `CONTACT_FROM_EMAIL`, and `RESEND_API_KEY` are server-only and must never be committed or exposed to the browser. `RUNTIME_DATA_DIR=/app/.runtime` is the production cache root; any explicit provider-cache override must also stay below that mount. Set `EVENT_CACHE_FRESHNESS_MINUTES=240`, `GOING_OUT_CACHE_FRESHNESS_MINUTES=240`, `VIKPG_CACHE_FRESHNESS_MINUTES=150`, `VODOVOD_KOTOR_CACHE_FRESHNESS_MINUTES=150`, `CEDIS_CACHE_FRESHNESS_MINUTES=420`, and `SEA_WATER_QUALITY_CACHE_FRESHNESS_MINUTES=4320`; retain Flights at 90 minutes and Cineplexx at 780 minutes. Set `ENABLE_VODOVOD_KOTOR=true` with the shared internal refresh token configured before enabling the Vodovod Kotor cron. Sea Water Quality uses `SEA_WATER_QUALITY_REFRESH_SECRET`; its default isolated files are `/app/.runtime/cache/bar-sea-water-quality.json`, `/app/.runtime/cache/budva-sea-water-quality.json`, `/app/.runtime/cache/kotor-sea-water-quality.json`, and `/app/.runtime/cache/tivat-sea-water-quality.json`. Weather currently has no API key. `.env.example` contains safe defaults only.
 
 The app starts safely with an empty cache: Events show a safe empty/unavailable state, detail routes return not-found, and `/api/health` still returns 200. Public readiness is separate at `/api/readiness` and excludes paths, diagnostics, and event data.

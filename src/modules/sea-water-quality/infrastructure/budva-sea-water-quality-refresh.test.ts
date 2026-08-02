@@ -208,6 +208,32 @@ test("refreshes Tivat independently of Budva, requesting Tivat's municipality id
   });
 });
 
+test("refreshes Bar independently, requesting Bar's municipality id and stamping its own municipality", async () => {
+  await withTempCachePath(async (cachePath) => {
+    const calendarBody = await readFixture("morskodobro-calendar-data.json");
+    const mapBody = await readFixture("morskodobro-bar-map-data.json");
+    const requestedBodies: string[] = [];
+    const httpClient: MorskodobroHttpClient = {
+      post: async (url, body) => {
+        if (!url.includes("getCalendarData")) requestedBodies.push(body.toString());
+        return url.includes("getCalendarData") ? calendarBody : mapBody;
+      },
+    };
+
+    const result = await refreshBudvaSeaWaterQuality({
+      cachePath,
+      cityId: "bar",
+      httpClient,
+      now: () => new Date("2026-07-29T10:00:00.000Z"),
+    });
+
+    assert.equal(result.success, true);
+    assert.equal(result.totalLocations, 15);
+    assert.equal(result.snapshot?.summary.municipality, "bar");
+    assert.match(requestedBodies[0] ?? "", /opstina=1/);
+  });
+});
+
 test("refreshes Kotor independently, requesting Kotor's municipality id and stamping its own municipality", async () => {
   await withTempCachePath(async (cachePath) => {
     const calendarBody = await readFixture("morskodobro-calendar-data.json");

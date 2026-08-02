@@ -42,8 +42,11 @@ Bar is active with an intentionally small initial local product. Its canonical r
 
 - **Weather:** available through the generic weather flow.
 - **CEDIS:** available through the approved Bar municipality mapping and isolated city snapshot.
-- **Water, Going Out, beach quality, standard events, cinema, flights, and railway:** not supported
-  for Bar in this initial release.
+- **Going Out:** available through the approved Bar mapping in the shared MonteGigs collector,
+  with an isolated Bar snapshot.
+- **Sea-water quality:** available through the official JPMD monitoring source and its approved
+  Bar municipality mapping, with an isolated Bar snapshot.
+- **Water, standard events, cinema, flights, and railway:** not supported for Bar.
 
 ### Podgorica
 

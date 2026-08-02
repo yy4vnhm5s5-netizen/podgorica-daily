@@ -19,6 +19,10 @@ import {
 const maximumResponseLength = 1_500_000;
 
 const monteGigsCitySources = {
+  bar: {
+    cityId: "bar",
+    listingUrl: "https://staging.montegigs.me/me/events/bar",
+  },
   budva: {
     cityId: "budva",
     listingUrl: "https://staging.montegigs.me/me/events/budva",
@@ -560,7 +564,7 @@ function extractEventMetadata(value: string) {
 }
 
 const goingOutEventSchema = z.object({
-  city: z.enum(["podgorica", "budva", "kotor", "tivat"]),
+  city: z.enum(["bar", "podgorica", "budva", "kotor", "tivat"]),
   id: z.string().min(1),
   imageUrl: z.string().url().optional(),
   sourceName: z.literal("MonteGigs"),
@@ -572,7 +576,7 @@ const goingOutEventSchema = z.object({
 });
 
 const goingOutCacheSnapshotSchema = z.object({
-  cityId: z.enum(["podgorica", "budva", "kotor", "tivat"]).default("podgorica"),
+  cityId: z.enum(["bar", "podgorica", "budva", "kotor", "tivat"]).default("podgorica"),
   events: z.array(goingOutEventSchema),
   fetchedAt: z.string().datetime(),
   lastRefreshError: z.string().optional(),

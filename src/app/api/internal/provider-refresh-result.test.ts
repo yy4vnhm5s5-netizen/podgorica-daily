@@ -193,6 +193,19 @@ test("keeps Cineplexx out of the standard-events endpoint result", () => {
 test("maps a multi-city sea water quality refresh to per-city results without exposing cache paths", () => {
   const result = toMultiCitySeaWaterQualityRefreshEndpointResult([
     {
+      cityId: "bar",
+      exitCode: 0,
+      output: "provider=sea-water-quality city=bar state=success",
+      refresh: {
+        retainedPreviousSnapshot: false,
+        snapshot: null,
+        success: true,
+        totalLocations: 15,
+        warnings: [],
+      },
+      state: "success",
+    },
+    {
       cityId: "budva",
       exitCode: 0,
       output: "provider=sea-water-quality city=budva state=success",
@@ -237,11 +250,12 @@ test("maps a multi-city sea water quality refresh to per-city results without ex
   assert.equal(result.provider, "sea-water-quality");
   assert.deepEqual(
     result.cities.map(({ cityId }) => cityId),
-    ["budva", "kotor", "tivat"],
+    ["bar", "budva", "kotor", "tivat"],
   );
-  assert.equal(result.cities[0]?.acceptedCount, 34);
-  assert.equal(result.cities[1]?.acceptedCount, 15);
-  assert.equal(result.cities[2]?.state, "retained");
+  assert.equal(result.cities[0]?.acceptedCount, 15);
+  assert.equal(result.cities[1]?.acceptedCount, 34);
+  assert.equal(result.cities[2]?.acceptedCount, 15);
+  assert.equal(result.cities[3]?.state, "retained");
   assert.equal(result.state, "retained");
   assert.equal(JSON.stringify(result).includes("/private/"), false);
 });

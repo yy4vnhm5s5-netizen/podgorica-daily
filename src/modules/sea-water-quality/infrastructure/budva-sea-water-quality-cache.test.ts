@@ -85,6 +85,10 @@ test("getCachedBudvaSeaWaterQuality reports unavailable when no snapshot exists"
 test("derives a distinct sibling cache path per supported city without a new env var", () => {
   assert.equal(getSeaWaterQualityCachePath("budva"), defaultBudvaSeaWaterQualityCachePath);
   assert.equal(
+    getSeaWaterQualityCachePath("bar"),
+    `${dirname(defaultBudvaSeaWaterQualityCachePath)}/bar-sea-water-quality.json`,
+  );
+  assert.equal(
     getSeaWaterQualityCachePath("tivat"),
     `${dirname(defaultBudvaSeaWaterQualityCachePath)}/tivat-sea-water-quality.json`,
   );

@@ -23,6 +23,7 @@ const podgoricaFixturePath = join(
 );
 const budvaFixturePath = join(import.meta.dirname, "__fixtures__", "montegigs-budva-listing.html");
 const kotorFixturePath = join(import.meta.dirname, "__fixtures__", "montegigs-kotor-listing.html");
+const barFixturePath = join(import.meta.dirname, "__fixtures__", "montegigs-bar-listing.html");
 const kotorBoundariesFixturePath = join(
   import.meta.dirname,
   "__fixtures__",
@@ -32,6 +33,39 @@ const podgorica = createCityContext("podgorica");
 const budva = createCityContext("budva");
 const tivat = createCityContext("tivat");
 const kotor = createCityContext("kotor");
+const bar = createCityContext("bar");
+
+test("parses only Bar events from the approved city listing without leaking neighbouring metadata", async () => {
+  const parsed = parseMonteGigsEvents(
+    await readFile(barFixturePath, "utf8"),
+    bar,
+    new Date("2026-07-22T10:00:00.000Z"),
+  );
+
+  assert.equal(parsed.recognized, true);
+  assert.deepEqual(
+    parsed.events.map(({ city, startDate, startsAt, title, venue }) => ({
+      city,
+      startDate,
+      startsAt,
+      title,
+      venue,
+    })),
+    [
+      {
+        city: "bar",
+        startDate: "2026-08-07",
+        startsAt: "2026-08-07T19:00:00.000Z",
+        title: "Ljeto sa zvijezdama: Savo Perović & Slađa Allegro",
+        venue: "Šetalište Kralja Nikole",
+      },
+    ],
+  );
+  assert.equal(
+    parsed.events[0]?.sourceUrl,
+    "https://staging.montegigs.me/me/events/bar/6453-20260807-ljeto-sa-zvijezdama-savo-perovic-sladja-allegro",
+  );
+});
 
 test("parses only Podgorica events from the official-style listing fixture", async () => {
   const html = await readFile(podgoricaFixturePath, "utf8");
@@ -250,6 +284,10 @@ test("allows only the configured MonteGigs listing host", () => {
 
 test("uses explicit city sources and independent city cache paths", () => {
   assert.equal(
+    getMonteGigsCitySource("bar")?.listingUrl,
+    "https://staging.montegigs.me/me/events/bar",
+  );
+  assert.equal(
     getMonteGigsCitySource("podgorica")?.listingUrl,
     "https://staging.montegigs.me/me/events/podgorica",
   );
@@ -265,7 +303,8 @@ test("uses explicit city sources and independent city cache paths", () => {
     getMonteGigsCitySource("kotor")?.listingUrl,
     "https://staging.montegigs.me/me/events/kotor",
   );
-  assert.equal(getMonteGigsCitySource("bar"), undefined);
+  assert.notEqual(getGoingOutCachePath("bar"), getGoingOutCachePath("podgorica"));
+  assert.notEqual(getGoingOutCachePath("bar"), getGoingOutCachePath("budva"));
   assert.notEqual(getGoingOutCachePath("podgorica"), getGoingOutCachePath("budva"));
   assert.notEqual(getGoingOutCachePath("podgorica"), getGoingOutCachePath("tivat"));
   assert.notEqual(getGoingOutCachePath("budva"), getGoingOutCachePath("tivat"));
@@ -319,7 +358,7 @@ test("keeps Budva and Podgorica snapshots isolated through independent retention
 });
 
 test("rejects unsupported city contexts without reading or writing a snapshot", async () => {
-  const unsupported = { ...budva, city: { ...budva.city, id: "bar", slug: "bar" } };
+  const unsupported = { ...budva, city: { ...budva.city, id: "niksic", slug: "niksic" } };
   const result = await refreshMonteGigsGoingOut({ context: unsupported });
 
   assert.equal(result.success, false);
@@ -354,7 +393,10 @@ test("retries a transient MonteGigs response through the injected client", async
   assert.equal(value.status, 200);
 });
 
-function response(body: string, city: "budva" | "kotor" | "podgorica" | "tivat" = "podgorica") {
+function response(
+  body: string,
+  city: "bar" | "budva" | "kotor" | "podgorica" | "tivat" = "podgorica",
+) {
   return {
     body,
     contentType: "text/html",

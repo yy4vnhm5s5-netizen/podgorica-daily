@@ -122,6 +122,17 @@ test("builds the Budva map-data request with the confirmed stable municipality i
   assert.equal(body.get("rb"), "5");
 });
 
+test("builds the Bar map-data request with the confirmed stable municipality id", () => {
+  const barMunicipalityId = seaWaterQualityMunicipalities.bar.municipalityId;
+  const body = buildMapDataRequestBody({
+    municipalityId: barMunicipalityId,
+    round: 5,
+    year: 2026,
+  });
+  assert.equal(barMunicipalityId, 1);
+  assert.equal(body.get("opstina"), "1");
+});
+
 test("builds the Tivat map-data request with the confirmed stable municipality id", () => {
   const tivatMunicipalityId = seaWaterQualityMunicipalities.tivat.municipalityId;
   const body = buildMapDataRequestBody({
@@ -198,4 +209,26 @@ test("normalizes the Kotor crtajMapu fixture and stamps it with the Kotor munici
     ],
   );
   assert.deepEqual(parsed?.warnings, []);
+});
+
+test("normalizes the Bar crtajMapu fixture and keeps only Bar beaches", async () => {
+  const body = await readFixture("morskodobro-bar-map-data.json");
+  const parsed = parseBudvaSeaWaterQualitySummary(body, "bar");
+
+  assert.equal(parsed?.summary.municipality, "bar");
+  assert.equal(parsed?.summary.totalLocations, 15);
+  assert.deepEqual(parsed?.summary.gradeCounts, {
+    excellent: 13,
+    good: 0,
+    poor: 2,
+    satisfactory: 0,
+  });
+  assert.deepEqual(
+    parsed?.summary.locations.map(({ id, name }) => ({ id, name })),
+    [
+      { id: 30, name: "Topolica 01" },
+      { id: 31, name: "Žukotrlica 01" },
+      { id: 32, name: "Crvena plaža 01" },
+    ],
+  );
 });

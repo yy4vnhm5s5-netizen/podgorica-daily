@@ -31,12 +31,12 @@ test("publishes only canonical indexable public routes", async () => {
   assert.equal(urls.includes("/budva/letovi"), false);
   assert.equal(urls.includes("/bar"), true);
   assert.equal(urls.includes("/bar/struja"), true);
+  assert.equal(urls.includes("/bar/izlasci"), true);
+  assert.equal(urls.includes("/bar/plaze"), true);
   for (const path of [
     "/bar/dogadjaji",
     "/bar/filmovi",
-    "/bar/izlasci",
     "/bar/letovi",
-    "/bar/plaze",
     "/bar/vozovi",
     "/bar/voda",
   ]) {

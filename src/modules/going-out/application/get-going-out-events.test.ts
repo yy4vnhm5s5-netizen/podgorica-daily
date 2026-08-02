@@ -17,4 +17,5 @@ test("allows the going-out cache only for a city with going-out capability", () 
   const context = createCityContext("podgorica");
   assert.equal(canReadGoingOutEvents(context), true);
   assert.equal(canReadGoingOutEvents(createCityContext("budva")), true);
+  assert.equal(canReadGoingOutEvents(createCityContext("bar")), true);
 });

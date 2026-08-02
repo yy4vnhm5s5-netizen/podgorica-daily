@@ -116,7 +116,7 @@ test("dashboard loader calls sea water quality for Kotor but not unsupported pro
   });
 });
 
-test("dashboard loader queries only weather for Bar's initial capability set", async () => {
+test("dashboard loader queries Bar's approved weather, Going Out, and sea-water data only", async () => {
   const context = createCityContext("bar");
   const calls = { events: 0, flights: 0, goingOut: 0, railway: 0, seaWaterQuality: 0, weather: 0 };
 
@@ -153,9 +153,9 @@ test("dashboard loader queries only weather for Bar's initial capability set", a
   assert.deepEqual(calls, {
     events: 0,
     flights: 0,
-    goingOut: 0,
+    goingOut: 1,
     railway: 0,
-    seaWaterQuality: 0,
+    seaWaterQuality: 1,
     weather: 1,
   });
 });

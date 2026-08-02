@@ -1,0 +1,30 @@
+{
+  "ukupno": 15,
+  "sumarno": [
+    [1, 13],
+    [4, 2]
+  ],
+  "mjerenja": [
+    {
+      "id": 30,
+      "naziv": "Topolica 01",
+      "opstina": "Bar",
+      "datumUzorkovanja": "23.07.2026",
+      "tezina": 1
+    },
+    {
+      "id": 31,
+      "naziv": "Žukotrlica 01",
+      "opstina": "Bar",
+      "datumUzorkovanja": "23.07.2026",
+      "tezina": 1
+    },
+    {
+      "id": 32,
+      "naziv": "Crvena plaža 01",
+      "opstina": "Bar",
+      "datumUzorkovanja": "23.07.2026",
+      "tezina": 4
+    }
+  ]
+}

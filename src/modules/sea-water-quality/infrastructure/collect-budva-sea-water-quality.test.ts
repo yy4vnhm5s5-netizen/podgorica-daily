@@ -65,6 +65,7 @@ test("runs a single collector for a non-default city, deriving its own cache pat
 });
 
 test("getActiveSeaWaterQualityContexts filters to active, capability-supported, provider-known cities", () => {
+  const bar = city({ capabilities: ["seaWaterQuality"], id: "bar", slug: "bar" });
   const budva = city({ capabilities: ["seaWaterQuality"], id: "budva", slug: "budva" });
   const kotor = city({ capabilities: ["seaWaterQuality"], id: "kotor", slug: "kotor" });
   const tivat = city({ capabilities: ["seaWaterQuality"], id: "tivat", slug: "tivat" });
@@ -82,29 +83,34 @@ test("getActiveSeaWaterQualityContexts filters to active, capability-supported, 
   });
 
   const contexts = getActiveSeaWaterQualityContexts(
-    [budva, kotor, tivat, unsupportedCapability, unknownToProvider, inactive],
+    [bar, budva, kotor, tivat, unsupportedCapability, unknownToProvider, inactive],
     (cityId) =>
       createCityContext(
-        cityId === "budva" || cityId === "kotor" || cityId === "tivat" ? cityId : "podgorica",
+        cityId === "bar" || cityId === "budva" || cityId === "kotor" || cityId === "tivat"
+          ? cityId
+          : "podgorica",
       ),
   );
 
   assert.deepEqual(
     contexts.map((context) => context.city.id),
-    ["budva", "kotor", "tivat"],
+    ["bar", "budva", "kotor", "tivat"],
   );
 });
 
 test("runActiveSeaWaterQualityCollectors runs one collector per active supported city in order", async () => {
+  const bar = city({ capabilities: ["seaWaterQuality"], id: "bar", slug: "bar" });
   const budva = city({ capabilities: ["seaWaterQuality"], id: "budva", slug: "budva" });
   const kotor = city({ capabilities: ["seaWaterQuality"], id: "kotor", slug: "kotor" });
   const tivat = city({ capabilities: ["seaWaterQuality"], id: "tivat", slug: "tivat" });
   const calledFor: string[] = [];
 
   const results = await runActiveSeaWaterQualityCollectors({
-    cities: [budva, kotor, tivat],
+    cities: [bar, budva, kotor, tivat],
     createContext: (cityId) =>
-      createCityContext(cityId === "budva" || cityId === "kotor" ? cityId : "tivat"),
+      createCityContext(
+        cityId === "bar" || cityId === "budva" || cityId === "kotor" ? cityId : "tivat",
+      ),
     runCollector: async (cityId) => {
       calledFor.push(cityId);
       const result: BudvaSeaWaterQualityCollectorResult = {
@@ -118,9 +124,9 @@ test("runActiveSeaWaterQualityCollectors runs one collector per active supported
     },
   });
 
-  assert.deepEqual(calledFor, ["budva", "kotor", "tivat"]);
+  assert.deepEqual(calledFor, ["bar", "budva", "kotor", "tivat"]);
   assert.deepEqual(
     results.map(({ cityId }) => cityId),
-    ["budva", "kotor", "tivat"],
+    ["bar", "budva", "kotor", "tivat"],
   );
 });

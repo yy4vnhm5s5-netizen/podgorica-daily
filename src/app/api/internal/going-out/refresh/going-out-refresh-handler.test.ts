@@ -48,6 +48,7 @@ test("refreshes every active approved Going Out city when no city query is suppl
     runActiveCollectors: async () => {
       activeRefreshes += 1;
       return [
+        collectorResult({ cityId: "bar" }),
         collectorResult({ cityId: "podgorica" }),
         collectorResult({ cityId: "budva" }),
         collectorResult({ cityId: "tivat" }),
@@ -70,6 +71,15 @@ test("refreshes every active approved Going Out city when no city query is suppl
   assert.equal(targetedRefreshes, 0);
   assert.deepEqual(await response.json(), {
     cities: [
+      {
+        acceptedCount: 2,
+        cityId: "bar",
+        provider: "montegigs-going-out",
+        retainedPreviousSnapshot: false,
+        snapshotState: "fresh",
+        state: "success",
+        warnings: [],
+      },
       {
         acceptedCount: 2,
         cityId: "podgorica",
@@ -129,25 +139,25 @@ test("preserves an allowlisted targeted refresh and rejects an empty or unsuppor
     secret,
   });
 
-  for (const cityId of ["podgorica", "budva", "tivat", "kotor"]) {
+  for (const cityId of ["bar", "podgorica", "budva", "tivat", "kotor"]) {
     const targeted = await post(
       request(`/api/internal/going-out/refresh?city=${cityId}`, `Bearer ${secret}`),
     );
     assert.equal(targeted.status, 200);
     assert.equal((await targeted.json()).cityId, cityId);
   }
-  assert.deepEqual(targetedCities, ["podgorica", "budva", "tivat", "kotor"]);
+  assert.deepEqual(targetedCities, ["bar", "podgorica", "budva", "tivat", "kotor"]);
   assert.equal(activeRefreshes, 0);
 
   const empty = await post(request("/api/internal/going-out/refresh?city=", `Bearer ${secret}`));
   assert.equal(empty.status, 400);
-  assert.equal(targetedCities.length, 4);
+  assert.equal(targetedCities.length, 5);
 
   const unsupported = await post(
-    request("/api/internal/going-out/refresh?city=bar", `Bearer ${secret}`),
+    request("/api/internal/going-out/refresh?city=niksic", `Bearer ${secret}`),
   );
   assert.equal(unsupported.status, 400);
-  assert.equal(targetedCities.length, 4);
+  assert.equal(targetedCities.length, 5);
 });
 
 test("keeps successful city outcomes when another city has a routine upstream failure", async () => {

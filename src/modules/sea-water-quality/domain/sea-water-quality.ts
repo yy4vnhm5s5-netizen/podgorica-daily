@@ -2,7 +2,7 @@ type SeaWaterQualityGrade = "excellent" | "good" | "poor" | "satisfactory";
 
 // The set of municipalities the Morsko dobro monitoring source is wired for in this codebase —
 // not the full national list of coastal municipalities, just the ones this app collects today.
-type SeaWaterQualityMunicipality = "budva" | "kotor" | "tivat";
+type SeaWaterQualityMunicipality = "bar" | "budva" | "kotor" | "tivat";
 
 interface SeaWaterQualityGradeCounts {
   excellent: number;

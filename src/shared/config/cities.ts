@@ -4,9 +4,9 @@ import type { City, CityCapability, CityContext, CityId, CityNameForm } from "@/
 const cityRegistry: Record<string, City> = {
   bar: {
     accusativeName: "Bar",
-    capabilities: ["electricity", "weather"],
+    capabilities: ["electricity", "goingOut", "seaWaterQuality", "weather"],
     country: "Montenegro",
-    description: "Informacije za svakodnevni život u Baru.",
+    description: "Vrijeme, izlasci, plaže i važne servisne informacije za Bar.",
     id: "bar",
     isActive: true,
     isMain: false,

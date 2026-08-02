@@ -185,33 +185,26 @@ test("exposes only Budva's capability-supported feature routes", () => {
   ]);
 });
 
-test("Bar exposes only its weather and electricity-backed routes", () => {
+test("Bar exposes only its approved weather, electricity, Going Out, and sea-water routes", () => {
   const bar = createCityContext("bar").city;
 
-  assert.deepEqual(getCitySitemapPaths(bar), ["/bar", "/bar/struja"]);
+  assert.deepEqual(getCitySitemapPaths(bar), ["/bar", "/bar/struja", "/bar/izlasci", "/bar/plaze"]);
   assert.deepEqual(getCityDashboardSummaryAvailability(bar), {
     cinema: false,
     events: false,
-    goingOut: false,
-    seaWaterQuality: false,
+    goingOut: true,
+    seaWaterQuality: true,
   });
   assert.deepEqual(getCityDashboardCapabilities(createCityContext("bar")), {
     cityAlerts: true,
     events: false,
     flights: false,
-    goingOut: false,
+    goingOut: true,
     railway: false,
-    seaWaterQuality: false,
+    seaWaterQuality: true,
     weather: true,
   });
-  for (const capability of [
-    "events",
-    "flights",
-    "goingOut",
-    "railway",
-    "seaWaterQuality",
-    "water",
-  ] as const) {
+  for (const capability of ["events", "flights", "railway", "water"] as const) {
     assert.equal(isCityPublicFeatureRouteAvailable(bar, capability), false);
   }
 });
