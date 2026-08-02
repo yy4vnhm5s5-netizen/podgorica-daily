@@ -16,6 +16,7 @@
     "collect:vodovod-kotor": "node --experimental-strip-types src/modules/city-alerts/infrastructure/collect-vodovod-kotor.ts",
     "collect:zpcg-railway": "node --experimental-strip-types src/modules/transport/infrastructure/collect-zpcg-railway.ts",
     "collect:podgorica-flights": "node --experimental-strip-types src/modules/flights/infrastructure/collect-podgorica-flights.ts",
+    "collect:weather": "node --experimental-strip-types src/modules/weather/infrastructure/collect-weather.ts",
     "collect:montegigs-going-out": "node --experimental-strip-types src/modules/going-out/infrastructure/collect-montegigs-going-out.ts",
     "collect:sea-water-quality": "node --experimental-strip-types src/modules/sea-water-quality/infrastructure/collect-budva-sea-water-quality.ts",
     "collect:budva-sea-water-quality": "node --experimental-strip-types src/modules/sea-water-quality/infrastructure/collect-budva-sea-water-quality.ts",

@@ -32,6 +32,7 @@ import { initializeBudvaSeaWaterQuality } from "@/modules/sea-water-quality/infr
 import { getActiveSeaWaterQualityContexts } from "@/modules/sea-water-quality/infrastructure/collect-budva-sea-water-quality";
 import { getSeaWaterQualityCityId } from "@/modules/sea-water-quality/infrastructure/sea-water-quality-cities";
 import { initializeZpcgRailwayCache } from "@/modules/transport/infrastructure/zpcg-railway-initialization";
+import { initializeWeatherSnapshots } from "@/modules/weather/infrastructure/weather-initialization";
 
 export function register() {
   if (process.env.NEXT_RUNTIME !== "nodejs" || env.NODE_ENV !== "production") return;
@@ -102,6 +103,10 @@ export function register() {
         context,
       });
     }
+  }
+
+  if (env.ENABLE_WEATHER) {
+    void initializeWeatherSnapshots();
   }
 
   if (env.ENABLE_EVENTS && env.EVENT_PROVIDER_MODE === "live") {

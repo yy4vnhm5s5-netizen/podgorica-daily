@@ -70,6 +70,10 @@ const environmentSchema = z.object({
   ENABLE_FLIGHTS: z.enum(["false", "true"]).default("true"),
   ENABLE_GOING_OUT: z.enum(["false", "true"]).default("true"),
   ENABLE_WEATHER: z.enum(["false", "true"]).default("true"),
+  WEATHER_CACHE_PATH: z.string().min(1).optional(),
+  WEATHER_CACHE_FRESHNESS_MINUTES: z.coerce.number().int().positive().default(15),
+  WEATHER_CACHE_MAX_STALE_MINUTES: z.coerce.number().int().positive().default(30),
+  WEATHER_REFRESH_SECRET: z.string().min(32).optional(),
   ENABLE_SEA_WATER_QUALITY: z.enum(["false", "true"]).default("true"),
   NEXT_PUBLIC_APP_ENV: z.string().min(1).default("development"),
   NEXT_PUBLIC_SITE_URL: z.string().url().optional(),
@@ -148,6 +152,10 @@ const parsedEnvironment = environmentSchema.safeParse({
   ENABLE_FLIGHTS: process.env.ENABLE_FLIGHTS,
   ENABLE_GOING_OUT: process.env.ENABLE_GOING_OUT,
   ENABLE_WEATHER: process.env.ENABLE_WEATHER,
+  WEATHER_CACHE_PATH: process.env.WEATHER_CACHE_PATH,
+  WEATHER_CACHE_FRESHNESS_MINUTES: process.env.WEATHER_CACHE_FRESHNESS_MINUTES,
+  WEATHER_CACHE_MAX_STALE_MINUTES: process.env.WEATHER_CACHE_MAX_STALE_MINUTES,
+  WEATHER_REFRESH_SECRET: process.env.WEATHER_REFRESH_SECRET,
   ENABLE_SEA_WATER_QUALITY: process.env.ENABLE_SEA_WATER_QUALITY,
   NEXT_PUBLIC_APP_ENV: process.env.NEXT_PUBLIC_APP_ENV,
   NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
@@ -209,6 +217,8 @@ const resolvedEnvironment = {
   SEA_WATER_QUALITY_CACHE_PATH:
     parsedEnvironment.data.SEA_WATER_QUALITY_CACHE_PATH ??
     `${cacheDirectory}/budva-sea-water-quality.json`,
+  WEATHER_CACHE_PATH:
+    parsedEnvironment.data.WEATHER_CACHE_PATH ?? `${cacheDirectory}/weather-podgorica.json`,
   RUNTIME_DATA_DIR: runtimeDataDirectory,
 };
 

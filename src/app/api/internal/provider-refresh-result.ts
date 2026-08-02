@@ -5,6 +5,7 @@ import type { GoingOutCollectorResult } from "@/modules/going-out/infrastructure
 import type { BudvaSeaWaterQualityCollectorResult } from "@/modules/sea-water-quality/infrastructure/collect-budva-sea-water-quality";
 import type { ZpcgCollectorResult } from "@/modules/transport/infrastructure/collect-zpcg-railway";
 import type { VodovodKotorCollectorResult } from "@/modules/city-alerts/infrastructure/vodovod-kotor";
+import type { WeatherCollectorResult } from "@/modules/weather/infrastructure/collect-weather";
 import type { RefreshEndpointState } from "./refresh-post-handler";
 import { isPodgoricaFlightsUpstreamErrorCode } from "@/modules/flights/infrastructure/podgorica-flights";
 
@@ -40,6 +41,12 @@ interface MultiCityGoingOutRefreshEndpointResult {
 interface MultiCitySeaWaterQualityRefreshEndpointResult {
   cities: readonly ProviderRefreshEndpointResult[];
   provider: "sea-water-quality";
+  state: RefreshEndpointState;
+}
+
+interface MultiCityWeatherRefreshEndpointResult {
+  cities: readonly ProviderRefreshEndpointResult[];
+  provider: "weather";
   state: RefreshEndpointState;
 }
 
@@ -204,6 +211,29 @@ function toMultiCitySeaWaterQualityRefreshEndpointResult(
   };
 }
 
+function toWeatherRefreshEndpointResult(
+  result: WeatherCollectorResult,
+): ProviderRefreshEndpointResult {
+  return toSingleProviderRefreshEndpointResult(
+    "weather",
+    result,
+    (refresh) => (refresh.success ? 1 : 0),
+    result.cityId,
+  );
+}
+
+function toMultiCityWeatherRefreshEndpointResult(
+  results: readonly WeatherCollectorResult[],
+): MultiCityWeatherRefreshEndpointResult {
+  const cities = results.map((result) => toWeatherRefreshEndpointResult(result));
+
+  return {
+    cities,
+    provider: "weather",
+    state: aggregateMultiCityRefreshState(cities),
+  };
+}
+
 function toSingleProviderRefreshEndpointResult<
   TRefresh extends {
     errorCode?: string;
@@ -295,6 +325,7 @@ export {
   toMultiCityAlertRefreshEndpointResult,
   toMultiCityFlightsRefreshEndpointResult,
   toMultiCitySeaWaterQualityRefreshEndpointResult,
+  toMultiCityWeatherRefreshEndpointResult,
   toSeaWaterQualityRefreshEndpointResult,
   toZpcgRefreshEndpointResult,
   type EventRefreshEndpointResult,
@@ -302,5 +333,6 @@ export {
   type MultiCityFlightsRefreshEndpointResult,
   type MultiCityGoingOutRefreshEndpointResult,
   type MultiCitySeaWaterQualityRefreshEndpointResult,
+  type MultiCityWeatherRefreshEndpointResult,
   type ProviderRefreshEndpointResult,
 };

@@ -137,14 +137,44 @@ test("rejects unsuccessful upstream HTTP responses", async () => {
   });
 });
 
-test("keeps the existing weather fallback when the client request fails", async () => {
+test("public Weather reads use snapshots and never invoke the Open-Meteo client", async () => {
   const originalFetch = globalThis.fetch;
+  let fetchCalls = 0;
   globalThis.fetch = (async () => {
+    fetchCalls += 1;
     throw new Error("Open-Meteo is unavailable");
   }) as typeof fetch;
 
   try {
-    assert.deepEqual(await getCurrentWeather(context), { status: "error" });
+    assert.deepEqual(
+      await getCurrentWeather(context, {
+        readWeather: async () => ({
+          state: "fresh",
+          weather: {
+            apparentTemperature: 28.1,
+            cityIds: ["podgorica"],
+            condition: "mainlyClear",
+            humidity: 42,
+            temperature: 27.4,
+            updatedAt: new Date("2026-07-20T10:00:00.000Z"),
+            windSpeed: 12.4,
+          },
+        }),
+      }),
+      {
+        data: {
+          apparentTemperature: 28.1,
+          cityIds: ["podgorica"],
+          condition: "mainlyClear",
+          humidity: 42,
+          temperature: 27.4,
+          updatedAt: new Date("2026-07-20T10:00:00.000Z"),
+          windSpeed: 12.4,
+        },
+        status: "success",
+      },
+    );
+    assert.equal(fetchCalls, 0);
   } finally {
     globalThis.fetch = originalFetch;
   }

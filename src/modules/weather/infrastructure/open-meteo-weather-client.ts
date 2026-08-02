@@ -16,6 +16,7 @@ type OpenMeteoFetchImplementation = (
 ) => Promise<OpenMeteoFetchResponse>;
 
 interface OpenMeteoWeatherClientOptions {
+  cache?: RequestCache;
   fetchImplementation?: OpenMeteoFetchImplementation;
   timeoutMs?: number;
 }
@@ -33,7 +34,10 @@ const openMeteoResponseSchema = z.object({
   current: currentWeatherSchema.nullable().optional(),
 });
 
+type OpenMeteoCurrentWeather = z.infer<typeof currentWeatherSchema>;
+
 function createOpenMeteoWeatherClient({
+  cache,
   fetchImplementation = fetch,
   timeoutMs = weatherRequestTimeoutMs,
 }: OpenMeteoWeatherClientOptions = {}) {
@@ -55,8 +59,9 @@ function createOpenMeteoWeatherClient({
 
     try {
       const response = await fetchImplementation(url, {
+        ...(cache ? { cache } : {}),
         headers: { Accept: "application/json" },
-        next: { revalidate: 600 },
+        ...(cache === "no-store" ? {} : { next: { revalidate: 600 } }),
         signal: controller.signal,
       });
 
@@ -90,5 +95,6 @@ export {
   weatherProviderMetadata,
   weatherRequestTimeoutMs,
   type OpenMeteoFetchImplementation,
+  type OpenMeteoCurrentWeather,
   type OpenMeteoWeatherClientOptions,
 };

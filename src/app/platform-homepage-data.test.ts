@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import {
@@ -12,6 +13,14 @@ import { getEmptyCityEventsReadModel } from "@/modules/events/application/get-ci
 import type { CityEvent } from "@/modules/events/domain/event";
 import type { GoingOutEvent } from "@/modules/going-out/domain/going-out-event";
 import { createCityContext, getActiveCities, getCity } from "@/shared/config/cities";
+
+test("platform homepage uses the shared snapshot-backed dashboard loader rather than Open-Meteo", async () => {
+  const source = await readFile(new URL("./platform-homepage-data.ts", import.meta.url), "utf8");
+
+  assert.match(source, /import \{ loadCityDashboardData \} from "@\/app\/city-dashboard-data";/u);
+  assert.match(source, /await loadCityDashboardData\(/u);
+  assert.doesNotMatch(source, /open-meteo|fetchOpenMeteoCurrentWeather|fetch\(/iu);
+});
 
 test("derives generic city cards from every active registry city", () => {
   const cards = getActiveCities().map((city) =>
