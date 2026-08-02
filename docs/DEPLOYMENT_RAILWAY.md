@@ -35,17 +35,17 @@ sh -c 'curl --fail-with-body --silent --show-error --max-time 120 --write-out "\
 
 The trigger never mounts or writes `/app/.runtime`; the Web service owns the mounted cache, lock, and atomic cache writes. The request body, query string, and URL cannot choose a provider or source URL. The fixed CEDIS endpoint invokes the existing sequential collector for every active city with an electricity capability and approved CEDIS municipality mapping; its response includes one safe result per city.
 
-| Job                                                          | Railway cron (UTC)        | Endpoint                                  | Web secret                         |
-| ------------------------------------------------------------ | ------------------------- | ----------------------------------------- | ---------------------------------- |
-| Flights, every 15 minutes                                    | `*/15 * * * *`            | `/api/internal/flights/refresh`           | `FLIGHTS_REFRESH_SECRET`           |
-| VIK, every 30 minutes                                        | `*/30 * * * *`            | `/api/internal/vikpg/refresh`             | `VIKPG_REFRESH_SECRET`             |
-| Vodovod Kotor, daily (retain the existing Railway schedule)  | existing daily cron       | `/api/internal/vodovod-kotor/refresh`     | `INTERNAL_REFRESH_TOKEN`           |
-| CEDIS, every six hours for active supported cities           | `25 1,7,13,19 * * *`      | `/api/internal/cedis/refresh`             | `CEDIS_REFRESH_SECRET`             |
-| Standard Events, every three hours                           | `5 */3 * * *`             | `/api/internal/events/standard/refresh`   | `STANDARD_EVENTS_REFRESH_SECRET`   |
-| Going Out, every three hours for all active supported cities | `35 */3 * * *`            | `/api/internal/going-out/refresh`         | `GOING_OUT_REFRESH_SECRET`         |
-| Sea Water Quality, daily for active supported cities         | `45 2 * * *`              | `/api/internal/sea-water-quality/refresh` | `SEA_WATER_QUALITY_REFRESH_SECRET` |
-| Cineplexx, daily at 04:00 UTC                                | `0 4 * * *`               | `/api/internal/cineplexx/refresh`         | `CINEPLEXX_REFRESH_SECRET`         |
-| ŽPCG, 06:45 and 18:45 Podgorica time                         | see daylight-saving table | `/api/internal/zpcg/refresh`              | `ZPCG_RAILWAY_REFRESH_SECRET`      |
+| Job                                                            | Railway cron (UTC)        | Endpoint                                  | Web secret                         |
+| -------------------------------------------------------------- | ------------------------- | ----------------------------------------- | ---------------------------------- |
+| Flights, every 15 minutes                                      | `*/15 * * * *`            | `/api/internal/flights/refresh`           | `FLIGHTS_REFRESH_SECRET`           |
+| VIK, every 30 minutes                                          | `*/30 * * * *`            | `/api/internal/vikpg/refresh`             | `VIKPG_REFRESH_SECRET`             |
+| Vodovod Kotor, daily (retain the existing Railway schedule)    | existing daily cron       | `/api/internal/vodovod-kotor/refresh`     | `INTERNAL_REFRESH_TOKEN`           |
+| CEDIS, every six hours for active supported cities             | `25 1,7,13,19 * * *`      | `/api/internal/cedis/refresh`             | `CEDIS_REFRESH_SECRET`             |
+| Standard Events (CNP, Glavni Grad, Tourism), every three hours | `5 */3 * * *`             | `/api/internal/events/standard/refresh`   | `STANDARD_EVENTS_REFRESH_SECRET`   |
+| Going Out, every three hours for all active supported cities   | `35 */3 * * *`            | `/api/internal/going-out/refresh`         | `GOING_OUT_REFRESH_SECRET`         |
+| Sea Water Quality, daily for active supported cities           | `45 2 * * *`              | `/api/internal/sea-water-quality/refresh` | `SEA_WATER_QUALITY_REFRESH_SECRET` |
+| Cineplexx, daily at 04:00 UTC                                  | `0 4 * * *`               | `/api/internal/cineplexx/refresh`         | `CINEPLEXX_REFRESH_SECRET`         |
+| ŽPCG, 06:45 and 18:45 Podgorica time                           | see daylight-saving table | `/api/internal/zpcg/refresh`              | `ZPCG_RAILWAY_REFRESH_SECRET`      |
 
 Configure each trigger with its own explicit variables and command:
 
@@ -66,7 +66,10 @@ sh -c 'curl --fail-with-body --silent --show-error --max-time 120 --write-out "\
 # REFRESH_SECRET references CEDIS_REFRESH_SECRET
 sh -c 'curl --fail-with-body --silent --show-error --max-time 120 --write-out "\n" --request POST --header "Authorization: Bearer $REFRESH_SECRET" "$REFRESH_URL"'
 
-# Standard Events: /api/internal/events/standard/refresh + STANDARD_EVENTS_REFRESH_SECRET
+# Standard Events (CNP, Glavni Grad, Tourism for Podgorica and Tivat):
+# /api/internal/events/standard/refresh + STANDARD_EVENTS_REFRESH_SECRET.
+# KIC is intentionally excluded from the active refresh plan because its upstream TLS
+# certificate is expired.
 sh -c 'curl --fail-with-body --silent --show-error --max-time 120 --write-out "\n" --request POST --header "Authorization: Bearer $REFRESH_SECRET" "$REFRESH_URL"'
 
 # Going Out: /api/internal/going-out/refresh + GOING_OUT_REFRESH_SECRET.

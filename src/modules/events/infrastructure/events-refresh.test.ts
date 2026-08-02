@@ -26,11 +26,11 @@ function provider(id: string, refresh: EventRefreshProvider["refresh"]): EventRe
   return { id, refresh };
 }
 
-test("keeps standard event providers separate from the Cineplexx refresh plan", () => {
+test("keeps active standard event providers separate from the Cineplexx refresh plan", () => {
   const context = getDefaultCityContext();
   assert.deepEqual(
     createStandardEventRefreshProviders(context).map(({ id }) => id),
-    ["kic", "cnp", "glavni-grad-podgorica", "tourism-podgorica"],
+    ["cnp", "glavni-grad-podgorica", "tourism-podgorica"],
   );
   assert.equal(createCineplexxRefreshProvider(context).id, "cineplexx-podgorica");
 });

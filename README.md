@@ -44,14 +44,13 @@ Podgorica and Budva are active cities. The platform homepage at `/` derives publ
 
 The repository includes a city-aware Event Platform: normalized event and venue contracts, cache and provider boundaries, deterministic IDs and deduplication, recurrence limits, timezone-aware query rules, and a provider-agnostic Daily Overview contract. The mobile-first public Events experience is available at `/podgorica/dogadjaji`. Live provider content remains available only when `ENABLE_EVENTS=true` and `EVENT_PROVIDER_MODE=live`. See [ADR 0010](docs/adr/0010-event-platform-foundation.md).
 
-KIC Budo Tomović, Crnogorsko narodno pozorište (CNP), Glavni Grad Podgorica, Turistička organizacija Podgorice, and Cineplexx Podgorica are approved official event sources. Their collectors read only official source pages into separate caches; Cineplexx renders its public JavaScript programme page through a bounded server-side browser process because no public server-rendered repertoire is available. Application reads use caches only. Providers remain inactive until `ENABLE_EVENTS=true` and `EVENT_PROVIDER_MODE=live` are explicitly configured. Mock mode never enables live providers and is rejected in production.
+CNP, Glavni Grad Podgorica, Turistička organizacija Podgorice, and Cineplexx Podgorica are active official event sources. Their collectors read only official source pages into separate caches; Cineplexx renders its public JavaScript programme page through a bounded server-side browser process because no public server-rendered repertoire is available. KIC Budo Tomović collection code and fixtures are retained but excluded from public reads, startup initialization, and recurring refreshes while its upstream TLS certificate is expired. Application reads use caches only. Providers remain inactive until `ENABLE_EVENTS=true` and `EVENT_PROVIDER_MODE=live` are explicitly configured. Mock mode never enables live providers and is rejected in production.
 
 Event collection applies deterministic quality validation before caching. It preserves valid date-only and incomplete events with warnings, rejects invalid core records, and records collector diagnostics without exposing rejected data. See [ADR 0012](docs/adr/0012-event-quality-layer.md).
 
 Quality policy and provider-health thresholds are validated server configuration; see `.env.example`. Event reads remain cache-only and provide non-public provider-status diagnostics for future operations tooling.
 
 ```bash
-pnpm run collect:kic-events
 pnpm run collect:cnp-events
 pnpm run collect:glavni-grad-events
 pnpm run collect:tourism-events

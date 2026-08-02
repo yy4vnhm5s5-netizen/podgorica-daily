@@ -63,7 +63,9 @@ while true; do
     # Sea Water Quality: once daily. One provider-wide run refreshes every active supported
     # coastal city sequentially and keeps a city-specific cache and lock for each one.
     02:45) run_collector "sea-water-quality" "pnpm run collect:sea-water-quality" ;;
-    # KIC, CNP, Glavni Grad, and Tourism: every three hours under one shared event lock.
+    # CNP, Glavni Grad, and Tourism (Podgorica and Tivat): every three hours under one shared
+    # event lock. KIC is intentionally excluded from the active provider registry because its
+    # upstream TLS certificate is expired.
     00:05|03:05|06:05|09:05|12:05|15:05|18:05|21:05)
       run_collector "standard-events" "pnpm run events:refresh-standard"
       ;;

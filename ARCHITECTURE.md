@@ -122,7 +122,7 @@ Every collector follows: `official source → HTTP client (host allow-listed) �
 |---|---|---|---|
 | CEDIS (power outages, Podgorica + Budva) | `city-alerts` | `pnpm run collect:cedis` / `/api/internal/cedis/refresh` | `cedis-planned-outages.json` (Podgorica), `cedis-planned-outages-budva.json` (Budva) — see note below |
 | VIK Podgorica (water) | `city-alerts` | `pnpm run collect:vikpg` / `/api/internal/vikpg/refresh` | `vikpg-water-alerts.json` |
-| KIC Budo Tomović | `events` | `pnpm run collect:kic-events`, bundled into `pnpm run events:refresh-standard` / `/api/internal/events/standard/refresh` | `kic-events.json` |
+| KIC Budo Tomović (retained, inactive) | `events` | `pnpm run collect:kic-events` only; excluded from public reads, startup initialization, and recurring refreshes while its upstream TLS certificate is expired | `kic-events.json` |
 | CNP | `events` | `pnpm run collect:cnp-events`, bundled into `pnpm run events:refresh-standard` / `/api/internal/events/standard/refresh` | `cnp-events.json` |
 | Glavni Grad Podgorica | `events` | `pnpm run collect:glavni-grad-events`, bundled into `pnpm run events:refresh-standard` / `/api/internal/events/standard/refresh` | `glavni-grad-events.json` |
 | Tourism Podgorica | `events` | `pnpm run collect:tourism-events`, bundled into `pnpm run events:refresh-standard` / `/api/internal/events/standard/refresh` | `tourism-events.json` |
