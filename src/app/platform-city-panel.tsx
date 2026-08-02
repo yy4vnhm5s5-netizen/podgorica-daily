@@ -7,6 +7,7 @@ import {
   Landmark,
   Music2,
   Plane,
+  Ship,
   Waves,
   Zap,
 } from "lucide-react";
@@ -62,6 +63,7 @@ const shortcutStyle = "bg-muted text-foreground hover:bg-muted/70";
 // cities later without redesigning the component: unmapped cities fall back to a neutral
 // landmark glyph and a neutral tint rather than requiring a code change to render at all.
 const cityIdentityIcons: Record<string, ComponentType<SVGProps<SVGSVGElement>>> = {
+  bar: Ship,
   budva: CitadelIcon,
   kotor: Castle,
   podgorica: MillenniumBridgeIcon,

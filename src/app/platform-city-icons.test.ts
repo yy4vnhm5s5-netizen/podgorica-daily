@@ -67,3 +67,15 @@ test("maps Kotor to the existing Castle icon instead of the generic landmark fal
   assert.ok(text.includes('kotor: "bg-slate-100 text-slate-700",'));
   assert.doesNotMatch(text, /kotor:\s*Landmark/u);
 });
+
+test("maps Bar to Lucide's Ship icon instead of the generic landmark fallback", async () => {
+  const text = await panelSource();
+
+  assert.match(text, /\bShip\b/u);
+  assert.ok(text.includes("bar: Ship,"));
+  assert.doesNotMatch(text, /bar:\s*Landmark/u);
+  assert.ok(text.includes("budva: CitadelIcon,"));
+  assert.ok(text.includes("kotor: Castle,"));
+  assert.ok(text.includes("podgorica: MillenniumBridgeIcon,"));
+  assert.ok(text.includes("tivat: MarinaSailIcon,"));
+});
