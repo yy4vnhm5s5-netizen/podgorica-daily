@@ -13,6 +13,10 @@ import {
   supportsCityCapability,
 } from "@/shared/config/cities";
 import {
+  isCityPublicFeatureRouteAvailable,
+  type CityRouteAvailabilityOptions,
+} from "@/shared/config/city-routes";
+import {
   getCityPath,
   getCinemaPath,
   getElectricityPath,
@@ -22,13 +26,8 @@ import {
   getSeaWaterQualityPath,
 } from "@/shared/config/public-routes";
 import { createPublicRouteMetadata } from "@/app/public-route-metadata";
-import { isFeatureEnabled, type Feature } from "@/shared/config/features";
 import { getPageTitle } from "@/shared/config/site";
 import type { City, CityCapability, CityContext } from "@/shared/types/city";
-
-interface CityRouteAvailabilityOptions {
-  isFeatureEnabled?: typeof isFeatureEnabled;
-}
 
 interface CityDashboardSummaryAvailability {
   cinema: boolean;
@@ -36,12 +35,6 @@ interface CityDashboardSummaryAvailability {
   goingOut: boolean;
   seaWaterQuality: boolean;
 }
-
-const publicFeatureByCityCapability: Partial<Record<CityCapability, Feature>> = {
-  flights: "flights",
-  goingOut: "goingOut",
-  seaWaterQuality: "seaWaterQuality",
-};
 
 function getCityLandingTitle(context: CityContext) {
   if (!supportsCityCapability(context.city, "events")) {
@@ -89,17 +82,6 @@ function resolveActiveCityFeatureRoute(slug: string, capability: CityCapability)
 
 function getCanonicalCitySitemapPaths() {
   return getActiveCities().map((city) => getCityPath(city));
-}
-
-function isCityPublicFeatureRouteAvailable(
-  city: City,
-  capability: CityCapability,
-  { isFeatureEnabled: checkFeature = isFeatureEnabled }: CityRouteAvailabilityOptions = {},
-) {
-  if (!isActiveCity(city) || !supportsCityCapability(city, capability)) return false;
-
-  const feature = publicFeatureByCityCapability[capability];
-  return feature ? checkFeature(feature) : true;
 }
 
 // Cinema is a Cineplexx-specific sub-feature of "events", not a synonym for it — Cineplexx only

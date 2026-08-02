@@ -2,6 +2,7 @@ import { Waves } from "lucide-react";
 
 import type { SeaWaterQualityHistoryLocation } from "../domain/sea-water-quality.ts";
 import { gradeLabels, gradeStyles } from "./sea-water-quality-grade-styles";
+import { ExploreCityLinks } from "@/shared/components/explore-city-links";
 import { NewTabNotice } from "@/shared/components/new-tab-notice";
 import { SectionTitle } from "@/shared/components/section-title";
 import { getLocaleTag, type Locale } from "@/shared/config/locale";
@@ -144,6 +145,10 @@ function SeaWaterQualityLocationPage({
           }
         </p>
       ) : null}
+
+      {/* The beach listing this page already belongs to is excluded, so the block only offers
+          genuinely different destinations within the same city. */}
+      <ExploreCityLinks city={city} exclude={["seaWaterQuality"]} />
     </section>
   );
 }

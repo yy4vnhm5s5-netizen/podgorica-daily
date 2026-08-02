@@ -15,6 +15,19 @@ test("renders user-facing beach history without exposing the raw JPMD source rou
   assert.doesNotMatch(source, /\{measurement\.sourceRound\}<\/td>/u);
 });
 
+test("offers contextual same-city navigation without linking back to the beach listing", async () => {
+  const source = await readFile(
+    new URL("./sea-water-quality-location-page.tsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(
+    source,
+    /import \{ ExploreCityLinks \} from "@\/shared\/components\/explore-city-links";/u,
+  );
+  assert.match(source, /<ExploreCityLinks city=\{city\} exclude=\{\["seaWaterQuality"\]\} \/>/u);
+});
+
 test("uses the compact linked JPMD source attribution", async () => {
   const source = await readFile(
     new URL("./sea-water-quality-location-page.tsx", import.meta.url),
