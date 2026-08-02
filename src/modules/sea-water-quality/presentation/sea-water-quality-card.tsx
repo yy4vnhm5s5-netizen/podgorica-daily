@@ -38,7 +38,9 @@ function SeaWaterQualityCard({
           <Waves aria-hidden="true" className="size-[1.125rem]" strokeWidth={2} />
         </div>
         <div>
-          <h2 className="text-base font-semibold tracking-tight">Kvalitet mora</h2>
+          <h2 className="text-sm font-medium uppercase leading-5 tracking-[0.16em] text-slate-800 sm:text-[0.9375rem]">
+            Kvalitet mora
+          </h2>
           <p className="mt-0.5 text-sm text-muted-foreground">
             Zvanično praćenje sanitarnog kvaliteta mora na javnim kupalištima
           </p>
