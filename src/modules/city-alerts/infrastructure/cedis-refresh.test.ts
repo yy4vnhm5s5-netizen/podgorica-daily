@@ -21,6 +21,9 @@ import {
   getActiveCedisContexts,
   runActiveCedisCollectors,
 } from "./collect-cedis.ts";
+import { getPowerOutages } from "../application/get-power-outages.ts";
+import { getCedisCityAlerts } from "./cedis-city-alerts-provider.ts";
+import { createCityContext } from "@/shared/config/cities";
 import { refreshCedis, type RefreshCache, type RefreshResult } from "./cedis-refresh.ts";
 
 const fixture = (name: string) =>
@@ -387,6 +390,80 @@ test("replaces, rather than merges, a prior cache with clean current CEDIS notic
   );
 });
 
+test("replaces an old Podgorica outage with a valid empty snapshot when today's article only covers Bar", async () => {
+  const previous = {
+    ...previousSnapshot(),
+    alerts: [{ id: "ducici-previous", cityIds: ["podgorica"] }] as never[],
+  };
+  const memory = createMemoryCache(previous);
+  const previousArticleUrl =
+    "https://cedis.me/servisne-informacije/planirani-radovi-na-mrezi-za-01-avgust/";
+  const currentArticleUrl =
+    "https://cedis.me/servisne-informacije/planirani-radovi-na-mrezi-za-02-avgust/";
+  const listing = [
+    `<a href="${previousArticleUrl}">Planirani radovi na mreži za 01. avgust</a>`,
+    `<a href="${currentArticleUrl}">Planirani radovi na mreži za 02. avgust</a>`,
+  ].join("");
+  const result = await refreshCedis({
+    cache: memory.cache,
+    httpClient: createFixtureClient({
+      [currentArticleUrl]: await fixture("cedis-august-2-bar-only.html"),
+      [listingUrl]: listing,
+      [previousArticleUrl]: `
+        <article>
+          <p>Podgorica</p>
+          <p>Od 08 do 15 sati: Liješta, Dučići, Koći i Radan.</p>
+        </article>
+      `,
+    }),
+    now: () => new Date("2026-08-02T12:00:00Z"),
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(result.classification, "trustworthy-empty");
+  assert.equal(result.retainedPreviousSnapshot, false);
+  assert.deepEqual(memory.getSnapshot()?.alerts, []);
+
+  const context = createCityContext("podgorica");
+  const cedis = await getCedisCityAlerts({
+    context,
+    mode: "live",
+    readCache: async () => memory.getSnapshot(),
+  });
+  const powerOutages = await getPowerOutages(context, {
+    getCedisData: async () => cedis,
+  });
+  assert.equal(powerOutages.status, "empty");
+  assert.deepEqual(powerOutages.outages, []);
+});
+
+test("writes a valid empty snapshot for every supported CEDIS city omitted from today's Bar-only article", async () => {
+  const currentArticleUrl =
+    "https://cedis.me/servisne-informacije/planirani-radovi-na-mrezi-za-02-avgust/";
+  const pages = {
+    [currentArticleUrl]: await fixture("cedis-august-2-bar-only.html"),
+    [listingUrl]: `<a href="${currentArticleUrl}">Planirani radovi na mreži za 02. avgust</a>`,
+  };
+
+  for (const cityId of ["podgorica", "budva", "tivat", "kotor"] as const) {
+    const memory = createMemoryCache({
+      ...previousSnapshot(),
+      alerts: [{ id: `${cityId}-previous`, cityIds: [cityId] }] as never[],
+      cityId,
+    });
+    const result = await refreshCedis({
+      cache: memory.cache,
+      context: createCityContext(cityId),
+      httpClient: createFixtureClient(pages),
+      now: () => new Date("2026-08-02T12:00:00Z"),
+    });
+
+    assert.equal(result.success, true, cityId);
+    assert.equal(result.snapshot?.cityId, cityId);
+    assert.deepEqual(result.snapshot?.alerts, [], cityId);
+  }
+});
+
 test("replaces a rejected polluted legacy cache with clean fresh CEDIS notices", async () => {
   const legacyCache = await readCedisCacheResult(
     "cache.json",
@@ -480,6 +557,7 @@ test("retains a previous cache when a required article fetch fails", async () =>
   });
   assert.equal(result.retainedPreviousSnapshot, true);
   assert.equal(result.snapshot?.alerts[0]?.id, "previous");
+  assert.equal(memory.getSnapshot()?.alerts[0]?.id, "previous");
 });
 
 test("retains a previous cache when article markup is structurally suspicious", async () => {
@@ -494,6 +572,7 @@ test("retains a previous cache when article markup is structurally suspicious", 
   });
   assert.equal(result.classification, "structurally-suspicious");
   assert.equal(result.retainedPreviousSnapshot, true);
+  assert.equal(memory.getSnapshot()?.alerts[0]?.id, "previous");
 });
 
 test("writes a trustworthy empty result for a city when only its municipality section is missing from otherwise-parseable articles", async () => {
@@ -556,7 +635,7 @@ test("retains a previous snapshot when no article has any recognizable municipal
   assert.equal(result.snapshot?.alerts[0]?.id, "previous");
 });
 
-test("combines a Podgorica-present article with a benign Podgorica-absent article into one trustworthy non-empty result", async () => {
+test("uses the nearest daily schedule instead of merging a later municipality-mismatched article", async () => {
   const secondArticleUrl = "https://cedis.me/planirani-radovi-za-31-mart/";
   const result = await refreshCedis({
     cache: createMemoryCache().cache,
@@ -573,7 +652,7 @@ test("combines a Podgorica-present article with a benign Podgorica-absent articl
   assert.equal(result.classification, "trustworthy-non-empty");
   assert.equal(result.success, true);
   assert.ok(result.snapshot && result.snapshot.alerts.length > 0);
-  assert.ok(result.warnings.includes("municipality-section-not-found"));
+  assert.ok(!result.warnings.includes("municipality-section-not-found"));
   assert.ok(!result.warnings.includes("no-municipality-headings-recognized"));
 });
 

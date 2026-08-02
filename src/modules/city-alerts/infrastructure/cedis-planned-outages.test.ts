@@ -24,6 +24,22 @@ test("discovers only planned-work listing links", async () => {
   assert.equal(articles[0].url, "https://cedis.me/planirani-radovi-za-30-mart/");
 });
 
+test("selects only the nearest current-or-next daily schedule and excludes yesterday's notice", () => {
+  const articles = discoverCedisArticles(
+    [
+      '<a href="/servisne-informacije/planirani-radovi-na-mrezi-za-01-avgust/">Planirani radovi na mreži za 01. avgust</a>',
+      '<a href="/servisne-informacije/planirani-radovi-na-mrezi-za-02-avgust/">Planirani radovi na mreži za 02. avgust</a>',
+      '<a href="/servisne-informacije/planirani-radovi-na-mrezi-za-03-avgust/">Planirani radovi na mreži za 03. avgust</a>',
+    ].join(""),
+    new Date("2026-08-02T12:00:00Z"),
+  );
+
+  assert.deepEqual(
+    articles.map(({ url }) => url),
+    ["https://cedis.me/servisne-informacije/planirani-radovi-na-mrezi-za-02-avgust/"],
+  );
+});
+
 test("isolates Podgorica and stops at the next municipality", async () => {
   const html = await fixture("multi-municipality.html");
   const section = getPodgoricaSection(html.replace(/<[^>]+>/g, " "));

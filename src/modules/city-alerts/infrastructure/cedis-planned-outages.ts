@@ -103,10 +103,33 @@ function discoverCedisArticles(html: string, now = new Date()): CedisArticleLink
     .filter((link): link is { title: string; url: string } => Boolean(link.url))
     .filter(({ title }) => /planiran[ai] radov/i.test(title));
 
-  return deduplicate(links).filter(({ title }) => {
-    const date = parseArticleDate(title, now);
-    return !date || date.getTime() >= startOfDay(addDays(now, -1)).getTime();
-  });
+  // CEDIS can keep yesterday's planned-work notice next to the current one in its
+  // listing. Those notices describe separate daily schedules and must not be
+  // merged: otherwise a completed refresh can republish yesterday's outage for a
+  // city that has no outage in today's authoritative notice. CEDIS also commonly
+  // publishes the next day's notice ahead of time, so use the nearest source date
+  // on or after the current Podgorica-local day instead of requiring an exact
+  // calendar-date match.
+  const currentDay = getPodgoricaCalendarDay(now);
+  const datedLinks = deduplicate(links)
+    .map((link) => ({ ...link, scheduledDay: parseArticleDate(link.title, now) }))
+    .filter(
+      (link): link is CedisArticleLink & { scheduledDay: Date } =>
+        link.scheduledDay !== undefined && getCalendarDay(link.scheduledDay) >= currentDay,
+    );
+
+  if (datedLinks.length === 0) return [];
+
+  const selectedDay = datedLinks.reduce(
+    (earliest, link) =>
+      getCalendarDay(link.scheduledDay) < getCalendarDay(earliest) ? link.scheduledDay : earliest,
+    datedLinks[0].scheduledDay,
+  );
+  const selectedCalendarDay = getCalendarDay(selectedDay);
+
+  return datedLinks
+    .filter((link) => getCalendarDay(link.scheduledDay) === selectedCalendarDay)
+    .map(({ scheduledDay, ...link }) => ({ ...link, publishedAt: scheduledDay }));
 }
 
 function parseCedisArticle(
@@ -529,13 +552,18 @@ function removeEmbeddedNonContent(value: string) {
     )
     .replace(/<(?:script|style|noscript|svg|template|iframe|object|embed)\b[^>]*\/?\s*>/gi, " ");
 }
-function addDays(value: Date, days: number) {
-  const next = new Date(value);
-  next.setDate(next.getDate() + days);
-  return next;
+function getPodgoricaCalendarDay(value: Date) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone: "Europe/Podgorica",
+    year: "numeric",
+  }).formatToParts(value);
+  const values = Object.fromEntries(parts.map(({ type, value: partValue }) => [type, partValue]));
+  return `${values.year}-${values.month}-${values.day}`;
 }
-function startOfDay(value: Date) {
-  return new Date(value.getFullYear(), value.getMonth(), value.getDate());
+function getCalendarDay(value: Date) {
+  return value.toISOString().slice(0, 10);
 }
 function deduplicate<T extends { url: string }>(items: T[]) {
   return [...new Map(items.map((item) => [item.url, item])).values()];
