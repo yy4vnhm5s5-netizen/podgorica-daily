@@ -2,7 +2,7 @@ const contactTranslations = {
   description:
     "Partnerstva sa Gradom.me za pouzdane lokalne informacije, javne servise, događaje i sadržaje važne građanima.",
   email: "E-mail",
-  emailPlaceholder: "ime@organizacija.me",
+  emailPlaceholder: "Upišite Vaš e-mail",
   error: "Upit trenutno nije moguće poslati. Pokušajte ponovo kasnije.",
   formDescription:
     "Ostavite osnovne kontakt podatke i ukratko opišite temu. Gradom.me će se javiti u roku od par radnih dana.",
@@ -16,7 +16,7 @@ const contactTranslations = {
   loading: "Slanje…",
   message: "Kako možemo pomoći?",
   messagePlaceholder:
-    "Opišite vašu organizaciju, projekat ili ideju i navedite kako Gradom.me može pomoći.",
+    "Pošaljite nam Vaše predloge za saradnju, sugestije, greške koje ste primijetili ili ideje kako Gradom.me možemo dodatno poboljšati.",
   metadataTitle: "Partnerstva i saradnja | Gradom.me",
   partnershipLabel: "JEDNO MJESTO ZA LOKALNE INFORMACIJE",
   submit: "Pošalji upit",

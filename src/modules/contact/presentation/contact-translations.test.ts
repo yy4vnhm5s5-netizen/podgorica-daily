@@ -17,9 +17,10 @@ test("provides the single-language platform contact copy and navigation destinat
   );
   assert.equal(getContactTranslations().partnershipLabel, "JEDNO MJESTO ZA LOKALNE INFORMACIJE");
   assert.equal(getContactTranslations().metadataTitle, "Partnerstva i saradnja | Gradom.me");
+  assert.equal(getContactTranslations().emailPlaceholder, "Upišite Vaš e-mail");
   assert.equal(
     getContactTranslations().messagePlaceholder,
-    "Opišite vašu organizaciju, projekat ili ideju i navedite kako Gradom.me može pomoći.",
+    "Pošaljite nam Vaše predloge za saradnju, sugestije, greške koje ste primijetili ili ideje kako Gradom.me možemo dodatno poboljšati.",
   );
   assert.equal(getTranslations("me").shell.navigation.contact, "Kontakt");
   assert.equal(getContactPath(), "/kontakt");
