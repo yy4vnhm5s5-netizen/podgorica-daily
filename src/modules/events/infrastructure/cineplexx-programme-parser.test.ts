@@ -138,5 +138,8 @@ test("extracts the real duration when a separator element shares the duration cl
   );
   const candidates = parseCineplexxProgramme(html, { today: "2026-07-20" });
 
-  assert.ok(candidates[0]?.tags.includes("duration:1h 42m"));
+  const firstCandidate = candidates[0];
+  assert.ok(firstCandidate);
+  assert.ok(Array.isArray(firstCandidate.tags));
+  assert.ok(firstCandidate.tags.includes("duration:1h 42m"));
 });

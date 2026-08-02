@@ -171,12 +171,14 @@ test("uses the same available Going Out result as the city page and does not tur
       flights: false,
       goingOut: true,
       railway: false,
+      seaWaterQuality: true,
       weather: true,
     },
     events: getEmptyCityEventsReadModel(),
     flights: null,
     goingOut: { events: [event], state: "fresh" },
     railway: null,
+    seaWaterQuality: null,
     weather: null,
   });
   const unavailable = createPlatformCityCardData(context, null);
@@ -187,12 +189,14 @@ test("uses the same available Going Out result as the city page and does not tur
       flights: false,
       goingOut: true,
       railway: false,
+      seaWaterQuality: true,
       weather: true,
     },
     events: getEmptyCityEventsReadModel(),
     flights: null,
     goingOut: { events: [], state: "stale" },
     railway: null,
+    seaWaterQuality: null,
     weather: null,
   });
 
@@ -268,6 +272,7 @@ test("derives Podgorica event and movie totals from the same displayable read mo
       flights: true,
       goingOut: true,
       railway: true,
+      seaWaterQuality: false,
       weather: true,
     },
     events: {
@@ -278,6 +283,7 @@ test("derives Podgorica event and movie totals from the same displayable read mo
     flights: null,
     goingOut: { events: [], state: "fresh" },
     railway: null,
+    seaWaterQuality: null,
     weather: null,
   });
 
@@ -326,6 +332,7 @@ test("counts many screenings of the same movies across several days as their uni
       flights: true,
       goingOut: true,
       railway: true,
+      seaWaterQuality: false,
       weather: true,
     },
     events: {
@@ -336,6 +343,7 @@ test("counts many screenings of the same movies across several days as their uni
     flights: null,
     goingOut: { events: [], state: "fresh" },
     railway: null,
+    seaWaterQuality: null,
     weather: null,
   });
 
@@ -353,6 +361,7 @@ test("shows Tivat's own beach count in the sea water quality highlight, not Budv
       flights: false,
       goingOut: true,
       railway: false,
+      seaWaterQuality: true,
       weather: true,
     },
     events: getEmptyCityEventsReadModel(),
@@ -434,6 +443,7 @@ test("never shows a movies highlight for Tivat, even if Cineplexx-shaped events 
       flights: false,
       goingOut: true,
       railway: false,
+      seaWaterQuality: true,
       weather: true,
     },
     events: {
@@ -444,6 +454,7 @@ test("never shows a movies highlight for Tivat, even if Cineplexx-shaped events 
     flights: null,
     goingOut: { events: [], state: "fresh" },
     railway: null,
+    seaWaterQuality: null,
     weather: null,
   });
 

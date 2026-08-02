@@ -15,8 +15,9 @@ const configuration = getContactResendConfiguration({
 
 const inquiry = {
   email: "guest@example.com",
+  fullName: "Guest User",
+  locale: "me" as const,
   message: "Hello there.",
-  name: "Guest User",
 };
 
 const metadata = { submittedAt: "2026-07-28T10:00:00.000Z" };

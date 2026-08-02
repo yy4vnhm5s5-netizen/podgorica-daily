@@ -108,7 +108,7 @@ test("forwards VIKPG's HTTP-error diagnostics (httpStatus, finalUrl, responseBod
       {
         id: "vikpg",
         refresh: async () => ({
-          exitCode: 1,
+          exitCode: 0,
           summary: {
             alertCount: 1,
             diagnostics: {
@@ -145,7 +145,7 @@ test("forwards emptyBody, redirected, and networkErrorType exactly as the provid
       {
         id: "vikpg",
         refresh: async () => ({
-          exitCode: 1,
+          exitCode: 0,
           summary: {
             alertCount: 1,
             diagnostics: { emptyBody: true, httpStatus: 200, redirected: false },
@@ -228,7 +228,7 @@ test("never carries a body larger than the provider's own preview, headers, cook
       {
         id: "vikpg",
         refresh: async () => ({
-          exitCode: 1,
+          exitCode: 0,
           summary: {
             alertCount: 1,
             diagnostics: {

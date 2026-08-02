@@ -51,6 +51,7 @@ test("maps fixed-provider refresh outcomes without exposing cache paths", () => 
     },
   });
   const retainedFlights = toFlightsRefreshEndpointResult({
+    cityId: "podgorica",
     exitCode: 1,
     output: "provider=podgorica-airport state=failed cache=retained",
     refresh: {

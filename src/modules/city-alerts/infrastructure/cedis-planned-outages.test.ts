@@ -314,8 +314,18 @@ test("treats Andrijevica as a municipality boundary around the Kotor section", a
     ["Glavatičići – dio korisnika."],
   );
   assert.ok(kotor.every((alert) => alert.cityIds.every((cityId) => cityId === "kotor")));
-  assert.ok(kotor.every((alert) => !alert.affectedArea.value.includes("Andrijevica")));
-  assert.ok(kotor.every((alert) => !alert.affectedArea.value.includes("Donja Lastva")));
+  assert.ok(
+    kotor.every(
+      (alert) =>
+        alert.affectedArea.kind === "source" && !alert.affectedArea.value.includes("Andrijevica"),
+    ),
+  );
+  assert.ok(
+    kotor.every(
+      (alert) =>
+        alert.affectedArea.kind === "source" && !alert.affectedArea.value.includes("Donja Lastva"),
+    ),
+  );
 
   assert.equal(andrijevica.state, "found");
   assert.equal(andrijevica.sections.length, 1);

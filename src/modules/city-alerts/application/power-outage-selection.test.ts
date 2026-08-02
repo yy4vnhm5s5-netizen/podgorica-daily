@@ -41,10 +41,10 @@ test("keeps all parsed locations and sorts every currently relevant outage", () 
 });
 
 test("does not select an outage assigned to a different city", () => {
-  const kotor = { ...powerOutage("kotor", "Glavatičići"), cityIds: ["kotor"] as const };
-  const budva = {
+  const kotor: CityAlert = { ...powerOutage("kotor", "Glavatičići"), cityIds: ["kotor"] };
+  const budva: CityAlert = {
     ...powerOutage("budva", "Trešnjevik"),
-    cityIds: ["budva"] as const,
+    cityIds: ["budva"],
   };
 
   assert.deepEqual(

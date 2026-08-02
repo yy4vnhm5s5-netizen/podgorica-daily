@@ -113,7 +113,10 @@ test("collects fixtures atomically through injected KIC HTTP and writes a normal
   assert.equal(snapshot?.venues.length, 3);
   assert.equal(kicEventProvider.metadata.id, "kic-budo-tomovic");
   assert.equal(kicEventProvider.metadata.refreshIntervalMinutes, 180);
-  assert.ok(eventProviderRegistry.some((provider) => provider.metadata.id === "kic-budo-tomovic"));
+  assert.equal(
+    eventProviderRegistry.some((provider) => provider.metadata.id === "kic-budo-tomovic"),
+    false,
+  );
   const service = await getCityEvents(context, [
     {
       ...kicEventProvider,

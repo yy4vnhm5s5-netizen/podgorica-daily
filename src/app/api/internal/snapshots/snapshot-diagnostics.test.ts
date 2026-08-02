@@ -49,9 +49,24 @@ test("reports cache metadata using the same displayability rules as each public 
       paths.cineplexx,
       JSON.stringify({
         events: [
-          { id: "past", startsAt: "2026-07-25T09:00:00.000Z", title: "Prošli" },
-          { id: "today", startsAt: "2026-07-25T12:00:00.000Z", title: "Danas" },
-          { id: "tomorrow", startsAt: "2026-07-26T12:00:00.000Z", title: "Sjutra" },
+          {
+            id: "past",
+            startsAt: "2026-07-25T09:00:00.000Z",
+            status: "scheduled",
+            title: "Prošli",
+          },
+          {
+            id: "today",
+            startsAt: "2026-07-25T12:00:00.000Z",
+            status: "scheduled",
+            title: "Danas",
+          },
+          {
+            id: "tomorrow",
+            startsAt: "2026-07-26T12:00:00.000Z",
+            status: "scheduled",
+            title: "Sjutra",
+          },
         ],
         fetchedAt: "2026-07-25T09:55:00.000Z",
       }),
