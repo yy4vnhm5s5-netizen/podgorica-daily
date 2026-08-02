@@ -214,6 +214,26 @@ test("extracts only the requested allowlisted municipality from one CEDIS articl
   assert.ok(budva.every((alert) => alert.cityIds.every((cityId) => cityId === "budva")));
 });
 
+test("extracts the Bar section from the approved CEDIS Bar-only fixture", async () => {
+  const article = {
+    title: "Planirani radovi na mreži za 02. avgust",
+    url: "https://cedis.me/servisne-informacije/planirani-radovi-na-mrezi-za-02-avgust/",
+  };
+
+  const alerts = parseCedisArticle(
+    article,
+    await fixture("cedis-august-2-bar-only.html"),
+    "bar",
+    new Date("2026-08-02T00:00:00Z"),
+  );
+
+  assert.deepEqual(
+    alerts.map((alert) => alert.affectedArea.kind === "source" && alert.affectedArea.value),
+    ["Centar."],
+  );
+  assert.ok(alerts.every((alert) => alert.cityIds.every((cityId) => cityId === "bar")));
+});
+
 test("handles Budva before Podgorica without cross-city leakage", async () => {
   const article = {
     title: "Planirani radovi za 30. mart",
@@ -326,7 +346,7 @@ test("rejects unsupported municipality extraction", async () => {
       url: "https://cedis.me/planirani-radovi-za-30-mart/",
     },
     await fixture("multi-municipality.html"),
-    "bar",
+    "niksic",
     fixedNow(),
   );
 

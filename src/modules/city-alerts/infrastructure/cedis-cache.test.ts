@@ -165,10 +165,12 @@ test("restores alert timestamps from JSON before homepage date mapping", async (
   ]);
 });
 
-test("keeps the legacy Podgorica snapshot path while deriving an isolated Budva path", () => {
+test("keeps the legacy Podgorica snapshot path while deriving isolated city paths", () => {
   assert.equal(getCedisCachePath("podgorica"), defaultCachePath);
   assert.notEqual(getCedisCachePath("budva"), defaultCachePath);
   assert.match(getCedisCachePath("budva"), /cedis-planned-outages-budva\.json$/);
+  assert.notEqual(getCedisCachePath("bar"), defaultCachePath);
+  assert.match(getCedisCachePath("bar"), /cedis-planned-outages-bar\.json$/);
 });
 
 test("rejects a snapshot written for another city", async () => {

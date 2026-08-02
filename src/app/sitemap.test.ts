@@ -29,6 +29,19 @@ test("publishes only canonical indexable public routes", async () => {
   assert.equal(urls.includes("/budva/dogadjaji"), false);
   assert.equal(urls.includes("/budva/filmovi"), false);
   assert.equal(urls.includes("/budva/letovi"), false);
+  assert.equal(urls.includes("/bar"), true);
+  assert.equal(urls.includes("/bar/struja"), true);
+  for (const path of [
+    "/bar/dogadjaji",
+    "/bar/filmovi",
+    "/bar/izlasci",
+    "/bar/letovi",
+    "/bar/plaze",
+    "/bar/vozovi",
+    "/bar/voda",
+  ]) {
+    assert.equal(urls.includes(path), false, path);
+  }
   assert.equal(urls.includes("/kotor"), true);
   assert.equal(urls.includes("/kotor/izlasci"), true);
   assert.equal(urls.includes("/kotor/struja"), true);

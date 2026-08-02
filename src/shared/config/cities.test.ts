@@ -41,8 +41,30 @@ test("exposes Podgorica as the main city and every active public city", () => {
   assert.equal(mainCity.isMain, true);
   assert.deepEqual(
     getActiveCities().map(({ slug }) => slug),
-    ["budva", "kotor", "podgorica", "tivat"],
+    ["bar", "budva", "kotor", "podgorica", "tivat"],
   );
+});
+
+test("registers Bar as an active weather and electricity city", () => {
+  const bar = getCityBySlug("bar");
+
+  assert.equal(bar?.id, "bar");
+  assert.equal(bar?.isActive, true);
+  assert.deepEqual(bar?.capabilities, ["electricity", "weather"]);
+  assert.equal(getCityName(bar!, "locative"), "Baru");
+  assert.equal(bar?.timezone, "Europe/Podgorica");
+  assert.equal(bar?.latitude, 42.0937);
+  assert.equal(bar?.longitude, 19.1005);
+  for (const capability of [
+    "events",
+    "flights",
+    "goingOut",
+    "railway",
+    "seaWaterQuality",
+    "water",
+  ] as const) {
+    assert.equal(supportsCityCapability(bar!, capability), false);
+  }
 });
 
 test("registers Tivat as a third active city with its launch-phase capability set", () => {
@@ -79,6 +101,7 @@ test("resolves active city route slugs and keeps Kotor's approved capability set
   assert.equal(getActiveCityBySlug("podgorica")?.id, "podgorica");
   assert.equal(getActiveCityBySlug("budva")?.id, "budva");
   assert.equal(getActiveCityBySlug("kotor")?.id, "kotor");
+  assert.equal(getActiveCityBySlug("bar")?.id, "bar");
   assert.equal(getActiveCityBySlug("unknown"), undefined);
   assert.equal(getCityBySlug("budva")?.isActive, true);
   assert.deepEqual(getCityBySlug("budva")?.capabilities, [

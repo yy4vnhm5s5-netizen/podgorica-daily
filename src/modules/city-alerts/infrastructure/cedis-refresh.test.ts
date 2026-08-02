@@ -198,6 +198,18 @@ test("reuses one fetched source document set for every active CEDIS city", async
     {
       capabilities: ["electricity"] as const,
       country: "Montenegro",
+      id: "bar",
+      isActive: true,
+      isMain: false,
+      latitude: 42.0937,
+      longitude: 19.1005,
+      name: "Bar",
+      slug: "bar",
+      timezone: "Europe/Podgorica",
+    },
+    {
+      capabilities: ["electricity"] as const,
+      country: "Montenegro",
       id: "podgorica",
       isActive: true,
       isMain: true,
@@ -247,7 +259,7 @@ test("reuses one fetched source document set for every active CEDIS city", async
     },
   });
 
-  assert.equal(results.length, 2);
+  assert.equal(results.length, 3);
   assert.deepEqual(requests, [
     "https://cedis.me/servisne-informacije/",
     "https://cedis.me/article/",
@@ -267,6 +279,18 @@ test("selects only active CEDIS-supported electricity cities for scheduled colle
         longitude: 0,
         name: "Podgorica",
         slug: "podgorica",
+        timezone: "Europe/Podgorica",
+      },
+      {
+        capabilities: ["electricity"] as const,
+        country: "Montenegro",
+        id: "bar",
+        isActive: true,
+        isMain: false,
+        latitude: 0,
+        longitude: 0,
+        name: "Bar",
+        slug: "bar",
         timezone: "Europe/Podgorica",
       },
       {
@@ -302,7 +326,7 @@ test("selects only active CEDIS-supported electricity cities for scheduled colle
 
   assert.deepEqual(
     contexts.map((context) => context.city.id),
-    ["podgorica"],
+    ["podgorica", "bar"],
   );
 });
 

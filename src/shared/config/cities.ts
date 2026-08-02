@@ -4,11 +4,11 @@ import type { City, CityCapability, CityContext, CityId, CityNameForm } from "@/
 const cityRegistry: Record<string, City> = {
   bar: {
     accusativeName: "Bar",
-    capabilities: [],
+    capabilities: ["electricity", "weather"],
     country: "Montenegro",
     description: "Informacije za svakodnevni život u Baru.",
     id: "bar",
-    isActive: false,
+    isActive: true,
     isMain: false,
     latitude: 42.0937,
     longitude: 19.1005,

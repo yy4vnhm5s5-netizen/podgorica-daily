@@ -33,6 +33,18 @@ Product roadmap ideas are not committed scope. A capability appears publicly onl
 
 ## Current city direction
 
+The active registry currently includes Bar, Budva, Kotor, Podgorica, and Tivat. Each city exposes
+only the capabilities supported by its approved source coverage.
+
+### Bar
+
+Bar is active with an intentionally small initial local product. Its canonical route is `/bar`.
+
+- **Weather:** available through the generic weather flow.
+- **CEDIS:** available through the approved Bar municipality mapping and isolated city snapshot.
+- **Water, Going Out, beach quality, standard events, cinema, flights, and railway:** not supported
+  for Bar in this initial release.
+
 ### Podgorica
 
 Podgorica is an active city. Its local product currently combines weather, selected transport data, city alerts, events, cinema programme data, Going Out listings, and the supporting daily overview. Its canonical route is `/podgorica`; the platform homepage is not a duplicate Podgorica dashboard.

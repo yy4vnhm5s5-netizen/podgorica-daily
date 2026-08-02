@@ -20,7 +20,17 @@ test("derives generic city cards from every active registry city", () => {
 
   assert.deepEqual(
     cards.map((card) => card.city.id),
-    ["budva", "kotor", "podgorica", "tivat"],
+    ["bar", "budva", "kotor", "podgorica", "tivat"],
+  );
+  const bar = cards.find((card) => card.city.id === "bar");
+  assert.ok(bar);
+  assert.deepEqual(
+    bar.shortcuts.map((shortcut) => shortcut.label),
+    ["Struja"],
+  );
+  assert.deepEqual(
+    bar.highlights.map((highlight) => highlight.key),
+    ["weather"],
   );
   const budva = cards.find((card) => card.city.id === "budva");
   assert.ok(budva);
@@ -101,29 +111,36 @@ test("creates platform metadata and structured data only from public city cards"
   assert.deepEqual(graph[1]?.itemListElement, [
     {
       "@type": "ListItem",
-      name: "Budva",
+      name: "Bar",
       position: 1,
+      url: "https://gradom.me/bar",
+    },
+    {
+      "@type": "ListItem",
+      name: "Budva",
+      position: 2,
       url: "https://gradom.me/budva",
     },
     {
       "@type": "ListItem",
       name: "Kotor",
-      position: 2,
+      position: 3,
       url: "https://gradom.me/kotor",
     },
     {
       "@type": "ListItem",
       name: "Podgorica",
-      position: 3,
+      position: 4,
       url: "https://gradom.me/podgorica",
     },
     {
       "@type": "ListItem",
       name: "Tivat",
-      position: 4,
+      position: 5,
       url: "https://gradom.me/tivat",
     },
   ]);
+  assert.equal(JSON.stringify(structuredData).includes("bar"), true);
   assert.equal(JSON.stringify(structuredData).includes("budva"), true);
   assert.equal(JSON.stringify(structuredData).includes("kotor"), true);
 });

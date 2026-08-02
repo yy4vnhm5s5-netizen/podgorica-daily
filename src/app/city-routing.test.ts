@@ -86,7 +86,7 @@ test("cinema route availability requires both the events capability and Cineplex
 test("resolves active public city routes but rejects inactive and unknown city routes", () => {
   assert.equal(resolveActiveCityRoute("budva")?.city.id, "budva");
   assert.equal(resolveActiveCityRoute("kotor")?.city.id, "kotor");
-  assert.equal(resolveActiveCityRoute("bar"), undefined);
+  assert.equal(resolveActiveCityRoute("bar")?.city.id, "bar");
   assert.equal(resolveActiveCityRoute("unknown"), undefined);
 });
 
@@ -122,7 +122,13 @@ test("a city without capabilities does not enable Podgorica dashboard data sourc
 });
 
 test("sitemap paths contain only active canonical city paths", () => {
-  assert.deepEqual(getCanonicalCitySitemapPaths(), ["/budva", "/kotor", "/podgorica", "/tivat"]);
+  assert.deepEqual(getCanonicalCitySitemapPaths(), [
+    "/bar",
+    "/budva",
+    "/kotor",
+    "/podgorica",
+    "/tivat",
+  ]);
 });
 
 test("sitemap emits only capability-supported routes for active cities", () => {
@@ -177,6 +183,37 @@ test("exposes only Budva's capability-supported feature routes", () => {
     "/budva/izlasci",
     "/budva/plaze",
   ]);
+});
+
+test("Bar exposes only its weather and electricity-backed routes", () => {
+  const bar = createCityContext("bar").city;
+
+  assert.deepEqual(getCitySitemapPaths(bar), ["/bar", "/bar/struja"]);
+  assert.deepEqual(getCityDashboardSummaryAvailability(bar), {
+    cinema: false,
+    events: false,
+    goingOut: false,
+    seaWaterQuality: false,
+  });
+  assert.deepEqual(getCityDashboardCapabilities(createCityContext("bar")), {
+    cityAlerts: true,
+    events: false,
+    flights: false,
+    goingOut: false,
+    railway: false,
+    seaWaterQuality: false,
+    weather: true,
+  });
+  for (const capability of [
+    "events",
+    "flights",
+    "goingOut",
+    "railway",
+    "seaWaterQuality",
+    "water",
+  ] as const) {
+    assert.equal(isCityPublicFeatureRouteAvailable(bar, capability), false);
+  }
 });
 
 test("Kotor exposes only its capability-supported public routes", () => {

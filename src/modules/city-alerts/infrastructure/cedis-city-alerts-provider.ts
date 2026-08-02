@@ -90,7 +90,7 @@ const cedisProviderMetadata: ProviderMetadata = {
   id: "cedis",
   officialSource: "https://cedis.me/servisne-informacije/",
   refreshIntervalMinutes: 360,
-  supportedCityIds: ["podgorica", "budva", "tivat", "kotor"],
+  supportedCityIds: ["podgorica", "budva", "tivat", "kotor", "bar"],
   supportsMultipleCities: true,
 };
 

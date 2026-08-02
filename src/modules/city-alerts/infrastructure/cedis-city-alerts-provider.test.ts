@@ -154,7 +154,7 @@ test("does not read Podgorica CEDIS cache for an unsupported city", async () => 
   const result = await getCedisCityAlerts({
     context: {
       ...context,
-      city: { ...context.city, id: "bar", name: "Bar", slug: "bar" },
+      city: { ...context.city, id: "niksic", name: "Nikšić", slug: "niksic" },
     },
     mode: "live",
     readCache: async () => {
@@ -166,6 +166,40 @@ test("does not read Podgorica CEDIS cache for an unsupported city", async () => 
   assert.equal(cacheReads, 0);
   assert.deepEqual(result.alerts, []);
   assert.equal(result.freshnessStatus, "unavailable");
+});
+
+test("reads only the matching Bar snapshot", async () => {
+  const barAlert = {
+    ...liveAlert,
+    affectedArea: { kind: "source" as const, value: "Centar" },
+    cityIds: ["bar"],
+    id: "cedis-bar-1",
+  };
+  const requestedCityIds: string[] = [];
+  const result = await getCedisCityAlerts({
+    context: {
+      ...context,
+      city: {
+        ...context.city,
+        capabilities: ["electricity"],
+        id: "bar",
+        isMain: false,
+        name: "Bar",
+        slug: "bar",
+      },
+    },
+    mode: "live",
+    readCache: async (cityId) => {
+      requestedCityIds.push(cityId);
+      return { ...cache("fresh"), alerts: [barAlert], cityId };
+    },
+  });
+
+  assert.deepEqual(requestedCityIds, ["bar"]);
+  assert.deepEqual(
+    result.alerts.map((alert) => alert.cityIds),
+    [["bar"]],
+  );
 });
 
 test("reads only the matching Budva snapshot when Budva receives electricity support", async () => {

@@ -1,6 +1,10 @@
 import type { CityContext, CityId } from "@/shared/types/city";
 
 const cedisMunicipalities = {
+  bar: {
+    cityId: "bar",
+    headingVariants: ["Bar"],
+  },
   budva: {
     cityId: "budva",
     headingVariants: ["Budva", "Opština Budva"],
