@@ -42,7 +42,7 @@ function LastCityContinuation({ cards }: { cards: readonly PlatformCityCardData[
     >
       <p className="text-sm font-medium text-muted-foreground">Nastavite gdje ste stali</p>
       <Link
-        className="inline-flex rounded-md text-sm font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className="focus-visible:ring-ring inline-flex min-h-8 shrink-0 items-center rounded-md border border-primary/20 bg-background/70 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-primary transition-colors hover:border-primary/35 hover:bg-blue-50/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
         href={card.href}
       >
         {card.city.name}

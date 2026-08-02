@@ -19,4 +19,8 @@ test("renders the continuation only for a valid stored city and uses the correct
   assert.doesNotMatch(source, /Nastavi gdje ste stali/u);
   assert.match(source, /flex flex-wrap items-center justify-between/u);
   assert.match(source, /px-4 py-2\.5/u);
+  assert.match(source, /uppercase tracking-\[0\.08em\]/u);
+  assert.match(source, /border border-primary\/20 bg-background\/70/u);
+  assert.match(source, /hover:border-primary\/35 hover:bg-blue-50\/70/u);
+  assert.match(source, /focus-visible:ring-2 focus-visible:ring-offset-2/u);
 });
