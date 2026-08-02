@@ -47,11 +47,11 @@ function SeaWaterQualityCard({
       <CardContent className="p-4 pt-0 sm:p-5 sm:pt-0">
         {hasData ? (
           <>
-            <p className="text-4xl font-bold leading-none tracking-tight text-foreground">
-              {summary.totalLocations}
-            </p>
-            <p className="mt-1.5 text-sm text-muted-foreground">
-              Kupališta pod zvaničnim monitoringom
+            <p className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-sm text-muted-foreground">
+              <span className="text-4xl font-bold leading-none tracking-tight text-foreground">
+                {summary.totalLocations}
+              </span>
+              <span>kupališta pod monitoringom</span>
             </p>
             <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
               {gradeOrder.map((grade) => (
@@ -72,17 +72,6 @@ function SeaWaterQualityCard({
               Pogledajte sva kupališta
               <span aria-hidden="true">→</span>
             </Link>
-            {summary.latestSamplingDate ? (
-              <p className="mt-3 text-xs leading-5 text-muted-foreground">
-                Uzorkovanje:{" "}
-                {
-                  formatDateTime(new Date(`${summary.latestSamplingDate}T12:00:00.000Z`), {
-                    formatOptions: { dateStyle: "medium" },
-                    locale: locale === "me" ? "sr-Latn-ME" : "en-US",
-                  }).label
-                }
-              </p>
-            ) : null}
           </>
         ) : (
           <InCardEmptyNote icon={Waves}>Podaci trenutno nijesu dostupni.</InCardEmptyNote>
@@ -92,29 +81,42 @@ function SeaWaterQualityCard({
             Prikazani podaci mogu biti zastarjeli.
           </p>
         ) : null}
-        {lastSuccessfulRefreshAt ? (
-          <p className="mt-3 text-xs leading-5 text-muted-foreground">
-            Posljednje osvježenje:{" "}
-            {
-              formatDateTime(new Date(lastSuccessfulRefreshAt), {
-                formatOptions: { dateStyle: "medium" },
-                locale: locale === "me" ? "sr-Latn-ME" : "en-US",
-              }).label
-            }
+        <div className="mt-3 space-y-0.5 text-xs leading-5 text-muted-foreground">
+          {hasData && summary.latestSamplingDate ? (
+            <p>
+              Uzorkovanje:{" "}
+              {
+                formatDateTime(new Date(`${summary.latestSamplingDate}T12:00:00.000Z`), {
+                  formatOptions: { dateStyle: "medium" },
+                  locale: locale === "me" ? "sr-Latn-ME" : "en-US",
+                }).label
+              }
+            </p>
+          ) : null}
+          {lastSuccessfulRefreshAt ? (
+            <p>
+              Posljednje osvježenje:{" "}
+              {
+                formatDateTime(new Date(lastSuccessfulRefreshAt), {
+                  formatOptions: { dateStyle: "medium" },
+                  locale: locale === "me" ? "sr-Latn-ME" : "en-US",
+                }).label
+              }
+            </p>
+          ) : null}
+          <p className="italic">
+            Izvor:{" "}
+            <a
+              className="font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              href={sourceUrl}
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              JPMD
+              <NewTabNotice locale={locale} />
+            </a>
           </p>
-        ) : null}
-        <p className="mt-3 text-xs leading-5 text-muted-foreground">
-          Izvor:{" "}
-          <a
-            className="font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-            href={sourceUrl}
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            Javno preduzeće za upravljanje morskim dobrom Crne Gore
-            <NewTabNotice locale={locale} />
-          </a>
-        </p>
+        </div>
       </CardContent>
     </Card>
   );
