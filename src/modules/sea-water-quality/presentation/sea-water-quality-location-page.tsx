@@ -89,25 +89,21 @@ function SeaWaterQualityLocationPage({
         <h2 className="text-base font-semibold tracking-tight" id="istorija-uzorkovanja-heading">
           Istorija uzorkovanja
         </h2>
-        <div className="overflow-x-auto rounded-xl border border-border">
-          <table className="w-full min-w-[28rem] text-left text-sm">
+        <div className="rounded-xl border border-border">
+          <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
-                <th className="px-4 py-3 font-medium" scope="col">
-                  Krug monitoringa
-                </th>
                 <th className="px-4 py-3 font-medium" scope="col">
                   Kvalitet vode
                 </th>
                 <th className="px-4 py-3 font-medium" scope="col">
-                  Uzorkovanje
+                  Datum uzorkovanja
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {[...location.measurements].reverse().map((measurement) => (
                 <tr key={measurement.sourceRound}>
-                  <td className="px-4 py-3 text-muted-foreground">{measurement.sourceRound}</td>
                   <td className="px-4 py-3">
                     <span
                       className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${gradeStyles[measurement.grade]}`}
@@ -125,15 +121,18 @@ function SeaWaterQualityLocationPage({
         </div>
       </section>
 
-      <a
-        className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-        href={sourceUrl}
-        rel="noopener noreferrer"
-        target="_blank"
-      >
-        Izvor: Javno preduzeće za upravljanje morskim dobrom Crne Gore
-        <NewTabNotice locale={locale} />
-      </a>
+      <p className="text-sm italic text-muted-foreground">
+        Izvor:{" "}
+        <a
+          className="font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          href={sourceUrl}
+          rel="noopener noreferrer"
+          target="_blank"
+        >
+          JPMD
+          <NewTabNotice locale={locale} />
+        </a>
+      </p>
       {lastSuccessfulRefreshAt ? (
         <p className="text-xs leading-5 text-muted-foreground">
           Posljednje osvježenje:{" "}
