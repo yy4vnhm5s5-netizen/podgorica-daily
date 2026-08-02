@@ -23,6 +23,15 @@ interface CityDashboardDependencies {
   isFeatureEnabled: typeof isFeatureEnabled;
 }
 
+/**
+ * Lets lightweight dashboard consumers opt out of data that they do not render.
+ * The city dashboard itself intentionally keeps both values enabled by default.
+ */
+interface CityDashboardDataLoadOptions {
+  includeFlights?: boolean;
+  includeRailway?: boolean;
+}
+
 const defaultDependencies: CityDashboardDependencies = {
   getBudvaSeaWaterQuality,
   getCityEvents,
@@ -36,6 +45,7 @@ const defaultDependencies: CityDashboardDependencies = {
 async function loadCityDashboardData(
   context: CityContext,
   dependencies: Partial<CityDashboardDependencies> = {},
+  { includeFlights = true, includeRailway = true }: CityDashboardDataLoadOptions = {},
 ) {
   const resolvedDependencies = { ...defaultDependencies, ...dependencies };
   const capabilities = getCityDashboardCapabilities(context);
@@ -44,13 +54,13 @@ async function loadCityDashboardData(
     capabilities.events
       ? resolvedDependencies.getCityEvents(context).catch(() => getEmptyCityEventsReadModel())
       : Promise.resolve(getEmptyCityEventsReadModel()),
-    resolvedDependencies.isFeatureEnabled("flights") && capabilities.flights
+    includeFlights && resolvedDependencies.isFeatureEnabled("flights") && capabilities.flights
       ? resolvedDependencies.getPodgoricaFlights(context).catch(() => null)
       : Promise.resolve(null),
     resolvedDependencies.isFeatureEnabled("goingOut") && capabilities.goingOut
       ? resolvedDependencies.getGoingOutEvents(context).catch(() => null)
       : Promise.resolve(null),
-    capabilities.railway
+    includeRailway && capabilities.railway
       ? resolvedDependencies.getRailwayDepartures(context).catch(() => null)
       : Promise.resolve(null),
     resolvedDependencies.isFeatureEnabled("seaWaterQuality") && capabilities.seaWaterQuality
@@ -64,4 +74,4 @@ async function loadCityDashboardData(
   return { capabilities, events, flights, goingOut, railway, seaWaterQuality, weather };
 }
 
-export { loadCityDashboardData, type CityDashboardDependencies };
+export { loadCityDashboardData, type CityDashboardDataLoadOptions, type CityDashboardDependencies };

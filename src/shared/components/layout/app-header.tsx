@@ -10,11 +10,17 @@ import type { Translations } from "@/shared/lib/translations";
 
 interface AppHeaderProps {
   city: City;
+  contactEnabled: boolean;
   homeHref?: string;
   translations: Translations;
 }
 
-function AppHeader({ city, homeHref = getCityPath(city), translations }: AppHeaderProps) {
+function AppHeader({
+  city,
+  contactEnabled,
+  homeHref = getCityPath(city),
+  translations,
+}: AppHeaderProps) {
   return (
     <header className="sticky top-0 z-40 border-b border-blue-100/80 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/85">
       <ResponsiveContainer className="flex h-16 items-center justify-between gap-4">
@@ -34,7 +40,12 @@ function AppHeader({ city, homeHref = getCityPath(city), translations }: AppHead
           />
         </Link>
         <div className="hidden flex-1 justify-center md:flex">
-          <Navigation city={city} homeHref={homeHref} translations={translations} />
+          <Navigation
+            city={city}
+            contactEnabled={contactEnabled}
+            homeHref={homeHref}
+            translations={translations}
+          />
         </div>
       </ResponsiveContainer>
     </header>

@@ -4,7 +4,6 @@ import { House, Mail } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { isFeatureEnabled } from "@/shared/config/features";
 import { isNavigationItemCurrent } from "@/shared/components/layout/navigation-state";
 import { getCityPath, getContactPath } from "@/shared/config/public-routes";
 import type { City } from "@/shared/types/city";
@@ -13,6 +12,7 @@ import { cn } from "@/shared/lib/utils";
 
 interface NavigationProps {
   city: City;
+  contactEnabled: boolean;
   homeHref?: string;
   mobile?: boolean;
   translations: Translations;
@@ -20,6 +20,7 @@ interface NavigationProps {
 
 function Navigation({
   city,
+  contactEnabled,
   homeHref = getCityPath(city),
   mobile = false,
   translations,
@@ -36,7 +37,7 @@ function Navigation({
       iconClassName: "bg-brand text-white",
       label: translations.shell.navigation.dashboard,
     },
-    ...(isFeatureEnabled("contact")
+    ...(contactEnabled
       ? [
           {
             href: getContactPath(),

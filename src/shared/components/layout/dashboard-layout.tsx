@@ -12,6 +12,7 @@ import {
 } from "@/shared/components/hero-icon-backdrop";
 import { PageAtmosphere } from "@/shared/components/page-atmosphere";
 import { Button } from "@/shared/components/ui/button";
+import { isFeatureEnabled } from "@/shared/config/features";
 import type { City } from "@/shared/types/city";
 import type { Translations } from "@/shared/lib/translations";
 
@@ -52,6 +53,7 @@ function PageContourMotif() {
 
 function DashboardLayout({ children, city, homeHref, translations }: DashboardLayoutProps) {
   const isCityScoped = homeHref === undefined;
+  const contactEnabled = isFeatureEnabled("contact");
 
   return (
     <div className="city-page-surface relative min-h-screen overflow-hidden pb-[calc(5rem+env(safe-area-inset-bottom))] text-foreground md:pb-0">
@@ -62,7 +64,12 @@ function DashboardLayout({ children, city, homeHref, translations }: DashboardLa
       >
         {translations.shell.skipToContent}
       </a>
-      <AppHeader city={city} homeHref={homeHref} translations={translations} />
+      <AppHeader
+        city={city}
+        contactEnabled={contactEnabled}
+        homeHref={homeHref}
+        translations={translations}
+      />
       <main id="main-content">
         <ResponsiveContainer className={isCityScoped ? "relative py-8 sm:py-12" : "py-8 sm:py-12"}>
           {isCityScoped ? <DecorativeIconBleed icons={cityDashboardPageIcons} /> : null}
@@ -88,7 +95,12 @@ function DashboardLayout({ children, city, homeHref, translations }: DashboardLa
         </ResponsiveContainer>
       </main>
       <AppFooter translations={translations} />
-      <MobileNavigation city={city} homeHref={homeHref} translations={translations} />
+      <MobileNavigation
+        city={city}
+        contactEnabled={contactEnabled}
+        homeHref={homeHref}
+        translations={translations}
+      />
     </div>
   );
 }

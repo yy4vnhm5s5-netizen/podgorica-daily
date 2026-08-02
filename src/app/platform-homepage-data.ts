@@ -10,11 +10,7 @@ import { getWeatherTemperature } from "@/modules/weather/presentation/weather-te
 import { createPublicRouteMetadata } from "@/app/public-route-metadata";
 import { loadCityDashboardData } from "@/app/city-dashboard-data";
 import { isCityCinemaRouteAvailable, isCityPublicFeatureRouteAvailable } from "@/app/city-routing";
-import {
-  createCityContext,
-  getActiveCities,
-  getCityName,
-} from "@/shared/config/cities";
+import { createCityContext, getActiveCities, getCityName } from "@/shared/config/cities";
 import { formatBcsCount, formatCountLabel } from "@/shared/lib/pluralize";
 import {
   getCityPath,
@@ -58,6 +54,14 @@ interface PlatformCityCardData {
 const platformHomepageDescription =
   "Gradom.me okuplja provjerene lokalne informacije za gradove Crne Gore — vrijeme, događaje, prevoz i servisne obavijesti na jednom mjestu.";
 
+// Platform city cards do not render transport metrics. Avoid opening those two
+// city snapshots for every active city while preserving the full city dashboard
+// loader defaults for routes that do render them.
+const platformCityCardDataLoadOptions = {
+  includeFlights: false,
+  includeRailway: false,
+};
+
 function getPlatformHomepageMetadata() {
   return createPublicRouteMetadata({
     canonical: "/",
@@ -76,7 +80,11 @@ async function getPlatformCityCardData(context: CityContext): Promise<PlatformCi
   const fallback = createPlatformCityCardData(context, null);
 
   try {
-    const dashboardData = await loadCityDashboardData(context);
+    const dashboardData = await loadCityDashboardData(
+      context,
+      undefined,
+      platformCityCardDataLoadOptions,
+    );
     return createPlatformCityCardData(context, dashboardData);
   } catch {
     return fallback;
@@ -118,7 +126,11 @@ function createPlatformCityCardData(
         city,
         href: getEventsPath(city),
         key: "events",
-        label: formatCountLabel(events.length, { few: "događaja", many: "događaja", one: "događaj" }),
+        label: formatCountLabel(events.length, {
+          few: "događaja",
+          many: "događaja",
+          one: "događaj",
+        }),
         priority: 2,
         value: String(events.length),
         visual: "calendar",
@@ -138,7 +150,11 @@ function createPlatformCityCardData(
         city,
         href: getGoingOutPath(city),
         key: "going-out",
-        label: formatCountLabel(events.length, { few: "izlaska", many: "izlazaka", one: "izlazak" }),
+        label: formatCountLabel(events.length, {
+          few: "izlaska",
+          many: "izlazaka",
+          one: "izlazak",
+        }),
         priority: 3,
         value: String(events.length),
         visual: "music",
