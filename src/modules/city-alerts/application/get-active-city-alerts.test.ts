@@ -12,8 +12,28 @@ import {
   writeVodovodKotorCache,
 } from "@/modules/city-alerts/infrastructure/vodovod-kotor";
 import { createCityContext } from "@/shared/config/cities";
+import type { CityAlertServiceId } from "./city-alert-service-capabilities.ts";
 
 import { getActiveCityAlerts } from "./get-active-city-alerts.ts";
+
+test("requests only electricity data for an electricity-only city", async () => {
+  const requestedServiceIds: CityAlertServiceId[][] = [];
+
+  const result = await getActiveCityAlerts(createCityContext("bar"), {
+    getProviderData: async (_context, serviceIds) => {
+      requestedServiceIds.push([...(serviceIds ?? [])]);
+      return [{ alerts: [], freshnessStatus: "fresh", mode: "live" }, undefined];
+    },
+  });
+
+  assert.deepEqual(requestedServiceIds, [["power"]]);
+  assert.equal(result.status, "empty");
+  assert.ok("metadata" in result);
+  assert.deepEqual(
+    result.metadata.sources.map(({ id }) => id),
+    ["cedis"],
+  );
+});
 
 function createTomorrowTankerHtml(now: Date) {
   const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);

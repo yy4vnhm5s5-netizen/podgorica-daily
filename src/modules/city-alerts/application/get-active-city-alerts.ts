@@ -46,10 +46,10 @@ async function getActiveCityAlerts(
   { getProviderData = getCityAlertProviderData }: ActiveCityAlertsDependencies = {},
 ): Promise<CityAlertsResult> {
   try {
-    const [cedis, water] = await getProviderData(context);
     const serviceIds = getCityAlertServiceIds(context.city);
+    const [cedis, water] = await getProviderData(context, serviceIds);
     const sources: CityAlertsSourceMetadata[] = [
-      ...(serviceIds.includes("power")
+      ...(serviceIds.includes("power") && cedis
         ? [
             {
               freshnessStatus: cedis.freshnessStatus,
@@ -59,7 +59,7 @@ async function getActiveCityAlerts(
             },
           ]
         : []),
-      ...(serviceIds.includes("water")
+      ...(serviceIds.includes("water") && water
         ? [
             {
               freshnessStatus: water.freshnessStatus,
@@ -72,8 +72,8 @@ async function getActiveCityAlerts(
     ];
     const metadata = { sources };
     const sourceAlerts = [
-      ...(serviceIds.includes("power") ? cedis.alerts : []),
-      ...(serviceIds.includes("water") ? water.alerts : []),
+      ...(serviceIds.includes("power") && cedis ? cedis.alerts : []),
+      ...(serviceIds.includes("water") && water ? water.alerts : []),
     ];
     const activeAlerts = sourceAlerts.filter(
       ({ cityIds, status }) =>

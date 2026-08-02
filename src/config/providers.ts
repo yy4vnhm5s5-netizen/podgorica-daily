@@ -13,6 +13,7 @@ import {
   vodovodKotorProviderMetadata,
 } from "@/modules/city-alerts/infrastructure/vodovod-kotor";
 import { weatherProviderMetadata } from "@/modules/weather/infrastructure/open-meteo-weather-client";
+import type { CityAlertServiceId } from "@/modules/city-alerts/application/city-alert-service-capabilities";
 import type { CityContext } from "@/shared/types/city";
 import type { ProviderMetadata } from "@/shared/types/provider";
 
@@ -27,13 +28,20 @@ function getProviderMetadata(id: string) {
   return providerRegistry.find((provider) => provider.id === id);
 }
 
-async function getCityAlertProviderData(context: CityContext) {
+async function getCityAlertProviderData(
+  context: CityContext,
+  requestedServiceIds: readonly CityAlertServiceId[] = ["power", "water"],
+) {
   return Promise.all([
-    getCedisCityAlerts({
-      context,
-      mode: env.ENABLE_CEDIS ? env.CEDIS_PROVIDER_MODE : "disabled",
-    }),
-    getWaterCityAlerts(context),
+    requestedServiceIds.includes("power")
+      ? getCedisCityAlerts({
+          context,
+          mode: env.ENABLE_CEDIS ? env.CEDIS_PROVIDER_MODE : "disabled",
+        })
+      : Promise.resolve(undefined),
+    requestedServiceIds.includes("water")
+      ? getWaterCityAlerts(context)
+      : Promise.resolve(undefined),
   ]);
 }
 

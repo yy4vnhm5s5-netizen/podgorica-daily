@@ -23,7 +23,7 @@ interface CedisPowerOutageData {
 }
 
 interface GetPowerOutagesDependencies {
-  getCedisData?: (context: CityContext) => Promise<CedisPowerOutageData>;
+  getCedisData?: (context: CityContext) => Promise<CedisPowerOutageData | undefined>;
 }
 
 async function getPowerOutages(
@@ -32,7 +32,7 @@ async function getPowerOutages(
 ): Promise<PowerOutagesReadResult> {
   try {
     const cedis = await getCedisData(context);
-    if (cedis.freshnessStatus === "unavailable") {
+    if (!cedis || cedis.freshnessStatus === "unavailable") {
       return { freshnessStatus: "unavailable", outages: [], status: "unavailable" };
     }
 
@@ -48,8 +48,10 @@ async function getPowerOutages(
   }
 }
 
-async function getDefaultCedisData(context: CityContext): Promise<CedisPowerOutageData> {
-  const [cedis] = await getCityAlertProviderData(context);
+async function getDefaultCedisData(
+  context: CityContext,
+): Promise<CedisPowerOutageData | undefined> {
+  const [cedis] = await getCityAlertProviderData(context, ["power"]);
   return cedis;
 }
 
