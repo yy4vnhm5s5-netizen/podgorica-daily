@@ -14,6 +14,9 @@ test("renders City Services as a compact desktop status strip while preserving t
   assert.match(source, /lg:px-3 lg:py-2/u);
   assert.match(source, /role="tablist"/u);
   assert.match(source, /role="tabpanel"/u);
+  assert.match(source, /<ServiceEmptyState \{\.\.\.emptyState\} \/>/u);
+  assert.match(source, /lg:col-span-3/u);
+  assert.match(source, /text-xs leading-5 text-muted-foreground/u);
   assert.match(source, /formatAdditionalAffectedAreas\(service\.additionalLocationCount\)/u);
   assert.match(source, /icon=\{MapPin\}[\s\S]*?iconClassName="text-rose-500"/u);
   assert.match(source, /text-rose-500/u);

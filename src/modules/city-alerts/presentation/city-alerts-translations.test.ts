@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { cityServicesDescription, getCityAlertsTranslations } from "./city-alerts-translations.ts";
+import {
+  cityServicesDescription,
+  cityServicesEmptyStateCopy,
+  getCityAlertsTranslations,
+} from "./city-alerts-translations.ts";
 import { getCity } from "@/shared/config/cities";
 
 test("provides localized stale-data copy", () => {
@@ -35,17 +39,20 @@ test("provides the single-language City Services section subtitle", () => {
 });
 
 test("uses the successful empty-state copy for planned power outages", () => {
-  assert.equal(getCityAlertsTranslations("me").noPowerOutages, "Bez planiranih isključenja.");
+  assert.deepEqual(cityServicesEmptyStateCopy.power, {
+    primary: "Bez planiranih isključenja",
+    secondary: "Trenutno nema najavljenih prekida u snabdijevanju električnom energijom.",
+  });
   assert.equal(getCityAlertsTranslations("me").moreLocations.one, "Još {count} lokacija");
   assert.equal(getCityAlertsTranslations("me").moreLocations.few, "Još {count} lokacije");
   assert.equal(getCityAlertsTranslations("me").moreLocations.many, "Još {count} lokacija");
 });
 
 test("uses the specific successful empty-state copy for water interruptions", () => {
-  assert.equal(
-    getCityAlertsTranslations("me").noWaterInterruptions,
-    "Nema aktivnih obavještenja o prekidima u vodosnabdijevanju.",
-  );
+  assert.deepEqual(cityServicesEmptyStateCopy.water, {
+    primary: "Bez aktivnih prekida",
+    secondary: "Trenutno nema objavljenih obavještenja o prekidima u vodosnabdijevanju.",
+  });
 });
 
 test("uses the current city name in shared city-alert copy", () => {

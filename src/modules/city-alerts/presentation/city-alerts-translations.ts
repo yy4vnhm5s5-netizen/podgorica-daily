@@ -21,8 +21,6 @@ interface CityAlertsTranslations {
   lastUpdated: string;
   lastAvailableUpdate: string;
   officialSource: string;
-  noPowerOutages: string;
-  noWaterInterruptions: string;
   moreLocations: {
     few: string;
     many: string;
@@ -68,8 +66,6 @@ const cityAlertsTranslations: Record<Locale, CityAlertsTranslations> = {
     lastUpdated: "Last successful update",
     lastAvailableUpdate: "Last available update:",
     officialSource: "Official source",
-    noPowerOutages: "No planned power outages.",
-    noWaterInterruptions: "No water service interruptions",
     moreLocations: {
       few: "{count} more locations",
       many: "{count} more locations",
@@ -125,8 +121,6 @@ const cityAlertsTranslations: Record<Locale, CityAlertsTranslations> = {
     lastUpdated: "Posljednje uspješno ažuriranje",
     lastAvailableUpdate: "Posljednje dostupno ažuriranje:",
     officialSource: "Zvanični izvor",
-    noPowerOutages: "Bez planiranih isključenja.",
-    noWaterInterruptions: "Nema aktivnih obavještenja o prekidima u vodosnabdijevanju.",
     moreLocations: {
       few: "Još {count} lokacije",
       many: "Još {count} lokacija",
@@ -164,6 +158,16 @@ const cityAlertsTranslations: Record<Locale, CityAlertsTranslations> = {
 };
 
 const cityServicesDescription = "Planirana isključenja i stanje servisa.";
+const cityServicesEmptyStateCopy = {
+  power: {
+    primary: "Bez planiranih isključenja",
+    secondary: "Trenutno nema najavljenih prekida u snabdijevanju električnom energijom.",
+  },
+  water: {
+    primary: "Bez aktivnih prekida",
+    secondary: "Trenutno nema objavljenih obavještenja o prekidima u vodosnabdijevanju.",
+  },
+} as const;
 
 function getCityAlertsTranslations(locale: Locale, city?: City) {
   const translations = cityAlertsTranslations[locale];
@@ -186,6 +190,7 @@ function getCityAlertContent(content: CityAlertContent, translations: CityAlerts
 
 export {
   cityServicesDescription,
+  cityServicesEmptyStateCopy,
   getCityAlertContent,
   getCityAlertsTranslations,
   type CityAlertsTranslations,

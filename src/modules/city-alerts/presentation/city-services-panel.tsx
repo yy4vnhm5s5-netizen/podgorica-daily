@@ -5,6 +5,7 @@ import { useId, useState, type KeyboardEvent } from "react";
 
 import type { CityAlertServiceId } from "@/modules/city-alerts/application/city-alert-service-capabilities";
 import { formatAdditionalAffectedAreas } from "@/modules/city-alerts/presentation/power-outages-ui-model";
+import { cityServicesEmptyStateCopy } from "@/modules/city-alerts/presentation/city-alerts-translations";
 import { Badge } from "@/shared/components/ui/badge";
 import { Card } from "@/shared/components/ui/card";
 import { getRovingTabIndex } from "@/shared/lib/roving-tab-index";
@@ -31,8 +32,6 @@ interface CityServiceInfo {
 interface CityServicesTranslations {
   area: string;
   label: string;
-  noPowerOutages: string;
-  noWaterInterruptions: string;
   moreLocations: {
     few: string;
     many: string;
@@ -102,14 +101,9 @@ function CityServicesPanel({ serviceIds, services, translations }: CityServicesP
   }
 
   const primaryArea = service.locations?.[0] ?? service.area;
-  const stateLabel =
-    service.state === "none"
-      ? activeServiceId === "power"
-        ? translations.noPowerOutages
-        : translations.noWaterInterruptions
-      : service.state === "unavailable"
-        ? translations.unavailable
-        : undefined;
+  const emptyState =
+    service.state === "none" ? cityServicesEmptyStateCopy[activeServiceId] : undefined;
+  const stateLabel = service.state === "unavailable" ? translations.unavailable : undefined;
 
   return (
     <Card className="overflow-hidden border-border bg-background shadow-none">
@@ -165,7 +159,9 @@ function CityServicesPanel({ serviceIds, services, translations }: CityServicesP
           id={panelId}
           role="tabpanel"
         >
-          {stateLabel ? (
+          {emptyState ? (
+            <ServiceEmptyState {...emptyState} />
+          ) : stateLabel ? (
             <p className="min-w-0 text-sm font-semibold text-foreground lg:pr-5">{stateLabel}</p>
           ) : (
             <>
@@ -213,6 +209,15 @@ function CityServicesPanel({ serviceIds, services, translations }: CityServicesP
         </div>
       </div>
     </Card>
+  );
+}
+
+function ServiceEmptyState({ primary, secondary }: { primary: string; secondary: string }) {
+  return (
+    <div className="min-w-0 lg:col-span-3 lg:pr-5">
+      <p className="text-sm font-medium text-foreground">{primary}</p>
+      <p className="mt-0.5 text-xs leading-5 text-muted-foreground">{secondary}</p>
+    </div>
   );
 }
 
