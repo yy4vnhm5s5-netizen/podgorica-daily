@@ -151,13 +151,19 @@ function isValidCityEvent(event: CityEvent) {
   );
 }
 
-function isIsoTimestamp(value: string | undefined) {
+// Type predicates rather than plain booleans: every caller that validates a date field goes on to
+// use the value (`new Date(value)`, or storing it), and without narrowing each one is left holding
+// `string | undefined`. The predicate is sound in the direction that matters — these only ever
+// return true for a string. `unknown` is the parameter type, not `string | undefined`, so a failed
+// check narrows nothing: `isIsoDate("bogus")` is false for a value that is still very much a
+// string, and TypeScript must not be told otherwise.
+function isIsoTimestamp(value: unknown): value is string {
   return (
     typeof value === "string" && !Number.isNaN(new Date(value).getTime()) && value.includes("T")
   );
 }
 
-function isIsoDate(value: string | undefined) {
+function isIsoDate(value: unknown): value is string {
   if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const [year, month, day] = value.split("-").map(Number);
   const date = new Date(Date.UTC(year, month - 1, day));

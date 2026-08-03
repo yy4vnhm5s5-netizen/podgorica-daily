@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { runEventQualityPipeline } from "../domain/event-quality.ts";
-import { isIsoDate, type CityEvent, type EventCandidate } from "../domain/event.ts";
+import { isIsoDate, isIsoTimestamp, type CityEvent, type EventCandidate } from "../domain/event.ts";
 import {
   createEventRefreshObservability,
   logEventRefreshParsedSample,
@@ -85,6 +85,19 @@ test("reports pipeline counts and a deterministic reason for every rejected even
 test("recognizes invalid calendar dates before they enter the quality pipeline", () => {
   assert.equal(isIsoDate("2026-02-28"), true);
   assert.equal(isIsoDate("2026-02-30"), false);
+});
+
+// Runtime contract of the two date validators, pinned because they are now type predicates: the
+// narrowing they hand callers is only sound while they keep returning true exclusively for
+// well-formed strings.
+test("accepts only well-formed ISO values and rejects everything else", () => {
+  assert.equal(isIsoTimestamp("2026-08-03T18:00:00.000Z"), true);
+  assert.equal(isIsoTimestamp("2026-08-03"), false, "a date without a time is not a timestamp");
+  assert.equal(isIsoTimestamp("not-a-date"), false);
+  assert.equal(isIsoTimestamp(undefined), false);
+  assert.equal(isIsoDate("2026-08-03"), true);
+  assert.equal(isIsoDate("2026-08-03T18:00:00.000Z"), false);
+  assert.equal(isIsoDate(undefined), false);
 });
 
 test("logs one concise representative parsed candidate before normalization", () => {
