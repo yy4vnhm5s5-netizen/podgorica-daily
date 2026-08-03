@@ -1,7 +1,8 @@
 import type { MetadataRoute } from "next";
 
-import { createCityContext, getActiveCities, supportsCityCapability } from "@/shared/config/cities";
+import { createCityContext, getActiveCities } from "@/shared/config/cities";
 import { getCityEvents } from "@/modules/events/application/get-city-events";
+import { isEventSitemapEligible } from "@/modules/events/domain/event-lifecycle";
 import { getCityEventsForPublicListing } from "@/modules/events/presentation/events-ui-model";
 import { getSeaWaterQualityHistory } from "@/modules/sea-water-quality/application/get-sea-water-quality-history";
 import {
@@ -70,18 +71,33 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     createEntry(getTermsOfUsePath(), "yearly", 0.3),
     createEntry(getPrivacyPolicyPath(), "yearly", 0.3),
   ];
+  // One reference instant for the whole document, so two cities can never land on opposite sides
+  // of a midnight boundary within a single sitemap response.
+  const now = new Date();
   const eventEntries = await Promise.all(
     cities
-      .filter((city) => supportsCityCapability(city, "events"))
+      // The same public-route availability rule the events listing path itself is gated on, so a
+      // detail URL can never be advertised for a city whose /dogadjaji route does not exist. Using
+      // the shared helper rather than a bare capability check also means any future feature gating
+      // of `events` applies here automatically instead of silently missing the sitemap.
+      .filter((city) => isCityPublicFeatureRouteAvailable(city, "events"))
       .map(async (city) => {
         try {
-          const { events } = await getCityEvents(createCityContext(city.id, "me"));
-          return getCityEventsForPublicListing(events).map((event) => ({
-            changeFrequency: "weekly" as const,
-            lastModified: event.sourceUpdatedAt ? new Date(event.sourceUpdatedAt) : undefined,
-            priority: 0.6,
-            url: new URL(getEventDetailPath(city, event.id), siteConfig.url).toString(),
-          }));
+          const context = createCityContext(city.id, "me");
+          const { events } = await getCityEvents(context);
+          // Explicit lifecycle rule rather than "whatever the snapshot happens to hold": promote
+          // upcoming and ongoing events, keep a just-ended event briefly so crawlers re-read the
+          // page now that it says the event is over, and drop older ones. Undatable events are
+          // never promoted. The detail URLs stay resolvable either way — leaving the sitemap is
+          // not a 404 (see event-lifecycle.ts).
+          return getCityEventsForPublicListing(events)
+            .filter((event) => isEventSitemapEligible(event, { now, timezone: context.timezone }))
+            .map((event) => ({
+              changeFrequency: "weekly" as const,
+              lastModified: event.sourceUpdatedAt ? new Date(event.sourceUpdatedAt) : undefined,
+              priority: 0.6,
+              url: new URL(getEventDetailPath(city, event.id), siteConfig.url).toString(),
+            }));
         } catch {
           return [];
         }

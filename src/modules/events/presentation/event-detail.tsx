@@ -2,11 +2,8 @@ import { ArrowLeft, CalendarClock, ExternalLink, MapPin, Users } from "lucide-re
 import Link from "next/link";
 
 import type { CityEvent } from "../domain/event.ts";
-import {
-  getEventPresentationCategoryLabel,
-  getEventsTranslations,
-  getEventStatusLabel,
-} from "./events-translations";
+import { getEventPresentationCategoryLabel, getEventsTranslations } from "./events-translations";
+import { getEventDetailStatusNotice } from "./events-ui-model.ts";
 import { getEventPresentationCategory } from "./event-presentation-category";
 import { formatEventSchedule } from "./event-schedule.ts";
 import { getEventSummary } from "./event-summary";
@@ -21,11 +18,14 @@ interface EventDetailProps {
   city: City;
   event: CityEvent;
   locale: Locale;
+  now?: Date;
 }
 
-function EventDetail({ city, event, locale }: EventDetailProps) {
+function EventDetail({ city, event, locale, now = new Date() }: EventDetailProps) {
   const translations = getEventsTranslations(locale);
-  const statusLabel = getEventStatusLabel(locale, event.status);
+  // Derived per render from the event's dates, so a page that was upcoming yesterday says the
+  // event has ended today without any refresh having to rewrite the snapshot.
+  const statusNotice = getEventDetailStatusNotice(event, locale, { now, timezone: city.timezone });
   const summary = getEventSummary(event.description);
 
   return (
@@ -54,22 +54,15 @@ function EventDetail({ city, event, locale }: EventDetailProps) {
                 getEventPresentationCategory(event.category),
               )}
             </Badge>
-            {statusLabel ? (
-              <Badge
-                className={
-                  event.status === "cancelled"
-                    ? "border-red-300 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200"
-                    : "border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-100"
-                }
-                variant="outline"
-              >
-                {statusLabel}
+            {statusNotice ? (
+              <Badge className={statusBadgeStyles[statusNotice.tone]} variant="outline">
+                {statusNotice.label}
               </Badge>
             ) : null}
           </div>
           <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{event.title}</h1>
-          {statusLabel ? (
-            <p className="text-sm font-medium text-muted-foreground">{statusLabel}</p>
+          {statusNotice ? (
+            <p className="text-sm font-medium text-muted-foreground">{statusNotice.label}</p>
           ) : null}
         </CardHeader>
         <CardContent className="space-y-6 p-5 pt-0 sm:p-8 sm:pt-0">
@@ -113,6 +106,16 @@ function EventDetail({ city, event, locale }: EventDetailProps) {
     </article>
   );
 }
+
+// A finished event is a neutral fact, not a problem, so it stays visually quiet — unlike the
+// cancelled/postponed tones, which warn the reader about a change to the programme.
+const statusBadgeStyles = {
+  cancelled:
+    "border-red-300 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200",
+  ended: "text-muted-foreground",
+  postponed:
+    "border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-100",
+} as const;
 
 function EventDetailItem({
   icon: Icon,

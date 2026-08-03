@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import { podgoricaEvent } from "../__fixtures__/events.ts";
@@ -59,4 +60,31 @@ test("omits the end time instead of throwing when endsAt does not parse as a val
   assert.doesNotThrow(() => formatEventSchedule(event, "me"));
   const label = formatEventSchedule(event, "me");
   assert.ok(label && !label.includes("–"));
+});
+
+test("shows the ended state from the injected reference time, not the frozen snapshot status", async () => {
+  const source = await readFile(new URL("./event-detail.tsx", import.meta.url), "utf8");
+
+  assert.match(
+    source,
+    /getEventDetailStatusNotice\(event, locale, \{ now, timezone: city\.timezone \}\)/u,
+  );
+  assert.match(source, /now = new Date\(\)/u);
+  // The frozen snapshot status is no longer read directly for the visible notice.
+  assert.doesNotMatch(source, /getEventStatusLabel\(locale, event\.status\)/u);
+});
+
+test("keeps the real date visible and adds no upcoming-flavoured call to action", async () => {
+  const source = await readFile(new URL("./event-detail.tsx", import.meta.url), "utf8");
+
+  // The schedule row is still rendered from the event's own dates, unconditionally.
+  assert.match(source, /value=\{formatEventSchedule\(event, locale\)\}/u);
+  assert.doesNotMatch(source, /Kupi|Rezerv|ulaznic|Ne propustite/iu);
+});
+
+test("a finished event is stated neutrally, unlike a cancelled or postponed one", async () => {
+  const source = await readFile(new URL("./event-detail.tsx", import.meta.url), "utf8");
+
+  assert.match(source, /ended: "text-muted-foreground"/u);
+  assert.match(source, /cancelled:\n\s+"border-red-300/u);
 });

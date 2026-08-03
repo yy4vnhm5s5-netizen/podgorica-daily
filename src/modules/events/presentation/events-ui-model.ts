@@ -1,15 +1,19 @@
 import type { EventProviderReadState } from "../application/get-city-events.ts";
 import type { CityEvent } from "../domain/event.ts";
+import { hasEventEnded, type EventLifecycleOptions } from "../domain/event-lifecycle.ts";
 import { queryEvents, type EventSort } from "../application/query-events.ts";
+import { getEventsTranslations } from "./events-translations.ts";
 import {
   getDomainCategories,
   isEventPresentationCategory,
   type EventPresentationCategory,
 } from "./event-presentation-category.ts";
 import { getCityName } from "@/shared/config/cities";
+import type { Locale } from "@/shared/config/locale";
 import type { City, CityContext } from "@/shared/types/city";
 
 type EventDatePreset = "today" | "tomorrow" | "upcoming" | "weekend";
+type EventDetailStatusTone = "cancelled" | "ended" | "postponed";
 
 const genericHomepageVenueNames = new Set(["grad", "online", "podgorica", "tba"]);
 
@@ -54,6 +58,24 @@ function getEventDetailPageTitle(event: CityEvent, city: City) {
 
 function escapeRegExpLiteral(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// One status line for the detail page. Provider-declared states win, because "otkazano" and
+// "odgođeno" are facts the source asserted about the event and outrank anything the clock implies.
+// Otherwise the ended notice is derived from the event's own dates against an injected `now` —
+// never from the snapshot's frozen `status`, which still says "scheduled" for an event that was
+// upcoming when the snapshot was written.
+function getEventDetailStatusNotice(
+  event: CityEvent,
+  locale: Locale,
+  options: EventLifecycleOptions,
+): { label: string; tone: EventDetailStatusTone } | undefined {
+  const { status } = getEventsTranslations(locale);
+  if (event.status === "cancelled" || event.status === "postponed") {
+    return { label: status[event.status], tone: event.status };
+  }
+
+  return hasEventEnded(event, options) ? { label: status.ended, tone: "ended" } : undefined;
 }
 
 function isCineplexxProgrammeEvent(event: CityEvent) {
@@ -231,6 +253,7 @@ export {
   filterEventsForUi,
   getCityEventsForPublicListing,
   getEventDetailPageTitle,
+  getEventDetailStatusNotice,
   getPublicCityEventById,
   getHomepageEvents,
   getHomepageEventsTodayCount,
@@ -241,5 +264,6 @@ export {
   selectHomepageEvents,
   type EventDatePreset,
   type EventDayGroup,
+  type EventDetailStatusTone,
   type EventsUiFilters,
 };

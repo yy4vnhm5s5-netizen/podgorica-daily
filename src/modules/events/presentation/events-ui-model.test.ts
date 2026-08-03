@@ -15,6 +15,7 @@ import {
   filterEventsForUi,
   getCityEventsForPublicListing,
   getEventDetailPageTitle,
+  getEventDetailStatusNotice,
   getPublicCityEventById,
   getHomepageEvents,
   getHomepageEventsTodayCount,
@@ -393,4 +394,77 @@ test("treats a city name only as a whole word, never as a substring", () => {
     getEventDetailPageTitle(podgoricaEvent({ title: "Ljeto u Baru" }), bar),
     "Ljeto u Baru",
   );
+});
+
+// Fixed reference instant: 2026-08-03 14:00 in Europe/Podgorica (UTC+2).
+const statusNoticeOptions = {
+  now: new Date("2026-08-03T12:00:00.000Z"),
+  timezone: "Europe/Podgorica",
+};
+
+test("an upcoming event carries no status notice", () => {
+  const event = podgoricaEvent({ startsAt: "2026-08-10T18:00:00.000Z" });
+
+  assert.equal(getEventDetailStatusNotice(event, "me", statusNoticeOptions), undefined);
+});
+
+test("an event that has ended says so, in a visually secondary tone", () => {
+  const event = podgoricaEvent({ startsAt: "2026-08-01T18:00:00.000Z" });
+
+  assert.deepEqual(getEventDetailStatusNotice(event, "me", statusNoticeOptions), {
+    label: "Događaj je završen",
+    tone: "ended",
+  });
+});
+
+test("the ended notice is derived from dates, not from the snapshot's frozen status", () => {
+  // A snapshot written while the event was still upcoming keeps status "scheduled" forever; the
+  // page must not repeat that once the date has passed.
+  const stale = podgoricaEvent({ startsAt: "2026-08-01T18:00:00.000Z", status: "scheduled" });
+
+  assert.equal(getEventDetailStatusNotice(stale, "me", statusNoticeOptions)?.tone, "ended");
+});
+
+test("a cancelled or postponed event keeps the provider's own status instead of the ended notice", () => {
+  const cancelled = podgoricaEvent({ startsAt: "2026-08-01T18:00:00.000Z", status: "cancelled" });
+  const postponed = podgoricaEvent({ startsAt: "2026-08-01T18:00:00.000Z", status: "postponed" });
+
+  assert.deepEqual(getEventDetailStatusNotice(cancelled, "me", statusNoticeOptions), {
+    label: "Otkazano",
+    tone: "cancelled",
+  });
+  assert.deepEqual(getEventDetailStatusNotice(postponed, "me", statusNoticeOptions), {
+    label: "Odgođeno",
+    tone: "postponed",
+  });
+});
+
+test("an ended event is never presented as upcoming anywhere on the public surface", () => {
+  const context = createCityContext("podgorica");
+  const ended = podgoricaEvent({ id: "event_ended", startsAt: "2026-08-01T18:00:00.000Z" });
+  const upcoming = podgoricaEvent({ id: "event_upcoming", startsAt: "2026-08-10T18:00:00.000Z" });
+  const events = [ended, upcoming];
+  const { now } = statusNoticeOptions;
+
+  // Listing default preset and the homepage teaser both exclude it...
+  assert.deepEqual(
+    filterEventsForUi(events, context, { datePreset: "upcoming", sort: "soonest" }, now).map(
+      ({ id }) => id,
+    ),
+    ["event_upcoming"],
+  );
+  assert.deepEqual(
+    getHomepageEvents(events, context, now).map(({ id }) => id),
+    ["event_upcoming"],
+  );
+  // ...while its own detail URL still resolves, now labelled as finished.
+  assert.equal(getPublicCityEventById(events, "event_ended")?.id, "event_ended");
+  assert.equal(getEventDetailStatusNotice(ended, "me", statusNoticeOptions)?.tone, "ended");
+});
+
+test("an unknown event ID stays unresolvable rather than becoming a soft 404", () => {
+  const events = [podgoricaEvent({ id: "event_upcoming" })];
+
+  assert.equal(getPublicCityEventById(events, "event_does_not_exist"), undefined);
+  assert.equal(getPublicCityEventById([], "event_upcoming"), undefined);
 });

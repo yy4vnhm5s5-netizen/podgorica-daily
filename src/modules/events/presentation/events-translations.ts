@@ -80,6 +80,7 @@ const eventTranslations = {
     },
     status: {
       cancelled: "Cancelled",
+      ended: "This event has ended",
       postponed: "Postponed",
     },
     supportingText: "Verified programme information from official Podgorica sources.",
@@ -165,6 +166,7 @@ const eventTranslations = {
     },
     status: {
       cancelled: "Otkazano",
+      ended: "Događaj je završen",
       postponed: "Odgođeno",
     },
     supportingText: "Provjereni programi iz zvaničnih podgoričkih izvora.",

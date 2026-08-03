@@ -4,10 +4,16 @@ import { join } from "node:path";
 import test from "node:test";
 
 import sitemap, { dynamic, getSeaWaterQualitySitemapEntries } from "./sitemap.ts";
+import { isCityPublicFeatureRouteAvailable } from "./city-routing.ts";
+import { podgoricaEvent } from "@/modules/events/__fixtures__/events";
+import { isEventSitemapEligible } from "@/modules/events/domain/event-lifecycle";
+import { getCityEventsForPublicListing } from "@/modules/events/presentation/events-ui-model";
 import { parseBudvaSeaWaterQualitySummary } from "@/modules/sea-water-quality/infrastructure/budva-sea-water-quality";
 import { mergeSeaWaterQualityHistoryBackfill } from "@/modules/sea-water-quality/infrastructure/sea-water-quality-history-cache";
 import type { SeaWaterQualitySupportedCityId } from "@/modules/sea-water-quality/infrastructure/sea-water-quality-cities";
 import { getActiveCities, getCity } from "@/shared/config/cities";
+import { getEventDetailPath, getEventsPath } from "@/shared/config/public-routes";
+import type { City } from "@/shared/types/city";
 
 test("publishes only canonical indexable public routes", async () => {
   const urls = (await sitemap()).map(({ url }) => new URL(url).pathname);
@@ -236,4 +242,134 @@ test("keeps the rest of the sitemap when one city's history is missing or corrup
     paths.filter((path) => path.startsWith("/bar/plaze/")).length,
     histories.get("bar")!.locations.length,
   );
+});
+
+test("event entries are filtered by the explicit lifecycle rule, not by whatever the snapshot holds", async () => {
+  const source = await readFile(new URL("./sitemap.ts", import.meta.url), "utf8");
+
+  assert.match(source, /import \{ isEventSitemapEligible \}/u);
+  assert.match(source, /isEventSitemapEligible\(event, \{ now, timezone: context\.timezone \}\)/u);
+  // The city's own timezone decides the day boundary — no hardcoded zone, no UTC assumption.
+  assert.doesNotMatch(source, /timezone: "Europe\/Podgorica"/u);
+});
+
+test("never emits the same URL twice", async () => {
+  const urls = (await sitemap()).map(({ url }) => url);
+
+  assert.deepEqual(urls.length, new Set(urls).size);
+});
+
+test("applies the event lifecycle policy per city without leaking events across cities", () => {
+  // Composes exactly what sitemap() composes — the public-listing filter and the lifecycle rule —
+  // against a deterministic reference instant, so the boundary is asserted on real event shapes.
+  const now = new Date("2026-08-03T12:00:00.000Z");
+  const podgorica = getCity("podgorica");
+  const tivat = getCity("tivat");
+  assert.ok(podgorica);
+  assert.ok(tivat);
+
+  const events = [
+    podgoricaEvent({ id: "event_upcoming", startsAt: "2026-08-10T18:00:00.000Z" }),
+    podgoricaEvent({ id: "event_today", startDate: "2026-08-03", startsAt: undefined }),
+    podgoricaEvent({ id: "event_ended_yesterday", startDate: "2026-08-02", startsAt: undefined }),
+    podgoricaEvent({ id: "event_ended_long_ago", startDate: "2026-07-05", startsAt: undefined }),
+    podgoricaEvent({
+      id: "event_cineplexx",
+      sourceId: "cineplexx-podgorica",
+      startsAt: "2026-08-10T18:00:00.000Z",
+    }),
+    podgoricaEvent({
+      cityId: "tivat",
+      cityIds: ["tivat"],
+      id: "event_tivat_upcoming",
+      startsAt: "2026-08-10T18:00:00.000Z",
+    }),
+  ];
+
+  const selectFor = (city: City) =>
+    getCityEventsForPublicListing(events.filter((event) => event.cityId === city.id))
+      .filter((event) => isEventSitemapEligible(event, { now, timezone: city.timezone }))
+      .map((event) => event.id);
+
+  assert.deepEqual(selectFor(podgorica), [
+    "event_upcoming",
+    "event_today",
+    "event_ended_yesterday",
+  ]);
+  // Cineplexx programme events are excluded from the public surface entirely, so they are never
+  // sitemap candidates regardless of lifecycle.
+  assert.equal(selectFor(podgorica).includes("event_cineplexx"), false);
+  assert.deepEqual(selectFor(tivat), ["event_tivat_upcoming"]);
+});
+
+test("canonical event URLs are unchanged by the lifecycle rule", () => {
+  const podgorica = getCity("podgorica");
+  assert.ok(podgorica);
+  const event = podgoricaEvent({ id: "event_ended", startDate: "2026-08-02", startsAt: undefined });
+  const upcoming = podgoricaEvent({ id: "event_ended", startsAt: "2026-08-10T18:00:00.000Z" });
+
+  // Same ID in and out of the window: leaving the sitemap must never rewrite the canonical path.
+  assert.equal(getEventDetailPath(podgorica, event.id), "/podgorica/dogadjaji/event_ended");
+  assert.equal(getEventDetailPath(podgorica, event.id), getEventDetailPath(podgorica, upcoming.id));
+});
+
+test("event detail URLs are gated on the same public-route rule as the events listing path", async () => {
+  const source = await readFile(new URL("./sitemap.ts", import.meta.url), "utf8");
+  const paths = (await sitemap()).map(({ url }) => new URL(url).pathname);
+
+  // One shared rule for both, so the listing route and its detail URLs can never disagree.
+  assert.match(
+    source,
+    /\.filter\(\(city\) => isCityPublicFeatureRouteAvailable\(city, "events"\)\)/u,
+  );
+  assert.doesNotMatch(source, /supportsCityCapability\(city, "events"\)/u);
+
+  for (const city of getActiveCities()) {
+    const listingPath = getEventsPath(city);
+    const isAvailable = isCityPublicFeatureRouteAvailable(city, "events");
+
+    assert.equal(paths.includes(listingPath), isAvailable, city.id);
+    if (!isAvailable) {
+      assert.equal(
+        paths.some((path) => path.startsWith(`${listingPath}/`)),
+        false,
+        `${city.id} must not advertise event detail URLs`,
+      );
+    }
+  }
+});
+
+test("a city without the events capability contributes no event detail URLs", async () => {
+  const paths = (await sitemap()).map(({ url }) => new URL(url).pathname);
+
+  for (const cityId of ["bar", "budva", "kotor"]) {
+    const city = getCity(cityId);
+    assert.ok(city);
+    assert.equal(isCityPublicFeatureRouteAvailable(city, "events"), false, cityId);
+    assert.equal(
+      paths.some((path) => path.startsWith(`${getEventsPath(city)}/`)),
+      false,
+      cityId,
+    );
+  }
+});
+
+test("the shared gate refuses a capability whose feature flag is switched off", () => {
+  const podgorica = getCity("podgorica");
+  const budva = getCity("budva");
+  assert.ok(podgorica);
+  assert.ok(budva);
+  const disabled = { isFeatureEnabled: () => false };
+
+  // The gate the sitemap now uses is the one that honours feature flags: a supported city loses a
+  // flag-gated route the moment the flag is off.
+  assert.equal(isCityPublicFeatureRouteAvailable(budva, "seaWaterQuality"), true);
+  assert.equal(isCityPublicFeatureRouteAvailable(budva, "seaWaterQuality", disabled), false);
+  assert.equal(isCityPublicFeatureRouteAvailable(budva, "goingOut", disabled), false);
+
+  // `events` is currently capability-only — it is deliberately absent from
+  // publicFeatureByCityCapability in shared/config/city-routes.ts, so no flag suppresses it today.
+  // Routing this call site through the shared helper is what makes adding it there later take
+  // effect in the sitemap too, instead of being silently missed.
+  assert.equal(isCityPublicFeatureRouteAvailable(podgorica, "events", disabled), true);
 });
