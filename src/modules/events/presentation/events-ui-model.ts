@@ -6,7 +6,8 @@ import {
   isEventPresentationCategory,
   type EventPresentationCategory,
 } from "./event-presentation-category.ts";
-import type { CityContext } from "@/shared/types/city";
+import { getCityName } from "@/shared/config/cities";
+import type { City, CityContext } from "@/shared/types/city";
 
 type EventDatePreset = "today" | "tomorrow" | "upcoming" | "weekend";
 
@@ -31,6 +32,28 @@ function getCityEventsForPublicListing(events: readonly CityEvent[]) {
 
 function getPublicCityEventById(events: readonly CityEvent[], eventId: string) {
   return getCityEventsForPublicListing(events).find((event) => event.id === eventId);
+}
+
+// The <title> for an event detail page. Provider titles carry no city context of their own, which
+// left every event page competing without the local signal its own URL already has. The city is
+// appended unless the title already names it in one of its registry forms — matched on word
+// boundaries so a substring ("Barok" for Bar) is not mistaken for a mention. Visible title/H1 are
+// deliberately untouched; this only affects metadata.
+function getEventDetailPageTitle(event: CityEvent, city: City) {
+  const cityForms = new Set([
+    getCityName(city),
+    getCityName(city, "locative"),
+    getCityName(city, "accusative"),
+  ]);
+  const mentionsCity = [...cityForms].some((form) =>
+    new RegExp(`(^|\\P{L})${escapeRegExpLiteral(form)}(\\P{L}|$)`, "iu").test(event.title),
+  );
+
+  return mentionsCity ? event.title : `${event.title} — ${getCityName(city)}`;
+}
+
+function escapeRegExpLiteral(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function isCineplexxProgrammeEvent(event: CityEvent) {
@@ -207,6 +230,7 @@ function isEventSort(value: unknown): value is EventSort {
 export {
   filterEventsForUi,
   getCityEventsForPublicListing,
+  getEventDetailPageTitle,
   getPublicCityEventById,
   getHomepageEvents,
   getHomepageEventsTodayCount,

@@ -3,6 +3,7 @@ import test from "node:test";
 
 import { podgoricaEvent } from "../__fixtures__/events.ts";
 import { getCityEvents } from "../application/get-city-events.ts";
+import { createCityContext } from "@/shared/config/cities";
 import type { EventProvider } from "../domain/event.ts";
 import {
   getEventCategoryLabel,
@@ -13,6 +14,7 @@ import {
 import {
   filterEventsForUi,
   getCityEventsForPublicListing,
+  getEventDetailPageTitle,
   getPublicCityEventById,
   getHomepageEvents,
   getHomepageEventsTodayCount,
@@ -355,3 +357,40 @@ function createProviderMetadata(id: string, displayName: string, sourceUrl: stri
     supportsMultipleCities: false,
   };
 }
+
+test("gives an event detail title its city context for local search", () => {
+  const podgorica = createCityContext("podgorica").city;
+
+  assert.equal(
+    getEventDetailPageTitle(podgoricaEvent({ title: "Ljetnji koncert" }), podgorica),
+    "Ljetnji koncert — Podgorica",
+  );
+});
+
+test("does not repeat a city the provider title already names", () => {
+  const podgorica = createCityContext("podgorica").city;
+
+  // Nominative and locative are both real provider phrasings.
+  assert.equal(
+    getEventDetailPageTitle(podgoricaEvent({ title: "Koncert u Podgorici" }), podgorica),
+    "Koncert u Podgorici",
+  );
+  assert.equal(
+    getEventDetailPageTitle(podgoricaEvent({ title: "Podgorica Jazz Festival" }), podgorica),
+    "Podgorica Jazz Festival",
+  );
+});
+
+test("treats a city name only as a whole word, never as a substring", () => {
+  const bar = createCityContext("bar").city;
+
+  // "Barok" merely starts with "Bar" — the city context is still missing and must be added.
+  assert.equal(
+    getEventDetailPageTitle(podgoricaEvent({ title: "Barok veče" }), bar),
+    "Barok veče — Bar",
+  );
+  assert.equal(
+    getEventDetailPageTitle(podgoricaEvent({ title: "Ljeto u Baru" }), bar),
+    "Ljeto u Baru",
+  );
+});

@@ -1,5 +1,6 @@
 import type { CityEvent } from "../domain/event.ts";
 import { getEventSummary } from "./event-summary.ts";
+import { getCity } from "@/shared/config/cities";
 import { getCityPath, getEventDetailPath, getEventsPath } from "@/shared/config/public-routes";
 import { siteConfig } from "@/shared/config/site";
 import type { City } from "@/shared/types/city";
@@ -13,7 +14,12 @@ interface EventStructuredData {
   image?: string;
   location?: {
     "@type": "Place";
-    address?: { "@type": "PostalAddress"; streetAddress: string };
+    address?: {
+      "@type": "PostalAddress";
+      addressCountry?: "ME";
+      addressLocality?: string;
+      streetAddress: string;
+    };
     name?: string;
   };
   name: string;
@@ -36,6 +42,7 @@ function createEventStructuredData(event: CityEvent): EventStructuredData | unde
   if (!startDate) return undefined;
   const endDate = getValidIsoDateValue(event.endsAt);
   const summary = getEventSummary(event.description);
+  const eventCity = getCity(event.cityId);
 
   return {
     "@context": "https://schema.org",
@@ -53,8 +60,20 @@ function createEventStructuredData(event: CityEvent): EventStructuredData | unde
       ? {
           location: {
             "@type": "Place" as const,
+            // Only ever enriches an address the source actually provided — a missing street
+            // address still omits PostalAddress entirely rather than manufacturing one from the
+            // city alone. Locality/country are added only for a resolvable registry city, and the
+            // registry is Montenegro-only, so "ME" is verified rather than assumed.
             ...(event.address
-              ? { address: { "@type": "PostalAddress" as const, streetAddress: event.address } }
+              ? {
+                  address: {
+                    "@type": "PostalAddress" as const,
+                    ...(eventCity
+                      ? { addressCountry: "ME" as const, addressLocality: eventCity.name }
+                      : {}),
+                    streetAddress: event.address,
+                  },
+                }
               : {}),
             ...(event.venueName ? { name: event.venueName } : {}),
           },

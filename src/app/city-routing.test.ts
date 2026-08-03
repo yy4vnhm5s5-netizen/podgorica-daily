@@ -16,7 +16,7 @@ import {
   resolveActiveCityRoute,
 } from "./city-routing.ts";
 import { resolveCityContextCapability } from "@/config/city-context";
-import { createCityContext } from "@/shared/config/cities";
+import { createCityContext, supportsCityCapability } from "@/shared/config/cities";
 import type { City } from "@/shared/types/city";
 
 function city(overrides: Partial<City> = {}): City {
@@ -59,7 +59,7 @@ test("uses capability-aware metadata and summary routes for a future city", () =
     city: { ...createCityContext("budva").city, isActive: true },
   };
 
-  assert.equal(getCityLandingTitle(budva), "Budva — lokalne informacije | Gradom.me");
+  assert.equal(getCityLandingTitle(budva), "Budva — izlasci, plaže i informacije | Gradom.me");
   assert.match(getCityLandingMetadata(budva).description ?? "", /vremenu, izlascima/u);
   assert.deepEqual(getCityDashboardSummaryAvailability(budva.city), {
     cinema: false,
@@ -67,6 +67,57 @@ test("uses capability-aware metadata and summary routes for a future city", () =
     goingOut: true,
     seaWaterQuality: true,
   });
+});
+
+test("advertises sea-water coverage on the hub of every city that declares the capability", () => {
+  for (const cityId of ["bar", "budva", "kotor", "tivat"]) {
+    const context = createCityContext(cityId);
+    const description = getCityLandingMetadata(context).description ?? "";
+
+    assert.equal(supportsCityCapability(context.city, "seaWaterQuality"), true);
+    assert.match(getCityLandingTitle(context), /plaže/u, `${cityId} title must mention beaches`);
+    assert.match(description, /plažama i kvalitetu mora/u, `${cityId} description`);
+    // The locative city form and the canonical must be unaffected by the added wording.
+    assert.match(description, new RegExp(`za grad ${context.city.name}`, "u"));
+    assert.equal(getCityLandingMetadata(context).alternates?.canonical, `/${context.city.slug}`);
+  }
+});
+
+test("keeps sea-water wording off a city that does not declare the capability", () => {
+  const podgorica = createCityContext("podgorica");
+
+  assert.equal(supportsCityCapability(podgorica.city, "seaWaterQuality"), false);
+  assert.equal(
+    getCityLandingTitle(podgorica),
+    "Podgorica — događaji, izlasci i informacije | Gradom.me",
+  );
+  assert.doesNotMatch(getCityLandingMetadata(podgorica).description ?? "", /plaž|mora/u);
+});
+
+test("derives hub wording from capabilities alone, not from any hardcoded city", () => {
+  // A synthetic city the registry has never heard of still gets the coastal wording purely by
+  // declaring the capability — proving the rule is capability-driven rather than city-keyed.
+  const synthetic = {
+    city: city({ capabilities: ["seaWaterQuality"], name: "Testgrad", slug: "testgrad" }),
+    locale: "me" as const,
+    timezone: "Europe/Podgorica",
+  };
+
+  assert.equal(getCityLandingTitle(synthetic), "Testgrad — plaže i informacije | Gradom.me");
+  assert.match(
+    getCityLandingMetadata(synthetic).description ?? "",
+    /sa podacima o plažama i kvalitetu mora\.$/u,
+  );
+
+  const withoutCapabilities = {
+    city: city({ name: "Praznograd", slug: "praznograd" }),
+    locale: "me" as const,
+    timezone: "Europe/Podgorica",
+  };
+  assert.equal(
+    getCityLandingTitle(withoutCapabilities),
+    "Praznograd — lokalne informacije | Gradom.me",
+  );
 });
 
 test("cinema route availability requires both the events capability and Cineplexx city support", () => {

@@ -36,14 +36,16 @@ interface CityDashboardSummaryAvailability {
   seaWaterQuality: boolean;
 }
 
+// The headline capabilities a city hub advertises, in reading order. Coastal cities carry their
+// sea-water/beach coverage here too: it is their most distinctive content (a per-location detail
+// page per monitoring point), and leaving it out made every coastal hub read as generic "lokalne
+// informacije". Driven entirely by the registry — a city that does not declare the capability
+// never gets the wording, so Podgorica stays beach-free without being named anywhere.
 function getCityLandingTitle(context: CityContext) {
-  if (!supportsCityCapability(context.city, "events")) {
-    return getPageTitle(`${getCityName(context.city)} — lokalne informacije`);
-  }
-
   const labels = [
-    "događaji",
+    ...(supportsCityCapability(context.city, "events") ? ["događaji"] : []),
     ...(supportsCityCapability(context.city, "goingOut") ? ["izlasci"] : []),
+    ...(supportsCityCapability(context.city, "seaWaterQuality") ? ["plaže"] : []),
   ];
 
   return getPageTitle(
@@ -55,10 +57,15 @@ function getCityLandingTitle(context: CityContext) {
 
 function getCityLandingMetadata(context: CityContext) {
   const canonical = getCityPath(context.city);
+  // Every entry is governed by "sa podacima o …", so each must be in the same locative/dative
+  // form ("o vremenu", "o plažama i kvalitetu mora").
   const availableServices = [
     ...(supportsCityCapability(context.city, "weather") ? ["vremenu"] : []),
     ...(supportsCityCapability(context.city, "events") ? ["događajima"] : []),
     ...(supportsCityCapability(context.city, "goingOut") ? ["izlascima"] : []),
+    ...(supportsCityCapability(context.city, "seaWaterQuality")
+      ? ["plažama i kvalitetu mora"]
+      : []),
     ...(supportsCityCapability(context.city, "electricity") ? ["servisnim obavještenjima"] : []),
   ];
   const description = availableServices.length

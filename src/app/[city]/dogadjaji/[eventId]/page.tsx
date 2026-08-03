@@ -11,7 +11,10 @@ import {
   createEventStructuredData,
   serializeStructuredData,
 } from "@/modules/events/presentation/event-structured-data";
-import { getPublicCityEventById } from "@/modules/events/presentation/events-ui-model";
+import {
+  getEventDetailPageTitle,
+  getPublicCityEventById,
+} from "@/modules/events/presentation/events-ui-model";
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
 import { getPageTitle } from "@/shared/config/site";
 import { getEventDetailPath } from "@/shared/config/public-routes";
@@ -52,7 +55,7 @@ async function generateMetadata({ params }: EventDetailPageProps): Promise<Metad
     canonical: getEventDetailPath(context.city, event.id),
     description,
     ...(event.imageUrl ? { imageUrl: event.imageUrl } : {}),
-    title: getPageTitle(event.title),
+    title: getPageTitle(getEventDetailPageTitle(event, context.city)),
   });
 }
 

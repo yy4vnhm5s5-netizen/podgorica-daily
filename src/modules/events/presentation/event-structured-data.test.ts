@@ -22,7 +22,12 @@ test("builds Event structured data from known event fields only", () => {
     eventStatus: "https://schema.org/EventCancelled",
     location: {
       "@type": "Place",
-      address: { "@type": "PostalAddress", streetAddress: "Njegoševa 1" },
+      address: {
+        "@type": "PostalAddress",
+        addressCountry: "ME",
+        addressLocality: "Podgorica",
+        streetAddress: "Njegoševa 1",
+      },
       name: "KIC Budo Tomović",
     },
     name: "Ljetnji koncert",
@@ -46,6 +51,25 @@ test("does not invent time or location for date-only events", () => {
 
   assert.equal(structuredData?.startDate, "2026-08-14");
   assert.equal(structuredData?.location, undefined);
+});
+
+test("adds verified locality and country only to an address the source provided", () => {
+  const withAddress = createEventStructuredData(podgoricaEvent({ address: "Njegoševa 1" }));
+
+  assert.equal(withAddress?.location?.address?.addressLocality, "Podgorica");
+  assert.equal(withAddress?.location?.address?.addressCountry, "ME");
+  assert.equal(withAddress?.location?.address?.streetAddress, "Njegoševa 1");
+});
+
+test("never manufactures a PostalAddress from the city when no street address exists", () => {
+  const venueOnly = createEventStructuredData(
+    podgoricaEvent({ address: undefined, venueName: "KIC Budo Tomović" }),
+  );
+
+  // The venue is still a Place, but with no address object at all — the city alone is not an
+  // address, and inventing one would be fabricated structured data.
+  assert.equal(venueOnly?.location?.name, "KIC Budo Tomović");
+  assert.equal(venueOnly?.location?.address, undefined);
 });
 
 test("falls back to a valid startDate when startsAt is malformed instead of embedding it as-is", () => {
