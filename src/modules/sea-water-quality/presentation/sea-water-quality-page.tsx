@@ -1,4 +1,4 @@
-import { Waves } from "lucide-react";
+import { ArrowRight, Waves } from "lucide-react";
 import Link from "next/link";
 
 import type { BudvaSeaWaterQualityCacheResult } from "../application/get-budva-sea-water-quality";
@@ -105,9 +105,14 @@ function SeaWaterQualityPage({ city, locale, locationSlugs, result }: SeaWaterQu
           </section>
 
           <section aria-labelledby="plaze-tabela-heading" className="space-y-3">
-            <h2 className="text-base font-semibold tracking-tight" id="plaze-tabela-heading">
-              Sva kupališta
-            </h2>
+            <div className="space-y-1">
+              <h2 className="text-base font-semibold tracking-tight" id="plaze-tabela-heading">
+                Sva kupališta
+              </h2>
+              <p className="text-xs italic leading-5 text-muted-foreground">
+                Kliknite na ime plaže za detaljne informacije
+              </p>
+            </div>
             <BeachTable
               city={city}
               locale={locale}
@@ -172,11 +177,18 @@ function BeachTable({
             return (
               <tr key={location.id}>
                 <td className="px-4 py-3 font-medium text-foreground">
+                  {/* The arrow is a navigation affordance for the detail page, so it only ever
+                      accompanies a location that actually has one. Locations without history keep
+                      their plain-text rendering. */}
                   {locationSlug ? (
                     <Link
-                      className="underline-offset-4 hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                      className="inline-flex items-center gap-1 underline-offset-4 hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                       href={getSeaWaterQualityLocationPath(city, locationSlug)}
                     >
+                      <ArrowRight
+                        aria-hidden="true"
+                        className="size-3.5 shrink-0 text-muted-foreground"
+                      />
                       {location.name}
                     </Link>
                   ) : (
