@@ -92,6 +92,34 @@ function parseCurrentRoundId(body: string): number | undefined {
   return result.data.data.map((entry) => entry.id).sort((left, right) => right - left)[0];
 }
 
+// The same calendar payload, read for backfill instead of for "which round is current". Alongside
+// the real sampling rounds the response carries a negative pseudo-entry (observed: id -2026,
+// tekst "za sezonu") that aggregates the whole season rather than identifying a fetchable round —
+// only positive ids are real rounds, so a backfill must never treat that entry as one. There is no
+// explicit "completed" flag anywhere in the payload; `selectedRound` (odabraniKalendar) is the
+// site's own newest-usable-round signal and is the safest available upper bound.
+function parseSeaWaterQualityCalendar(
+  body: string,
+): { rounds: number[]; selectedRound?: number } | undefined {
+  const parsed = safeJsonParse(body);
+  if (parsed === undefined) return undefined;
+
+  const result = calendarResponseSchema.safeParse(parsed);
+  if (!result.success) return undefined;
+
+  const rounds = [...new Set(result.data.data.map((entry) => entry.id))]
+    .filter((id) => Number.isInteger(id) && id > 0)
+    .sort((left, right) => left - right);
+  const selectedRound = result.data.odabraniKalendar;
+
+  return {
+    rounds,
+    ...(typeof selectedRound === "number" && Number.isInteger(selectedRound) && selectedRound > 0
+      ? { selectedRound }
+      : {}),
+  };
+}
+
 interface BudvaSeaWaterQualityParseResult {
   sourceRound?: number;
   summary: SeaWaterQualitySummary;
@@ -211,5 +239,6 @@ export {
   morskodobroMapDataUrl,
   parseBudvaSeaWaterQualitySummary,
   parseCurrentRoundId,
+  parseSeaWaterQualityCalendar,
   type BudvaSeaWaterQualityParseResult,
 };
