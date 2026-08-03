@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import test from "node:test";
 
-import sitemap, { getSeaWaterQualitySitemapEntries, revalidate } from "./sitemap.ts";
+import sitemap, { dynamic, getSeaWaterQualitySitemapEntries } from "./sitemap.ts";
 import { parseBudvaSeaWaterQualitySummary } from "@/modules/sea-water-quality/infrastructure/budva-sea-water-quality";
 import { mergeSeaWaterQualityHistoryBackfill } from "@/modules/sea-water-quality/infrastructure/sea-water-quality-history-cache";
 import type { SeaWaterQualitySupportedCityId } from "@/modules/sea-water-quality/infrastructure/sea-water-quality-cities";
@@ -201,18 +201,18 @@ test("excludes cities and municipalities that are not supported sea-water cities
 });
 
 // Regression guard for the production incident where /sitemap.xml contained zero /plaze/ detail
-// URLs after a successful backfill: the metadata route was statically generated at build time,
-// when RUNTIME_DATA_DIR holds no history yet, and was then cached until the next deploy.
-test("regenerates from runtime snapshots instead of being cached from the build", async () => {
+// URLs after a successful backfill. Railway builds the image without the /app/.runtime volume, so
+// any build-time render of this route sees an empty runtime-derived inventory. A revalidate window
+// is not sufficient: it still emits that empty prerender as the initial payload after every
+// deploy. The route must opt out of build-time rendering entirely.
+test("reads runtime snapshots per request instead of being prerendered at build", async () => {
   const source = await readFile(join(process.cwd(), "src/app/sitemap.ts"), "utf8");
 
-  assert.equal(typeof revalidate, "number");
-  assert.ok(
-    revalidate > 0 && revalidate <= 86_400,
-    "revalidate must be a positive interval no longer than a day",
-  );
-  assert.match(source, /^export const revalidate = /mu);
-  // Must never reach upstream JPMD while regenerating.
+  assert.equal(dynamic, "force-dynamic");
+  assert.match(source, /^export const dynamic = "force-dynamic";$/mu);
+  // A revalidate window would reintroduce the build-time payload after each deploy.
+  assert.doesNotMatch(source, /^export const revalidate\b/mu);
+  // Must never reach upstream JPMD while generating.
   assert.doesNotMatch(source, /fetch\(|morskodobro/iu);
 });
 

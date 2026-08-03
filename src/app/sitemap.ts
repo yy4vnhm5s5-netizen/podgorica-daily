@@ -15,16 +15,20 @@ import {
 import { siteConfig } from "@/shared/config/site";
 import { getCitySitemapPaths, isCityPublicFeatureRouteAvailable } from "./city-routing.ts";
 
-// `sitemap.ts` is a Next.js metadata route, which is statically generated at build time and cached
-// indefinitely unless it opts out. That default is wrong for this app: the sitemap is derived from
-// runtime snapshots on the persistent volume (RUNTIME_DATA_DIR, /app/.runtime in production), which
-// is empty during `next build` and is only populated later by refresh/backfill. Without this the
-// build bakes an empty beach/event inventory and no amount of refreshing changes /sitemap.xml until
-// the next deploy. Revalidating hourly keeps generation cheap (a crawler-only route doing ~8 local
-// file reads) while guaranteeing runtime data becomes visible without a rebuild. Every data page in
-// this app uses `revalidate = 0` for the same underlying reason; the sitemap simply does not need
-// per-request freshness.
-export const revalidate = 3600;
+// `sitemap.ts` is a Next.js metadata route: without a route segment config it is prerendered
+// during `next build` and cached. That is wrong here, because the sitemap is derived entirely from
+// runtime snapshots on the persistent volume (RUNTIME_DATA_DIR, /app/.runtime in production) and
+// Railway builds the image WITHOUT that volume mounted — so a build-time render always sees an
+// empty beach/event inventory.
+//
+// This must be `force-dynamic` rather than a revalidate window. A window (e.g. `revalidate = 3600`)
+// still emits a build-time prerender and serves it as the initial payload, so *every* deployment
+// would re-bake the empty inventory and hide runtime-derived URLs until the window expired —
+// turning a one-off into a recurring per-deploy regression. Forcing dynamic rendering removes the
+// build-time artifact entirely: every request reads the current local snapshots, so a refresh or
+// backfill is visible immediately and a deploy never erases URLs. Generation stays local-only
+// (~8 file reads, crawler-only traffic) and must never issue an upstream request.
+export const dynamic = "force-dynamic";
 
 function createEntry(
   path: string,
