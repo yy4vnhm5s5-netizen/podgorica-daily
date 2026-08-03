@@ -15,6 +15,17 @@ import {
 import { siteConfig } from "@/shared/config/site";
 import { getCitySitemapPaths, isCityPublicFeatureRouteAvailable } from "./city-routing.ts";
 
+// `sitemap.ts` is a Next.js metadata route, which is statically generated at build time and cached
+// indefinitely unless it opts out. That default is wrong for this app: the sitemap is derived from
+// runtime snapshots on the persistent volume (RUNTIME_DATA_DIR, /app/.runtime in production), which
+// is empty during `next build` and is only populated later by refresh/backfill. Without this the
+// build bakes an empty beach/event inventory and no amount of refreshing changes /sitemap.xml until
+// the next deploy. Revalidating hourly keeps generation cheap (a crawler-only route doing ~8 local
+// file reads) while guaranteeing runtime data becomes visible without a rebuild. Every data page in
+// this app uses `revalidate = 0` for the same underlying reason; the sitemap simply does not need
+// per-request freshness.
+export const revalidate = 3600;
+
 function createEntry(
   path: string,
   changeFrequency: MetadataRoute.Sitemap[0]["changeFrequency"],

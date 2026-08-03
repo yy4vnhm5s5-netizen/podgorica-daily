@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import test from "node:test";
 
-import sitemap, { getSeaWaterQualitySitemapEntries } from "./sitemap.ts";
+import sitemap, { getSeaWaterQualitySitemapEntries, revalidate } from "./sitemap.ts";
 import { parseBudvaSeaWaterQualitySummary } from "@/modules/sea-water-quality/infrastructure/budva-sea-water-quality";
 import { mergeSeaWaterQualityHistoryBackfill } from "@/modules/sea-water-quality/infrastructure/sea-water-quality-history-cache";
 import type { SeaWaterQualitySupportedCityId } from "@/modules/sea-water-quality/infrastructure/sea-water-quality-cities";
@@ -198,6 +198,22 @@ test("excludes cities and municipalities that are not supported sea-water cities
       `${municipality} must never reach the sitemap`,
     );
   }
+});
+
+// Regression guard for the production incident where /sitemap.xml contained zero /plaze/ detail
+// URLs after a successful backfill: the metadata route was statically generated at build time,
+// when RUNTIME_DATA_DIR holds no history yet, and was then cached until the next deploy.
+test("regenerates from runtime snapshots instead of being cached from the build", async () => {
+  const source = await readFile(join(process.cwd(), "src/app/sitemap.ts"), "utf8");
+
+  assert.equal(typeof revalidate, "number");
+  assert.ok(
+    revalidate > 0 && revalidate <= 86_400,
+    "revalidate must be a positive interval no longer than a day",
+  );
+  assert.match(source, /^export const revalidate = /mu);
+  // Must never reach upstream JPMD while regenerating.
+  assert.doesNotMatch(source, /fetch\(|morskodobro/iu);
 });
 
 test("keeps the rest of the sitemap when one city's history is missing or corrupt", async () => {
