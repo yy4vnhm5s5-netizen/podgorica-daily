@@ -10,6 +10,7 @@ import {
   groupPowerOutagesByDate,
 } from "@/modules/city-alerts/presentation/power-outages-ui-model";
 import { ErrorState } from "@/shared/components/error-state";
+import { ExploreCityLinks } from "@/shared/components/explore-city-links";
 import { SectionTitle } from "@/shared/components/section-title";
 import { StatusBadge } from "@/shared/components/status-badge";
 import { Timestamp } from "@/shared/components/timestamp";
@@ -94,6 +95,8 @@ function PowerOutagesPage({ city, locale, result }: PowerOutagesPageProps) {
           </div>
         </div>
       )}
+
+      <ExploreCityLinks city={city} exclude={["electricity"]} />
     </section>
   );
 }

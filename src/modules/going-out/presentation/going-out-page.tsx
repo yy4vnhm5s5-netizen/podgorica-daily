@@ -10,6 +10,7 @@ import {
 } from "./going-out-ui-model";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { EmptyState } from "@/shared/components/empty-state";
+import { ExploreCityLinks } from "@/shared/components/explore-city-links";
 import { NewTabNotice } from "@/shared/components/new-tab-notice";
 import { SectionTitle } from "@/shared/components/section-title";
 import { getCityName } from "@/shared/config/cities";
@@ -58,6 +59,8 @@ function GoingOutPage({ city, events, locale, state }: GoingOutPageProps) {
       {displayState === "stale" ? (
         <p className="text-xs text-muted-foreground">{copy.stale}</p>
       ) : null}
+
+      <ExploreCityLinks city={city} exclude={["goingOut"]} />
     </section>
   );
 }

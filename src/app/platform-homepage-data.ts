@@ -299,6 +299,10 @@ function getCityModuleShortcuts(city: City): CityModuleShortcut[] {
   );
 }
 
+// The publisher entity is emitted once, here on the platform homepage, and referenced by @id
+// rather than repeated on every route — one canonical Organization node for the whole site.
+const platformOrganizationId = `${siteConfig.url}#organization`;
+
 function createPlatformHomepageStructuredData(cards: readonly PlatformCityCardData[]) {
   return {
     "@context": "https://schema.org",
@@ -307,6 +311,7 @@ function createPlatformHomepageStructuredData(cards: readonly PlatformCityCardDa
         "@type": "WebSite",
         description: platformHomepageDescription,
         name: siteConfig.name,
+        publisher: { "@id": platformOrganizationId },
         url: siteConfig.url,
       },
       {
@@ -318,6 +323,17 @@ function createPlatformHomepageStructuredData(cards: readonly PlatformCityCardDa
           url: new URL(card.href, siteConfig.url).toString(),
         })),
         name: "Podržani gradovi na Gradom.me",
+      },
+      // Only facts the repository already owns: the site name, its canonical URL and the brand
+      // mark that siteConfig itself designates. No legal entity, address, phone, sameAs or
+      // founding data is asserted, and this is deliberately not a LocalBusiness — Gradom.me is a
+      // publisher of local information, not a physical business.
+      {
+        "@id": platformOrganizationId,
+        "@type": "Organization",
+        logo: new URL(siteConfig.logoMarkPath, siteConfig.url).toString(),
+        name: siteConfig.name,
+        url: siteConfig.url,
       },
     ],
   };

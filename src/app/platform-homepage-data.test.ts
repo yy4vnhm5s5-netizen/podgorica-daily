@@ -482,3 +482,50 @@ test("uses Montenegrin count forms for platform summaries", () => {
     assert.equal(formatCount(21, singular, paucal, plural), `21 ${singular}`);
   }
 });
+
+// The @graph is a heterogeneous list of schema.org nodes, so read it back as plain JSON rather
+// than reaching into a union type.
+function readHomepageGraph() {
+  const structuredData = createPlatformHomepageStructuredData([]);
+  return JSON.parse(JSON.stringify(structuredData))["@graph"] as Record<string, unknown>[];
+}
+
+test("publishes exactly one conservative site-level Organization entity", () => {
+  const organizations = readHomepageGraph().filter((node) => node["@type"] === "Organization");
+
+  assert.equal(organizations.length, 1);
+  assert.deepEqual(organizations[0], {
+    "@id": "https://gradom.me#organization",
+    "@type": "Organization",
+    logo: "https://gradom.me/brand/gradom-mark.svg",
+    name: "Gradom.me",
+    url: "https://gradom.me",
+  });
+});
+
+test("links the WebSite to that Organization instead of duplicating the entity", () => {
+  const graph = readHomepageGraph();
+  const website = graph.find((node) => node["@type"] === "WebSite");
+  const organization = graph.find((node) => node["@type"] === "Organization");
+
+  assert.ok(website);
+  assert.ok(organization);
+  assert.deepEqual(website.publisher, { "@id": organization["@id"] });
+});
+
+test("asserts no unverified organization facts", () => {
+  const serialized = JSON.stringify(readHomepageGraph());
+
+  for (const forbidden of [
+    "LocalBusiness",
+    "address",
+    "telephone",
+    "sameAs",
+    "founder",
+    "foundingDate",
+    "aggregateRating",
+    "priceRange",
+  ]) {
+    assert.doesNotMatch(serialized, new RegExp(forbidden, "u"), `must not assert ${forbidden}`);
+  }
+});

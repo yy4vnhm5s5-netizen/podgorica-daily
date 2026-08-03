@@ -28,6 +28,36 @@ test("offers contextual same-city navigation without linking back to the beach l
   assert.match(source, /<ExploreCityLinks city=\{city\} exclude=\{\["seaWaterQuality"\]\} \/>/u);
 });
 
+test("renders the visible breadcrumb from the same trail as the structured data", async () => {
+  const source = await readFile(
+    new URL("./sea-water-quality-location-page.tsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(source, /getSeaWaterQualityLocationBreadcrumbTrail\(\{/u);
+  assert.match(source, /<nav aria-label="Putanja"/u);
+  assert.match(source, /aria-current="page"/u);
+  // Non-terminal crumbs must be crawlable links, not plain text.
+  assert.match(source, /href=\{step\.href\}/u);
+  assert.doesNotMatch(source, /onClick/u);
+});
+
+test("shows the wider JPMD beach name as secondary context without touching the H1", async () => {
+  const source = await readFile(
+    new URL("./sea-water-quality-location-page.tsx", import.meta.url),
+    "utf8",
+  );
+
+  // H1 still identifies the monitoring location this canonical URL represents.
+  assert.match(
+    source,
+    /title=\{`\$\{location\.displayName\}, \$\{city\.name\} — kvalitet mora`\}/u,
+  );
+  assert.match(source, /const beachName = getDistinctBeachName\(location\);/u);
+  assert.match(source, /\{beachName \? \(/u);
+  assert.match(source, /Plaža: /u);
+});
+
 test("uses the compact linked JPMD source attribution", async () => {
   const source = await readFile(
     new URL("./sea-water-quality-location-page.tsx", import.meta.url),

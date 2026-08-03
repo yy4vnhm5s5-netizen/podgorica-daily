@@ -1,7 +1,10 @@
 import { Waves } from "lucide-react";
+import Link from "next/link";
 
 import type { SeaWaterQualityHistoryLocation } from "../domain/sea-water-quality.ts";
 import { gradeLabels, gradeStyles } from "./sea-water-quality-grade-styles";
+import { getSeaWaterQualityLocationBreadcrumbTrail } from "./sea-water-quality-location-structured-data";
+import { getDistinctBeachName } from "./sea-water-quality-location-ui-model.ts";
 import { ExploreCityLinks } from "@/shared/components/explore-city-links";
 import { NewTabNotice } from "@/shared/components/new-tab-notice";
 import { SectionTitle } from "@/shared/components/section-title";
@@ -28,9 +31,40 @@ function SeaWaterQualityLocationPage({
   state,
 }: SeaWaterQualityLocationPageProps) {
   const latestMeasurement = location.measurements.at(-1);
+  const breadcrumb = getSeaWaterQualityLocationBreadcrumbTrail({
+    city,
+    locationName: location.displayName,
+    slug: location.canonicalSlug,
+  });
+  const beachName = getDistinctBeachName(location);
 
   return (
     <section aria-labelledby="plaza-heading" className="space-y-6" id="plaza">
+      {/* Same trail as the BreadcrumbList JSON-LD emitted by the route, built from one helper so
+          the visible hierarchy and the structured data cannot disagree. */}
+      <nav aria-label="Putanja" className="text-xs leading-5 text-muted-foreground">
+        <ol className="flex flex-wrap items-center gap-x-1.5">
+          {breadcrumb.map((step, index) => {
+            const isCurrent = index === breadcrumb.length - 1;
+            return (
+              <li className="flex items-center gap-x-1.5" key={step.href}>
+                {index > 0 ? <span aria-hidden="true">/</span> : null}
+                {isCurrent ? (
+                  <span aria-current="page">{step.name}</span>
+                ) : (
+                  <Link
+                    className="underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    href={step.href}
+                  >
+                    {step.name}
+                  </Link>
+                )}
+              </li>
+            );
+          })}
+        </ol>
+      </nav>
+
       <div className="space-y-2">
         <SectionTitle
           as="h1"
@@ -39,6 +73,14 @@ function SeaWaterQualityLocationPage({
           id="plaza-heading"
           title={`${location.displayName}, ${city.name} — kvalitet mora`}
         />
+        {/* Secondary context only: JPMD's `plaza` names the wider beach a sampling point sits on.
+            The H1 keeps identifying the monitoring location itself, which is what this canonical
+            URL represents — there is no separate beach route for the beach to link to. */}
+        {beachName ? (
+          <p className="text-sm leading-6 text-muted-foreground">
+            Plaža: <span className="font-medium text-foreground">{beachName}</span>
+          </p>
+        ) : null}
         <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
           Rezultati zvaničnog praćenja sanitarnog kvaliteta mora za ovo kupalište.
         </p>

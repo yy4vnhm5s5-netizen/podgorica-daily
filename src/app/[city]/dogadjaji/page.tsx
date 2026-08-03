@@ -13,6 +13,7 @@ import {
   parseEventsUiFilters,
 } from "@/modules/events/presentation/events-ui-model";
 import { ErrorState } from "@/shared/components/error-state";
+import { ExploreCityLinks } from "@/shared/components/explore-city-links";
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
 import { SectionTitle } from "@/shared/components/section-title";
 import { getCityName } from "@/shared/config/cities";
@@ -119,6 +120,9 @@ async function EventsPage({ params, searchParams }: EventsPageProps) {
             locale={locale}
             timezone={context.timezone}
           />
+          {/* Only on the successful branch: the error branch below is already a dead end for the
+              user, and pointing them at other modules there would bury the actual failure. */}
+          <ExploreCityLinks city={context.city} exclude={["events"]} />
         </section>
       </DashboardLayout>
     );
