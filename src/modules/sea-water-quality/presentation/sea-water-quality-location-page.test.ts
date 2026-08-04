@@ -226,3 +226,60 @@ test("does not repeat the latest-result card inside the summary", async () => {
   assert.doesNotMatch(summaryBlock, /summary\.latest/u);
   assert.doesNotMatch(summaryBlock, /Najnoviji rezultat/u);
 });
+
+test("links sibling monitoring points as crawlable Links with their own names as anchors", async () => {
+  const source = await readFile(
+    new URL("./sea-water-quality-location-page.tsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(
+    source,
+    /const relatedLocations = history\n?\s*\? getRelatedSeaWaterQualityLocations\(history, location\)/u,
+  );
+  assert.match(source, /Druga mjerna mjesta na istoj plaži/u);
+  assert.match(source, /href=\{getSeaWaterQualityLocationPath\(city, related\.canonicalSlug\)\}/u);
+  // Meaningful anchor text — never "detalji" / "pogledaj" / "više".
+  assert.match(source, /\{related\.displayName\}/u);
+  assert.doesNotMatch(source, />\s*(Detalji|Pogledaj|Više)\s*</iu);
+});
+
+test("renders nothing when the point has no sibling on its beach", async () => {
+  const source = await readFile(
+    new URL("./sea-water-quality-location-page.tsx", import.meta.url),
+    "utf8",
+  );
+
+  // No empty heading or container: the whole nav is gated on there being at least one sibling.
+  assert.match(source, /\{relatedLocations\.length > 0 \? \(/u);
+  assert.match(source, /const relatedLocations = history/u);
+});
+
+test("the related section navigates only, with no client-side handlers", async () => {
+  const source = await readFile(
+    new URL("./sea-water-quality-location-page.tsx", import.meta.url),
+    "utf8",
+  );
+  const block =
+    /\{relatedLocations\.length > 0 \? \(([\s\S]*?)\n {6}\) : null\}/u.exec(source)?.[1];
+  assert.ok(block);
+
+  assert.match(block, /<nav aria-labelledby="druga-mjerna-mjesta-heading"/u);
+  assert.match(block, /<Link\n/u);
+  for (const banned of [/onClick/u, /router\.push/u, /rel="nofollow"/u, /<button/u]) {
+    assert.doesNotMatch(block, banned, String(banned));
+  }
+  // Visually secondary: it borrows the ExploreCityLinks chip treatment, not the grade badges.
+  assert.doesNotMatch(block, /getGradeBadgeClassName|gradeStyles|gradeLabels/u);
+});
+
+test("the sibling selection stays in the ui model, not the component", async () => {
+  const source = await readFile(
+    new URL("./sea-water-quality-location-page.tsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.doesNotMatch(source, /beachName\?\.trim\(\)/u);
+  assert.doesNotMatch(source, /normalizeForComparison/u);
+  assert.doesNotMatch(source, /\.filter\(/u);
+});

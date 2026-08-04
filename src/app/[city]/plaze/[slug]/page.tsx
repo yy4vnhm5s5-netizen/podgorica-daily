@@ -77,6 +77,7 @@ async function SeaWaterQualityLocationRoute({ params }: SeaWaterQualityLocationR
       />
       <SeaWaterQualityLocationPage
         city={context.city}
+        history={result.history}
         lastSuccessfulRefreshAt={result.lastSuccessfulRefreshAt}
         locale="me"
         location={location}

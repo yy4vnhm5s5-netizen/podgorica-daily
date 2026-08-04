@@ -1,5 +1,6 @@
 import type {
   SeaWaterQualityGrade,
+  SeaWaterQualityHistory,
   SeaWaterQualityHistoryLocation,
   SeaWaterQualityHistoryMeasurement,
 } from "../domain/sea-water-quality.ts";
@@ -41,7 +42,9 @@ function normalizeForComparison(value: string) {
 
 export {
   getDistinctBeachName,
+  getRelatedSeaWaterQualityLocations,
   getSeaWaterQualityLocationSummary,
+  type RelatedSeaWaterQualityLocation,
   type SeaWaterQualityGradeTally,
   type SeaWaterQualityLocationSummary,
   type SeaWaterQualityTrend,
@@ -110,4 +113,36 @@ function getTrend(
   const difference = gradeOrder.indexOf(latest) - gradeOrder.indexOf(previous);
   if (difference === 0) return "unchanged";
   return difference < 0 ? "improved" : "worsened";
+}
+
+interface RelatedSeaWaterQualityLocation {
+  canonicalSlug: string;
+  displayName: string;
+}
+
+// JPMD samples a long beach at several numbered points and tags each with the same `plaza` value,
+// so that field — and only that field — is the grouping key. Matching is an exact comparison of
+// two normalized beachName values using the same conservative rule getDistinctBeachName already
+// applies (case, diacritics, collapsed whitespace). Nothing is inferred from slugs, from numeric
+// suffixes in displayName, or from names that merely look similar: "Sv. Stefan plaža 01" belongs
+// to "SVETOSTEFANSKA PLAZA", which no slug-prefix rule would ever discover.
+//
+// The caller passes the city's own history, so a group can never span cities.
+function getRelatedSeaWaterQualityLocations(
+  history: Pick<SeaWaterQualityHistory, "locations">,
+  current: Pick<SeaWaterQualityHistoryLocation, "beachName" | "canonicalSlug">,
+): readonly RelatedSeaWaterQualityLocation[] {
+  const beachName = current.beachName?.trim();
+  if (!beachName) return [];
+
+  const key = normalizeForComparison(beachName);
+  // History order is preserved rather than re-sorted: the cache already stores locations sorted by
+  // displayName with Montenegrin collation, which puts "Slovenska plaža 01…06" in reading order.
+  return history.locations
+    .filter(
+      (location) =>
+        location.canonicalSlug !== current.canonicalSlug &&
+        normalizeForComparison(location.beachName?.trim() ?? "") === key,
+    )
+    .map(({ canonicalSlug, displayName }) => ({ canonicalSlug, displayName }));
 }

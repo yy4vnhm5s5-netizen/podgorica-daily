@@ -1,9 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import type { SeaWaterQualityHistoryMeasurement } from "../domain/sea-water-quality.ts";
+import type {
+  SeaWaterQualityHistoryLocation,
+  SeaWaterQualityHistoryMeasurement,
+} from "../domain/sea-water-quality.ts";
 import {
   getDistinctBeachName,
+  getRelatedSeaWaterQualityLocations,
   getSeaWaterQualityLocationSummary,
 } from "./sea-water-quality-location-ui-model.ts";
 
@@ -168,4 +172,101 @@ test("derives every counted value from the supplied measurements alone", () => {
 
   assert.equal(counted, summary?.measurementCount);
   assert.equal(counted, 2);
+});
+
+const historyLocation = (
+  displayName: string,
+  canonicalSlug: string,
+  beachName?: string,
+): SeaWaterQualityHistoryLocation => ({
+  canonicalSlug,
+  displayName,
+  firstSeenRound: 1,
+  lastSeenRound: 5,
+  measurements: [],
+  presentInLatestRound: true,
+  sourceLocationId: canonicalSlug.length,
+  ...(beachName ? { beachName } : {}),
+});
+
+const slovenska = [
+  historyLocation("Slovenska plaža 01", "slovenska-plaza-01", "SLOVENSKA PLAZA"),
+  historyLocation("Slovenska plaža 02", "slovenska-plaza-02", "SLOVENSKA PLAZA"),
+  historyLocation("Slovenska plaža 03", "slovenska-plaza-03", "SLOVENSKA PLAZA"),
+];
+
+test("groups monitoring points that share a beach name and drops the current one", () => {
+  const related = getRelatedSeaWaterQualityLocations({ locations: slovenska }, slovenska[0]);
+
+  assert.deepEqual(
+    related.map(({ canonicalSlug }) => canonicalSlug),
+    ["slovenska-plaza-02", "slovenska-plaza-03"],
+  );
+  assert.deepEqual(
+    related.map(({ displayName }) => displayName),
+    ["Slovenska plaža 02", "Slovenska plaža 03"],
+  );
+});
+
+test("never groups points from a different beach", () => {
+  const locations = [...slovenska, historyLocation("Jaz 01", "jaz-01", "JAZ")];
+  const related = getRelatedSeaWaterQualityLocations({ locations }, slovenska[0]);
+
+  assert.equal(
+    related.some(({ canonicalSlug }) => canonicalSlug === "jaz-01"),
+    false,
+  );
+  assert.equal(related.length, 2);
+});
+
+test("returns nothing when the beach name is absent or blank", () => {
+  const locations = [
+    historyLocation("Kamenovo", "kamenovo"),
+    historyLocation("Ploče", "ploce", "   "),
+    historyLocation("Rafailovići", "rafailovici", "PLOČE"),
+  ];
+
+  assert.deepEqual(getRelatedSeaWaterQualityLocations({ locations }, locations[0]), []);
+  assert.deepEqual(getRelatedSeaWaterQualityLocations({ locations }, locations[1]), []);
+});
+
+test("returns nothing for the only point on its beach", () => {
+  const locations = [historyLocation("Mogren 01", "mogren-01", "MOGREN")];
+
+  assert.deepEqual(getRelatedSeaWaterQualityLocations({ locations }, locations[0]), []);
+});
+
+test("matches on case, diacritics and whitespace only — never on similar-looking names", () => {
+  const locations = [
+    historyLocation("Sv. Stefan plaža 01", "sv-stefan-plaza-01", "SVETOSTEFANSKA PLAZA"),
+    historyLocation("Sv. Stefan plaža 02", "sv-stefan-plaza-02", " svetostefanska  plaža "),
+    // A different beach whose name merely starts the same way.
+    historyLocation("Svetostefanski most 01", "svetostefanski-most-01", "SVETOSTEFANSKI MOST"),
+  ];
+  const related = getRelatedSeaWaterQualityLocations({ locations }, locations[0]);
+
+  // The slug prefixes differ entirely from the beach name, which is why beachName is the key.
+  assert.deepEqual(
+    related.map(({ canonicalSlug }) => canonicalSlug),
+    ["sv-stefan-plaza-02"],
+  );
+});
+
+test("preserves the history's own ordering rather than re-sorting", () => {
+  const shuffled = [slovenska[2], slovenska[0], slovenska[1]];
+  const related = getRelatedSeaWaterQualityLocations({ locations: shuffled }, slovenska[0]);
+
+  assert.deepEqual(
+    related.map(({ canonicalSlug }) => canonicalSlug),
+    ["slovenska-plaza-03", "slovenska-plaza-02"],
+  );
+});
+
+test("returns only the two fields presentation needs and does not mutate the history", () => {
+  const locations = structuredClone(slovenska);
+  const snapshot = structuredClone(locations);
+  const related = getRelatedSeaWaterQualityLocations({ locations }, locations[0]);
+
+  assert.deepEqual(Object.keys(related[0]).sort(), ["canonicalSlug", "displayName"]);
+  assert.deepEqual(locations, snapshot);
 });

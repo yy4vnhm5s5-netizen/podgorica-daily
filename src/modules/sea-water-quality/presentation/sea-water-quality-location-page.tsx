@@ -2,6 +2,7 @@ import { ArrowDown, ArrowRight, ArrowUp, Waves } from "lucide-react";
 import Link from "next/link";
 
 import type {
+  SeaWaterQualityHistory,
   SeaWaterQualityHistoryLocation,
   SeaWaterQualityHistoryMeasurement,
 } from "../domain/sea-water-quality.ts";
@@ -9,6 +10,7 @@ import { getGradeBadgeClassName, gradeLabels } from "./sea-water-quality-grade-s
 import { getSeaWaterQualityLocationBreadcrumbTrail } from "./sea-water-quality-location-structured-data";
 import {
   getDistinctBeachName,
+  getRelatedSeaWaterQualityLocations,
   getSeaWaterQualityLocationSummary,
   type SeaWaterQualityTrend,
 } from "./sea-water-quality-location-ui-model.ts";
@@ -16,6 +18,7 @@ import { ExploreCityLinks } from "@/shared/components/explore-city-links";
 import { NewTabNotice } from "@/shared/components/new-tab-notice";
 import { SectionTitle } from "@/shared/components/section-title";
 import { getLocaleTag, type Locale } from "@/shared/config/locale";
+import { getSeaWaterQualityLocationPath } from "@/shared/config/public-routes";
 import { formatDateTime } from "@/shared/lib/date";
 import { formatBcsCount } from "@/shared/lib/pluralize";
 import type { CacheFreshnessStatus } from "@/shared/lib/cache";
@@ -23,6 +26,8 @@ import type { City } from "@/shared/types/city";
 
 interface SeaWaterQualityLocationPageProps {
   city: City;
+  /** The city's own history — already loaded by the route, so siblings cost no extra read. */
+  history?: Pick<SeaWaterQualityHistory, "locations">;
   lastSuccessfulRefreshAt?: string;
   locale: Locale;
   location: SeaWaterQualityHistoryLocation;
@@ -32,6 +37,7 @@ interface SeaWaterQualityLocationPageProps {
 
 function SeaWaterQualityLocationPage({
   city,
+  history,
   lastSuccessfulRefreshAt,
   locale,
   location,
@@ -46,6 +52,7 @@ function SeaWaterQualityLocationPage({
   });
   const beachName = getDistinctBeachName(location);
   const summary = getSeaWaterQualityLocationSummary(location);
+  const relatedLocations = history ? getRelatedSeaWaterQualityLocations(history, location) : [];
 
   return (
     <section aria-labelledby="plaza-heading" className="space-y-6" id="plaza">
@@ -217,6 +224,29 @@ function SeaWaterQualityLocationPage({
           </table>
         </div>
       </section>
+
+      {relatedLocations.length > 0 ? (
+        <nav aria-labelledby="druga-mjerna-mjesta-heading" className="space-y-3">
+          <h2 className="text-sm font-semibold tracking-tight" id="druga-mjerna-mjesta-heading">
+            Druga mjerna mjesta na istoj plaži
+          </h2>
+          {/* Ordinary crawlable links, one per sibling monitoring point, anchored on the point's
+              own name rather than "detalji" or "pogledaj". They are visually lighter than the
+              grade badges above so the result blocks stay dominant. */}
+          <ul className="flex flex-wrap gap-2">
+            {relatedLocations.map((related) => (
+              <li key={related.canonicalSlug}>
+                <Link
+                  className="inline-flex min-h-10 items-center rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  href={getSeaWaterQualityLocationPath(city, related.canonicalSlug)}
+                >
+                  {related.displayName}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      ) : null}
 
       <p className="text-sm italic text-muted-foreground">
         Izvor:{" "}
