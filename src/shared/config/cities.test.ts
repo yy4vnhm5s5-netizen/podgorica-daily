@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  cityRegistry,
   createCityContext,
   getActiveCities,
   getActiveCityBySlug,
@@ -193,4 +194,51 @@ test("rejects invalid city registry invariants", () => {
     () => validateCityRegistry({ "test-city": city({ isMain: true, slug: "" }) }),
     /empty slug/,
   );
+});
+
+// Genitive was added because "iz" governs it — "Letovi iz Podgorice", not "iz Podgorica".
+test("exposes a verified genitive form for every registered city", () => {
+  const expected: Record<string, string> = {
+    bar: "Bara",
+    budva: "Budve",
+    kotor: "Kotora",
+    niksic: "Nikšića",
+    podgorica: "Podgorice",
+    tivat: "Tivta",
+  };
+
+  const registered = Object.values(cityRegistry);
+  // Every record must be covered, so a future city cannot silently fall back to the nominative.
+  assert.deepEqual(registered.map((city) => city.id).sort(), Object.keys(expected).sort());
+  for (const city of registered) {
+    assert.equal(getCityName(city, "genitive"), expected[city.id], city.id);
+    assert.equal(city.genitiveName, expected[city.id], city.id);
+  }
+});
+
+test("adding the genitive leaves the other three forms untouched", () => {
+  const expected: Record<string, [string, string, string]> = {
+    bar: ["Bar", "Bar", "Baru"],
+    budva: ["Budva", "Budvu", "Budvi"],
+    kotor: ["Kotor", "Kotor", "Kotoru"],
+    niksic: ["Nikšić", "Nikšić", "Nikšiću"],
+    podgorica: ["Podgorica", "Podgoricu", "Podgorici"],
+    tivat: ["Tivat", "Tivat", "Tivtu"],
+  };
+
+  for (const city of Object.values(cityRegistry)) {
+    const [nominative, accusative, locative] = expected[city.id];
+    assert.equal(getCityName(city), nominative, city.id);
+    assert.equal(getCityName(city, "nominative"), nominative, city.id);
+    assert.equal(getCityName(city, "accusative"), accusative, city.id);
+    assert.equal(getCityName(city, "locative"), locative, city.id);
+  }
+});
+
+test("falls back to the nominative for a city that declares no genitive", () => {
+  const podgorica = getCity("podgorica");
+  assert.ok(podgorica);
+  const { genitiveName: _genitiveName, ...withoutGenitive } = podgorica;
+
+  assert.equal(getCityName(withoutGenitive, "genitive"), "Podgorica");
 });

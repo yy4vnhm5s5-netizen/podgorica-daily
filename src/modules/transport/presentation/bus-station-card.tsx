@@ -4,6 +4,7 @@ import { getBusStationConfig } from "@/modules/transport/domain/bus-station";
 import { getBusStationTranslations } from "@/modules/transport/presentation/bus-station-translations";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { NewTabNotice } from "@/shared/components/new-tab-notice";
+import { getCityName } from "@/shared/config/cities";
 import type { Locale } from "@/shared/config/locale";
 import type { City } from "@/shared/types/city";
 
@@ -27,8 +28,11 @@ function BusStationCard({ city, locale }: BusStationCardProps) {
         <h2 className="text-base font-semibold tracking-tight">{translations.title}</h2>
       </CardHeader>
       <CardContent className="p-4 pt-0 sm:p-5 sm:pt-0">
+        {/* "iz" governs the genitive, so the registry form is used rather than the config's
+            nominative `cityName`, which rendered "…iz Podgorica". The English copy takes the
+            plain name, which is why the form is chosen per locale at the translation boundary. */}
         <p className="text-sm leading-6 text-muted-foreground">
-          {translations.description(config.cityName)}
+          {translations.description(getCityName(city, locale === "me" ? "genitive" : "nominative"))}
         </p>
         <a
           aria-label={`${translations.openDepartures} — ${translations.externalService}`}

@@ -7,6 +7,7 @@ const cityRegistry: Record<string, City> = {
     capabilities: ["electricity", "goingOut", "seaWaterQuality", "weather"],
     country: "Montenegro",
     description: "Vrijeme, izlasci, plaže i važne servisne informacije za Bar.",
+    genitiveName: "Bara",
     id: "bar",
     isActive: true,
     isMain: false,
@@ -22,6 +23,7 @@ const cityRegistry: Record<string, City> = {
     capabilities: ["electricity", "weather", "goingOut", "seaWaterQuality"],
     country: "Montenegro",
     description: "Vrijeme, izlasci, plaže i važne servisne informacije za Budvu.",
+    genitiveName: "Budve",
     id: "budva",
     isActive: true,
     isMain: false,
@@ -37,6 +39,7 @@ const cityRegistry: Record<string, City> = {
     capabilities: ["electricity", "goingOut", "seaWaterQuality", "water", "weather"],
     country: "Montenegro",
     description: "Vrijeme, izlasci i važne servisne informacije za Kotor.",
+    genitiveName: "Kotora",
     id: "kotor",
     isActive: true,
     isMain: false,
@@ -52,6 +55,7 @@ const cityRegistry: Record<string, City> = {
     capabilities: [],
     country: "Montenegro",
     description: "Informacije za svakodnevni život u Nikšiću.",
+    genitiveName: "Nikšića",
     id: "niksic",
     isActive: false,
     isMain: false,
@@ -67,6 +71,7 @@ const cityRegistry: Record<string, City> = {
     capabilities: ["electricity", "events", "flights", "goingOut", "railway", "water", "weather"],
     country: "Montenegro",
     description: "Vrijeme, događaji, izlasci, prevoz i važne servisne informacije za Podgoricu.",
+    genitiveName: "Podgorice",
     id: "podgorica",
     isActive: true,
     isMain: true,
@@ -86,6 +91,7 @@ const cityRegistry: Record<string, City> = {
     capabilities: ["electricity", "events", "goingOut", "seaWaterQuality", "weather"],
     country: "Montenegro",
     description: "Struja, događaji, izlasci, plaže i lokalne informacije za Tivat.",
+    genitiveName: "Tivta",
     id: "tivat",
     isActive: true,
     isMain: false,
@@ -158,6 +164,7 @@ function isActiveCity(city: City) {
 function getCityName(city: City, form: CityNameForm = "nominative") {
   if (form === "locative") return city.locativeName ?? city.name;
   if (form === "accusative") return city.accusativeName ?? city.name;
+  if (form === "genitive") return city.genitiveName ?? city.name;
   return city.name;
 }
 

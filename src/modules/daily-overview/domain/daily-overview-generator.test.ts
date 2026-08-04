@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import { createDailyOverview } from "./daily-overview-generator.ts";
 import type { CityDataSnapshot } from "./daily-overview.ts";
+import { getCity, getCityName } from "@/shared/config/cities";
 
 const generatedAt = new Date("2026-07-17T08:00:00.000Z");
 const city = {
@@ -191,4 +193,27 @@ test("summarizes supplied event data in Montenegrin and English", () => {
       "Two concerts are scheduled this evening.",
     ),
   );
+});
+
+// "za" governs the accusative. The unusual-temperature sentence was fed getCityName(city) — the
+// default nominative — so it read "neuobičajena je za Podgorica".
+test("the unusual-temperature sentence uses the accusative city form", async () => {
+  const source = await readFile(
+    new URL("./daily-overview-generator.ts", import.meta.url),
+    "utf8",
+  );
+  const podgorica = getCity("podgorica");
+  assert.ok(podgorica);
+
+  assert.match(
+    source,
+    /getUnusualTemperatureSentence\(snapshot, copy, getCityName\(context\.city, "accusative"\)\)/u,
+  );
+  assert.doesNotMatch(
+    source,
+    /getUnusualTemperatureSentence\(snapshot, copy, getCityName\(context\.city\)\)/u,
+  );
+  // Accusative, deliberately not genitive: "za" does not take the genitive.
+  assert.equal(getCityName(podgorica, "accusative"), "Podgoricu");
+  assert.notEqual(getCityName(podgorica, "accusative"), getCityName(podgorica, "genitive"));
 });

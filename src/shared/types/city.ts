@@ -1,7 +1,7 @@
 import type { Locale } from "@/shared/config/locale";
 
 type CityId = string;
-type CityNameForm = "accusative" | "locative" | "nominative";
+type CityNameForm = "accusative" | "genitive" | "locative" | "nominative";
 
 type CityCapability =
   | "electricity"
@@ -18,6 +18,8 @@ interface City {
   capabilities?: readonly CityCapability[];
   country: string;
   description?: string;
+  /** Required by prepositions such as "iz" — e.g. "Letovi iz Podgorice". */
+  genitiveName?: string;
   id: CityId;
   isActive: boolean;
   isMain: boolean;

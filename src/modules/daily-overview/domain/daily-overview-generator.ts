@@ -133,7 +133,8 @@ function createDailyOverview(snapshot: CityDataSnapshot, context: CityContext): 
     getWeatherWarningsSentence(activeAlerts, copy),
     getPowerOutagesSentence(snapshot, activeAlerts, copy),
     getWaterOutagesSentence(activeAlerts, copy),
-    getUnusualTemperatureSentence(snapshot, copy, getCityName(context.city)),
+    // "za" governs the accusative ("za Podgoricu"), not the nominative the default form returns.
+    getUnusualTemperatureSentence(snapshot, copy, getCityName(context.city, "accusative")),
     getEventsSentence(snapshot, copy),
   ].filter((sentence): sentence is string => sentence !== null);
 
