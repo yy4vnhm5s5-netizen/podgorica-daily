@@ -9,6 +9,7 @@ import {
   parseCnpRepertoire,
 } from "./cnp-event-parser.ts";
 import { normalizeEventCandidate } from "../domain/event-normalization.ts";
+import { createCityContext } from "@/shared/config/cities";
 
 const fixtures = new URL("./__fixtures__/", import.meta.url);
 test("discovers same-host CNP URLs and parses theatre details", async () => {
@@ -137,4 +138,57 @@ test("warns for incomplete details without preventing valid event normalization"
   assert.equal(normalizedFirst.id, normalizedSame.id);
   assert.notEqual(normalizedFirst.id, normalizedSecond.id);
   assert.notEqual(normalizedFirst.id, normalizedDifferentTime.id);
+});
+
+// The theatre's street address is a fact about any event staged in one of its own rooms, so it is
+// carried on the candidate rather than left stranded in `venues[]`, where the structured-data
+// emitter can never reach it.
+test("attaches the verified CNP street address only to events on a CNP stage", async () => {
+  const onStage = parseCnpEventArticle(
+    await readFile(new URL("cnp-theatre.html", fixtures), "utf8"),
+    "https://cnp.me/hamlet/",
+  );
+  const elsewhere = parseCnpEventArticle(
+    await readFile(new URL("cnp-concert-unknown-venue.html", fixtures), "utf8"),
+    "https://cnp.me/vece-muzike/",
+  );
+
+  // "Velikoj sceni CNP" — a room inside the CNP building.
+  assert.equal(onStage.candidate.rawAddress, "Stanka Dragojevića bb, Podgorica");
+  assert.equal(onStage.venue?.address, "Stanka Dragojevića bb, Podgorica");
+  // A different hall entirely: no address may be asserted for it.
+  assert.equal(elsewhere.candidate.rawAddress, undefined);
+  assert.equal(elsewhere.venue, undefined);
+});
+
+test("the address rides the same deterministic condition as the venue record", async () => {
+  const onStage = parseCnpEventArticle(
+    await readFile(new URL("cnp-date-only-free-postponed.html", fixtures), "utf8"),
+    "https://cnp.me/mala-scena/",
+  );
+
+  // "Maloj sceni CNP" — same building, so both the venue record and the address attach together.
+  assert.equal(Boolean(onStage.venue), true);
+  assert.equal(onStage.candidate.rawAddress, "Stanka Dragojevića bb, Podgorica");
+});
+
+test("the repertoire table never asserts an address, since it names no stage", async () => {
+  const candidates = parseCnpRepertoire(
+    await readFile(new URL("cnp-repertoire-table.html", fixtures), "utf8"),
+  );
+
+  assert.equal(candidates.length > 0, true);
+  for (const candidate of candidates) {
+    assert.equal(candidate.rawAddress, undefined, candidate.rawTitle);
+  }
+});
+
+test("normalization carries the verified address through to the event", async () => {
+  const parsed = parseCnpEventArticle(
+    await readFile(new URL("cnp-theatre.html", fixtures), "utf8"),
+    "https://cnp.me/hamlet/",
+  );
+  const event = normalizeEventCandidate(parsed.candidate, createCityContext("podgorica")).event;
+
+  assert.equal(event?.address, "Stanka Dragojevića bb, Podgorica");
 });

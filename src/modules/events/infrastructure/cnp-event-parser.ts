@@ -98,6 +98,11 @@ function parseCnpEventArticle(html: string, sourceUrl: string) {
     /(?:cijena ulaznice(?: je)?|ulaznica(?: je)?)\s*(\d+(?:[,.]\d+)?)\s*(€|eur)/i,
   );
   const rawVenue = extractVenue(text);
+  // True only when the article names one of CNP's own stages (Velika scena / Mala scena / Scena
+  // Studio), which are rooms inside the CNP building — so the theatre's street address is a fact
+  // about this event, not a guess. CNP articles that name some other hall instead fall through to
+  // the generic branch of extractVenue and deliberately get no address.
+  const isCnpStage = isCnpVenue(rawVenue);
   const startDate = date
     ? `${date[2]}-${date[1].padStart(2, "0")}-${date[0].padStart(2, "0")}`
     : undefined;
@@ -135,6 +140,7 @@ function parseCnpEventArticle(html: string, sourceUrl: string) {
       ...(startDate && !time ? ["CNP article start time was unavailable."] : []),
     ],
     priceAmount: price ? Number(price[1].replace(",", ".")) : undefined,
+    ...(isCnpStage ? { rawAddress: cnpVenue.address } : {}),
     rawDateText: date?.join("."),
     rawDescription: text,
     rawPriceText: price?.[0],
@@ -146,7 +152,7 @@ function parseCnpEventArticle(html: string, sourceUrl: string) {
     startsAt,
     timezone: "Europe/Podgorica",
   };
-  return { candidate, venue: isCnpVenue(rawVenue) ? cnpVenue : undefined };
+  return { candidate, venue: isCnpStage ? cnpVenue : undefined };
 }
 
 function extractOpenGraphImage(html: string) {

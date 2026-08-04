@@ -5,28 +5,75 @@ import { getCityPath, getEventDetailPath, getEventsPath } from "@/shared/config/
 import { siteConfig } from "@/shared/config/site";
 import type { City } from "@/shared/types/city";
 
+type EventSchemaStatus =
+  | "https://schema.org/EventCancelled"
+  | "https://schema.org/EventPostponed"
+  | "https://schema.org/EventScheduled";
+
 interface EventStructuredData {
   "@context": "https://schema.org";
   "@type": "Event";
   description?: string;
   endDate?: string;
-  eventStatus?: "https://schema.org/EventCancelled" | "https://schema.org/EventPostponed";
+  eventStatus: EventSchemaStatus;
   image?: string;
-  location?: {
+  // Required by Google, so it is non-optional here: an Event object can only be constructed once
+  // a truthful Place has been established (see getEventStructuredDataEligibility).
+  location: {
     "@type": "Place";
-    address?: {
+    address: {
       "@type": "PostalAddress";
-      addressCountry?: "ME";
-      addressLocality?: string;
-      streetAddress: string;
+      addressCountry: "ME";
+      addressLocality: string;
+      streetAddress?: string;
     };
-    name?: string;
+    name: string;
   };
   name: string;
   organizer?: { "@type": "Organization"; name: string };
   sameAs: string;
   startDate: string;
   url: string;
+}
+
+type EventStructuredDataIneligibility = "missing-city" | "missing-start-date" | "missing-location";
+
+type EventStructuredDataEligibility =
+  | { city: City; eligible: true; startDate: string; venueName: string }
+  | { eligible: false; reason: EventStructuredDataIneligibility };
+
+// Google requires `location` with both `location.name` and `location.address` for a physical
+// Event. We hold no street address for any event — no collector populates `rawAddress`, so
+// `CityEvent.address` is always undefined in production — which leaves two honest options per
+// event: build a Place from the venue the source did name plus the city that venue verifiably
+// sits in, or emit no Event markup at all.
+//
+// We do NOT fall back to naming the city as the venue, or the event title as the venue: both
+// would be assertions the source never made. An event with no venue therefore gets no Event
+// JSON-LD. Its page stays indexable, canonical and in the sitemap — only the rich-result markup
+// is withheld, because incomplete Event markup is worse than none.
+function getEventStructuredDataEligibility(event: CityEvent): EventStructuredDataEligibility {
+  const startDate = getValidIsoDateValue(event.startsAt) ?? getValidIsoDateValue(event.startDate);
+  if (!startDate) return { eligible: false, reason: "missing-start-date" };
+
+  const venueName = event.venueName?.trim();
+  if (!venueName) return { eligible: false, reason: "missing-location" };
+
+  // The locality has to come from the registry rather than the raw cityId, and the registry is
+  // Montenegro-only — so "ME" is verified, not assumed.
+  const city = getCity(event.cityId);
+  if (!city) return { eligible: false, reason: "missing-city" };
+
+  return { city, eligible: true, startDate, venueName };
+}
+
+// schema.org has no "completed" state and Google defines none, so a past event that simply
+// happened stays EventScheduled — it was scheduled and it was neither cancelled nor postponed.
+// Only the two states a provider explicitly asserts override that.
+function getEventSchemaStatus(status: CityEvent["status"]): EventSchemaStatus {
+  if (status === "cancelled") return "https://schema.org/EventCancelled";
+  if (status === "postponed") return "https://schema.org/EventPostponed";
+  return "https://schema.org/EventScheduled";
 }
 
 // A cached event's date fields are not guaranteed to be a valid, parseable date (see
@@ -38,48 +85,39 @@ function getValidIsoDateValue(value: string | undefined) {
 }
 
 function createEventStructuredData(event: CityEvent): EventStructuredData | undefined {
-  const startDate = getValidIsoDateValue(event.startsAt) ?? getValidIsoDateValue(event.startDate);
-  if (!startDate) return undefined;
+  const eligibility = getEventStructuredDataEligibility(event);
+  if (!eligibility.eligible) return undefined;
+
+  const { city, startDate, venueName } = eligibility;
+  // Only a genuine provider-supplied end. No duration is invented for a timed event and no
+  // end-of-day is invented for a date-only one, so this stays absent for most events.
   const endDate = getValidIsoDateValue(event.endsAt);
   const summary = getEventSummary(event.description);
-  const eventCity = getCity(event.cityId);
 
   return {
     "@context": "https://schema.org",
     "@type": "Event",
     ...(summary ? { description: summary } : {}),
     ...(endDate ? { endDate } : {}),
-    ...(event.status === "cancelled"
-      ? { eventStatus: "https://schema.org/EventCancelled" as const }
-      : {}),
-    ...(event.status === "postponed"
-      ? { eventStatus: "https://schema.org/EventPostponed" as const }
-      : {}),
+    eventStatus: getEventSchemaStatus(event.status),
     ...(event.imageUrl ? { image: event.imageUrl } : {}),
-    ...(event.venueName || event.address
-      ? {
-          location: {
-            "@type": "Place" as const,
-            // Only ever enriches an address the source actually provided — a missing street
-            // address still omits PostalAddress entirely rather than manufacturing one from the
-            // city alone. Locality/country are added only for a resolvable registry city, and the
-            // registry is Montenegro-only, so "ME" is verified rather than assumed.
-            ...(event.address
-              ? {
-                  address: {
-                    "@type": "PostalAddress" as const,
-                    ...(eventCity
-                      ? { addressCountry: "ME" as const, addressLocality: eventCity.name }
-                      : {}),
-                    streetAddress: event.address,
-                  },
-                }
-              : {}),
-            ...(event.venueName ? { name: event.venueName } : {}),
-          },
-        }
-      : {}),
+    location: {
+      "@type": "Place",
+      address: {
+        "@type": "PostalAddress",
+        addressCountry: "ME",
+        addressLocality: city.name,
+        // Included only if a collector ever supplies one. No street address is derived from the
+        // venue name, the city, or anything else.
+        ...(event.address ? { streetAddress: event.address } : {}),
+      },
+      // Always the venue the source named — never the event title and never the city.
+      name: venueName,
+    },
     name: event.title,
+    // Emitted only where a provider states an organizer (Tourism Podgorica's "Organizator:").
+    // Gradom.me publishes these listings, it does not host the events, so it is never claimed
+    // here. `performer` and `offers` are absent by the same rule — see the module tests.
     ...(event.organizer
       ? { organizer: { "@type": "Organization" as const, name: event.organizer } }
       : {}),
@@ -137,7 +175,12 @@ function serializeStructuredData(value: EventBreadcrumbStructuredData | EventStr
 export {
   createEventBreadcrumbStructuredData,
   createEventStructuredData,
+  getEventSchemaStatus,
+  getEventStructuredDataEligibility,
   serializeStructuredData,
   type EventBreadcrumbStructuredData,
+  type EventSchemaStatus,
   type EventStructuredData,
+  type EventStructuredDataEligibility,
+  type EventStructuredDataIneligibility,
 };
