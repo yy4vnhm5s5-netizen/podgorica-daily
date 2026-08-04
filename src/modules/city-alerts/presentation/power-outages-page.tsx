@@ -50,20 +50,38 @@ function PowerOutagesPage({ city, locale, result }: PowerOutagesPageProps) {
         </p>
         {summary ? <p className="text-sm text-muted-foreground">{summary}</p> : null}
       </div>
+      {/* The staleness warning applies to an empty result just as much as a populated one: "no
+          announced outages" read from a snapshot we could not refresh is not the same claim as
+          "no announced outages, checked minutes ago", and the reader cannot tell them apart
+          without it. It used to live inside the populated branch only. */}
+      {result.status !== "unavailable" && result.freshnessStatus === "stale" ? (
+        <p
+          className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950"
+          role="status"
+        >
+          {translations.stale}
+        </p>
+      ) : null}
       {result.status === "unavailable" ? (
         <ErrorState description={translations.unavailable} title={translations.title} />
       ) : result.status === "empty" ? (
-        <EmptyState description={translations.empty} title={translations.title} />
-      ) : (
-        <div className="space-y-4">
-          {result.freshnessStatus === "stale" ? (
-            <p
-              className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950"
-              role="status"
-            >
-              {translations.stale}
+        <div className="space-y-2">
+          <EmptyState
+            description={translations.empty}
+            // A distinct heading: repeating the H1 verbatim told the reader nothing.
+            title={translations.emptyTitle}
+          />
+          {/* Absence is only meaningful with a time attached, and this is the collector's own
+              verified last successful read — omitted entirely when we do not have one. */}
+          {result.lastSuccessfulUpdate ? (
+            <p className="text-xs leading-5 text-muted-foreground">
+              {translations.checkedAt}:{" "}
+              <Timestamp locale={localeTag} value={result.lastSuccessfulUpdate} />
             </p>
           ) : null}
+        </div>
+      ) : (
+        <div className="space-y-4">
           <div className="space-y-10">
             {groups.map((group) => (
               <section

@@ -8,7 +8,9 @@ const powerOutagesTranslations = {
     description:
       "Current and upcoming planned power outages in {city}, based on official CEDIS service notices.",
     dateUnavailable: "Date unavailable",
+    checkedAt: "Last checked",
     empty: "There are no planned power outages in {city}.",
+    emptyTitle: "No announced outages",
     officialSource: "View official CEDIS notice",
     publicationTime: "Published",
     scheduledTime: "Date and time",
@@ -27,7 +29,9 @@ const powerOutagesTranslations = {
     description:
       "Aktuelna i najavljena planirana isključenja struje u {city}, na osnovu zvaničnih servisnih informacija CEDIS-a.",
     dateUnavailable: "Datum nije dostupan",
+    checkedAt: "Provjereno",
     empty: "Bez planiranih isključenja struje u {city}.",
+    emptyTitle: "Nema najavljenih isključenja",
     officialSource: "Pogledajte zvanično obavještenje CEDIS-a",
     publicationTime: "Objavljeno",
     scheduledTime: "Datum i vrijeme",
