@@ -31,14 +31,11 @@ test("reads the bare 'Ulcinj' heading CEDIS publishes", async () => {
     new Date("2026-08-06T00:00:00Z"),
   );
 
+  // Two rows in, two alerts out: the bullet introducing the second row is a boundary, so it
+  // neither trails the first row's area nor becomes an outage of its own.
   assert.equal(alerts.length, 2);
-  // Verbatim CEDIS wording. The trailing "•" on the first row is a pre-existing artifact of the
-  // shared row splitter (the next row's bullet lands at the end of the previous chunk) and is not
-  // Ulcinj-specific — Podgorica and Kotor carry it identically on the same live article. It is
-  // asserted here rather than papered over, so a future cross-city fix updates this expectation
-  // deliberately.
   assert.deepEqual(areasOf(alerts), [
-    "dio Đerana iza Doma zdravlja, Ulica 28. decembra i okolina. •",
+    "dio Đerana iza Doma zdravlja, Ulica 28. decembra i okolina.",
     "dio zaseoka Krute Duraku.",
   ]);
 });

@@ -37,6 +37,15 @@ const municipalityPattern = new RegExp(
   `(?:^|\\n)\\s*(?:${municipalityNames.map(escapeRegularExpression).join("|")})\\s*(?:[-–—:]\\s*|(?=\\n|$))`,
   "gi",
 );
+// Markers CEDIS puts in front of an outage row: a dash on some days, a bullet on others. They
+// belong to the row that FOLLOWS them, so the splitter has to break before the marker, not after
+// it. While "•" was missing here the split fell between a bullet and its own "u terminu", which
+// stranded the next row's bullet on the end of the previous row's affected area ("… i okolina. •")
+// and left the section's first bullet as a chunk of its own that became a bogus extra outage.
+// The marker is consumed as a boundary, never stripped from content: a bullet that does not
+// introduce a time range stays exactly where the source put it. Both classes must stay in step.
+const rowStartPattern = /(?=\s*[-–—•]?\s*(?:(?:u terminu\s+)?od\s+\d{1,2}))/i;
+const leadingRowSeparatorPattern = /^[-–—•]\s*/;
 const monthNumbers: Record<string, number> = {
   april: 3,
   aprila: 3,
@@ -222,7 +231,7 @@ function parseCedisArticleResult(
     : extraction.sections.flatMap(({ section, startIndex }) => {
         const date = getDateBeforePosition(text, startIndex, publicationDate);
         const lines = section
-          .split(/(?=\s*-?\s*(?:(?:u terminu\s+)?od\s+\d{1,2}))/i)
+          .split(rowStartPattern)
           .filter((line) => line.trim() && !/^u terminu$/i.test(line.trim()));
         return lines.flatMap((line) => parseOutageLine(line, date, article, cityId, effectiveNow));
       });
@@ -253,7 +262,7 @@ function parseOutageLine(
   cityId: CedisSupportedCityId,
   now: Date,
 ): CityAlert[] {
-  const normalized = normalizeWhitespace(line).replace(/^[-–—]\s*/, "");
+  const normalized = normalizeWhitespace(line).replace(leadingRowSeparatorPattern, "");
   const range = parseTimeRange(normalized);
   const area = extractAffectedArea(normalized, range);
 
