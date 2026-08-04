@@ -8,8 +8,8 @@ import { InCardEmptyNote } from "@/shared/components/in-card-empty-note";
 import { NewTabNotice } from "@/shared/components/new-tab-notice";
 import {
   getSeaWaterQualityAdvertisingDescription,
+  seaWaterQualityAdvertisingAriaLabel,
   seaWaterQualityAdvertisingCta,
-  seaWaterQualityAdvertisingLabel,
   seaWaterQualityAdvertisingTitle,
 } from "./sea-water-quality-advertising.ts";
 import { AdvertisingCard } from "@/shared/components/dashboard/advertising-card";
@@ -113,9 +113,10 @@ function SeaWaterQualityPage({ city, locale, locationSlugs, result }: SeaWaterQu
 
           {/* After the city overview, before the beach table — never between individual rows. */}
           <AdvertisingCard
+            align="center"
+            ariaLabel={seaWaterQualityAdvertisingAriaLabel}
             description={getSeaWaterQualityAdvertisingDescription(city, "listing")}
             href={getContactPath()}
-            label={seaWaterQualityAdvertisingLabel}
             subtitle={seaWaterQualityAdvertisingCta}
             title={seaWaterQualityAdvertisingTitle}
           />

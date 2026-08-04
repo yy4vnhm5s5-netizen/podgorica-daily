@@ -4,21 +4,37 @@ import { Card } from "@/shared/components/ui/card";
 import { cn } from "@/shared/lib/utils";
 
 interface AdvertisingCardProps {
+  /**
+   * "start" keeps the original single-row banner (icon, title and call to action on one line) and
+   * remains the default so the city dashboard placement is unchanged. "center" stacks the same
+   * elements — icon above title above description above call to action — for placements that sit
+   * in a narrow reading column.
+   */
+  align?: "center" | "start";
+  /**
+   * Accessible name for the region. Defaults to the title; supply an explicit one where the title
+   * alone does not say the block is promotional.
+   */
+  ariaLabel?: string;
   /** Optional second line for placements whose title alone does not carry the context. */
   description?: string;
   href: string;
-  /**
-   * Promotional disclosure shown above the title (e.g. "Oglas"). Supply it wherever the copy is
-   * not self-evidently an advert — a contextual pitch can otherwise read like page content.
-   */
-  label?: string;
   subtitle: string;
   title: string;
 }
 
-function AdvertisingCard({ description, href, label, subtitle, title }: AdvertisingCardProps) {
+function AdvertisingCard({
+  align = "start",
+  ariaLabel,
+  description,
+  href,
+  subtitle,
+  title,
+}: AdvertisingCardProps) {
+  const isCentered = align === "center";
+
   return (
-    <aside aria-label={title} className="mx-auto w-full max-w-[520px] py-1 sm:py-2">
+    <aside aria-label={ariaLabel ?? title} className="mx-auto w-full max-w-[520px] py-1 sm:py-2">
       <a
         className="block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
         href={href}
@@ -27,23 +43,22 @@ function AdvertisingCard({ description, href, label, subtitle, title }: Advertis
           <div
             className={cn(
               "flex min-h-14 gap-3 px-4 py-2.5 sm:min-h-[4.25rem] sm:px-5",
-              description ? "items-start" : "items-center",
+              isCentered
+                ? "flex-col items-center text-center"
+                : description
+                  ? "items-start"
+                  : "items-center",
             )}
           >
             <div
               className={cn(
                 "flex size-8 shrink-0 items-center justify-center rounded-lg bg-indigo-100/70 text-indigo-700",
-                description ? "mt-0.5" : undefined,
+                !isCentered && description ? "mt-0.5" : undefined,
               )}
             >
               <Megaphone aria-hidden="true" className="size-4" strokeWidth={1.8} />
             </div>
-            <div className="min-w-0 flex-1">
-              {label ? (
-                <span className="block text-[11px] font-semibold uppercase tracking-wide text-indigo-700">
-                  {label}
-                </span>
-              ) : null}
+            <div className={cn("min-w-0", isCentered ? undefined : "flex-1")}>
               <p className="text-sm font-medium tracking-tight text-foreground">{title}</p>
               {description ? (
                 <p className="mt-0.5 text-xs leading-5 text-muted-foreground">{description}</p>

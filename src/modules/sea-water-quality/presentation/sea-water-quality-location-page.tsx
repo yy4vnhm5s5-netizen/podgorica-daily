@@ -16,8 +16,8 @@ import {
 } from "./sea-water-quality-location-ui-model.ts";
 import {
   getSeaWaterQualityAdvertisingDescription,
+  seaWaterQualityAdvertisingAriaLabel,
   seaWaterQualityAdvertisingCta,
-  seaWaterQualityAdvertisingLabel,
   seaWaterQualityAdvertisingTitle,
 } from "./sea-water-quality-advertising.ts";
 import { AdvertisingCard } from "@/shared/components/dashboard/advertising-card";
@@ -200,9 +200,10 @@ function SeaWaterQualityLocationPage({
       {/* Placed after the latest result and the measurement summary, so the reader has the water
           quality facts before any promotional content. One banner per page. */}
       <AdvertisingCard
+        align="center"
+        ariaLabel={seaWaterQualityAdvertisingAriaLabel}
         description={getSeaWaterQualityAdvertisingDescription(city, "detail")}
         href={getContactPath()}
-        label={seaWaterQualityAdvertisingLabel}
         subtitle={seaWaterQualityAdvertisingCta}
         title={seaWaterQualityAdvertisingTitle}
       />

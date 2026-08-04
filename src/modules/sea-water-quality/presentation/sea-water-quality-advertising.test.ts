@@ -4,8 +4,8 @@ import test from "node:test";
 
 import {
   getSeaWaterQualityAdvertisingDescription,
+  seaWaterQualityAdvertisingAriaLabel,
   seaWaterQualityAdvertisingCta,
-  seaWaterQualityAdvertisingLabel,
   seaWaterQualityAdvertisingTitle,
 } from "./sea-water-quality-advertising.ts";
 import { getActiveCities, getCity } from "@/shared/config/cities";
@@ -56,7 +56,7 @@ test("makes no claim about water quality, JPMD or the reader", () => {
   }
 });
 
-test("both beach surfaces render exactly one clearly-labelled banner", async () => {
+test("both beach surfaces render exactly one centred banner and no visible label chip", async () => {
   for (const [name, url] of [
     ["detail", detail],
     ["listing", listing],
@@ -64,15 +64,63 @@ test("both beach surfaces render exactly one clearly-labelled banner", async () 
     const source = await readFile(url, "utf8");
 
     assert.equal(source.match(/<AdvertisingCard/gu)?.length, 1, name);
-    assert.match(source, /label=\{seaWaterQualityAdvertisingLabel\}/u, name);
+    assert.match(source, /align="center"/u, name);
+    assert.match(source, /ariaLabel=\{seaWaterQualityAdvertisingAriaLabel\}/u, name);
     assert.match(source, /title=\{seaWaterQualityAdvertisingTitle\}/u, name);
     assert.match(source, /subtitle=\{seaWaterQualityAdvertisingCta\}/u, name);
     // The approved existing destination, not a new route and not a mailto.
     assert.match(source, /href=\{getContactPath\(\)\}/u, name);
     assert.doesNotMatch(source, /mailto:/u, name);
+    // The "Oglas" chip is gone; nothing replaced it visually.
+    assert.doesNotMatch(source, /Oglas"|label=\{/u, name);
   }
-  assert.equal(seaWaterQualityAdvertisingLabel, "Oglas");
+  assert.equal(seaWaterQualityAdvertisingTitle, "Vaša reklama može biti ovdje");
   assert.equal(seaWaterQualityAdvertisingCta, "Kontaktirajte nas →");
+});
+
+test("states the promotional nature in the region's accessible name instead of a chip", async () => {
+  const card = await readFile(
+    new URL("../../../shared/components/dashboard/advertising-card.tsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.equal(
+    seaWaterQualityAdvertisingAriaLabel,
+    "Promotivni oglas: Vaša reklama može biti ovdje",
+  );
+  assert.match(card, /<aside aria-label=\{ariaLabel \?\? title\}/u);
+  // No visible label chip remains in the component, and no text is hidden from assistive tech.
+  assert.doesNotMatch(card, /uppercase tracking-wide text-indigo-700/u);
+  assert.doesNotMatch(card, /aria-hidden="true">\{title\}|sr-only/u);
+});
+
+test("centres the icon, title, description and call to action", async () => {
+  const card = await readFile(
+    new URL("../../../shared/components/dashboard/advertising-card.tsx", import.meta.url),
+    "utf8",
+  );
+
+  // One column, centred cross-axis, centred text — icon above title above description above CTA.
+  assert.match(card, /isCentered\n?\s*\? "flex-col items-center text-center"/u);
+  assert.match(card, /const isCentered = align === "center";/u);
+  // The card chrome is untouched: same dashed border and colours.
+  assert.match(card, /border border-dashed border-indigo-200\/80 bg-indigo-50\/40/u);
+});
+
+test("the city dashboard placement stays left-aligned and unchanged", async () => {
+  const dashboard = await readFile(
+    new URL("../../../app/city-dashboard.tsx", import.meta.url),
+    "utf8",
+  );
+  const card = await readFile(
+    new URL("../../../shared/components/dashboard/advertising-card.tsx", import.meta.url),
+    "utf8",
+  );
+
+  // It passes no align prop, and the default keeps the original single-row layout.
+  assert.doesNotMatch(dashboard, /align="center"/u);
+  assert.match(dashboard, /<AdvertisingCard\n\s+href=\{getContactPath\(\)\}/u);
+  assert.match(card, /align = "start"/u);
 });
 
 test("the detail banner sits after the summary and before the history", async () => {
