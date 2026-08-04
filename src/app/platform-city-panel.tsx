@@ -8,14 +8,18 @@ import {
   Music2,
   Plane,
   Ship,
-  Umbrella,
   Waves,
   Zap,
 } from "lucide-react";
 import Link from "next/link";
 import type { ComponentType, SVGProps } from "react";
 
-import { CitadelIcon, MarinaSailIcon, MillenniumBridgeIcon } from "@/app/platform-city-icons";
+import {
+  CitadelIcon,
+  MarinaSailIcon,
+  MillenniumBridgeIcon,
+  SunWavesIcon,
+} from "@/app/platform-city-icons";
 import type {
   CityHighlight,
   CityHighlightVisual,
@@ -69,10 +73,10 @@ const cityIdentityIcons: Record<string, ComponentType<SVGProps<SVGSVGElement>>> 
   kotor: Castle,
   podgorica: MillenniumBridgeIcon,
   tivat: MarinaSailIcon,
-  // Lucide has no literal beach glyph; Umbrella is its parasol form (wide canopy on a planted
-  // pole) and is the closest explicit beach mark. Waves is deliberately not reused here — it is
-  // already the sea-water-quality capability icon in this same file.
-  ulcinj: Umbrella,
+  // Lucide has no beach or shoreline glyph, so Ulcinj uses a custom sun-over-water mark like the
+  // custom marks Podgorica, Budva and Tivat use. Lucide's own Waves is deliberately not reused —
+  // it is already the sea-water-quality capability icon in this same file.
+  ulcinj: SunWavesIcon,
 };
 
 // Restrained per-city identity accents (see globals.css) — a subtle surface tint, not a theme.

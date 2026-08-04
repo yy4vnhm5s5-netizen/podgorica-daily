@@ -62,4 +62,27 @@ function MarinaSailIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
-export { CitadelIcon, MarinaSailIcon, MillenniumBridgeIcon };
+// Ulcinj's coastal identity: a sun above two wave lines, nothing else. Lucide ships no beach or
+// shoreline glyph, so this takes the same custom-mark route as the bridge/citadel/sail marks —
+// and like them it stays at two shapes, which is all that survives at the 20-24px size it renders
+// at. No sand, no parasol, no scene.
+function SunWavesIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      aria-hidden="true"
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={1.8}
+      viewBox="0 0 24 24"
+      {...props}
+    >
+      <circle cx="12" cy="7" r="3.5" />
+      <path d="M3 15c2 1.6 4 1.6 6 0s4-1.6 6 0 4 1.6 6 0" />
+      <path d="M3 19c2 1.6 4 1.6 6 0s4-1.6 6 0 4 1.6 6 0" />
+    </svg>
+  );
+}
+
+export { CitadelIcon, MarinaSailIcon, MillenniumBridgeIcon, SunWavesIcon };

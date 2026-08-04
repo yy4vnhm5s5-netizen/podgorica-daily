@@ -15,7 +15,10 @@ test("replaces the unreadable Buća Palace mark with a minimal marina/sail ident
 
   assert.doesNotMatch(text, /BucaPalaceIcon/u);
   assert.match(text, /function MarinaSailIcon/u);
-  assert.match(text, /export \{ CitadelIcon, MarinaSailIcon, MillenniumBridgeIcon \}/u);
+  assert.match(
+    text,
+    /export \{ CitadelIcon, MarinaSailIcon, MillenniumBridgeIcon, SunWavesIcon \}/u,
+  );
 });
 
 test("keeps the new Tivat mark on the same SVG conventions as the Podgorica and Budva marks", async () => {
@@ -51,7 +54,10 @@ test("is a minimal sail/mast/waterline mark with no airplane, text, or embedded 
 test("registers Tivat's identity icon, style, and card tint on the renamed MarinaSailIcon", async () => {
   const text = await panelSource();
 
-  assert.match(text, /import \{ CitadelIcon, MarinaSailIcon, MillenniumBridgeIcon \}/u);
+  // `[^}]*` cannot cross a closing brace, so this anchors to the custom-icon import specifically.
+  const iconImport = text.match(/import \{[^}]*\} from "@\/app\/platform-city-icons";/u);
+  assert.ok(iconImport);
+  assert.match(iconImport[0], /\bMarinaSailIcon\b/u);
   assert.ok(text.includes("tivat: MarinaSailIcon,"));
   assert.ok(
     text.includes('tivat: "bg-[hsl(var(--accent-tivat-soft))] text-[hsl(var(--accent-tivat))]",'),
@@ -80,16 +86,20 @@ test("maps Bar to Lucide's Ship icon instead of the generic landmark fallback", 
   assert.ok(text.includes("tivat: MarinaSailIcon,"));
 });
 
-test("maps Ulcinj to the Umbrella beach glyph through the same cityIdentityIcons map", async () => {
+test("maps Ulcinj to the custom SunWavesIcon through the same cityIdentityIcons map", async () => {
   const text = await panelSource();
   const map = text.match(/const cityIdentityIcons[\s\S]*?\n\};\n/u);
   assert.ok(map);
 
   // Same mechanism as every other city: one entry in cityIdentityIcons, no Ulcinj branch, no
   // Ulcinj-specific style override, container/size/stroke untouched.
-  assert.ok(map[0].includes("ulcinj: Umbrella,"));
-  assert.match(text, /^\s+Umbrella,$/mu);
+  assert.ok(map[0].includes("ulcinj: SunWavesIcon,"));
+  const iconImport = text.match(/import \{[^}]*\} from "@\/app\/platform-city-icons";/u);
+  assert.ok(iconImport);
+  assert.match(iconImport[0], /\bSunWavesIcon\b/u);
   assert.doesNotMatch(text, /ulcinj:\s*Landmark/u);
+  // The rejected umbrella/parasol attempts are gone entirely — not imported, not mapped.
+  assert.doesNotMatch(text, /Umbrella|Parasol/u);
   // Exactly one mention in the whole component: the map entry. Anything more would mean an
   // Ulcinj-specific branch, style override or rendering path.
   assert.equal([...text.matchAll(/ulcinj/gu)].length, 1);
@@ -100,4 +110,28 @@ test("maps Ulcinj to the Umbrella beach glyph through the same cityIdentityIcons
   assert.ok(map[0].includes("kotor: Castle,"));
   assert.ok(map[0].includes("podgorica: MillenniumBridgeIcon,"));
   assert.ok(map[0].includes("tivat: MarinaSailIcon,"));
+});
+
+test("draws the Ulcinj mark on the same SVG conventions as the other custom city marks", async () => {
+  const text = await source();
+  const match = text.match(/function SunWavesIcon[\s\S]*?\n\}\n/u);
+  assert.ok(match);
+  const icon = match[0];
+
+  assert.match(icon, /aria-hidden="true"/u);
+  assert.match(icon, /fill="none"/u);
+  assert.match(icon, /stroke="currentColor"/u);
+  assert.match(icon, /strokeLinecap="round"/u);
+  assert.match(icon, /strokeLinejoin="round"/u);
+  assert.match(icon, /strokeWidth=\{1\.8\}/u);
+  assert.match(icon, /viewBox="0 0 24 24"/u);
+  assert.match(icon, /\{\.\.\.props\}/u);
+  // No embedded color, gradient, raster asset or text.
+  assert.doesNotMatch(icon, /#[0-9a-fA-F]{3,6}\b/u);
+  assert.doesNotMatch(icon, /<image|<text|Gradient|fill="(?!none)/u);
+
+  // Sun plus two wave lines — nothing else, and the rejected parasol geometry is gone.
+  assert.equal([...icon.matchAll(/<circle /gu)].length, 1);
+  assert.equal([...icon.matchAll(/<path /gu)].length, 2);
+  assert.doesNotMatch(text, /Umbrella|Parasol|BeachIcon/u);
 });
