@@ -9,6 +9,7 @@ const cineplexxProgrammeTranslations = {
     tomorrow: "Tomorrow",
     title: "At the cinema",
     unavailable: "Data is currently unavailable.",
+    viewAll: "All movies",
   },
   me: {
     cta: "Pogledaj kompletan repertoar",
@@ -18,6 +19,7 @@ const cineplexxProgrammeTranslations = {
     tomorrow: "Sjutra",
     title: "U bioskopu",
     unavailable: "Podaci trenutno nijesu dostupni.",
+    viewAll: "Svi filmovi",
   },
 } as const;
 

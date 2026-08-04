@@ -113,3 +113,38 @@ test("uses only background-region tones for city services, sea water and Going O
   assert.match(source, /<DashboardSection tone="violet">\s*<GoingOutSection/u);
   assert.match(source, /<DashboardSection>\s*<Suspense/u);
 });
+
+// Regression test for the missing internal path /podgorica -> /podgorica/filmovi. The cinema card
+// previously linked only to cineplexx.me, so the sole internal route into /filmovi was the Daily
+// Summary tile, whose anchor text is a bare count.
+test("links the cinema card onward to the city's own /filmovi listing", async () => {
+  const source = await readFile(new URL("./city-dashboard.tsx", import.meta.url), "utf8");
+
+  assert.match(
+    source,
+    /import \{ getCinemaPath, getContactPath \} from "@\/shared\/config\/public-routes";/u,
+  );
+  assert.match(source, /viewAllHref=\{getCinemaPath\(city\)\}/u);
+  // Derived from the city in scope — never a literal path or a city-specific branch.
+  assert.doesNotMatch(source, /"\/podgorica/u);
+  assert.doesNotMatch(source, /viewAllHref="/u);
+});
+
+test("keeps the cinema link gated on route availability, not on the events capability", async () => {
+  const source = await readFile(new URL("./city-dashboard.tsx", import.meta.url), "utf8");
+  const cinemaBlock = /\{cinemaAvailable \? \(([\s\S]*?)\) : null\}/u.exec(source)?.[1];
+
+  assert.ok(cinemaBlock, "the cinema block must stay behind cinemaAvailable");
+  // The onward link lives inside that block, so a city without a cinema route never emits it.
+  assert.match(cinemaBlock, /viewAllHref=\{getCinemaPath\(city\)\}/u);
+});
+
+test("leaves the other dashboard module sections and their links untouched", async () => {
+  const source = await readFile(new URL("./city-dashboard.tsx", import.meta.url), "utf8");
+
+  assert.match(source, /<HomepageEventsCard/u);
+  assert.match(source, /<GoingOutSection/u);
+  assert.match(source, /<AirportFlightsCard/u);
+  assert.match(source, /<SeaWaterQualityCard/u);
+  assert.match(source, /<AdvertisingCard\n\s+href=\{getContactPath\(\)\}/u);
+});

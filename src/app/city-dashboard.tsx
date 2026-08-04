@@ -34,7 +34,7 @@ import {
 import { LastCityTracker } from "@/app/platform-last-city";
 import { isFeatureEnabled } from "@/shared/config/features";
 import { getActiveCities } from "@/shared/config/cities";
-import { getContactPath } from "@/shared/config/public-routes";
+import { getCinemaPath, getContactPath } from "@/shared/config/public-routes";
 import type { CityContext } from "@/shared/types/city";
 import { getTranslations } from "@/shared/lib/translations";
 
@@ -154,6 +154,7 @@ async function CityDashboard({ context }: CityDashboardProps) {
                       events.providers.find((provider) => provider.id === "cineplexx-podgorica")
                         ?.state
                     }
+                    viewAllHref={getCinemaPath(city)}
                   />
                 </div>
               ) : null}
