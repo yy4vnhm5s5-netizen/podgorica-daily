@@ -112,3 +112,34 @@ test("the listing page keeps the external Cineplexx programme link", async () =>
     /\{!viewAllHref && \(displayState === "programme" \|\| displayState === "stale"\)/u,
   );
 });
+
+// The <title> already carried the city; the visible H1 was the bare word "Filmovi" while every
+// sibling module page ("Događaji u Podgorici", "Plaže u Baru…") named its city.
+test("gives the cinema H1 the same registry-derived locative as the title", async () => {
+  const source = await readFile(new URL("./page.tsx", import.meta.url), "utf8");
+  const podgorica = getCity("podgorica");
+  assert.ok(podgorica);
+
+  assert.match(source, /const cityName = getCityName\(context\.city, "locative"\);/u);
+  assert.match(source, /title=\{`Filmovi u \$\{cityName\}`\}/u);
+  assert.doesNotMatch(source, /title="Filmovi"/u);
+  assert.equal(`Filmovi u ${getCityName(podgorica, "locative")}`, "Filmovi u Podgorici");
+});
+
+test("the H1 change leaves title, description and canonical exactly as they were", async () => {
+  const source = await readFile(new URL("./page.tsx", import.meta.url), "utf8");
+  const podgorica = getCity("podgorica");
+  assert.ok(podgorica);
+
+  assert.equal(
+    getPageTitle(`Filmovi u ${getCityName(podgorica, "locative")}`),
+    "Filmovi u Podgorici | Gradom.me",
+  );
+  assert.match(
+    source,
+    /const description = `Aktuelni program Cineplexx bioskopa u \$\{cityName\}\.`;/u,
+  );
+  assert.match(source, /canonical: getCinemaPath\(context\.city\),/u);
+  // Internal linking and provider wiring are untouched by this pass.
+  assert.match(source, /<CineplexxProgrammeCard events=\{screenings\} locale=\{locale\}/u);
+});

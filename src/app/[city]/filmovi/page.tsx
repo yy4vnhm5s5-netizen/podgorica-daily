@@ -46,6 +46,9 @@ async function CinemaPage({ params }: CinemaPageProps) {
   const context = resolveActiveCityFeatureRoute(slug, "events");
   if (!context || !isCityCinemaRouteAvailable(context.city)) notFound();
 
+  // The visible heading now carries the same city context the <title> already had — every sibling
+  // module page ("Događaji u Podgorici", "Plaže u Baru…") does, and cinema was the odd one out.
+  const cityName = getCityName(context.city, "locative");
   const result = await getCityEvents(context);
   const cinemaEvents = result.events.filter((event) => event.sourceId === "cineplexx-podgorica");
   // Every screening with an upcoming startsAt, across every day (not the ≤3-item,
@@ -64,7 +67,7 @@ async function CinemaPage({ params }: CinemaPageProps) {
           icon={Clapperboard}
           iconClassName="bg-gradient-to-br from-blue-400 to-blue-600 text-white shadow-blue-900/20"
           id="cinema-heading"
-          title="Filmovi"
+          title={`Filmovi u ${cityName}`}
         />
         <CineplexxProgrammeCard events={screenings} locale={locale} state={providerState} />
       </section>

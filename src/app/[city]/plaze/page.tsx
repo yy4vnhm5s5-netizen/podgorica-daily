@@ -10,6 +10,7 @@ import { getBudvaSeaWaterQuality } from "@/modules/sea-water-quality/application
 import { getSeaWaterQualityLocationSlugs } from "@/modules/sea-water-quality/application/get-sea-water-quality-history";
 import { SeaWaterQualityPage } from "@/modules/sea-water-quality/presentation/sea-water-quality-page";
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
+import { getCityName } from "@/shared/config/cities";
 import { getSeaWaterQualityPath } from "@/shared/config/public-routes";
 import { getPageTitle } from "@/shared/config/site";
 import { getTranslations } from "@/shared/lib/translations";
@@ -24,7 +25,10 @@ async function generateMetadata({ params }: PlazePageProps): Promise<Metadata> {
   const { city: slug } = await params;
   const context = resolveActiveCityFeatureRoute(slug, "seaWaterQuality");
   if (!context || !isCityPublicFeatureRouteAvailable(context.city, "seaWaterQuality")) return {};
-  const title = `Plaže ${context.city.name} i kvalitet mora`;
+  // "Plaže <grad>" put the city in the nominative with no preposition, so production rendered
+  // "Plaže Bar i kvalitet mora" while the H1 directly below already read "Plaže u Baru…".
+  // Same construction as the H1 now, from the same registry accessor.
+  const title = `Plaže u ${getCityName(context.city, "locative")} i kvalitet mora`;
   const description = `Zvanično praćenje sanitarnog kvaliteta mora na javnim plažama u ${context.city.locativeName ?? context.city.name} — aktuelne ocjene kvaliteta i datumi uzorkovanja za svako kupalište.`;
 
   return createPublicRouteMetadata({
