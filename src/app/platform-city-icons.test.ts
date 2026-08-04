@@ -79,3 +79,25 @@ test("maps Bar to Lucide's Ship icon instead of the generic landmark fallback", 
   assert.ok(text.includes("podgorica: MillenniumBridgeIcon,"));
   assert.ok(text.includes("tivat: MarinaSailIcon,"));
 });
+
+test("maps Ulcinj to the Umbrella beach glyph through the same cityIdentityIcons map", async () => {
+  const text = await panelSource();
+  const map = text.match(/const cityIdentityIcons[\s\S]*?\n\};\n/u);
+  assert.ok(map);
+
+  // Same mechanism as every other city: one entry in cityIdentityIcons, no Ulcinj branch, no
+  // Ulcinj-specific style override, container/size/stroke untouched.
+  assert.ok(map[0].includes("ulcinj: Umbrella,"));
+  assert.match(text, /^\s+Umbrella,$/mu);
+  assert.doesNotMatch(text, /ulcinj:\s*Landmark/u);
+  // Exactly one mention in the whole component: the map entry. Anything more would mean an
+  // Ulcinj-specific branch, style override or rendering path.
+  assert.equal([...text.matchAll(/ulcinj/gu)].length, 1);
+
+  // The other cities keep exactly the icons they already had.
+  assert.ok(map[0].includes("bar: Ship,"));
+  assert.ok(map[0].includes("budva: CitadelIcon,"));
+  assert.ok(map[0].includes("kotor: Castle,"));
+  assert.ok(map[0].includes("podgorica: MillenniumBridgeIcon,"));
+  assert.ok(map[0].includes("tivat: MarinaSailIcon,"));
+});

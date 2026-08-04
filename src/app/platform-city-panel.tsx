@@ -8,6 +8,7 @@ import {
   Music2,
   Plane,
   Ship,
+  Umbrella,
   Waves,
   Zap,
 } from "lucide-react";
@@ -68,6 +69,10 @@ const cityIdentityIcons: Record<string, ComponentType<SVGProps<SVGSVGElement>>> 
   kotor: Castle,
   podgorica: MillenniumBridgeIcon,
   tivat: MarinaSailIcon,
+  // Lucide has no literal beach glyph; Umbrella is its parasol form (wide canopy on a planted
+  // pole) and is the closest explicit beach mark. Waves is deliberately not reused here — it is
+  // already the sea-water-quality capability icon in this same file.
+  ulcinj: Umbrella,
 };
 
 // Restrained per-city identity accents (see globals.css) — a subtle surface tint, not a theme.
