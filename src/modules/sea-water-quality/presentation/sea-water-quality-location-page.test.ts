@@ -114,7 +114,7 @@ test("keeps the summary free of safety, cleanliness or compliance claims", async
     assert.doesNotMatch(source, new RegExp(banned, "iu"), banned);
   }
   // Grade wording is JPMD's own, taken from the shared label map rather than reworded.
-  assert.match(source, /gradeLabels\[summary\.latest\.grade\]/u);
+  assert.match(source, /\{gradeLabels\[grade\]\}/u);
 });
 
 test("the measurement logic lives in the ui model, not in the component", async () => {
@@ -130,4 +130,99 @@ test("the measurement logic lives in the ui model, not in the component", async 
   assert.doesNotMatch(source, /\.sort\(/u);
   assert.doesNotMatch(source, /indexOf/u);
   assert.doesNotMatch(source, /measurementCount \?\?|\.reduce\(/u);
+});
+
+test("renders the grade distribution as non-interactive chips reusing the shared grade styling", async () => {
+  const source = await readFile(
+    new URL("./sea-water-quality-location-page.tsx", import.meta.url),
+    "utf8",
+  );
+  const summaryBlock = /\{summary \? \(([\s\S]*?)\n {6}\) : null\}/u.exec(source)?.[1];
+  assert.ok(summaryBlock);
+
+  // A list of spans — nothing that reads or behaves as a control.
+  assert.match(summaryBlock, /<ul className="flex flex-wrap gap-2">/u);
+  assert.match(summaryBlock, /<span className=\{getGradeBadgeClassName\(grade\)\}>/u);
+  for (const interactive of [/onClick/u, /<button/u, /<a\b/u, /href=/u, /cursor-pointer/u]) {
+    assert.doesNotMatch(summaryBlock, interactive, String(interactive));
+  }
+  // One grade colour mapping in the codebase — the summary must not declare its own.
+  assert.doesNotMatch(summaryBlock, /bg-(green|lime|amber|red)-/u);
+});
+
+test("compacts a uniform history into one chip and shows only grades actually observed", async () => {
+  const source = await readFile(
+    new URL("./sea-water-quality-location-page.tsx", import.meta.url),
+    "utf8",
+  );
+
+  // "5/5 Odlična" for a uniform history, "3× Odlična" otherwise — and the list is driven by
+  // summary.breakdown, which only ever contains observed grades.
+  assert.match(
+    source,
+    /summary\.uniformGrade \? `\$\{count\}\/\$\{summary\.measurementCount\}` : `\$\{count\}×`/u,
+  );
+  assert.match(source, /summary\.breakdown\.map\(\(\{ count, grade \}\)/u);
+  assert.doesNotMatch(source, /gradeOrder\.map/u);
+});
+
+test("gives each trend its own wording plus a directional icon, never colour alone", async () => {
+  const source = await readFile(
+    new URL("./sea-water-quality-location-page.tsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(source, /improved: "Bolja ocjena nego prethodno mjerenje"/u);
+  assert.match(source, /unchanged: "Ista ocjena kao prethodno mjerenje"/u);
+  assert.match(source, /worsened: "Slabija ocjena nego prethodno mjerenje"/u);
+  assert.match(
+    source,
+    /trend === "improved" \? ArrowUp : trend === "worsened" \? ArrowDown : ArrowRight/u,
+  );
+  // The icon is decorative; the sentence carries the meaning.
+  assert.match(source, /<Icon aria-hidden="true"/u);
+  assert.doesNotMatch(source, /text-(green|red)-\d+.*trend|trend.*text-(green|red)-\d+/u);
+});
+
+test("labels the previous measurement and shows its date only when one exists", async () => {
+  const source = await readFile(
+    new URL("./sea-water-quality-location-page.tsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(source, /Prethodno:/u);
+  assert.match(
+    source,
+    /<span className=\{getGradeBadgeClassName\(summary\.comparison\.previous\.grade\)\}>/u,
+  );
+  // No date in the data means no date rendered — never a fabricated or placeholder one.
+  assert.match(
+    source,
+    /\{formatMeasurementDate\(summary\.comparison\.previous, locale\) \? \(/u,
+  );
+  assert.doesNotMatch(source, /Prethodno:[\s\S]{0,200}"—"/u);
+});
+
+test("omits the comparison row entirely for a single-measurement history", async () => {
+  const source = await readFile(
+    new URL("./sea-water-quality-location-page.tsx", import.meta.url),
+    "utf8",
+  );
+
+  // The row is gated on summary.comparison, which the derivation leaves undefined below two
+  // measurements — so one reading renders the count and its chip and nothing more.
+  assert.match(source, /\{summary\.comparison \? \(/u);
+});
+
+test("does not repeat the latest-result card inside the summary", async () => {
+  const source = await readFile(
+    new URL("./sea-water-quality-location-page.tsx", import.meta.url),
+    "utf8",
+  );
+  const summaryBlock = /\{summary \? \(([\s\S]*?)\n {6}\) : null\}/u.exec(source)?.[1];
+  assert.ok(summaryBlock);
+
+  // The summary is about the history; the latest grade already has its own card above it.
+  assert.doesNotMatch(summaryBlock, /summary\.latest/u);
+  assert.doesNotMatch(summaryBlock, /Najnoviji rezultat/u);
 });

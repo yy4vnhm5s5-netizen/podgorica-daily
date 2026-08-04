@@ -1,22 +1,23 @@
-import { Waves } from "lucide-react";
+import { ArrowDown, ArrowRight, ArrowUp, Waves } from "lucide-react";
 import Link from "next/link";
 
 import type {
   SeaWaterQualityHistoryLocation,
   SeaWaterQualityHistoryMeasurement,
 } from "../domain/sea-water-quality.ts";
-import { gradeLabels, gradeStyles } from "./sea-water-quality-grade-styles";
+import { getGradeBadgeClassName, gradeLabels } from "./sea-water-quality-grade-styles";
 import { getSeaWaterQualityLocationBreadcrumbTrail } from "./sea-water-quality-location-structured-data";
 import {
   getDistinctBeachName,
   getSeaWaterQualityLocationSummary,
-  type SeaWaterQualityLocationSummary,
+  type SeaWaterQualityTrend,
 } from "./sea-water-quality-location-ui-model.ts";
 import { ExploreCityLinks } from "@/shared/components/explore-city-links";
 import { NewTabNotice } from "@/shared/components/new-tab-notice";
 import { SectionTitle } from "@/shared/components/section-title";
 import { getLocaleTag, type Locale } from "@/shared/config/locale";
 import { formatDateTime } from "@/shared/lib/date";
+import { formatBcsCount } from "@/shared/lib/pluralize";
 import type { CacheFreshnessStatus } from "@/shared/lib/cache";
 import type { City } from "@/shared/types/city";
 
@@ -113,7 +114,7 @@ function SeaWaterQualityLocationPage({
           </h2>
           <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
             <span
-              className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${gradeStyles[latestMeasurement.grade]}`}
+              className={getGradeBadgeClassName(latestMeasurement.grade)}
             >
               {gradeLabels[latestMeasurement.grade]}
             </span>
@@ -137,14 +138,47 @@ function SeaWaterQualityLocationPage({
       ) : null}
 
       {summary ? (
-        <section aria-labelledby="sazetak-mjerenja-heading" className="space-y-2">
+        <section aria-labelledby="sazetak-mjerenja-heading" className="space-y-3">
           <h2 className="text-base font-semibold tracking-tight" id="sazetak-mjerenja-heading">
             Sažetak mjerenja
           </h2>
-          <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-            {describeMeasurementCounts(summary)}
-            {summary.comparison ? ` ${describeComparison(summary, locale)}` : ""}
+          <p className="text-sm leading-6 text-muted-foreground">
+            {formatBcsCount(
+              summary.measurementCount,
+              "dostupno mjerenje",
+              "dostupna mjerenja",
+              "dostupnih mjerenja",
+            )}
           </p>
+          {/* Static chips, not controls: no href, no handler, no hover affordance. The grade word
+              is always written out, so colour is never the only carrier of meaning. */}
+          <ul className="flex flex-wrap gap-2">
+            {summary.breakdown.map(({ count, grade }) => (
+              <li key={grade}>
+                <span className={getGradeBadgeClassName(grade)}>
+                  {summary.uniformGrade ? `${count}/${summary.measurementCount}` : `${count}×`}{" "}
+                  {gradeLabels[grade]}
+                </span>
+              </li>
+            ))}
+          </ul>
+          {summary.comparison ? (
+            <div className="space-y-1">
+              <p className="flex items-center gap-1.5 text-sm font-medium leading-6">
+                <ComparisonArrow trend={summary.comparison.trend} />
+                {comparisonLabels[summary.comparison.trend]}
+              </p>
+              <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+                Prethodno:
+                <span className={getGradeBadgeClassName(summary.comparison.previous.grade)}>
+                  {gradeLabels[summary.comparison.previous.grade]}
+                </span>
+                {formatMeasurementDate(summary.comparison.previous, locale) ? (
+                  <span>· {formatMeasurementDate(summary.comparison.previous, locale)}</span>
+                ) : null}
+              </p>
+            </div>
+          ) : null}
         </section>
       ) : null}
 
@@ -169,7 +203,7 @@ function SeaWaterQualityLocationPage({
                 <tr key={measurement.sourceRound}>
                   <td className="px-4 py-3">
                     <span
-                      className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${gradeStyles[measurement.grade]}`}
+                      className={getGradeBadgeClassName(measurement.grade)}
                     >
                       {gradeLabels[measurement.grade]}
                     </span>
@@ -215,35 +249,17 @@ function SeaWaterQualityLocationPage({
   );
 }
 
-// Both sentences below are assembled from the derived counts only. They state what JPMD measured
-// and nothing about the beach, the water's suitability, or any legal threshold — JPMD's own grade
-// wording is reused verbatim via gradeLabels.
-function describeMeasurementCounts(summary: SeaWaterQualityLocationSummary) {
-  const latestLabel = gradeLabels[summary.latest.grade].toLocaleLowerCase("sr-Latn-ME");
-  if (summary.measurementCount === 1) {
-    return `Dostupno je jedno mjerenje, ocijenjeno kao ${latestLabel}.`;
-  }
-  if (summary.uniformGrade) {
-    return `Svih ${summary.measurementCount} dostupnih mjerenja ocijenjeno je kao ${latestLabel}.`;
-  }
-  const breakdown = summary.breakdown
-    .map(({ count, grade }) => `${count}× ${gradeLabels[grade].toLocaleLowerCase("sr-Latn-ME")}`)
-    .join(", ");
-  return `Od ${summary.measurementCount} dostupnih mjerenja: ${breakdown}.`;
-}
+// Direction is carried by the wording; the arrow only reinforces it, so it is aria-hidden and no
+// colour is used to signal improvement or deterioration.
+const comparisonLabels = {
+  improved: "Bolja ocjena nego prethodno mjerenje",
+  unchanged: "Ista ocjena kao prethodno mjerenje",
+  worsened: "Slabija ocjena nego prethodno mjerenje",
+} as const satisfies Record<SeaWaterQualityTrend, string>;
 
-function describeComparison(summary: SeaWaterQualityLocationSummary, locale: Locale) {
-  const { comparison } = summary;
-  if (!comparison) return "";
-  const previousDate = formatMeasurementDate(comparison.previous, locale);
-  const previousLabel = gradeLabels[comparison.previous.grade].toLocaleLowerCase("sr-Latn-ME");
-  const suffix = previousDate ? ` (${previousDate}: ${previousLabel})` : ` (${previousLabel})`;
-
-  if (comparison.trend === "unchanged") {
-    return `Posljednje mjerenje donijelo je istu ocjenu kao prethodno${suffix}.`;
-  }
-  const direction = comparison.trend === "improved" ? "bolju" : "slabiju";
-  return `Posljednje mjerenje donijelo je ${direction} ocjenu nego prethodno${suffix}.`;
+function ComparisonArrow({ trend }: { trend: SeaWaterQualityTrend }) {
+  const Icon = trend === "improved" ? ArrowUp : trend === "worsened" ? ArrowDown : ArrowRight;
+  return <Icon aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />;
 }
 
 function formatMeasurementDate(measurement: SeaWaterQualityHistoryMeasurement, locale: Locale) {

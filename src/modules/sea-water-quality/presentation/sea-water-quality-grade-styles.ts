@@ -20,4 +20,13 @@ const gradeStyles: Record<SeaWaterQualityGrade, string> = {
   satisfactory: "border-amber-100 bg-amber-50 text-amber-700",
 };
 
-export { gradeLabels, gradeOrder, gradeStyles };
+// The pill shape shared by every grade badge on the sea-water surfaces (latest result, history
+// rows, measurement summary). Only the shape lives here — the colour still comes from gradeStyles,
+// so there remains exactly one grade colour mapping in the codebase.
+const gradeBadgeClassName = "inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold";
+
+function getGradeBadgeClassName(grade: SeaWaterQualityGrade) {
+  return `${gradeBadgeClassName} ${gradeStyles[grade]}`;
+}
+
+export { getGradeBadgeClassName, gradeBadgeClassName, gradeLabels, gradeOrder, gradeStyles };
