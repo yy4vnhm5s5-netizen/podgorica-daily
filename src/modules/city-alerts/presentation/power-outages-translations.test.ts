@@ -41,3 +41,18 @@ test("keeps the empty sentence city-specific and grammatical", () => {
     assert.doesNotMatch(empty, /\{city\}/u);
   }
 });
+
+test("no longer offers a publication-time label for CEDIS outages", () => {
+  const podgorica = getCity("podgorica");
+  assert.ok(podgorica);
+  const me = getPowerOutagesTranslations("me", podgorica);
+  const en = getPowerOutagesTranslations("en", podgorica);
+
+  // CEDIS publishes no publication timestamp, so there is nothing for this label to describe.
+  assert.equal("publicationTime" in me, false);
+  assert.equal("publicationTime" in en, false);
+  // The time concepts that do exist are untouched.
+  assert.equal(me.scheduledTime, "Datum i vrijeme");
+  assert.equal(me.source, "Izvor: CEDIS");
+  assert.equal(me.checkedAt, "Provjereno");
+});

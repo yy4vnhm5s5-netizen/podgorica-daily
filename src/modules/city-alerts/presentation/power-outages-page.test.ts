@@ -71,3 +71,41 @@ test("adds no new links, routes or fabricated source facts", async () => {
   assert.doesNotMatch(source, /cedis\.me/u);
   assert.doesNotMatch(source, /getElectricityPath|href="\//u);
 });
+
+// CEDIS never exposes a publication time. `publishedAt` on a power alert is the scheduled outage
+// day, renamed from `scheduledDay` in cedis-planned-outages.ts, anchored at 12:00 UTC — which is
+// why the card used to read "Objavljeno: 4. 8. 2026. 14:00" for an outage scheduled that day.
+test("no longer labels the scheduled outage day as a publication time", async () => {
+  const source = await readSource();
+
+  assert.doesNotMatch(source, /publicationTime/u);
+  assert.doesNotMatch(source, /value=\{alert\.publishedAt\}/u);
+  assert.doesNotMatch(source, /alert\.publishedAt/u);
+});
+
+test("keeps the scheduled date and time in their intended places", async () => {
+  const source = await readSource();
+
+  // The day heading and the explicit start–end range both remain; the removed row was redundant
+  // with them, so nothing replaced it.
+  assert.match(source, /\{translations\.scheduledTime\}: \{time\}/u);
+  assert.match(source, /formatOptions: \{ dateStyle: "full", timeStyle: undefined \}/u);
+  assert.match(source, /\[alert\.startsAt, alert\.expectedEndAt\]/u);
+  assert.match(source, /\{translations\.source\}/u);
+  assert.match(source, /\{translations\.officialSource\}/u);
+});
+
+test("derives no substitute timestamp from the collector or the clock", async () => {
+  const source = await readSource();
+
+  // Nothing was swapped in for the removed row.
+  assert.doesNotMatch(source, /fetchedAt/u);
+  assert.doesNotMatch(source, /Date\.now\(\)/u);
+  assert.doesNotMatch(source, /new Date\(\)/u);
+  // The one remaining Timestamp is the empty state's verified last successful read.
+  assert.equal(source.match(/<Timestamp/gu)?.length, 1);
+  assert.match(
+    source,
+    /<Timestamp locale=\{localeTag\} value=\{result\.lastSuccessfulUpdate\} \/>/u,
+  );
+});

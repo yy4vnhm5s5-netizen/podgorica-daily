@@ -268,9 +268,6 @@ function toCityServiceInfo(
           translations,
         })
       : undefined,
-    publicationContext: alert.publishedAt
-      ? `${translations.publishedAt}: ${formatDateTime(alert.publishedAt, { locale: localeTag }).label}`
-      : undefined,
     sourceUrl: alert.type === "powerOutage" ? undefined : alert.sourceUrl,
     state: "available",
     statusLabel:

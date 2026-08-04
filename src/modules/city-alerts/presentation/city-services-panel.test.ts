@@ -178,3 +178,37 @@ test("the dedicated /[city]/struja empty state is untouched by this change", asy
     /\{result\.status !== "unavailable" && result\.freshnessStatus === "stale" \? \(/u,
   );
 });
+
+// `publicationContext` used to build "Objavljeno: <publishedAt>" for every alert, but nothing ever
+// rendered it — and for CEDIS that value is the scheduled outage day, not a publication time. It
+// was dead plumbing whose only future was to reintroduce a false label.
+test("carries no publication-context field for anything to render", async () => {
+  const panel = await readFile(new URL("./city-services-panel.tsx", import.meta.url), "utf8");
+  const section = await readFile(new URL("./city-alerts-section.tsx", import.meta.url), "utf8");
+
+  assert.doesNotMatch(panel, /publicationContext/u);
+  assert.doesNotMatch(section, /publicationContext/u);
+  // Nothing replaced it, and the panel reads no alert publication timestamp of its own.
+  assert.doesNotMatch(panel, /publishedAt/u);
+});
+
+test("every field the panel reads is still declared, and the strip is unchanged", async () => {
+  const panel = await readFile(new URL("./city-services-panel.tsx", import.meta.url), "utf8");
+  const declared = /interface CityServiceInfo \{([\s\S]*?)\n\}/u.exec(panel)?.[1];
+  assert.ok(declared);
+
+  for (const field of [
+    "additionalLocationCount",
+    "area",
+    "detailsHref",
+    "detailsLabel",
+    "freshnessLabel",
+    "locations",
+    "sourceUrl",
+    "state",
+    "time",
+  ]) {
+    assert.match(declared, new RegExp(`\\b${field}\\??:`, "u"), field);
+    assert.match(panel, new RegExp(`service\\.${field}\\b`, "u"), field);
+  }
+});

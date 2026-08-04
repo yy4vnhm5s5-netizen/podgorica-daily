@@ -178,12 +178,6 @@ function PowerOutageCard({
           <p className="break-words text-sm text-muted-foreground">{affectedArea}</p>
         )}
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-amber-200/80 pt-4 text-sm text-foreground/70">
-          {alert.publishedAt ? (
-            <span className="font-medium">
-              {translations.publicationTime}:{" "}
-              <Timestamp locale={localeTag} value={alert.publishedAt} />
-            </span>
-          ) : null}
           <span className="font-medium">{translations.source}</span>
           {getPowerOutageOfficialSourceUrl(alert) ? (
             <a

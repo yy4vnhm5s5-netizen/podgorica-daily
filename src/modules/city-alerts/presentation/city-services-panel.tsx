@@ -21,7 +21,6 @@ interface CityServiceInfo {
   description?: string;
   freshnessLabel?: string;
   locations?: readonly string[];
-  publicationContext?: string;
   state: CityServiceState;
   statusLabel?: string;
   sourceUrl?: string;
