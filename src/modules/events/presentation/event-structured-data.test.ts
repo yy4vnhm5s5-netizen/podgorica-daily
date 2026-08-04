@@ -11,7 +11,9 @@ import {
   getEventStructuredDataEligibility,
   serializeStructuredData,
 } from "./event-structured-data.ts";
-import { getCity } from "@/shared/config/cities";
+import { normalizeEventCandidate } from "../domain/event-normalization.ts";
+import { parseGlavniGradEventArticle } from "../infrastructure/glavni-grad-event-parser.ts";
+import { createCityContext, getCity } from "@/shared/config/cities";
 
 test("builds Event structured data from known event fields only", () => {
   const structuredData = createEventStructuredData(
@@ -247,4 +249,70 @@ test("degrades to city-level precision rather than inventing a street", () => {
   assert.equal(partial?.location.address.addressLocality, "Podgorica");
   // The venue name still identifies the place; nothing about the street is asserted.
   assert.equal(partial?.location.name, "Trg nezavisnosti");
+});
+
+// End-to-end regression from real provider HTML through the real parser and normalizer, because
+// the production symptom ("only BreadcrumbList on a Glavni Grad page") is a question about what
+// those providers actually put in venueName — not about the emitter in isolation.
+const podgoricaContext = createCityContext("podgorica");
+
+test("a Glavni Grad event that names a venue emits partial-precision Event JSON-LD", () => {
+  const article =
+    "<h1>Koncert u parku</h1><article>Koncert će biti održan 20.07.2026. u 21 čas u parku " +
+    "Univerzitetskom. Ulaz je slobodan.</article>";
+  const { candidate } = parseGlavniGradEventArticle(
+    article,
+    "https://podgorica.me/koncert-u-parku/",
+  );
+  const event = normalizeEventCandidate(candidate, podgoricaContext).event;
+  assert.ok(event);
+
+  assert.equal(event.venueName, "u parku Univerzitetskom");
+  assert.deepEqual(getEventStructuredDataEligibility(event).eligible, true);
+
+  const structuredData = createEventStructuredData(event);
+  assert.deepEqual(structuredData?.location, {
+    "@type": "Place",
+    address: {
+      "@type": "PostalAddress",
+      addressCountry: "ME",
+      addressLocality: "Podgorica",
+    },
+    name: "u parku Univerzitetskom",
+  });
+  assert.equal("streetAddress" in structuredData!.location.address, false);
+});
+
+test("a Glavni Grad event whose article names no venue emits no Event JSON-LD", () => {
+  // The provider attaches its `glavniGradVenue` institution record in this case, but that is the
+  // city administration, not a place the event happens — and it never reaches the event anyway,
+  // because nothing joins venues[] back onto a CityEvent.
+  const article =
+    "<h1>Obavještenje</h1><article>Manifestacija će biti održana 20.07.2026. u 21 čas.</article>";
+  const { candidate, venue } = parseGlavniGradEventArticle(
+    article,
+    "https://podgorica.me/obavjestenje/",
+  );
+  const event = normalizeEventCandidate(candidate, podgoricaContext).event;
+  assert.ok(event);
+
+  assert.equal(candidate.rawVenue, undefined);
+  assert.equal(event.venueName, undefined);
+  assert.equal(venue?.name, "Glavni grad Podgorica");
+  assert.equal(venue?.address, undefined);
+  assert.deepEqual(getEventStructuredDataEligibility(event), {
+    eligible: false,
+    reason: "missing-location",
+  });
+  assert.equal(createEventStructuredData(event), undefined);
+});
+
+test("the page's visible source badge is the publisher, not a venue claim", async () => {
+  const detail = await readFile(new URL("./event-detail.tsx", import.meta.url), "utf8");
+
+  // "Glavni grad Podgorica" on a detail page is event.sourceName in the attribution badge. The
+  // venue row is separate and renders only when venueName exists, so an absent venue is honestly
+  // absent on the page too — there is nothing visible for Event markup to mirror.
+  assert.match(detail, /<Badge variant="outline">\{event\.sourceName\}<\/Badge>/u);
+  assert.match(detail, /\{event\.venueName \? \(/u);
 });
