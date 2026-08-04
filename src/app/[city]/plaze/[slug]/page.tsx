@@ -6,11 +6,14 @@ import { resolveActiveCityFeatureRoute } from "@/app/city-routing";
 import { createPublicRouteMetadata } from "@/app/public-route-metadata";
 import { getSeaWaterQualityLocationBySlug } from "@/modules/sea-water-quality/application/get-sea-water-quality-history";
 import { SeaWaterQualityLocationPage } from "@/modules/sea-water-quality/presentation/sea-water-quality-location-page";
+import { gradeLabels } from "@/modules/sea-water-quality/presentation/sea-water-quality-grade-styles";
+import { getSeaWaterQualityLocationSummary } from "@/modules/sea-water-quality/presentation/sea-water-quality-location-ui-model";
 import {
   createSeaWaterQualityLocationBreadcrumbStructuredData,
   serializeSeaWaterQualityStructuredData,
 } from "@/modules/sea-water-quality/presentation/sea-water-quality-location-structured-data";
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
+import { getCityName } from "@/shared/config/cities";
 import { getSeaWaterQualityLocationPath } from "@/shared/config/public-routes";
 import { getPageTitle } from "@/shared/config/site";
 import { getTranslations } from "@/shared/lib/translations";
@@ -34,9 +37,21 @@ async function generateMetadata({ params }: SeaWaterQualityLocationRouteProps): 
   if (!location) return {};
 
   const title = `${location.displayName}, ${context.city.name} — kvalitet mora`;
+  // The location is already loaded here (same cache() call the page uses), so appending the
+  // newest verified measurement costs no extra read. Omitted when the point has no measurement,
+  // rather than padded with a generic clause.
+  const summary = getSeaWaterQualityLocationSummary(location);
+  const latestGradeLabel = summary
+    ? gradeLabels[summary.latest.grade].toLocaleLowerCase("sr-Latn-ME")
+    : undefined;
+  const description = [
+    `Zvanični rezultati praćenja kvaliteta mora za kupalište ${location.displayName} u ${getCityName(context.city, "locative")}.`,
+    ...(latestGradeLabel ? [`Posljednja ocjena: ${latestGradeLabel}.`] : []),
+  ].join(" ");
+
   return createPublicRouteMetadata({
     canonical: getSeaWaterQualityLocationPath(context.city, location.canonicalSlug),
-    description: `Zvanični rezultati praćenja kvaliteta mora za kupalište ${location.displayName} u ${context.city.locativeName ?? context.city.name}.`,
+    description,
     title: getPageTitle(title),
   });
 }

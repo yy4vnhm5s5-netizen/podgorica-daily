@@ -3,6 +3,7 @@ import type { MetadataRoute } from "next";
 import { createCityContext, getActiveCities } from "@/shared/config/cities";
 import { getCityEvents } from "@/modules/events/application/get-city-events";
 import { isEventSitemapEligible } from "@/modules/events/domain/event-lifecycle";
+import type { SeaWaterQualityHistoryLocation } from "@/modules/sea-water-quality/domain/sea-water-quality";
 import { getCityEventsForPublicListing } from "@/modules/events/presentation/events-ui-model";
 import { getSeaWaterQualityHistory } from "@/modules/sea-water-quality/application/get-sea-water-quality-history";
 import {
@@ -36,11 +37,11 @@ function createEntry(
   changeFrequency: MetadataRoute.Sitemap[0]["changeFrequency"],
   priority: number,
 ) {
-  // No genuine last-modified timestamp exists for these routes (they are rendered from
-  // live/cached provider data, not a tracked content revision), so lastModified is
-  // intentionally omitted rather than stamped with the sitemap generation time — a fabricated
-  // "just changed" date on every request misleads crawlers into treating stable pages as
-  // freshly modified. changeFrequency conveys the update cadence instead.
+  // The base entry carries no lastModified: hub and listing routes are rendered from live/cached
+  // provider data with no tracked content revision, and stamping them with the sitemap generation
+  // time would be a fabricated "just changed" date on every request. changeFrequency conveys the
+  // update cadence instead. Callers that *do* hold a verified per-URL timestamp — event details
+  // via sourceUpdatedAt, beach details via the newest sampling date — add it on top.
   return {
     changeFrequency,
     priority,
@@ -109,6 +110,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [...cityEntries, ...globalEntries, ...eventEntries.flat(), ...seaWaterQualityEntries];
 }
 
+function getLatestSamplingDate(location: SeaWaterQualityHistoryLocation) {
+  const newest = [...location.measurements]
+    .sort((left, right) => left.sourceRound - right.sourceRound)
+    .reverse()
+    .find(({ samplingDate }) => samplingDate !== undefined)?.samplingDate;
+  if (!newest || !/^\d{4}-\d{2}-\d{2}$/.test(newest)) return undefined;
+  const parsed = new Date(`${newest}T00:00:00.000Z`);
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+}
+
 async function getSeaWaterQualitySitemapEntries(
   cities = getActiveCities(),
   readHistory: typeof getSeaWaterQualityHistory = getSeaWaterQualityHistory,
@@ -120,13 +131,23 @@ async function getSeaWaterQualitySitemapEntries(
         try {
           const result = await readHistory(createCityContext(city.id, "me"));
           if (!result.history) return [];
-          return result.history.locations.map((location) =>
-            createEntry(
-              getSeaWaterQualityLocationPath(city, location.canonicalSlug),
-              "weekly",
-              0.55,
-            ),
-          );
+          return result.history.locations.map((location) => {
+            const lastModified = getLatestSamplingDate(location);
+            return {
+              ...createEntry(
+                getSeaWaterQualityLocationPath(city, location.canonicalSlug),
+                "weekly",
+                0.55,
+              ),
+              // A beach detail page's entire content is its measurement history, so the newest
+              // sampling date IS the date that content last changed — a verified per-location fact,
+              // never build time, request time or a collector run. `samplingDate` is a plain ISO
+              // calendar date, so it is anchored at UTC midnight for a deterministic Date; the
+              // freeform `samplingDateTime` display string is deliberately not parsed. Points with
+              // no dated measurement get no lastModified rather than a fabricated one.
+              ...(lastModified ? { lastModified } : {}),
+            };
+          });
         } catch {
           return [];
         }

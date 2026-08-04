@@ -373,3 +373,78 @@ test("the shared gate refuses a capability whose feature flag is switched off", 
   // effect in the sitemap too, instead of being silently missed.
   assert.equal(isCityPublicFeatureRouteAvailable(podgorica, "events", disabled), true);
 });
+
+test("stamps each beach detail URL with its own newest sampling date", async () => {
+  const budva = getCity("budva");
+  assert.ok(budva);
+  const history = {
+    latestRound: 5,
+    locations: [
+      {
+        canonicalSlug: "jaz-01",
+        displayName: "Jaz 01",
+        firstSeenRound: 1,
+        lastSeenRound: 5,
+        measurements: [
+          { grade: "excellent" as const, samplingDate: "2026-06-08", sourceRound: 1 },
+          { grade: "good" as const, samplingDate: "2026-07-20", sourceRound: 2 },
+        ],
+        presentInLatestRound: true,
+        sourceLocationId: 1,
+      },
+      {
+        canonicalSlug: "jaz-02",
+        displayName: "Jaz 02",
+        firstSeenRound: 1,
+        lastSeenRound: 5,
+        measurements: [
+          { grade: "excellent" as const, samplingDate: "2026-07-23", sourceRound: 2 },
+        ],
+        presentInLatestRound: true,
+        sourceLocationId: 2,
+      },
+      {
+        canonicalSlug: "jaz-03",
+        displayName: "Jaz 03",
+        firstSeenRound: 1,
+        lastSeenRound: 5,
+        // No dated measurement at all.
+        measurements: [{ grade: "excellent" as const, sourceRound: 2 }],
+        presentInLatestRound: true,
+        sourceLocationId: 3,
+      },
+    ],
+    municipality: "budva" as const,
+    sourceMunicipalityId: 2,
+    year: 2026,
+  };
+  const entries = await getSeaWaterQualitySitemapEntries([budva], async () => ({
+    history,
+    lastSuccessfulRefreshAt: undefined,
+    state: "fresh" as const,
+  }));
+  const byUrl = new Map(entries.map((entry) => [entry.url, entry.lastModified]));
+
+  // Newest sampling date wins, and two locations get genuinely different dates.
+  assert.deepEqual(
+    byUrl.get("https://gradom.me/budva/plaze/jaz-01"),
+    new Date("2026-07-20T00:00:00.000Z"),
+  );
+  assert.deepEqual(
+    byUrl.get("https://gradom.me/budva/plaze/jaz-02"),
+    new Date("2026-07-23T00:00:00.000Z"),
+  );
+  // No date in the data means no lastModified — never a fabricated or current-time fallback.
+  assert.equal(byUrl.get("https://gradom.me/budva/plaze/jaz-03"), undefined);
+  assert.equal(byUrl.size, 3);
+});
+
+test("never falls back to generation time for a beach lastModified", async () => {
+  const source = await readFile(new URL("./sitemap.ts", import.meta.url), "utf8");
+
+  assert.match(source, /const lastModified = getLatestSamplingDate\(location\);/u);
+  assert.match(source, /\.\.\.\(lastModified \? \{ lastModified \} : \{\}\)/u);
+  // The only Date constructed for a beach entry is the anchored sampling date.
+  assert.match(source, /new Date\(`\$\{newest\}T00:00:00\.000Z`\)/u);
+  assert.doesNotMatch(source, /lastModified: new Date\(\)/u);
+});

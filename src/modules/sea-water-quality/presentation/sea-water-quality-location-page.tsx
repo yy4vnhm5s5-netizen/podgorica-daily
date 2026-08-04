@@ -1,10 +1,17 @@
 import { Waves } from "lucide-react";
 import Link from "next/link";
 
-import type { SeaWaterQualityHistoryLocation } from "../domain/sea-water-quality.ts";
+import type {
+  SeaWaterQualityHistoryLocation,
+  SeaWaterQualityHistoryMeasurement,
+} from "../domain/sea-water-quality.ts";
 import { gradeLabels, gradeStyles } from "./sea-water-quality-grade-styles";
 import { getSeaWaterQualityLocationBreadcrumbTrail } from "./sea-water-quality-location-structured-data";
-import { getDistinctBeachName } from "./sea-water-quality-location-ui-model.ts";
+import {
+  getDistinctBeachName,
+  getSeaWaterQualityLocationSummary,
+  type SeaWaterQualityLocationSummary,
+} from "./sea-water-quality-location-ui-model.ts";
 import { ExploreCityLinks } from "@/shared/components/explore-city-links";
 import { NewTabNotice } from "@/shared/components/new-tab-notice";
 import { SectionTitle } from "@/shared/components/section-title";
@@ -37,6 +44,7 @@ function SeaWaterQualityLocationPage({
     slug: location.canonicalSlug,
   });
   const beachName = getDistinctBeachName(location);
+  const summary = getSeaWaterQualityLocationSummary(location);
 
   return (
     <section aria-labelledby="plaza-heading" className="space-y-6" id="plaza">
@@ -128,6 +136,18 @@ function SeaWaterQualityLocationPage({
         </section>
       ) : null}
 
+      {summary ? (
+        <section aria-labelledby="sazetak-mjerenja-heading" className="space-y-2">
+          <h2 className="text-base font-semibold tracking-tight" id="sazetak-mjerenja-heading">
+            Sažetak mjerenja
+          </h2>
+          <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
+            {describeMeasurementCounts(summary)}
+            {summary.comparison ? ` ${describeComparison(summary, locale)}` : ""}
+          </p>
+        </section>
+      ) : null}
+
       <section aria-labelledby="istorija-uzorkovanja-heading" className="space-y-3">
         <h2 className="text-base font-semibold tracking-tight" id="istorija-uzorkovanja-heading">
           Istorija uzorkovanja
@@ -193,6 +213,45 @@ function SeaWaterQualityLocationPage({
       <ExploreCityLinks city={city} exclude={["seaWaterQuality"]} />
     </section>
   );
+}
+
+// Both sentences below are assembled from the derived counts only. They state what JPMD measured
+// and nothing about the beach, the water's suitability, or any legal threshold — JPMD's own grade
+// wording is reused verbatim via gradeLabels.
+function describeMeasurementCounts(summary: SeaWaterQualityLocationSummary) {
+  const latestLabel = gradeLabels[summary.latest.grade].toLocaleLowerCase("sr-Latn-ME");
+  if (summary.measurementCount === 1) {
+    return `Dostupno je jedno mjerenje, ocijenjeno kao ${latestLabel}.`;
+  }
+  if (summary.uniformGrade) {
+    return `Svih ${summary.measurementCount} dostupnih mjerenja ocijenjeno je kao ${latestLabel}.`;
+  }
+  const breakdown = summary.breakdown
+    .map(({ count, grade }) => `${count}× ${gradeLabels[grade].toLocaleLowerCase("sr-Latn-ME")}`)
+    .join(", ");
+  return `Od ${summary.measurementCount} dostupnih mjerenja: ${breakdown}.`;
+}
+
+function describeComparison(summary: SeaWaterQualityLocationSummary, locale: Locale) {
+  const { comparison } = summary;
+  if (!comparison) return "";
+  const previousDate = formatMeasurementDate(comparison.previous, locale);
+  const previousLabel = gradeLabels[comparison.previous.grade].toLocaleLowerCase("sr-Latn-ME");
+  const suffix = previousDate ? ` (${previousDate}: ${previousLabel})` : ` (${previousLabel})`;
+
+  if (comparison.trend === "unchanged") {
+    return `Posljednje mjerenje donijelo je istu ocjenu kao prethodno${suffix}.`;
+  }
+  const direction = comparison.trend === "improved" ? "bolju" : "slabiju";
+  return `Posljednje mjerenje donijelo je ${direction} ocjenu nego prethodno${suffix}.`;
+}
+
+function formatMeasurementDate(measurement: SeaWaterQualityHistoryMeasurement, locale: Locale) {
+  if (!measurement.samplingDate) return measurement.samplingDateTime;
+  return formatDateTime(new Date(`${measurement.samplingDate}T12:00:00.000Z`), {
+    formatOptions: { dateStyle: "medium" },
+    locale: getLocaleTag(locale),
+  }).label;
 }
 
 export { SeaWaterQualityLocationPage, type SeaWaterQualityLocationPageProps };

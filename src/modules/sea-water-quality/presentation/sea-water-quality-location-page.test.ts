@@ -71,3 +71,63 @@ test("uses the compact linked JPMD source attribution", async () => {
   assert.match(source, /rel="noopener noreferrer"/u);
   assert.match(source, /target="_blank"/u);
 });
+
+test("adds the measurement summary without disturbing the existing page structure", async () => {
+  const source = await readFile(
+    new URL("./sea-water-quality-location-page.tsx", import.meta.url),
+    "utf8",
+  );
+
+  // New block, rendered only when the derivation produced something.
+  assert.match(source, /const summary = getSeaWaterQualityLocationSummary\(location\);/u);
+  assert.match(source, /\{summary \? \(/u);
+  assert.match(source, /Sažetak mjerenja/u);
+  // Everything that was already on the page stays exactly as it was.
+  assert.match(
+    source,
+    /title=\{`\$\{location\.displayName\}, \$\{city\.name\} — kvalitet mora`\}/u,
+  );
+  assert.match(source, /const beachName = getDistinctBeachName\(location\);/u);
+  assert.match(source, /getSeaWaterQualityLocationBreadcrumbTrail\(\{/u);
+  assert.match(source, /Istorija uzorkovanja/u);
+  assert.match(source, /Najnoviji rezultat/u);
+  assert.match(source, /<ExploreCityLinks city=\{city\} exclude=\{\["seaWaterQuality"\]\} \/>/u);
+});
+
+test("keeps the summary free of safety, cleanliness or compliance claims", async () => {
+  const source = await readFile(
+    new URL("./sea-water-quality-location-page.tsx", import.meta.url),
+    "utf8",
+  );
+
+  for (const banned of [
+    "bezbjed",
+    "sigurn",
+    "preporuč",
+    "zagađ",
+    "zdrav",
+    "rizik",
+    "najbolj",
+    "propisan",
+    "kriterijum",
+  ]) {
+    assert.doesNotMatch(source, new RegExp(banned, "iu"), banned);
+  }
+  // Grade wording is JPMD's own, taken from the shared label map rather than reworded.
+  assert.match(source, /gradeLabels\[summary\.latest\.grade\]/u);
+});
+
+test("the measurement logic lives in the ui model, not in the component", async () => {
+  const source = await readFile(
+    new URL("./sea-water-quality-location-page.tsx", import.meta.url),
+    "utf8",
+  );
+
+  // The page formats and sequences; it never counts, sorts or ranks measurements itself. (It does
+  // reference measurement.sourceRound as a React key in the pre-existing history table, which is
+  // not measurement logic.)
+  assert.doesNotMatch(source, /gradeOrder/u);
+  assert.doesNotMatch(source, /\.sort\(/u);
+  assert.doesNotMatch(source, /indexOf/u);
+  assert.doesNotMatch(source, /measurementCount \?\?|\.reduce\(/u);
+});
