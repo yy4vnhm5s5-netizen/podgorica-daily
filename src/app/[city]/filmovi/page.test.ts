@@ -95,3 +95,20 @@ test("canonical URL and the visible H1 are untouched by the grammar fix", async 
   // The H1 is the bare word "Filmovi" — it names no city, so it never had this bug.
   assert.match(source, /title="Filmovi"/u);
 });
+
+test("the listing page keeps the external Cineplexx programme link", async () => {
+  const source = await readFile(new URL("./page.tsx", import.meta.url), "utf8");
+  const card = await readFile(
+    new URL("../../../modules/events/presentation/cineplexx-programme-card.tsx", import.meta.url),
+    "utf8",
+  );
+
+  // This page passes no viewAllHref (it *is* the listing), which is what keeps the external
+  // Cineplexx CTA rendered here after it was removed from the dashboard teaser.
+  assert.doesNotMatch(source, /viewAllHref/u);
+  assert.match(card, /const cineplexxProgrammeUrl = "https:\/\/www\.cineplexx\.me\//u);
+  assert.match(
+    card,
+    /\{!viewAllHref && \(displayState === "programme" \|\| displayState === "stale"\)/u,
+  );
+});

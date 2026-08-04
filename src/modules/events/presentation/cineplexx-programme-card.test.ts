@@ -21,13 +21,36 @@ test("renders the internal listing link as a plain crawlable Link, not a JS hand
 
 test("keeps the internal link outside the display-state branches so it survives an empty day", async () => {
   const source = await readCardSource();
-  // The external CTA is still gated on there being a programme; the internal one is not, so
-  // /[city]/filmovi stays reachable when the provider is empty or unavailable.
+
+  // Unconditional, so /[city]/filmovi stays reachable when the provider is empty or unavailable.
   assert.match(source, /\{viewAllHref \? \(\n\s+<Link/u);
+});
+
+// The dashboard teaser must not sit an off-site exit next to the internal one, so the external
+// Cineplexx CTA is now the listing page's alone.
+test("shows the external Cineplexx CTA only on the surface with no internal listing to link to", async () => {
+  const source = await readCardSource();
+
   assert.match(
     source,
-    /\{displayState === "programme" \|\| displayState === "stale" \? \(\n\s+<a/u,
+    /\{!viewAllHref && \(displayState === "programme" \|\| displayState === "stale"\) \? \(\n\s+<a/u,
   );
+  // Still the same external target, still opened safely — only its condition changed.
+  assert.match(source, /href=\{cineplexxProgrammeUrl\}/u);
+  assert.match(source, /rel="noreferrer"/u);
+  assert.match(source, /target="_blank"/u);
+});
+
+test("the two footer CTAs are mutually exclusive, never both and never neither surface", async () => {
+  const source = await readCardSource();
+  const internal = /\{viewAllHref \? \(/u.test(source);
+  const external = /\{!viewAllHref && \(/u.test(source);
+
+  assert.equal(internal && external, true);
+  // A card given viewAllHref renders the internal CTA and suppresses the external one; a card
+  // without it does the reverse. Both conditions key off the same prop, so they cannot overlap.
+  assert.equal(source.match(/href=\{cineplexxProgrammeUrl\}/gu)?.length, 1);
+  assert.equal(source.match(/href=\{viewAllHref\}/gu)?.length, 1);
 });
 
 test("omits the link entirely when no href is supplied, so /filmovi never self-links", async () => {

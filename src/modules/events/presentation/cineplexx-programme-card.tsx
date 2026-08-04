@@ -28,6 +28,11 @@ interface CineplexxProgrammeCardProps {
    * Internal href for the city's full cinema listing. Passed by the city dashboard so the compact
    * teaser links onward to /[city]/filmovi; omitted by the /filmovi page itself, which would
    * otherwise render a link to the page you are already on.
+   *
+   * Presence of this prop is what distinguishes the two surfaces, so it also decides the footer
+   * CTA: a teaser sends the reader to our own listing, and only the listing itself offers the
+   * external Cineplexx programme. That keeps the dashboard from competing with itself by
+   * dangling an off-site exit next to the internal one.
    */
   viewAllHref?: string;
 }
@@ -76,10 +81,11 @@ function CineplexxProgrammeCard({
         {displayState === "stale" ? (
           <p className="mt-3 text-xs leading-5 text-muted-foreground">{translations.stale}</p>
         ) : null}
-        {/* The internal listing link is rendered unconditionally — same as HomepageEventsCard's
-            "view all" link — so /[city]/filmovi stays reachable and crawlable even on a day with
-            no screenings or an unavailable provider. `flex-wrap` keeps the two links from
-            overflowing side by side on narrow screens. */}
+        {/* Exactly one footer CTA, chosen by surface. The teaser (dashboard) always offers the
+            internal listing — unconditionally, like HomepageEventsCard, so /[city]/filmovi stays
+            reachable and crawlable even on a day with no screenings or an unavailable provider.
+            The listing page itself has nowhere further to send the reader internally, so there
+            and only there the external Cineplexx programme is offered instead. */}
         <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-1">
           {viewAllHref ? (
             <Link
@@ -90,7 +96,7 @@ function CineplexxProgrammeCard({
               <span aria-hidden="true">→</span>
             </Link>
           ) : null}
-          {displayState === "programme" || displayState === "stale" ? (
+          {!viewAllHref && (displayState === "programme" || displayState === "stale") ? (
             <a
               className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-brand-foreground underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               href={cineplexxProgrammeUrl}

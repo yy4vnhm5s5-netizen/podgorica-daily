@@ -148,3 +148,18 @@ test("leaves the other dashboard module sections and their links untouched", asy
   assert.match(source, /<SeaWaterQualityCard/u);
   assert.match(source, /<AdvertisingCard\n\s+href=\{getContactPath\(\)\}/u);
 });
+
+// The dashboard cinema card is a teaser into our own listing, so it must not also dangle an
+// off-site exit. The Cineplexx CTA now belongs to /[city]/filmovi alone.
+test("the dashboard cinema card offers the internal listing and no external Cineplexx CTA", async () => {
+  const source = await readFile(new URL("./city-dashboard.tsx", import.meta.url), "utf8");
+  const card = await readFile(
+    new URL("../modules/events/presentation/cineplexx-programme-card.tsx", import.meta.url),
+    "utf8",
+  );
+
+  // The dashboard passes viewAllHref, which is exactly the condition that suppresses the CTA.
+  assert.match(source, /viewAllHref=\{getCinemaPath\(city\)\}/u);
+  assert.match(card, /\{!viewAllHref && \(displayState === "programme"/u);
+  assert.doesNotMatch(source, /cineplexx\.me/u);
+});
