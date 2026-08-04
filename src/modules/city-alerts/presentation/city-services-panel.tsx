@@ -160,7 +160,7 @@ function CityServicesPanel({ serviceIds, services, translations }: CityServicesP
           role="tabpanel"
         >
           {emptyState ? (
-            <ServiceEmptyState {...emptyState} />
+            <ServiceEmptyState icon={serviceIcons[activeServiceId]} primary={emptyState.primary} />
           ) : stateLabel ? (
             <p className="min-w-0 text-sm font-semibold text-foreground lg:pr-5">{stateLabel}</p>
           ) : (
@@ -214,12 +214,20 @@ function CityServicesPanel({ serviceIds, services, translations }: CityServicesP
   );
 }
 
-function ServiceEmptyState({ primary, secondary }: { primary: string; secondary: string }) {
+// One line, same rhythm as a populated detail cell, so an empty service does not make the strip
+// taller than a populated one. It spans the location and time columns only — the columns a
+// populated state would fill — leaving freshness and the details link in their own slots rather
+// than reserving an empty column for the time we do not have.
+//
+// The longer explanatory sentence in cityServicesEmptyStateCopy is deliberately not rendered
+// here; the compact strip carries the short label, and /[city]/struja keeps the full copy.
+function ServiceEmptyState({ icon, primary }: { icon: LucideIcon; primary: string }) {
   return (
-    <div className="min-w-0 lg:col-span-3 lg:pr-5">
-      <p className="text-sm font-medium text-foreground">{primary}</p>
-      <p className="mt-0.5 text-xs leading-5 text-muted-foreground">{secondary}</p>
-    </div>
+    <ServiceStripDetail
+      className="lg:col-start-1 lg:col-span-2 lg:border-l-0 lg:pr-4"
+      icon={icon}
+      value={primary}
+    />
   );
 }
 

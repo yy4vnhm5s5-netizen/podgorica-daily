@@ -8,15 +8,17 @@ test("renders City Services as a compact desktop status strip while preserving t
   assert.match(source, /flex flex-col lg:flex-row lg:items-stretch/u);
   assert.match(
     source,
-    /lg:grid lg:grid-cols-\[minmax\(7\.5rem,0\.8fr\)_minmax\(11rem,1\.35fr\)_auto_minmax\(9\.5rem,1fr\)_auto\]/u,
+    /lg:grid lg:grid-cols-\[minmax\(7\.5rem,1fr\)_minmax\(11rem,1\.35fr\)_minmax\(9\.5rem,1fr\)_auto\]/u,
   );
   assert.match(source, /lg:min-h-9/u);
   assert.match(source, /lg:px-3 lg:py-2/u);
   assert.match(source, /role="tablist"/u);
   assert.match(source, /role="tabpanel"/u);
-  assert.match(source, /<ServiceEmptyState \{\.\.\.emptyState\} \/>/u);
-  assert.match(source, /lg:col-span-3/u);
-  assert.match(source, /text-xs leading-5 text-muted-foreground/u);
+  assert.match(
+    source,
+    /<ServiceEmptyState icon=\{serviceIcons\[activeServiceId\]\} primary=\{emptyState\.primary\} \/>/u,
+  );
+  assert.match(source, /lg:col-start-1 lg:col-span-2/u);
   assert.match(source, /formatAdditionalAffectedAreas\(service\.additionalLocationCount\)/u);
   assert.match(source, /icon=\{MapPin\}[\s\S]*?iconClassName="text-rose-500"/u);
   assert.match(source, /text-rose-500/u);
@@ -100,4 +102,79 @@ test("renders the badge only when the model reports additional areas", async () 
   // nothing extra — no service-specific branch exists.
   assert.match(source, /service\.additionalLocationCount \? \(/u);
   assert.doesNotMatch(source, /serviceId === "power" \? [\s\S]{0,80}additionalLocationCount/u);
+});
+
+// The dashboard strip is a one-line-per-cell layout. The empty state used to stack a short label
+// over a long explanatory sentence, which made an empty service visibly taller than a populated
+// one — and, after the strip went from five columns to four, its lg:col-span-3 also overlapped
+// the freshness column.
+test("renders the empty service as a single-line strip cell, like a populated one", async () => {
+  const source = await readFile(new URL("./city-services-panel.tsx", import.meta.url), "utf8");
+  const emptyState = /function ServiceEmptyState[\s\S]*?\n\}/u.exec(source)?.[0];
+  assert.ok(emptyState);
+
+  // Reuses the same primitive the populated cells use, so height and alignment match.
+  assert.match(emptyState, /<ServiceStripDetail/u);
+  assert.match(emptyState, /value=\{primary\}/u);
+  // The stacked two-paragraph block is gone.
+  assert.doesNotMatch(emptyState, /<p className="mt-0\.5/u);
+  assert.doesNotMatch(emptyState, /secondary/u);
+});
+
+test("omits the long explanatory sentence from the compact strip", async () => {
+  const source = await readFile(new URL("./city-services-panel.tsx", import.meta.url), "utf8");
+
+  // Only the short label is passed through; the sentence stays on /[city]/struja.
+  assert.match(source, /primary=\{emptyState\.primary\}/u);
+  assert.doesNotMatch(source, /emptyState\.secondary/u);
+  assert.doesNotMatch(source, /\{\.\.\.emptyState\}/u);
+});
+
+test("keeps freshness and details in their own columns beside the empty state", async () => {
+  const source = await readFile(new URL("./city-services-panel.tsx", import.meta.url), "utf8");
+  const template = /lg:grid-cols-\[([^\]]*)\]/u.exec(source)?.[1];
+  assert.ok(template);
+
+  // Four columns: the empty cell covers 1-2 (location + time), leaving 3 and 4 free.
+  assert.equal(template.split("_").length, 4);
+  assert.match(source, /lg:col-start-1 lg:col-span-2/u);
+  assert.match(
+    source,
+    /<ServiceStripDetail className="lg:col-start-3" label=\{service\.freshnessLabel\} \/>/u,
+  );
+  assert.match(source, /lg:col-start-4 lg:justify-self-end/u);
+  // No leftover span that would reach into the freshness column.
+  assert.doesNotMatch(source, /lg:col-span-3/u);
+});
+
+test("uses the service's own icon so the empty state is not text-only", async () => {
+  const source = await readFile(new URL("./city-services-panel.tsx", import.meta.url), "utf8");
+
+  // Same Zap/Droplets mapping the tabs use — no new visual system, and the label is still text.
+  assert.match(source, /icon=\{serviceIcons\[activeServiceId\]\}/u);
+  assert.match(source, /const serviceIcons = \{ power: Zap, water: Droplets \}/u);
+});
+
+test("water reaches the same empty implementation with no electricity-specific branch", async () => {
+  const source = await readFile(new URL("./city-services-panel.tsx", import.meta.url), "utf8");
+
+  assert.match(source, /cityServicesEmptyStateCopy\[activeServiceId\]/u);
+  assert.doesNotMatch(source, /activeServiceId === "power" \?[\s\S]{0,80}emptyState/u);
+});
+
+test("the dedicated /[city]/struja empty state is untouched by this change", async () => {
+  const page = await readFile(
+    new URL("../../../modules/city-alerts/presentation/power-outages-page.tsx", import.meta.url),
+    "utf8",
+  );
+
+  // Its richer copy, its own heading, its checked-at line and its stale warning all remain.
+  assert.match(page, /title=\{translations\.emptyTitle\}/u);
+  assert.match(page, /description=\{translations\.empty\}/u);
+  assert.match(page, /\{translations\.checkedAt\}/u);
+  assert.match(page, /<Timestamp locale=\{localeTag\} value=\{result\.lastSuccessfulUpdate\} \/>/u);
+  assert.match(
+    page,
+    /\{result\.status !== "unavailable" && result\.freshnessStatus === "stale" \? \(/u,
+  );
 });
