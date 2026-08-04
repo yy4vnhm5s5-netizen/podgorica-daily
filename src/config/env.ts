@@ -49,6 +49,8 @@ const environmentSchema = z.object({
   VIKPG_REFRESH_SECRET: z.string().min(32).optional(),
   VODOVOD_KOTOR_CACHE_PATH: z.string().min(1).optional(),
   VODOVOD_KOTOR_CACHE_FRESHNESS_MINUTES: z.coerce.number().int().positive().default(150),
+  VIK_ULCINJ_CACHE_PATH: z.string().min(1).optional(),
+  VIK_ULCINJ_CACHE_FRESHNESS_MINUTES: z.coerce.number().int().positive().default(150),
   SEA_WATER_QUALITY_CACHE_PATH: z.string().min(1).optional(),
   // Individual bathing locations are re-sampled roughly every 3 days during the season, so 3 days
   // (4320 minutes) tracks the real update cadence — long enough that one missed daily refresh
@@ -66,6 +68,7 @@ const environmentSchema = z.object({
   ENABLE_CEDIS: z.enum(["false", "true"]).default("true"),
   ENABLE_VIKPG: z.enum(["false", "true"]).default("true"),
   ENABLE_VODOVOD_KOTOR: z.enum(["false", "true"]).default("false"),
+  ENABLE_VIK_ULCINJ: z.enum(["false", "true"]).default("true"),
   ENABLE_EVENTS: z.enum(["false", "true"]).default("false"),
   ENABLE_FLIGHTS: z.enum(["false", "true"]).default("true"),
   ENABLE_GOING_OUT: z.enum(["false", "true"]).default("true"),
@@ -136,6 +139,8 @@ const parsedEnvironment = environmentSchema.safeParse({
   VIKPG_REFRESH_SECRET: process.env.VIKPG_REFRESH_SECRET,
   VODOVOD_KOTOR_CACHE_PATH: process.env.VODOVOD_KOTOR_CACHE_PATH,
   VODOVOD_KOTOR_CACHE_FRESHNESS_MINUTES: process.env.VODOVOD_KOTOR_CACHE_FRESHNESS_MINUTES,
+  VIK_ULCINJ_CACHE_PATH: process.env.VIK_ULCINJ_CACHE_PATH,
+  VIK_ULCINJ_CACHE_FRESHNESS_MINUTES: process.env.VIK_ULCINJ_CACHE_FRESHNESS_MINUTES,
   SEA_WATER_QUALITY_CACHE_PATH: process.env.SEA_WATER_QUALITY_CACHE_PATH,
   SEA_WATER_QUALITY_CACHE_FRESHNESS_MINUTES: process.env.SEA_WATER_QUALITY_CACHE_FRESHNESS_MINUTES,
   SEA_WATER_QUALITY_REFRESH_SECRET: process.env.SEA_WATER_QUALITY_REFRESH_SECRET,
@@ -148,6 +153,7 @@ const parsedEnvironment = environmentSchema.safeParse({
   ENABLE_CEDIS: process.env.ENABLE_CEDIS,
   ENABLE_VIKPG: process.env.ENABLE_VIKPG,
   ENABLE_VODOVOD_KOTOR: process.env.ENABLE_VODOVOD_KOTOR,
+  ENABLE_VIK_ULCINJ: process.env.ENABLE_VIK_ULCINJ,
   ENABLE_EVENTS: process.env.ENABLE_EVENTS,
   ENABLE_FLIGHTS: process.env.ENABLE_FLIGHTS,
   ENABLE_GOING_OUT: process.env.ENABLE_GOING_OUT,
@@ -214,6 +220,9 @@ const resolvedEnvironment = {
   VODOVOD_KOTOR_CACHE_PATH:
     parsedEnvironment.data.VODOVOD_KOTOR_CACHE_PATH ??
     resolveRuntimeCachePath("vodovod-kotor-water-alerts.json", runtimeDataDirectory),
+  VIK_ULCINJ_CACHE_PATH:
+    parsedEnvironment.data.VIK_ULCINJ_CACHE_PATH ??
+    resolveRuntimeCachePath("vik-ulcinj-water-alerts.json", runtimeDataDirectory),
   SEA_WATER_QUALITY_CACHE_PATH:
     parsedEnvironment.data.SEA_WATER_QUALITY_CACHE_PATH ??
     `${cacheDirectory}/budva-sea-water-quality.json`,
@@ -232,6 +241,7 @@ export const env = {
   ENABLE_CEDIS: resolvedEnvironment.ENABLE_CEDIS === "true",
   ENABLE_VIKPG: resolvedEnvironment.ENABLE_VIKPG === "true",
   ENABLE_VODOVOD_KOTOR: resolvedEnvironment.ENABLE_VODOVOD_KOTOR === "true",
+  ENABLE_VIK_ULCINJ: resolvedEnvironment.ENABLE_VIK_ULCINJ === "true",
   ENABLE_EVENTS: resolvedEnvironment.ENABLE_EVENTS === "true",
   ENABLE_FLIGHTS: resolvedEnvironment.ENABLE_FLIGHTS === "true",
   ENABLE_GOING_OUT: resolvedEnvironment.ENABLE_GOING_OUT === "true",

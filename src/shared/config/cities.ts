@@ -104,10 +104,7 @@ const cityRegistry: Record<string, City> = {
   },
   ulcinj: {
     accusativeName: "Ulcinj",
-    // Water is deliberately absent until the ViK Ulcinj provider lands: the City Services Voda tab
-    // is derived from this capability alone, so declaring it now would render a permanently
-    // unavailable tab (see getCityAlertServiceIds).
-    capabilities: ["goingOut", "seaWaterQuality", "weather"],
+    capabilities: ["goingOut", "seaWaterQuality", "water", "weather"],
     country: "Montenegro",
     description: "Vrijeme, izlasci, plaže i kvalitet mora u Ulcinju.",
     genitiveName: "Ulcinja",

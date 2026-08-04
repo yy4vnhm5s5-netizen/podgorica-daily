@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { getActiveCities, getCity, getCityBySlug, getCityName } from "./cities.ts";
+import { vikUlcinjProviderMetadata } from "@/modules/city-alerts/infrastructure/vik-ulcinj";
 import { isCityPublicFeatureRouteAvailable } from "./city-routes.ts";
 import {
   getCityPath,
@@ -50,11 +51,19 @@ test("declares only the capabilities backed by a verified source", () => {
   assert.deepEqual([...(ulcinj.capabilities ?? [])].sort(), [
     "goingOut",
     "seaWaterQuality",
+    "water",
     "weather",
   ]);
-  // Water is intentionally withheld until the ViK Ulcinj provider exists — the City Services
-  // Voda tab is derived from the capability alone and would otherwise never resolve.
-  assert.equal(ulcinj.capabilities?.includes("water"), false);
+  // Water is declared only because the ViK Ulcinj provider now covers the city; the City Services
+  // Voda tab is derived from this capability alone, so it must never be declared ahead of a
+  // provider that can answer for it.
+  assert.equal(
+    vikUlcinjProviderMetadata.supportedCityIds?.includes("ulcinj"),
+    true,
+    "the water capability requires a provider that declares Ulcinj",
+  );
+  // Still withheld: no CEDIS evidence for Ulcinj yet.
+  assert.equal(ulcinj.capabilities?.includes("electricity"), false);
 });
 
 test("exposes exactly the supported public routes and no others", () => {
@@ -63,9 +72,12 @@ test("exposes exactly the supported public routes and no others", () => {
   for (const capability of ["goingOut", "seaWaterQuality"] as const) {
     assert.equal(isCityPublicFeatureRouteAvailable(ulcinj, capability), true, capability);
   }
-  for (const capability of ["electricity", "events", "flights", "railway", "water"] as const) {
+  for (const capability of ["electricity", "events", "flights", "railway"] as const) {
     assert.equal(isCityPublicFeatureRouteAvailable(ulcinj, capability), false, capability);
   }
+  // Water is deliberately absent from both lists: the platform has no standalone water route, so
+  // the capability adds a City Services tab and no page at all. sitemap.test.ts pins that no
+  // /ulcinj/voda URL is ever emitted.
   assert.equal(getCityPath(ulcinj), "/ulcinj");
   assert.equal(getSeaWaterQualityPath(ulcinj), "/ulcinj/plaze");
   assert.equal(getGoingOutPath(ulcinj), "/ulcinj/izlasci");

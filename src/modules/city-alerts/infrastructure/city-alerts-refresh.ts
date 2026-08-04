@@ -5,6 +5,7 @@ import {
   type CollectorResult as CedisCollectorResult,
 } from "./collect-cedis.ts";
 import { runVikpgCollector } from "./collect-vikpg.ts";
+import { runVikUlcinjCollector } from "./vik-ulcinj.ts";
 import { runVodovodKotorCollector } from "./vodovod-kotor.ts";
 import {
   runCityAlertsRefresh,
@@ -66,6 +67,14 @@ function defaultProviders({
           {
             id: "vodovod-kotor" as const,
             refresh: () => runVodovodKotorCollector(),
+          },
+        ]
+      : []),
+    ...(env.ENABLE_VIK_ULCINJ && getCity("ulcinj")?.isActive
+      ? [
+          {
+            id: "vik-ulcinj" as const,
+            refresh: () => runVikUlcinjCollector(),
           },
         ]
       : []),

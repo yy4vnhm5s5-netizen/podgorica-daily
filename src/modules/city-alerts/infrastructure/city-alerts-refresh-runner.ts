@@ -1,4 +1,4 @@
-type CityAlertsRefreshProviderId = "cedis" | "vikpg" | "vodovod-kotor";
+type CityAlertsRefreshProviderId = "cedis" | "vik-ulcinj" | "vikpg" | "vodovod-kotor";
 type CityAlertsRefreshProviderState = "already-running" | "failed" | "retained" | "success";
 type CityAlertsRefreshCacheStatus = "fresh" | "stale" | "unavailable";
 

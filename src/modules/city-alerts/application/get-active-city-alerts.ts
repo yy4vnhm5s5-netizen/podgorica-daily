@@ -4,7 +4,7 @@ import { getCityAlertServiceIds } from "@/modules/city-alerts/application/city-a
 import type { CityAlert } from "@/modules/city-alerts/domain/city-alert";
 import type { CityContext } from "@/shared/types/city";
 
-type CityAlertsSourceId = "cedis" | "vikpg" | "vodovod-kotor";
+type CityAlertsSourceId = "cedis" | "vik-ulcinj" | "vikpg" | "vodovod-kotor";
 type CityAlertsProviderMode = "disabled" | "live" | "mock";
 
 interface CityAlertsSourceMetadata {

@@ -4,6 +4,7 @@ import type { PodgoricaFlightsCollectorResult } from "@/modules/flights/infrastr
 import type { GoingOutCollectorResult } from "@/modules/going-out/infrastructure/collect-montegigs-going-out";
 import type { BudvaSeaWaterQualityCollectorResult } from "@/modules/sea-water-quality/infrastructure/collect-budva-sea-water-quality";
 import type { ZpcgCollectorResult } from "@/modules/transport/infrastructure/collect-zpcg-railway";
+import type { VikUlcinjCollectorResult } from "@/modules/city-alerts/infrastructure/vik-ulcinj";
 import type { VodovodKotorCollectorResult } from "@/modules/city-alerts/infrastructure/vodovod-kotor";
 import type { WeatherCollectorResult } from "@/modules/weather/infrastructure/collect-weather";
 import type { RefreshEndpointState } from "./refresh-post-handler";
@@ -75,7 +76,7 @@ interface EventRefreshEndpointResult {
 }
 
 function toCityAlertRefreshEndpointResult(
-  provider: "cedis" | "vikpg" | "vodovod-kotor",
+  provider: "cedis" | "vik-ulcinj" | "vikpg" | "vodovod-kotor",
   result: CityAlertCollectorResult,
 ): ProviderRefreshEndpointResult {
   const { summary } = result;
@@ -88,6 +89,12 @@ function toCityAlertRefreshEndpointResult(
     state: summary.status,
     warnings: summary.warnings,
   };
+}
+
+function toVikUlcinjRefreshEndpointResult(
+  result: VikUlcinjCollectorResult,
+): ProviderRefreshEndpointResult {
+  return toCityAlertRefreshEndpointResult("vik-ulcinj", result);
 }
 
 function toVodovodKotorRefreshEndpointResult(
@@ -317,6 +324,7 @@ function toEventRefreshEndpointResult(
 
 export {
   toCityAlertRefreshEndpointResult,
+  toVikUlcinjRefreshEndpointResult,
   toVodovodKotorRefreshEndpointResult,
   toEventRefreshEndpointResult,
   toFlightsRefreshEndpointResult,

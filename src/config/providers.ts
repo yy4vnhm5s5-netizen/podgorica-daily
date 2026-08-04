@@ -9,6 +9,10 @@ import {
   vikpgProviderMetadata,
 } from "@/modules/city-alerts/infrastructure/vikpg-city-alerts-provider";
 import {
+  getVikUlcinjCityAlerts,
+  vikUlcinjProviderMetadata,
+} from "@/modules/city-alerts/infrastructure/vik-ulcinj";
+import {
   getVodovodKotorCityAlerts,
   vodovodKotorProviderMetadata,
 } from "@/modules/city-alerts/infrastructure/vodovod-kotor";
@@ -21,6 +25,7 @@ const providerRegistry: readonly ProviderMetadata[] = [
   { ...cedisProviderMetadata, enabled: env.ENABLE_CEDIS },
   { ...vikpgProviderMetadata, enabled: env.ENABLE_VIKPG },
   { ...vodovodKotorProviderMetadata, enabled: env.ENABLE_VODOVOD_KOTOR },
+  { ...vikUlcinjProviderMetadata, enabled: env.ENABLE_VIK_ULCINJ },
   { ...weatherProviderMetadata, enabled: env.ENABLE_WEATHER },
 ];
 
@@ -45,11 +50,20 @@ async function getCityAlertProviderData(
   ]);
 }
 
+// Dispatch by declared provider coverage, most specific first. VIK Podgorica stays last as the
+// historical default rather than as a claim of nationwide coverage: it checks its own supported
+// city list and reports "unavailable" for a city it does not serve.
 function getWaterCityAlerts(context: CityContext) {
   if (isCitySupportedByProvider(context.city, vodovodKotorProviderMetadata.supportedCityIds)) {
     return getVodovodKotorCityAlerts({
       context,
       mode: env.ENABLE_VODOVOD_KOTOR ? "live" : "disabled",
+    });
+  }
+  if (isCitySupportedByProvider(context.city, vikUlcinjProviderMetadata.supportedCityIds)) {
+    return getVikUlcinjCityAlerts({
+      context,
+      mode: env.ENABLE_VIK_ULCINJ ? "live" : "disabled",
     });
   }
   return getVikpgCityAlerts({

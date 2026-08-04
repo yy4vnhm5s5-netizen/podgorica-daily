@@ -78,3 +78,14 @@ test("wires the legacy CEDIS provider to the active-city collector", async () =>
   assert.equal(calls, 1);
   assert.equal(result.summary.alertCount, 1);
 });
+
+test("includes the ViK Ulcinj collector in the scheduled city-alerts refresh", () => {
+  const providers = defaultProviders({ cedisCollectors: async () => [] });
+
+  // Ulcinj refreshes through the same runner as every other water provider, so one cron trigger
+  // keeps all of them current.
+  assert.equal(
+    providers.some(({ id }) => id === "vik-ulcinj"),
+    true,
+  );
+});
