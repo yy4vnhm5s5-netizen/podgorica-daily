@@ -2,8 +2,10 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
+import { isCityCinemaRouteAvailable } from "@/app/city-routing";
+import { getActiveCities, getCity, getCityName } from "@/shared/config/cities";
 import { getCinemaPath } from "@/shared/config/public-routes";
-import { getCity } from "@/shared/config/cities";
+import { getPageTitle } from "@/shared/config/site";
 
 test("the cinema route is /filmovi, matching getCinemaPath", () => {
   const podgorica = getCity("podgorica");
@@ -34,4 +36,62 @@ test("shows every upcoming Cineplexx screening via selectUpcomingCineplexxScreen
     /<CineplexxProgrammeCard events=\{screenings\} locale=\{locale\} state=\{providerState\} \/>/u,
   );
   assert.doesNotMatch(source, /limit=\{/u);
+});
+
+// Regression test for the production title "Filmovi u Podgorica | Gradom.me". "u" governs the
+// locative in Montenegrin, so the nominative `city.name` was grammatically wrong.
+test("titles the cinema page with the locative city form", () => {
+  const podgorica = getCity("podgorica");
+  assert.ok(podgorica);
+
+  assert.equal(
+    getPageTitle(`Filmovi u ${getCityName(podgorica, "locative")}`),
+    "Filmovi u Podgorici | Gradom.me",
+  );
+});
+
+test("derives the city form from the shared grammar model rather than naming Podgorica", async () => {
+  const source = await readFile(new URL("./page.tsx", import.meta.url), "utf8");
+
+  assert.match(source, /const cityName = getCityName\(context\.city, "locative"\);/u);
+  assert.match(source, /const title = `Filmovi u \$\{cityName\}`;/u);
+  // The nominative must not reappear in any user-facing metadata string on this route.
+  assert.doesNotMatch(source, /u \$\{context\.city\.name\}/u);
+  // No city baked into either metadata string (the word appears only in the explanatory comment).
+  assert.doesNotMatch(source, /`Filmovi u [^$]/u, "no city may be hardcoded in the title");
+  assert.doesNotMatch(source, /bioskopa u [^$]/u, "no city may be hardcoded in the description");
+});
+
+test("gives the meta description the same locative treatment as the title", async () => {
+  const source = await readFile(new URL("./page.tsx", import.meta.url), "utf8");
+  const podgorica = getCity("podgorica");
+  assert.ok(podgorica);
+
+  assert.match(
+    source,
+    /const description = `Aktuelni program Cineplexx bioskopa u \$\{cityName\}\.`;/u,
+  );
+  assert.equal(
+    `Aktuelni program Cineplexx bioskopa u ${getCityName(podgorica, "locative")}.`,
+    "Aktuelni program Cineplexx bioskopa u Podgorici.",
+  );
+});
+
+test("every cinema-capable city gets a grammatical title, not just Podgorica", () => {
+  for (const city of getActiveCities().filter((candidate) =>
+    isCityCinemaRouteAvailable(candidate),
+  )) {
+    const title = `Filmovi u ${getCityName(city, "locative")}`;
+
+    assert.doesNotMatch(title, new RegExp(`u ${city.name}$`, "u"), city.id);
+    assert.equal(title, `Filmovi u ${city.locativeName ?? city.name}`, city.id);
+  }
+});
+
+test("canonical URL and the visible H1 are untouched by the grammar fix", async () => {
+  const source = await readFile(new URL("./page.tsx", import.meta.url), "utf8");
+
+  assert.match(source, /canonical: getCinemaPath\(context\.city\),/u);
+  // The H1 is the bare word "Filmovi" — it names no city, so it never had this bug.
+  assert.match(source, /title="Filmovi"/u);
 });

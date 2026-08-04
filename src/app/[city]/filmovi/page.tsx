@@ -9,6 +9,7 @@ import { CineplexxProgrammeCard } from "@/modules/events/presentation/cineplexx-
 import { selectUpcomingCineplexxScreenings } from "@/modules/events/presentation/cineplexx-programme-ui-model";
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
 import { SectionTitle } from "@/shared/components/section-title";
+import { getCityName } from "@/shared/config/cities";
 import { getCinemaPath } from "@/shared/config/public-routes";
 import { getPageTitle } from "@/shared/config/site";
 import { getTranslations } from "@/shared/lib/translations";
@@ -24,8 +25,12 @@ async function generateMetadata({ params }: CinemaPageProps): Promise<Metadata> 
   const context = resolveActiveCityFeatureRoute(slug, "events");
   if (!context || !isCityCinemaRouteAvailable(context.city)) return {};
 
-  const title = `Filmovi u ${context.city.name}`;
-  const description = `Aktuelni program Cineplexx bioskopa u ${context.city.name}.`;
+  // "u" takes the locative in Montenegrin, so the registry's locative form is required here —
+  // `city.name` is the nominative and produced "Filmovi u Podgorica". Derived from the shared
+  // city grammar model, so any future cinema city gets its own correct form with no change here.
+  const cityName = getCityName(context.city, "locative");
+  const title = `Filmovi u ${cityName}`;
+  const description = `Aktuelni program Cineplexx bioskopa u ${cityName}.`;
   const metadataTitle = getPageTitle(title);
 
   return createPublicRouteMetadata({

@@ -258,8 +258,10 @@ function createCountHighlight({
   return {
     // `value` and `label` are the split "34 / temperatura" (or "3 / događaja") pair rendered as
     // two separate elements — reconstruct the natural "3 događaja" phrase here for screen readers.
+    // "u" governs the locative, so the registry's locative form is required — the nominative
+    // read as "1 izlazak u Budva" to every screen-reader user.
     accessibilityLabel: available
-      ? `${value} ${label} u ${city.name}`
+      ? `${value} ${label} u ${getCityName(city, "locative")}`
       : `${label}: podaci nijesu dostupni`,
     href,
     key,

@@ -16,6 +16,7 @@ import {
   getPublicCityEventById,
 } from "@/modules/events/presentation/events-ui-model";
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
+import { getCityName } from "@/shared/config/cities";
 import { getPageTitle } from "@/shared/config/site";
 import { getEventDetailPath } from "@/shared/config/public-routes";
 import { getTranslations } from "@/shared/lib/translations";
@@ -48,8 +49,11 @@ async function generateMetadata({ params }: EventDetailPageProps): Promise<Metad
 
   if (!event) return {};
 
+  // Fallback only — used when the provider supplied no description. "u" governs the locative, so
+  // the nominative rendered "… u Podgorica." on every such event page.
   const description =
-    event.description ?? `Informacije o događaju ${event.title} u ${context.city.name}.`;
+    event.description ??
+    `Informacije o događaju ${event.title} u ${getCityName(context.city, "locative")}.`;
 
   return createPublicRouteMetadata({
     canonical: getEventDetailPath(context.city, event.id),

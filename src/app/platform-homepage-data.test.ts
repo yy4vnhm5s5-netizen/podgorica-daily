@@ -203,7 +203,7 @@ test("uses the same available Going Out result as the city page and does not tur
   assert.deepEqual(
     available.highlights.find(({ key }) => key === "going-out"),
     {
-      accessibilityLabel: "1 izlazak u Budva",
+      accessibilityLabel: "1 izlazak u Budvi",
       href: "/budva/izlasci",
       key: "going-out",
       label: "izlazak",
@@ -383,7 +383,7 @@ test("shows Tivat's own beach count in the sea water quality highlight, not Budv
   assert.deepEqual(
     card.highlights.find(({ key }) => key === "sea-water-quality"),
     {
-      accessibilityLabel: "10 kupališta u Tivat",
+      accessibilityLabel: "10 kupališta u Tivtu",
       href: "/tivat/plaze",
       key: "sea-water-quality",
       label: "kupališta",
@@ -528,4 +528,13 @@ test("asserts no unverified organization facts", () => {
   ]) {
     assert.doesNotMatch(serialized, new RegExp(forbidden, "u"), `must not assert ${forbidden}`);
   }
+});
+
+// Behavioural regression coverage for "1 izlazak u Budva" / "10 kupališta u Tivat" lives in the
+// two available-highlight assertions above; this pins the implementation that produces them.
+test("derives the label's city form from the registry rather than naming a city", async () => {
+  const source = await readFile(new URL("./platform-homepage-data.ts", import.meta.url), "utf8");
+
+  assert.match(source, /u \$\{getCityName\(city, "locative"\)\}/u);
+  assert.doesNotMatch(source, /u \$\{city\.name\}/u);
 });
