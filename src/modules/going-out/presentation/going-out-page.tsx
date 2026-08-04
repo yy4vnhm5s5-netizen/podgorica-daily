@@ -4,9 +4,11 @@ import Image from "next/image";
 import type { GoingOutEvent } from "../domain/going-out-event";
 import type { GoingOutCacheState } from "../infrastructure/montegigs-going-out";
 import {
+  formatGoingOutDateHeading,
   formatGoingOutSchedule,
   getGoingOutDisplayState,
   getGoingOutPageEvents,
+  groupGoingOutEventsByDate,
 } from "./going-out-ui-model";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { EmptyState } from "@/shared/components/empty-state";
@@ -29,6 +31,7 @@ function GoingOutPage({ city, events, locale, state }: GoingOutPageProps) {
   const cityName = getCityName(city, locale === "me" ? "locative" : "nominative");
   const upcoming = getGoingOutPageEvents(events);
   const displayState = getGoingOutDisplayState({ eventCount: upcoming.length, state });
+  const dateGroups = groupGoingOutEventsByDate(upcoming);
 
   return (
     <section aria-labelledby="going-out-page-heading" className="space-y-6" id="izlasci">
@@ -45,11 +48,24 @@ function GoingOutPage({ city, events, locale, state }: GoingOutPageProps) {
         </p>
       </div>
       {displayState === "events" || displayState === "stale" ? (
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {upcoming.map((event) => (
-            <GoingOutPageCard event={event} key={event.id} locale={locale} />
+        // Grouped by the day each listing falls on, mirroring the Događaji and Struja listings.
+        <div className="space-y-8">
+          {dateGroups.map((group) => (
+            <section aria-labelledby={`izlasci-${group.date}`} key={group.date}>
+              <h2
+                className="text-sm font-semibold uppercase tracking-wide text-muted-foreground"
+                id={`izlasci-${group.date}`}
+              >
+                {formatGoingOutDateHeading(group.date, locale)}
+              </h2>
+              <ul className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {group.events.map((event) => (
+                  <GoingOutPageCard event={event} key={event.id} locale={locale} />
+                ))}
+              </ul>
+            </section>
           ))}
-        </ul>
+        </div>
       ) : (
         <EmptyState
           description={displayState === "unavailable" ? copy.unavailable : copy.empty}
@@ -85,7 +101,7 @@ function GoingOutPageCard({ event, locale }: { event: GoingOutEvent; locale: Loc
           </div>
         )}
         <CardHeader className="p-4 sm:p-5">
-          <h2 className="text-base font-semibold leading-6">{event.title}</h2>
+          <h3 className="text-base font-semibold leading-6">{event.title}</h3>
           <p className="text-sm leading-6 text-muted-foreground">
             {formatGoingOutSchedule(event, locale)}
           </p>

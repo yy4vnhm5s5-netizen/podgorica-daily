@@ -30,6 +30,36 @@ function getGoingOutPageEvents(events: readonly GoingOutEvent[], now = new Date(
   return selectUpcomingGoingOutEvents(events, now, 30);
 }
 
+interface GoingOutDateGroup {
+  date: string;
+  events: readonly GoingOutEvent[];
+}
+
+// Every MonteGigs record carries a startDate (the domain rejects one without it), so the whole
+// upcoming list groups cleanly by calendar day. Order is preserved from the already-sorted input
+// rather than re-sorted, and no day is invented: a day appears only if a listing falls on it.
+function groupGoingOutEventsByDate(events: readonly GoingOutEvent[]): readonly GoingOutDateGroup[] {
+  const groups = new Map<string, GoingOutEvent[]>();
+
+  for (const event of events) {
+    const group = groups.get(event.startDate);
+    if (group) group.push(event);
+    else groups.set(event.startDate, [event]);
+  }
+
+  return [...groups.entries()]
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([date, groupedEvents]) => ({ date, events: groupedEvents }));
+}
+
+function formatGoingOutDateHeading(date: string, locale: Locale) {
+  const label = formatDateTime(new Date(`${date}T12:00:00.000Z`), {
+    formatOptions: { dateStyle: "full", timeStyle: undefined },
+    locale: getLocaleTag(locale),
+  }).label;
+  return label ? `${label[0].toLocaleUpperCase(getLocaleTag(locale))}${label.slice(1)}` : label;
+}
+
 function formatGoingOutSchedule(event: GoingOutEvent, locale: Locale) {
   const date = formatDateTime(new Date(`${event.startDate}T12:00:00.000Z`), {
     formatOptions: { dateStyle: "medium", timeStyle: undefined },
@@ -44,10 +74,13 @@ function formatGoingOutSchedule(event: GoingOutEvent, locale: Locale) {
 }
 
 export {
+  formatGoingOutDateHeading,
   formatGoingOutSchedule,
   getAvailableGoingOutEvents,
   getGoingOutDisplayState,
   getGoingOutPageEvents,
   getHomepageGoingOutEvents,
+  groupGoingOutEventsByDate,
+  type GoingOutDateGroup,
   type GoingOutDisplayState,
 };
