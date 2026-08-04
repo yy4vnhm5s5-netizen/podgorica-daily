@@ -173,6 +173,12 @@ function FlightValue({ label, value }: { label: string; value: string }) {
   );
 }
 
+// The airport this surface represents, single-sourced so the page's H1 and the route's document
+// title cannot drift apart (see app/[city]/letovi/page.tsx). Deliberately named for Podgorica:
+// flights is a Podgorica-only capability today, and a second airport would have to revisit both
+// call sites rather than silently inherit this name.
+const podgoricaAirportName = "Aerodrom Podgorica";
+
 const montenegrinCopy = {
   airline: "Avio-kompanija",
   arrival: "Dolazak",
@@ -180,13 +186,13 @@ const montenegrinCopy = {
   departure: "Odlazak",
   departures: "Odlasci",
   description:
-    "Aktuelni red letenja za Aerodrom Podgorica iz zvaničnih podataka Aerodroma Crne Gore.",
+    "Aktuelni red letenja za Aerodrom Podgorica — dolasci i odlasci iz zvaničnih podataka Aerodroma Crne Gore.",
   empty: "Trenutno nema dostupnih letova.",
   flightNumber: "Broj leta",
   stale: "Prikazani podaci mogu biti zastarjeli.",
   status: "Status",
   source: "Kompletan red letenja na sajtu Aerodroma Crne Gore ↗",
-  title: "Aerodrom Podgorica",
+  title: podgoricaAirportName,
   unavailable: "Podaci trenutno nijesu dostupni.",
 };
 const englishCopy = {
@@ -195,7 +201,8 @@ const englishCopy = {
   arrivals: "Arrivals",
   departure: "Departure",
   departures: "Departures",
-  description: "Current Podgorica Airport schedule from official Airports of Montenegro data.",
+  description:
+    "Current Podgorica Airport schedule — arrivals and departures from official Airports of Montenegro data.",
   empty: "There are no flights available right now.",
   flightNumber: "Flight number",
   stale: "Displayed data may be outdated.",
@@ -205,4 +212,4 @@ const englishCopy = {
   unavailable: "Data is temporarily unavailable.",
 };
 
-export { AirportFlightsPage, type AirportFlightsPageProps };
+export { AirportFlightsPage, podgoricaAirportName, type AirportFlightsPageProps };

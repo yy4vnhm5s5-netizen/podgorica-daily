@@ -7,9 +7,11 @@ import {
 } from "@/app/city-routing";
 import { createPublicRouteMetadata } from "@/app/public-route-metadata";
 import { getPodgoricaFlights } from "@/modules/flights/application/get-podgorica-flights";
-import { AirportFlightsPage } from "@/modules/flights/presentation/airport-flights-page";
+import {
+  AirportFlightsPage,
+  podgoricaAirportName,
+} from "@/modules/flights/presentation/airport-flights-page";
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
-import { getCityName } from "@/shared/config/cities";
 import { getFlightsPath } from "@/shared/config/public-routes";
 import { getPageTitle } from "@/shared/config/site";
 import { getTranslations } from "@/shared/lib/translations";
@@ -20,19 +22,24 @@ interface FlightsPageProps {
   params: Promise<{ city: string }>;
 }
 
-// "Letovi iz <grad>" — a full phrase rather than the old bare "Letovi Podgorica" label. "iz"
-// governs the genitive, so the caller passes the registry's genitive form; any future flights
-// city inherits its own correct form with no change here.
-function getFlightsPageTitle(cityName: string) {
-  return `Letovi iz ${cityName}`;
+// The document title names the airport, because that is what the page is and what its own H1
+// says. The previous "Letovi iz Podgorice" described the city instead, so the page's title never
+// contained the word "aerodrom" at all while every search that reaches it is an airport lookup.
+// Both directions are named because arrivals are searched for as often as the airport itself.
+// The airport name comes from the presentation constant so the title and the H1 stay in step.
+function getFlightsPageTitle() {
+  return `${podgoricaAirportName} — dolasci i odlasci`;
 }
 
 async function generateMetadata({ params }: FlightsPageProps): Promise<Metadata> {
   const { city: slug } = await params;
   const context = resolveActiveCityFeatureRoute(slug, "flights");
   if (!context || !isCityPublicFeatureRouteAvailable(context.city, "flights")) return {};
-  const title = getFlightsPageTitle(getCityName(context.city, "genitive"));
-  const description = `Dolasci i odlasci za ${getCityName(context.city, "accusative")} iz zvaničnih podataka aerodroma.`;
+  const title = getFlightsPageTitle();
+  // Only what the feed actually carries: destination/origin, IATA flight number and the scheduled
+  // time. No airline (the feed has no such field), no estimated or actual times, no gate, delay or
+  // cancellation, and nothing described as live.
+  const description = `Red letenja za ${podgoricaAirportName}: predstojeći dolasci i odlasci sa destinacijom, brojem leta i planiranim vremenom. Zvanični podaci Aerodroma Crne Gore.`;
   const metadataTitle = getPageTitle(title);
 
   return createPublicRouteMetadata({
