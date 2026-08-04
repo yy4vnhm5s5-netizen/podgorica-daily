@@ -5,7 +5,7 @@ import {
   getCityEventsForPublicListing,
   isHomepageEventsUnavailable,
 } from "@/modules/events/presentation/events-ui-model";
-import { getGoingOutPageEvents } from "@/modules/going-out/presentation/going-out-ui-model";
+import { getAvailableGoingOutEvents } from "@/modules/going-out/presentation/going-out-ui-model";
 import { getWeatherTemperature } from "@/modules/weather/presentation/weather-temperature";
 import { createPublicRouteMetadata } from "@/app/public-route-metadata";
 import { loadCityDashboardData } from "@/app/city-dashboard-data";
@@ -139,8 +139,10 @@ function createPlatformCityCardData(
   }
 
   if (isCityPublicFeatureRouteAvailable(city, "goingOut")) {
+    // The card shows a count, so it uses the unlimited selector the city dashboard already uses —
+    // reusing the listing-page selector made the two surfaces disagree once a city passed 30.
     const events = dashboardData?.goingOut
-      ? getGoingOutPageEvents(dashboardData.goingOut.events)
+      ? getAvailableGoingOutEvents(dashboardData.goingOut.events)
       : [];
     highlights.push(
       createCountHighlight({

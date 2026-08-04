@@ -26,8 +26,13 @@ function getAvailableGoingOutEvents(events: readonly GoingOutEvent[], now = new 
   return selectUpcomingGoingOutEvents(events, now);
 }
 
+// The dedicated /[city]/izlasci listing shows every upcoming record we retain. It used to reuse a
+// 30-item cap that suited a compact surface, which silently hid listings once a city passed it
+// (Budva: 32 upcoming at source, 30 rendered). Volume is bounded upstream instead — the collector
+// refuses a MonteGigs response over maximumResponseLength — so no second numeric cap is invented
+// here. Preview surfaces keep their own explicit small limits.
 function getGoingOutPageEvents(events: readonly GoingOutEvent[], now = new Date()) {
-  return selectUpcomingGoingOutEvents(events, now, 30);
+  return selectUpcomingGoingOutEvents(events, now);
 }
 
 interface GoingOutDateGroup {

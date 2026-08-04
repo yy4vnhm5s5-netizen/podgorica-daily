@@ -5,6 +5,8 @@ import test from "node:test";
 import type { GoingOutEvent } from "../domain/going-out-event.ts";
 import {
   formatGoingOutDateHeading,
+  getGoingOutPageEvents,
+  getHomepageGoingOutEvents,
   groupGoingOutEventsByDate,
 } from "./going-out-ui-model.ts";
 
@@ -93,4 +95,88 @@ test("leaves the empty, stale, source-attribution and navigation behaviour untou
   assert.match(source, /<ExploreCityLinks city=\{city\} exclude=\{\["goingOut"\]\} \/>/u);
   // No claim about counts, venues, nightlife or what is "on" in the city.
   assert.doesNotMatch(source, /najbolj|preporuč|klubov[ai]\b|nema izlazaka/iu);
+});
+
+// Budva had 32 upcoming listings at source but rendered 30: the dedicated listing reused a cap
+// meant for a compact surface. Preview surfaces keep their own limits; the canonical page does not.
+const manyEvents = (count: number) =>
+  Array.from({ length: count }, (_, index) =>
+    event(`2026-08-${String((index % 28) + 1).padStart(2, "0")}`, `Listing ${index + 1}`),
+  );
+
+test("the dedicated listing keeps every upcoming record, past the old 30-item cap", () => {
+  const now = new Date("2026-08-01T10:00:00.000Z");
+  const selected = getGoingOutPageEvents(manyEvents(42), now);
+
+  assert.equal(selected.length, 42);
+  // The 31st and 42nd items are present — the cap used to drop them.
+  assert.equal(
+    selected.some(({ title }) => title === "Listing 31"),
+    true,
+  );
+  assert.equal(
+    selected.some(({ title }) => title === "Listing 42"),
+    true,
+  );
+});
+
+test("everything the listing selects is still grouped, in chronological order", () => {
+  const now = new Date("2026-08-01T10:00:00.000Z");
+  const selected = getGoingOutPageEvents(manyEvents(42), now);
+  const groups = groupGoingOutEventsByDate(selected);
+  const dates = groups.map(({ date }) => date);
+
+  assert.deepEqual(dates, [...dates].sort());
+  assert.equal(
+    groups.reduce((total, { events }) => total + events.length, 0),
+    selected.length,
+  );
+  // No duplicates introduced by removing the cap.
+  const ids = selected.map(({ id }) => id);
+  assert.equal(new Set(ids).size, ids.length);
+});
+
+test("compact preview surfaces keep their own small limits", async () => {
+  const now = new Date("2026-08-01T10:00:00.000Z");
+  const source = await readFile(new URL("./going-out-ui-model.ts", import.meta.url), "utf8");
+
+  // The dashboard section teaser stays at six.
+  assert.equal(getHomepageGoingOutEvents(manyEvents(42), now).length, 6);
+  assert.match(source, /getAvailableGoingOutEvents\(events, now\)\.slice\(0, 6\)/u);
+  // The listing selector no longer passes a limit at all.
+  assert.match(source, /return selectUpcomingGoingOutEvents\(events, now\);/u);
+  assert.doesNotMatch(source, /selectUpcomingGoingOutEvents\(events, now, 30\)/u);
+});
+
+test("the homepage count uses the same unlimited selector as the city dashboard", async () => {
+  const homepage = await readFile(
+    new URL("../../../app/platform-homepage-data.ts", import.meta.url),
+    "utf8",
+  );
+  const dashboard = await readFile(
+    new URL("../../../app/city-dashboard.tsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(homepage, /getAvailableGoingOutEvents\(dashboardData\.goingOut\.events\)/u);
+  assert.doesNotMatch(homepage, /getGoingOutPageEvents/u);
+  assert.match(dashboard, /getAvailableGoingOutEvents\(goingOut\.events\)\.length/u);
+});
+
+test("only upcoming records are selected, and city isolation is untouched", () => {
+  const now = new Date("2026-08-10T10:00:00.000Z");
+  const selected = getGoingOutPageEvents(
+    [event("2026-08-01", "Past"), event("2026-08-10", "Today"), event("2026-08-20", "Future")],
+    now,
+  );
+
+  assert.deepEqual(
+    selected.map(({ title }) => title),
+    ["Today", "Future"],
+  );
+  // Selection never inspects city — the read model already scopes the snapshot per city.
+  assert.equal(
+    selected.every(({ city }) => city === "budva"),
+    true,
+  );
 });
