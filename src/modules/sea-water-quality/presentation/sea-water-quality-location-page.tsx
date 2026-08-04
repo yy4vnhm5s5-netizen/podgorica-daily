@@ -14,10 +14,18 @@ import {
   getSeaWaterQualityLocationSummary,
   type SeaWaterQualityTrend,
 } from "./sea-water-quality-location-ui-model.ts";
+import {
+  getSeaWaterQualityAdvertisingDescription,
+  seaWaterQualityAdvertisingCta,
+  seaWaterQualityAdvertisingLabel,
+  seaWaterQualityAdvertisingTitle,
+} from "./sea-water-quality-advertising.ts";
+import { AdvertisingCard } from "@/shared/components/dashboard/advertising-card";
 import { ExploreCityLinks } from "@/shared/components/explore-city-links";
 import { NewTabNotice } from "@/shared/components/new-tab-notice";
 import { SectionTitle } from "@/shared/components/section-title";
 import { getLocaleTag, type Locale } from "@/shared/config/locale";
+import { getContactPath } from "@/shared/config/public-routes";
 import { getSeaWaterQualityLocationPath } from "@/shared/config/public-routes";
 import { formatDateTime } from "@/shared/lib/date";
 import { formatBcsCount } from "@/shared/lib/pluralize";
@@ -188,6 +196,16 @@ function SeaWaterQualityLocationPage({
           ) : null}
         </section>
       ) : null}
+
+      {/* Placed after the latest result and the measurement summary, so the reader has the water
+          quality facts before any promotional content. One banner per page. */}
+      <AdvertisingCard
+        description={getSeaWaterQualityAdvertisingDescription(city, "detail")}
+        href={getContactPath()}
+        label={seaWaterQualityAdvertisingLabel}
+        subtitle={seaWaterQualityAdvertisingCta}
+        title={seaWaterQualityAdvertisingTitle}
+      />
 
       <section aria-labelledby="istorija-uzorkovanja-heading" className="space-y-3">
         <h2 className="text-base font-semibold tracking-tight" id="istorija-uzorkovanja-heading">

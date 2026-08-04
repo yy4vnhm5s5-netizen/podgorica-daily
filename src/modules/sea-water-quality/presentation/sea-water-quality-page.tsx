@@ -6,9 +6,16 @@ import { gradeLabels, gradeOrder, gradeStyles } from "./sea-water-quality-grade-
 import { ErrorState } from "@/shared/components/error-state";
 import { InCardEmptyNote } from "@/shared/components/in-card-empty-note";
 import { NewTabNotice } from "@/shared/components/new-tab-notice";
+import {
+  getSeaWaterQualityAdvertisingDescription,
+  seaWaterQualityAdvertisingCta,
+  seaWaterQualityAdvertisingLabel,
+  seaWaterQualityAdvertisingTitle,
+} from "./sea-water-quality-advertising.ts";
+import { AdvertisingCard } from "@/shared/components/dashboard/advertising-card";
 import { SectionTitle } from "@/shared/components/section-title";
 import { getLocaleTag, type Locale } from "@/shared/config/locale";
-import { getSeaWaterQualityLocationPath } from "@/shared/config/public-routes";
+import { getContactPath, getSeaWaterQualityLocationPath } from "@/shared/config/public-routes";
 import { formatDateTime } from "@/shared/lib/date";
 import type { City } from "@/shared/types/city";
 
@@ -103,6 +110,15 @@ function SeaWaterQualityPage({ city, locale, locationSlugs, result }: SeaWaterQu
               ) : null}
             </div>
           </section>
+
+          {/* After the city overview, before the beach table — never between individual rows. */}
+          <AdvertisingCard
+            description={getSeaWaterQualityAdvertisingDescription(city, "listing")}
+            href={getContactPath()}
+            label={seaWaterQualityAdvertisingLabel}
+            subtitle={seaWaterQualityAdvertisingCta}
+            title={seaWaterQualityAdvertisingTitle}
+          />
 
           <section aria-labelledby="plaze-tabela-heading" className="space-y-3">
             <div className="space-y-1">
