@@ -1,7 +1,7 @@
 "use client";
 
 import { Clock3, Droplets, MapPin, Zap, type LucideIcon } from "lucide-react";
-import { useId, useState, type KeyboardEvent } from "react";
+import { useId, useState, type KeyboardEvent, type ReactNode } from "react";
 
 import type { CityAlertServiceId } from "@/modules/city-alerts/application/city-alert-service-capabilities";
 import { formatAdditionalAffectedAreas } from "@/modules/city-alerts/presentation/power-outages-ui-model";
@@ -155,7 +155,7 @@ function CityServicesPanel({ serviceIds, services, translations }: CityServicesP
         </div>
         <div
           aria-labelledby={`${panelId}-${activeServiceId}`}
-          className="flex min-w-0 flex-1 flex-col gap-2 p-3 sm:p-4 lg:grid lg:grid-cols-[minmax(7.5rem,0.8fr)_minmax(11rem,1.35fr)_auto_minmax(9.5rem,1fr)_auto] lg:items-center lg:gap-0 lg:px-3 lg:py-2"
+          className="flex min-w-0 flex-1 flex-col gap-2 p-3 sm:p-4 lg:grid lg:grid-cols-[minmax(7.5rem,1fr)_minmax(11rem,1.35fr)_minmax(9.5rem,1fr)_auto] lg:items-center lg:gap-0 lg:px-3 lg:py-2"
           id={panelId}
           role="tabpanel"
         >
@@ -170,29 +170,31 @@ function CityServicesPanel({ serviceIds, services, translations }: CityServicesP
                   className="lg:col-start-1 lg:border-l-0 lg:pr-4"
                   icon={MapPin}
                   iconClassName="text-rose-500"
+                  trailing={
+                    service.additionalLocationCount ? (
+                      <Badge
+                        aria-label={formatAdditionalAffectedAreas(service.additionalLocationCount)}
+                        className="shrink-0 border-amber-200/80 bg-amber-50/70 text-amber-800"
+                        variant="outline"
+                      >
+                        +{service.additionalLocationCount}
+                      </Badge>
+                    ) : null
+                  }
                   value={primaryArea}
                 />
               ) : null}
               {service.time ? (
                 <ServiceStripDetail className="lg:col-start-2" icon={Clock3} value={service.time} />
               ) : null}
-              {service.additionalLocationCount ? (
-                <Badge
-                  aria-label={formatAdditionalAffectedAreas(service.additionalLocationCount)}
-                  className="w-fit self-start border-amber-200/80 bg-amber-50/70 text-amber-800 lg:col-start-3 lg:self-auto"
-                  variant="outline"
-                >
-                  +{service.additionalLocationCount}
-                </Badge>
-              ) : null}
             </>
           )}
           {service.freshnessLabel ? (
-            <ServiceStripDetail className="lg:col-start-4" label={service.freshnessLabel} />
+            <ServiceStripDetail className="lg:col-start-3" label={service.freshnessLabel} />
           ) : null}
           {service.sourceUrl ? (
             <a
-              className="focus-visible:ring-ring inline-flex min-h-10 items-center text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 lg:col-start-5 lg:justify-self-end lg:border-l lg:border-slate-200/80 lg:pl-5"
+              className="focus-visible:ring-ring inline-flex min-h-10 items-center text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 lg:col-start-4 lg:justify-self-end lg:border-l lg:border-slate-200/80 lg:pl-5"
               href={service.sourceUrl}
             >
               {translations.officialSource}
@@ -200,7 +202,7 @@ function CityServicesPanel({ serviceIds, services, translations }: CityServicesP
           ) : null}
           {service.detailsHref && service.detailsLabel ? (
             <a
-              className="focus-visible:ring-ring inline-flex min-h-10 items-center text-sm font-semibold text-primary underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 lg:col-start-5 lg:justify-self-end lg:border-l lg:border-slate-200/80 lg:pl-5"
+              className="focus-visible:ring-ring inline-flex min-h-10 items-center text-sm font-semibold text-primary underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 lg:col-start-4 lg:justify-self-end lg:border-l lg:border-slate-200/80 lg:pl-5"
               href={service.detailsHref}
             >
               {service.detailsLabel}
@@ -226,12 +228,15 @@ function ServiceStripDetail({
   icon: Icon,
   iconClassName,
   label,
+  trailing,
   value,
 }: {
   className?: string;
   icon?: LucideIcon;
   iconClassName?: string;
   label?: string;
+  /** Rendered inside the value group — for adornments that describe the value itself. */
+  trailing?: ReactNode;
   value?: string;
 }) {
   return (
@@ -247,10 +252,16 @@ function ServiceStripDetail({
           className={cn("size-3.5 shrink-0 text-muted-foreground", iconClassName)}
         />
       ) : null}
-      {value && label ? <span className="text-muted-foreground">{label}: </span> : null}
-      <span className={cn(value ? "font-medium text-foreground" : "text-muted-foreground")}>
-        {value ?? label}
-      </span>
+      {/* Value and any trailing adornment share one wrapping group, so a badge that belongs to
+          the value (e.g. "+3 more affected areas") stays beside it instead of drifting into a
+          neighbouring column, and a long value wraps with the badge rather than overflowing. */}
+      <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1">
+        {value && label ? <span className="text-muted-foreground">{label}: </span> : null}
+        <span className={cn(value ? "font-medium text-foreground" : "text-muted-foreground")}>
+          {value ?? label}
+        </span>
+        {trailing}
+      </div>
     </div>
   );
 }
