@@ -25,6 +25,15 @@ const cedisMunicipalities = {
     // capital-city designation) and has been added alongside it there too.
     headingVariants: ["Tivat", "Opština Tivat"],
   },
+  ulcinj: {
+    cityId: "ulcinj",
+    // Only "Ulcinj". Across 11 consecutive live planned-works articles CEDIS wrote the heading as
+    // "Ulcinj" or "Ulcinj:" and never once as "Opština Ulcinj" — and the word never appeared
+    // anywhere outside a heading, so no free-text or formal-variant form is assumed here. "Ulcinj"
+    // is already a recognized boundary in municipalityNames, so the section terminates correctly
+    // at the next municipality without any parser change.
+    headingVariants: ["Ulcinj"],
+  },
 } as const;
 
 type CedisSupportedCityId = keyof typeof cedisMunicipalities;

@@ -104,7 +104,7 @@ const cityRegistry: Record<string, City> = {
   },
   ulcinj: {
     accusativeName: "Ulcinj",
-    capabilities: ["goingOut", "seaWaterQuality", "water", "weather"],
+    capabilities: ["electricity", "goingOut", "seaWaterQuality", "water", "weather"],
     country: "Montenegro",
     description: "Vrijeme, izlasci, plaže i kvalitet mora u Ulcinju.",
     genitiveName: "Ulcinja",

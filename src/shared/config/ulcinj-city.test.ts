@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { getActiveCities, getCity, getCityBySlug, getCityName } from "./cities.ts";
+import { isCedisSupportedCityId } from "@/modules/city-alerts/infrastructure/cedis-cities";
 import { vikUlcinjProviderMetadata } from "@/modules/city-alerts/infrastructure/vik-ulcinj";
 import { isCityPublicFeatureRouteAvailable } from "./city-routes.ts";
 import {
@@ -49,6 +50,7 @@ test("declares only the capabilities backed by a verified source", () => {
   const ulcinj = requireUlcinj();
 
   assert.deepEqual([...(ulcinj.capabilities ?? [])].sort(), [
+    "electricity",
     "goingOut",
     "seaWaterQuality",
     "water",
@@ -62,8 +64,9 @@ test("declares only the capabilities backed by a verified source", () => {
     true,
     "the water capability requires a provider that declares Ulcinj",
   );
-  // Still withheld: no CEDIS evidence for Ulcinj yet.
-  assert.equal(ulcinj.capabilities?.includes("electricity"), false);
+  // Electricity followed the same rule as water: declared only once CEDIS was shown to publish a
+  // recognizable Ulcinj municipality section, which the shared parser already resolves.
+  assert.equal(isCedisSupportedCityId("ulcinj"), true);
 });
 
 test("exposes exactly the supported public routes and no others", () => {
@@ -72,7 +75,9 @@ test("exposes exactly the supported public routes and no others", () => {
   for (const capability of ["goingOut", "seaWaterQuality"] as const) {
     assert.equal(isCityPublicFeatureRouteAvailable(ulcinj, capability), true, capability);
   }
-  for (const capability of ["electricity", "events", "flights", "railway"] as const) {
+  assert.equal(isCityPublicFeatureRouteAvailable(ulcinj, "electricity"), true);
+  assert.equal(getElectricityPath(ulcinj), "/ulcinj/struja");
+  for (const capability of ["events", "flights", "railway"] as const) {
     assert.equal(isCityPublicFeatureRouteAvailable(ulcinj, capability), false, capability);
   }
   // Water is deliberately absent from both lists: the platform has no standalone water route, so
@@ -83,7 +88,6 @@ test("exposes exactly the supported public routes and no others", () => {
   assert.equal(getGoingOutPath(ulcinj), "/ulcinj/izlasci");
   // These helpers still build strings; availability above is what keeps them unreachable.
   assert.equal(getEventsPath(ulcinj), "/ulcinj/dogadjaji");
-  assert.equal(getElectricityPath(ulcinj), "/ulcinj/struja");
   assert.equal(getFlightsPath(ulcinj), "/ulcinj/letovi");
 });
 

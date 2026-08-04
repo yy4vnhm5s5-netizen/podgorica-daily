@@ -458,12 +458,15 @@ test("emits only Ulcinj's supported route family", async () => {
   assert.ok(ulcinjPaths.includes("/ulcinj"));
   assert.ok(ulcinjPaths.includes("/ulcinj/plaze"));
   assert.ok(ulcinjPaths.includes("/ulcinj/izlasci"));
-  // Nothing without a verified provider may become indexable.
+  // Added by the electricity capability alone, through the generic capability-driven sitemap
+  // builder — sitemap.ts names no city and gained no Ulcinj branch.
+  assert.ok(ulcinjPaths.includes("/ulcinj/struja"));
+  // Nothing without a verified provider may become indexable. Water has a provider but no
+  // standalone route: it is a City Services tab, so it must still never appear here.
   for (const unsupported of [
     "/ulcinj/dogadjaji",
     "/ulcinj/filmovi",
     "/ulcinj/letovi",
-    "/ulcinj/struja",
     "/ulcinj/vozovi",
     "/ulcinj/voda",
   ]) {
@@ -472,7 +475,7 @@ test("emits only Ulcinj's supported route family", async () => {
   // Every remaining Ulcinj URL is a beach detail page derived from the history snapshot.
   for (const path of ulcinjPaths) {
     const isKnown =
-      ["/ulcinj", "/ulcinj/plaze", "/ulcinj/izlasci"].includes(path) ||
+      ["/ulcinj", "/ulcinj/plaze", "/ulcinj/izlasci", "/ulcinj/struja"].includes(path) ||
       path.startsWith("/ulcinj/plaze/");
     assert.equal(isKnown, true, path);
   }

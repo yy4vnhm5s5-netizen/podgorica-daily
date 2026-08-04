@@ -11,7 +11,7 @@ test("exposes only services backed by the current city's capabilities", () => {
   // Tivat has electricity but, like Budva, no approved water-notice provider — must not expose
   // "water" just because a third city exists.
   assert.deepEqual(getCityAlertServiceIds(createCityContext("tivat").city), ["power"]);
-  // Ulcinj is the mirror image: a water provider but no CEDIS evidence yet, so it gets the Voda
-  // tab and no Struja tab, through the same capability-driven derivation.
-  assert.deepEqual(getCityAlertServiceIds(createCityContext("ulcinj").city), ["water"]);
+  // Ulcinj now has both an approved water provider and a recognized CEDIS municipality section,
+  // so it derives both tabs from the same capability list as Podgorica and Kotor.
+  assert.deepEqual(getCityAlertServiceIds(createCityContext("ulcinj").city), ["power", "water"]);
 });
