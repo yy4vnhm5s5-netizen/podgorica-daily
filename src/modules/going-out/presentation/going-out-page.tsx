@@ -5,7 +5,7 @@ import type { GoingOutEvent } from "../domain/going-out-event";
 import type { GoingOutCacheState } from "../infrastructure/montegigs-going-out";
 import {
   formatGoingOutDateHeading,
-  formatGoingOutSchedule,
+  formatGoingOutTime,
   getGoingOutDisplayState,
   getGoingOutPageEvents,
   groupGoingOutEventsByDate,
@@ -83,6 +83,7 @@ function GoingOutPage({ city, events, locale, state }: GoingOutPageProps) {
 
 function GoingOutPageCard({ event, locale }: { event: GoingOutEvent; locale: Locale }) {
   const copy = locale === "me" ? montenegrinCopy : englishCopy;
+  const time = formatGoingOutTime(event, locale);
   return (
     <li className="min-w-0">
       <Card className="h-full overflow-hidden border-violet-200/65 bg-violet-50/45 shadow-sm shadow-violet-950/[0.025] dark:border-violet-800/55 dark:bg-violet-950/25">
@@ -102,10 +103,13 @@ function GoingOutPageCard({ event, locale }: { event: GoingOutEvent; locale: Loc
         )}
         <CardHeader className="p-4 sm:p-5">
           <h3 className="text-base font-semibold leading-6">{event.title}</h3>
-          <p className="text-sm leading-6 text-muted-foreground">
-            {formatGoingOutSchedule(event, locale)}
-          </p>
-          {event.venue ? <p className="text-sm text-muted-foreground">{event.venue}</p> : null}
+          {/* The day heading above already states the date, so the card carries only the time and
+              the venue. Either may be absent; nothing is substituted for a missing one. */}
+          {time || event.venue ? (
+            <p className="text-sm leading-6 text-muted-foreground">
+              {[time, event.venue].filter(Boolean).join(" · ")}
+            </p>
+          ) : null}
         </CardHeader>
         <CardContent className="p-4 pt-0 sm:p-5 sm:pt-0">
           <a

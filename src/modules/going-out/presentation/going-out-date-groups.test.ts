@@ -180,3 +180,40 @@ test("only upcoming records are selected, and city isolation is untouched", () =
     true,
   );
 });
+
+test("the grouped card shows the time beside the venue and drops the repeated date", async () => {
+  const source = await readFile(new URL("./going-out-page.tsx", import.meta.url), "utf8");
+
+  assert.match(source, /const time = formatGoingOutTime\(event, locale\);/u);
+  assert.match(source, /\{\[time, event\.venue\]\.filter\(Boolean\)\.join\(" · "\)\}/u);
+  // The day <h2> already carries the date, so the card no longer repeats it.
+  assert.doesNotMatch(source, /formatGoingOutSchedule/u);
+  // No placeholder for a missing time.
+  assert.doesNotMatch(source, /Vrijeme nije|TBD|00:00|nepoznat/iu);
+});
+
+test("renders venue alone when no time exists, and neither when both are missing", () => {
+  const withTime = ["21:00", "Crkva Sv. Duha"].filter(Boolean).join(" · ");
+  const venueOnly = [undefined, "Club Maximus"].filter(Boolean).join(" · ");
+  const neither = [undefined, undefined].filter(Boolean);
+
+  assert.equal(withTime, "21:00 · Crkva Sv. Duha");
+  assert.equal(venueOnly, "Club Maximus");
+  assert.equal(neither.length, 0);
+});
+
+test("the dashboard Going Out card is a different component and keeps its date", async () => {
+  const section = await readFile(new URL("./going-out-section.tsx", import.meta.url), "utf8");
+
+  // Not grouped by day, so it still needs full date context.
+  assert.match(section, /formatGoingOutSchedule\(event, locale\)/u);
+  assert.doesNotMatch(section, /formatGoingOutTime/u);
+});
+
+test("time enrichment adds no structured data anywhere in Going Out", async () => {
+  const files = ["./going-out-page.tsx", "./going-out-section.tsx", "./going-out-ui-model.ts"];
+  for (const file of files) {
+    const source = await readFile(new URL(file, import.meta.url), "utf8");
+    assert.doesNotMatch(source, /application\/ld\+json|schema\.org|"@type"/u, file);
+  }
+});

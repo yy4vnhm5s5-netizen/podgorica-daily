@@ -65,6 +65,17 @@ function formatGoingOutDateHeading(date: string, locale: Locale) {
   return label ? `${label[0].toLocaleUpperCase(getLocaleTag(locale))}${label.slice(1)}` : label;
 }
 
+// The grouped /izlasci card sits under a day heading that already states the date, so it shows
+// only the clock time when the source gave one. Returns undefined when there is no verified time —
+// the card then renders the venue alone rather than a placeholder.
+function formatGoingOutTime(event: GoingOutEvent, locale: Locale) {
+  if (!event.startsAt) return undefined;
+  return formatDateTime(new Date(event.startsAt), {
+    formatOptions: { dateStyle: undefined, timeStyle: "short" },
+    locale: getLocaleTag(locale),
+  }).label;
+}
+
 function formatGoingOutSchedule(event: GoingOutEvent, locale: Locale) {
   const date = formatDateTime(new Date(`${event.startDate}T12:00:00.000Z`), {
     formatOptions: { dateStyle: "medium", timeStyle: undefined },
@@ -81,6 +92,7 @@ function formatGoingOutSchedule(event: GoingOutEvent, locale: Locale) {
 export {
   formatGoingOutDateHeading,
   formatGoingOutSchedule,
+  formatGoingOutTime,
   getAvailableGoingOutEvents,
   getGoingOutDisplayState,
   getGoingOutPageEvents,

@@ -218,6 +218,49 @@ function createMonteGigsHttpClient({
   };
 }
 
+// MonteGigs renders each card as "date • venue" and never prints a clock time, but the same HTML
+// response embeds the React Query payload the page was hydrated from, and that carries the source's
+// own `time` field. This reads ONLY that field, keyed by the event's numeric MonteGigs id, and
+// leaves every other payload value (venue address, cost, genre, event_type, status, artists)
+// deliberately unread — the rendered markup remains the source of truth for everything else.
+//
+// Best-effort by construction: an absent, renamed or unparseable payload yields an empty map and
+// collection proceeds exactly as before, simply without start times.
+function extractMonteGigsEventTimes(html: string): ReadonlyMap<string, string> {
+  const times = new Map<string, string>();
+  // The payload is embedded with escaped quotes inside a script tag, so unescape before matching.
+  const payload = html.replace(/\\"/g, '"');
+
+  for (const match of payload.matchAll(
+    /\{"time":(null|"[^"]*")[\s\S]{0,4000}?"id":(\d+),"date":"\d{4}-\d{2}-\d{2}"/g,
+  )) {
+    const time = normalizeMonteGigsPayloadTime(match[1]);
+    if (time) times.set(match[2], time);
+  }
+
+  return times;
+}
+
+// Accepts only a well-formed clock value the source actually stated. "00:00" is deliberately
+// rejected: it appears on records that otherwise look time-less, so we treat it as MonteGigs'
+// "unset" placeholder rather than asserting a genuine midnight start we cannot verify.
+function normalizeMonteGigsPayloadTime(raw: string) {
+  if (raw === "null") return undefined;
+  const match = /^"(\d{1,2}):(\d{2})"$/.exec(raw);
+  if (!match) return undefined;
+  const hour = Number(match[1]);
+  const minute = Number(match[2]);
+  if (hour > 23 || minute > 59) return undefined;
+  const time = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+  return time === "00:00" ? undefined : time;
+}
+
+// The numeric id leading the URL slug (/me/events/kotor/3638-20260804-...) is the payload record's
+// own primary key, so the join is exact — never a title or date heuristic.
+function eventIdFromMonteGigsUrl(sourceUrl: string) {
+  return /\/(\d+)-\d{8}-/.exec(sourceUrl)?.[1];
+}
+
 function parseMonteGigsEvents(
   html: string,
   context: CityContext,
@@ -235,6 +278,7 @@ function parseMonteGigsEvents(
   }
 
   const listing = extractMonteGigsListingContent(html);
+  const payloadTimes = extractMonteGigsEventTimes(html);
   const allEventLinks = findMonteGigsEventLinks(listing);
   const eventLinks = allEventLinks.filter(({ cityId }) => cityId === source.cityId);
   const recognized = eventLinks.length > 0;
@@ -259,7 +303,10 @@ function parseMonteGigsEvents(
       ...(imageUrl ? { imageUrl } : {}),
       sourceUrl,
       startDate: startDate ?? "",
-      startTime: extractTime(cardWindow),
+      // Payload time first (the card markup carries none); the DOM reader stays as a fallback in
+      // case MonteGigs ever prints a time again.
+      startTime:
+        payloadTimes.get(eventIdFromMonteGigsUrl(sourceUrl) ?? "") ?? extractTime(cardWindow),
       title,
       venue: extractVenue(cardWindow),
     });
