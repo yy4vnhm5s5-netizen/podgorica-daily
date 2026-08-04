@@ -42,7 +42,7 @@ test("exposes Podgorica as the main city and every active public city", () => {
   assert.equal(mainCity.isMain, true);
   assert.deepEqual(
     getActiveCities().map(({ slug }) => slug),
-    ["bar", "budva", "kotor", "podgorica", "tivat"],
+    ["bar", "budva", "kotor", "podgorica", "tivat", "ulcinj"],
   );
 });
 

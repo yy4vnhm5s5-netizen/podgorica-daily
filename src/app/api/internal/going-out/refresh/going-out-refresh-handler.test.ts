@@ -146,18 +146,19 @@ test("preserves an allowlisted targeted refresh and rejects an empty or unsuppor
     assert.equal(targeted.status, 200);
     assert.equal((await targeted.json()).cityId, cityId);
   }
-  assert.deepEqual(targetedCities, ["bar", "podgorica", "budva", "tivat", "kotor"]);
+  assert.deepEqual(targetedCities, ["bar", "podgorica", "budva", "tivat", "kotor", "ulcinj"]);
+  const supportedCityCount = targetedCities.length;
   assert.equal(activeRefreshes, 0);
 
   const empty = await post(request("/api/internal/going-out/refresh?city=", `Bearer ${secret}`));
   assert.equal(empty.status, 400);
-  assert.equal(targetedCities.length, 5);
+  assert.equal(targetedCities.length, supportedCityCount);
 
   const unsupported = await post(
     request("/api/internal/going-out/refresh?city=niksic", `Bearer ${secret}`),
   );
   assert.equal(unsupported.status, 400);
-  assert.equal(targetedCities.length, 5);
+  assert.equal(targetedCities.length, supportedCityCount);
 });
 
 test("keeps successful city outcomes when another city has a routine upstream failure", async () => {

@@ -1,0 +1,91 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+
+import { getActiveCities, getCity, getCityBySlug, getCityName } from "./cities.ts";
+import { isCityPublicFeatureRouteAvailable } from "./city-routes.ts";
+import {
+  getCityPath,
+  getElectricityPath,
+  getEventsPath,
+  getFlightsPath,
+  getGoingOutPath,
+  getSeaWaterQualityPath,
+} from "./public-routes.ts";
+
+const requireUlcinj = () => {
+  const ulcinj = getCity("ulcinj");
+  assert.ok(ulcinj, "Ulcinj must exist in the registry");
+  return ulcinj;
+};
+
+test("registers Ulcinj as an active, non-main coastal city", () => {
+  const ulcinj = requireUlcinj();
+
+  assert.equal(ulcinj.isActive, true);
+  assert.equal(ulcinj.isMain, false);
+  assert.equal(ulcinj.slug, "ulcinj");
+  assert.equal(ulcinj.country, "Montenegro");
+  assert.equal(ulcinj.timezone, "Europe/Podgorica");
+  assert.equal(getCityBySlug("ulcinj")?.id, "ulcinj");
+  assert.equal(
+    getActiveCities().some((city) => city.id === "ulcinj"),
+    true,
+  );
+});
+
+test("carries all four verified grammatical forms", () => {
+  const ulcinj = requireUlcinj();
+
+  assert.equal(getCityName(ulcinj), "Ulcinj");
+  assert.equal(getCityName(ulcinj, "nominative"), "Ulcinj");
+  assert.equal(getCityName(ulcinj, "genitive"), "Ulcinja");
+  // Masculine inanimate: the accusative matches the nominative, like Bar and Kotor.
+  assert.equal(getCityName(ulcinj, "accusative"), "Ulcinj");
+  assert.equal(getCityName(ulcinj, "locative"), "Ulcinju");
+});
+
+test("declares only the capabilities backed by a verified source", () => {
+  const ulcinj = requireUlcinj();
+
+  assert.deepEqual([...(ulcinj.capabilities ?? [])].sort(), [
+    "goingOut",
+    "seaWaterQuality",
+    "weather",
+  ]);
+  // Water is intentionally withheld until the ViK Ulcinj provider exists — the City Services
+  // Voda tab is derived from the capability alone and would otherwise never resolve.
+  assert.equal(ulcinj.capabilities?.includes("water"), false);
+});
+
+test("exposes exactly the supported public routes and no others", () => {
+  const ulcinj = requireUlcinj();
+
+  for (const capability of ["goingOut", "seaWaterQuality"] as const) {
+    assert.equal(isCityPublicFeatureRouteAvailable(ulcinj, capability), true, capability);
+  }
+  for (const capability of ["electricity", "events", "flights", "railway", "water"] as const) {
+    assert.equal(isCityPublicFeatureRouteAvailable(ulcinj, capability), false, capability);
+  }
+  assert.equal(getCityPath(ulcinj), "/ulcinj");
+  assert.equal(getSeaWaterQualityPath(ulcinj), "/ulcinj/plaze");
+  assert.equal(getGoingOutPath(ulcinj), "/ulcinj/izlasci");
+  // These helpers still build strings; availability above is what keeps them unreachable.
+  assert.equal(getEventsPath(ulcinj), "/ulcinj/dogadjaji");
+  assert.equal(getElectricityPath(ulcinj), "/ulcinj/struja");
+  assert.equal(getFlightsPath(ulcinj), "/ulcinj/letovi");
+});
+
+test("produces grammatical Ulcinj copy from the registry, never a hardcoded form", () => {
+  const ulcinj = requireUlcinj();
+
+  assert.equal(
+    `Plaže u ${getCityName(ulcinj, "locative")} i kvalitet mora`,
+    "Plaže u Ulcinju i kvalitet mora",
+  );
+  assert.equal(`Izlasci u ${getCityName(ulcinj, "locative")}`, "Izlasci u Ulcinju");
+  assert.equal(`Letovi iz ${getCityName(ulcinj, "genitive")}`, "Letovi iz Ulcinja");
+  assert.equal(
+    `Sve informacije za ${getCityName(ulcinj, "accusative")}`,
+    "Sve informacije za Ulcinj",
+  );
+});

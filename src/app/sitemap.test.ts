@@ -448,3 +448,40 @@ test("never falls back to generation time for a beach lastModified", async () =>
   assert.match(source, /new Date\(`\$\{newest\}T00:00:00\.000Z`\)/u);
   assert.doesNotMatch(source, /lastModified: new Date\(\)/u);
 });
+
+test("emits only Ulcinj's supported route family", async () => {
+  const ulcinj = getCity("ulcinj");
+  assert.ok(ulcinj);
+  const paths = (await sitemap()).map(({ url }) => new URL(url).pathname);
+  const ulcinjPaths = paths.filter((path) => path === "/ulcinj" || path.startsWith("/ulcinj/"));
+
+  assert.ok(ulcinjPaths.includes("/ulcinj"));
+  assert.ok(ulcinjPaths.includes("/ulcinj/plaze"));
+  assert.ok(ulcinjPaths.includes("/ulcinj/izlasci"));
+  // Nothing without a verified provider may become indexable.
+  for (const unsupported of [
+    "/ulcinj/dogadjaji",
+    "/ulcinj/filmovi",
+    "/ulcinj/letovi",
+    "/ulcinj/struja",
+    "/ulcinj/vozovi",
+    "/ulcinj/voda",
+  ]) {
+    assert.equal(ulcinjPaths.includes(unsupported), false, unsupported);
+  }
+  // Every remaining Ulcinj URL is a beach detail page derived from the history snapshot.
+  for (const path of ulcinjPaths) {
+    const isKnown =
+      ["/ulcinj", "/ulcinj/plaze", "/ulcinj/izlasci"].includes(path) ||
+      path.startsWith("/ulcinj/plaze/");
+    assert.equal(isKnown, true, path);
+  }
+});
+
+test("keeps beach lastModified per location rather than per city", async () => {
+  const source = await readFile(new URL("./sitemap.ts", import.meta.url), "utf8");
+
+  // Unchanged by the Ulcinj release: the date still comes from each location's newest sample.
+  assert.match(source, /const lastModified = getLatestSamplingDate\(location\);/u);
+  assert.doesNotMatch(source, /ulcinj/iu);
+});

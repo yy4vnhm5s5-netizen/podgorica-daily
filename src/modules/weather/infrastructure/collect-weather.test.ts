@@ -29,7 +29,7 @@ test("selects every active Weather-capable city from the shared registry", () =>
     getActiveWeatherContexts()
       .map((context) => context.city.id)
       .sort(),
-    ["bar", "budva", "kotor", "podgorica", "tivat"],
+    ["bar", "budva", "kotor", "podgorica", "tivat", "ulcinj"],
   );
 });
 
@@ -86,7 +86,7 @@ test("refreshes the active city batch with bounded concurrency and preserves per
       },
     });
 
-    assert.equal(results.length, 5);
+    assert.equal(results.length, getActiveWeatherContexts().length);
     assert.equal(results.find((result) => result.cityId === "kotor")?.state, "failed");
     assert.equal(results.filter((result) => result.state === "success").length, 4);
     assert.ok(maximumActive <= weatherRefreshConcurrency);

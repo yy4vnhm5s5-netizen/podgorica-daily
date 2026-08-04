@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { getCity } from "./cities.ts";
+import { getActiveCities, getCity } from "./cities.ts";
 import { getExploreCityLinks } from "./explore-city-links.ts";
 import type { Feature } from "./features.ts";
 import type { City } from "@/shared/types/city";
@@ -103,8 +103,9 @@ test("uses each city's own grammatical forms rather than a hardcoded city", () =
 });
 
 test("every derived link is a crawlable same-city path with anchor text", () => {
-  for (const cityId of ["bar", "budva", "kotor", "podgorica", "tivat"]) {
-    const city = requireCity(cityId);
+  // Registry-driven: a newly activated city is covered without editing this list.
+  for (const city of getActiveCities()) {
+    const cityId = city.id;
 
     for (const link of getExploreCityLinks(city, { limit: 10, ...allFeaturesEnabled })) {
       assert.ok(link.href.length > 0, `${cityId}/${link.key} must have an href`);

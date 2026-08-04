@@ -102,6 +102,25 @@ const cityRegistry: Record<string, City> = {
     slug: "tivat",
     timezone: "Europe/Podgorica",
   },
+  ulcinj: {
+    accusativeName: "Ulcinj",
+    // Water is deliberately absent until the ViK Ulcinj provider lands: the City Services Voda tab
+    // is derived from this capability alone, so declaring it now would render a permanently
+    // unavailable tab (see getCityAlertServiceIds).
+    capabilities: ["goingOut", "seaWaterQuality", "weather"],
+    country: "Montenegro",
+    description: "Vrijeme, izlasci, plaže i kvalitet mora u Ulcinju.",
+    genitiveName: "Ulcinja",
+    id: "ulcinj",
+    isActive: true,
+    isMain: false,
+    latitude: 41.9294,
+    longitude: 19.2244,
+    locativeName: "Ulcinju",
+    name: "Ulcinj",
+    slug: "ulcinj",
+    timezone: "Europe/Podgorica",
+  },
 };
 
 function validateCityRegistry(

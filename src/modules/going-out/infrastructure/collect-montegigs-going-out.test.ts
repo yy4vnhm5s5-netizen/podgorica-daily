@@ -142,7 +142,7 @@ test("derives the current active Going Out city set from the shared registry", (
     .map((context) => context.city.id)
     .sort();
 
-  assert.deepEqual(cityIds, ["bar", "budva", "kotor", "podgorica", "tivat"]);
+  assert.deepEqual(cityIds, ["bar", "budva", "kotor", "podgorica", "tivat", "ulcinj"]);
 });
 
 test("keeps a failed city independent from successful active-city collector results", async () => {

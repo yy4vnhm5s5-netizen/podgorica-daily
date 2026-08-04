@@ -43,6 +43,12 @@ const monteGigsCitySources = {
     cityId: "tivat",
     listingUrl: "https://staging.montegigs.me/me/events/tivat",
   },
+  // Verified read-only against the live listing before enabling: it returns HTTP 200 with real
+  // upcoming Ulcinj events, and the embedded payload carries their start times.
+  ulcinj: {
+    cityId: "ulcinj",
+    listingUrl: "https://staging.montegigs.me/me/events/ulcinj",
+  },
 } as const;
 
 type MonteGigsSupportedCityId = keyof typeof monteGigsCitySources;
@@ -611,7 +617,7 @@ function extractEventMetadata(value: string) {
 }
 
 const goingOutEventSchema = z.object({
-  city: z.enum(["bar", "podgorica", "budva", "kotor", "tivat"]),
+  city: z.enum(["bar", "podgorica", "budva", "kotor", "tivat", "ulcinj"]),
   id: z.string().min(1),
   imageUrl: z.string().url().optional(),
   sourceName: z.literal("MonteGigs"),
@@ -623,7 +629,7 @@ const goingOutEventSchema = z.object({
 });
 
 const goingOutCacheSnapshotSchema = z.object({
-  cityId: z.enum(["bar", "podgorica", "budva", "kotor", "tivat"]).default("podgorica"),
+  cityId: z.enum(["bar", "podgorica", "budva", "kotor", "tivat", "ulcinj"]).default("podgorica"),
   events: z.array(goingOutEventSchema),
   fetchedAt: z.string().datetime(),
   lastRefreshError: z.string().optional(),

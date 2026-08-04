@@ -29,7 +29,7 @@ test("derives generic city cards from every active registry city", () => {
 
   assert.deepEqual(
     cards.map((card) => card.city.id),
-    ["bar", "budva", "kotor", "podgorica", "tivat"],
+    ["bar", "budva", "kotor", "podgorica", "tivat", "ulcinj"],
   );
   const bar = cards.find((card) => card.city.id === "bar");
   assert.ok(bar);
