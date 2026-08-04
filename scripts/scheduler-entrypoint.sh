@@ -58,10 +58,10 @@ while true; do
     00:20)
       run_collector "vodovod-kotor" "pnpm run collect:vodovod-kotor"
       ;;
-    # ViK Ulcinj: every two hours, staggered from the other water collectors. Matches the
-    # provider's declared refresh interval and stays inside its 150-minute freshness window;
-    # a daily pass like Kotor's would leave the Ulcinj snapshot stale for most of the day.
-    00:50|02:50|04:50|06:50|08:50|10:50|12:50|14:50|16:50|18:50|20:50|22:50)
+    # ViK Ulcinj: every twelve hours, staggered from the other water collectors and matching the
+    # cadence configured in production. VIK_ULCINJ_CACHE_FRESHNESS_MINUTES is sized to this
+    # interval, so a snapshot only reads stale once a refresh has actually been missed.
+    00:50|12:50)
       run_collector "vik-ulcinj" "pnpm run collect:vik-ulcinj"
       ;;
     # CEDIS: every six hours; the CLI sequentially refreshes each active allowlisted city.

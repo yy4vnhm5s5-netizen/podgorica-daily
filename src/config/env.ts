@@ -50,7 +50,10 @@ const environmentSchema = z.object({
   VODOVOD_KOTOR_CACHE_PATH: z.string().min(1).optional(),
   VODOVOD_KOTOR_CACHE_FRESHNESS_MINUTES: z.coerce.number().int().positive().default(150),
   VIK_ULCINJ_CACHE_PATH: z.string().min(1).optional(),
-  VIK_ULCINJ_CACHE_FRESHNESS_MINUTES: z.coerce.number().int().positive().default(150),
+  // Sized for the deployed 12-hour ViK Ulcinj cadence (720 min) plus an hour of margin, so a
+  // snapshot only reads stale once a refresh has actually been missed. The 150 used by the two
+  // Podgorica/Kotor water providers matches their own much shorter schedules, not this one.
+  VIK_ULCINJ_CACHE_FRESHNESS_MINUTES: z.coerce.number().int().positive().default(780),
   SEA_WATER_QUALITY_CACHE_PATH: z.string().min(1).optional(),
   // Individual bathing locations are re-sampled roughly every 3 days during the season, so 3 days
   // (4320 minutes) tracks the real update cadence — long enough that one missed daily refresh

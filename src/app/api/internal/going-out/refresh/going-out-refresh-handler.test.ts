@@ -139,7 +139,7 @@ test("preserves an allowlisted targeted refresh and rejects an empty or unsuppor
     secret,
   });
 
-  for (const cityId of ["bar", "podgorica", "budva", "tivat", "kotor"]) {
+  for (const cityId of ["bar", "podgorica", "budva", "tivat", "kotor", "ulcinj"]) {
     const targeted = await post(
       request(`/api/internal/going-out/refresh?city=${cityId}`, `Bearer ${secret}`),
     );

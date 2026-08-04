@@ -32,7 +32,7 @@ test("gives the empty state its own heading and a last-checked label in both loc
 });
 
 test("keeps the empty sentence city-specific and grammatical", () => {
-  for (const cityId of ["podgorica", "bar", "budva", "kotor", "tivat"]) {
+  for (const cityId of ["podgorica", "bar", "budva", "kotor", "tivat", "ulcinj"]) {
     const city = getCity(cityId);
     assert.ok(city);
     const { empty } = getPowerOutagesTranslations("me", city);
