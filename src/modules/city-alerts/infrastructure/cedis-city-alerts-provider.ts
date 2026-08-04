@@ -6,7 +6,7 @@ import {
   type CedisCacheSnapshot,
   type FreshnessStatus,
 } from "./cedis-cache.ts";
-import { getCedisCityId, type CedisSupportedCityId } from "./cedis-cities.ts";
+import { cedisMunicipalities, getCedisCityId, type CedisSupportedCityId } from "./cedis-cities.ts";
 import { mockCityAlertsProvider } from "./mock-city-alerts-provider.ts";
 import { isCitySupportedByProvider } from "@/shared/config/cities";
 import type { CityContext } from "@/shared/types/city";
@@ -90,7 +90,12 @@ const cedisProviderMetadata: ProviderMetadata = {
   id: "cedis",
   officialSource: "https://cedis.me/servisne-informacije/",
   refreshIntervalMinutes: 360,
-  supportedCityIds: ["podgorica", "budva", "tivat", "kotor", "bar"],
+  // Derived from cedisMunicipalities rather than restated. This list is the read-side gate: a city
+  // missing from it is refused here, before the snapshot file is ever opened, so the page renders
+  // the provider-unavailable state even though collection succeeded and wrote a valid snapshot.
+  // Keeping it hand-maintained let read coverage silently drift behind collection coverage — Ulcinj
+  // was collected successfully (acceptedCount 1) while /ulcinj/struja reported no data.
+  supportedCityIds: Object.values(cedisMunicipalities).map(({ cityId }) => cityId),
   supportsMultipleCities: true,
 };
 
