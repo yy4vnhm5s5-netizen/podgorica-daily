@@ -121,7 +121,10 @@ function CityCard({ card }: { card: PlatformCityCardData }) {
       className="group relative overflow-hidden rounded-2xl border border-border bg-background shadow-sm shadow-slate-950/[0.05] transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-md hover:shadow-slate-950/[0.08]"
     >
       <Link
-        aria-label={`Otvori grad ${card.city.name}`}
+        // "Otvori grad …" takes an accusative object, and the apposition agrees with it, so this
+        // is the registry's accusative rather than the bare name: a screen reader was announcing
+        // the card's main link as "Otvori grad Podgorica".
+        aria-label={`Otvori grad ${getCityName(card.city, "accusative")}`}
         className="absolute inset-0 z-20 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
         href={card.href}
       />
