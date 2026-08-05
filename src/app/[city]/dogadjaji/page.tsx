@@ -31,15 +31,16 @@ function getEventsPageHeading(cityName: string) {
   return `Događaji u ${cityName}`;
 }
 
-// eventTranslations.supportingText is Podgorica's own existing description ("...zvaničnih
-// podgoričkih izvora.") — kept byte-identical for Podgorica rather than reused for other cities.
-// Every other city gets a generic description built from its own name instead of a copy of
-// Podgorica's, using the same safe locative-name construction as the heading above (no invented
-// per-city adjective, e.g. a guessed "tivatski").
-function getEventsPageDescription(city: City, podgoricaDescription: string) {
-  return city.id === "podgorica"
-    ? podgoricaDescription
-    : `Provjereni programi iz zvaničnih izvora u ${getCityName(city, "locative")}.`;
+// The old meta description reused the dashboard card's supporting line: 51 characters that named
+// neither the events nor the days they are grouped into, and it carried a Podgorica-only adjective
+// no other city could inherit — thin for the one place a searcher reads before clicking. This one
+// describes what the page actually is, in the common denominator every provider supplies: dated
+// listings from official sources, grouped by day, with the day filters the page really offers.
+// It says nothing about what is on today; the filter existing is not a claim that it is populated.
+// Registry locative throughout, so Tivat reads "u Tivtu" with no invented per-city adjective.
+function getEventsPageDescription(city: City) {
+  const cityName = getCityName(city, "locative");
+  return `Predstojeći događaji i dešavanja u ${cityName}, grupisani po danima i iz zvaničnih izvora, sa filterima za danas, sjutra i ovaj vikend.`;
 }
 
 interface EventsPageProps {
@@ -55,12 +56,11 @@ async function generateMetadata({ params }: EventsPageProps): Promise<Metadata> 
   const { city: slug } = await params;
   const context = resolveActiveCityFeatureRoute(slug, "events");
   if (!context) return {};
-  const translations = getEventsTranslations("me");
   const title = getPageTitle(getEventsPageHeading(getCityName(context.city, "locative")));
 
   return createPublicRouteMetadata({
     canonical: getEventsPath(context.city),
-    description: getEventsPageDescription(context.city, translations.supportingText),
+    description: getEventsPageDescription(context.city),
     title,
   });
 }

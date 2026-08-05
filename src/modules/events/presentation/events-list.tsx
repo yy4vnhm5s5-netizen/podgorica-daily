@@ -3,7 +3,7 @@ import { EventCard } from "./event-card";
 import { EventsFilterSheet } from "./events-filter-sheet";
 import { getEventPresentationCategory } from "./event-presentation-category";
 import { getEventsTranslations } from "./events-translations";
-import { groupEventsByDay, type EventsUiFilters } from "./events-ui-model";
+import { getLocalDate, groupEventsByDay, type EventsUiFilters } from "./events-ui-model";
 import { EmptyState } from "@/shared/components/empty-state";
 import { Button } from "@/shared/components/ui/button";
 import type { Locale } from "@/shared/config/locale";
@@ -61,7 +61,7 @@ function EventsList({ allEvents, city, events, filters, locale, timezone }: Even
                 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground"
                 id={`events-day-${group.date}`}
               >
-                {formatDayHeading(group.date, locale)}
+                {formatDayHeading(group.date, locale, timezone)}
               </h2>
               <div className="grid gap-3 lg:grid-cols-2">
                 {group.events.map((event) => (
@@ -140,11 +140,21 @@ function createEventsHref(city: City, filters: EventsUiFilters) {
   return `${getEventsPath(city)}${query ? `?${query}` : ""}`;
 }
 
-function formatDayHeading(date: string, locale: Locale) {
-  return formatDateTime(new Date(`${date}T12:00:00.000Z`), {
+// The heading is always the calendar date; today is additionally marked rather than replaced, so
+// the reader still sees which day it is. "Today" is resolved with the same helper and timezone the
+// grouping itself uses, so the marker cannot land on a different day than the group it labels, and
+// the route renders per request (revalidate = 0) so this is request time, never build time. The
+// capitalisation and the marker match /izlasci, which groups by day in exactly the same way.
+function formatDayHeading(date: string, locale: Locale, timeZone: string, now = new Date()) {
+  const label = formatDateTime(new Date(`${date}T12:00:00.000Z`), {
     formatOptions: { dateStyle: "full", timeStyle: undefined },
     locale: getLocaleTag(locale),
   }).label;
+  if (!label) return label;
+  if (date === getLocalDate(now, timeZone)) {
+    return `${locale === "me" ? "Danas" : "Today"} — ${label}`;
+  }
+  return `${label[0].toLocaleUpperCase(getLocaleTag(locale))}${label.slice(1)}`;
 }
 
 export { EventsList, type EventsListProps };

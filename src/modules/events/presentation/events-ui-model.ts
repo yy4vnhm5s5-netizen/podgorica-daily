@@ -258,6 +258,7 @@ export {
   getHomepageEvents,
   getHomepageEventsTodayCount,
   getHomepageVenueName,
+  getLocalDate,
   groupEventsByDay,
   isHomepageEventsUnavailable,
   parseEventsUiFilters,

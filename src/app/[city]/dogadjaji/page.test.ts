@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-import { getEventsTranslations } from "@/modules/events/presentation/events-translations";
 import { getCity, getCityName } from "@/shared/config/cities";
 
 test("events page title and H1 are built per-city, not from the shared Podgorica-only heading string", async () => {
@@ -33,45 +32,49 @@ test("the per-city heading formula produces the exact required strings for Tivat
   assert.equal(getEventsPageHeading(getCityName(podgorica, "locative")), "Događaji u Podgorici");
 });
 
-test("the metadata description is built per-city, not the shared Podgorica-only supportingText string", async () => {
+test("the metadata description is built per-city, not the shared Podgorica-only supportingText", async () => {
   const source = await readFile(new URL("./page.tsx", import.meta.url), "utf8");
 
   assert.doesNotMatch(source, /description: translations\.supportingText,/u);
-  assert.match(source, /function getEventsPageDescription\(city: City, podgoricaDescription: string\)/u);
-  assert.match(
-    source,
-    /description: getEventsPageDescription\(context\.city, translations\.supportingText\),/u,
-  );
+  assert.match(source, /description: getEventsPageDescription\(context\.city\),/u);
 });
 
-test("Podgorica keeps its exact existing description; other cities get a generic, non-Podgorica one", () => {
-  const podgoricaDescription = getEventsTranslations("me").supportingText;
-  const podgorica = getCity("podgorica");
+test("the description describes dated listings from official sources, and uses the registry", async () => {
+  const source = await readFile(new URL("./page.tsx", import.meta.url), "utf8");
+
+  // Pinned against the implementation, not a copy of it: the one template, interpolating the
+  // registry locative rather than any hand-written city form.
+  assert.match(source, /const cityName = getCityName\(city, "locative"\);/u);
+  assert.match(source, /Predstojeći događaji i dešavanja u \$\{cityName\}, grupisani po danima/u);
+  assert.match(source, /iz zvaničnih izvora, sa filterima za danas, sjutra i ovaj vikend\./u);
+  // Offering a "danas" filter is not a claim that anything is on today.
+  assert.doesNotMatch(source, /svi\s+događaji|kompletan\s+kalendar|\buživo\b/iu);
+
+  // Tivat's irregular locative must survive, and it must not inherit Podgorica's adjective.
   const tivat = getCity("tivat");
-  assert.ok(podgorica);
   assert.ok(tivat);
-
-  const getEventsPageDescription = (city: NonNullable<typeof podgorica>, fallback: string) =>
-    city.id === "podgorica"
-      ? fallback
-      : `Provjereni programi iz zvaničnih izvora u ${getCityName(city, "locative")}.`;
-
-  assert.equal(
-    getEventsPageDescription(podgorica, podgoricaDescription),
-    "Provjereni programi iz zvaničnih podgoričkih izvora.",
-  );
-  assert.equal(
-    getEventsPageDescription(tivat, podgoricaDescription),
-    "Provjereni programi iz zvaničnih izvora u Tivtu.",
-  );
-  assert.equal(
-    getEventsPageDescription(tivat, podgoricaDescription).includes("podgor"),
-    false,
-  );
+  assert.equal(getCityName(tivat, "locative"), "Tivtu");
+  assert.doesNotMatch(source, /podgoričkih/u);
 });
 
 test("Budva still has no events route, so its events page and metadata remain a 404 and untouched", () => {
   const budva = getCity("budva");
   assert.ok(budva);
   assert.equal(budva.capabilities?.includes("events"), false);
+});
+
+test("the day heading marks today in the city timezone, without replacing the date", async () => {
+  const source = await readFile(
+    new URL("../../../modules/events/presentation/events-list.tsx", import.meta.url),
+    "utf8",
+  );
+
+  // Resolved with the same helper and timezone groupEventsByDay uses, so the marker cannot label
+  // a different day than the group it sits on, and it is request time (revalidate = 0).
+  assert.match(source, /date === getLocalDate\(now, timeZone\)/u);
+  assert.match(source, /formatDayHeading\(group\.date, locale, timezone\)/u);
+  // The marker is a prefix on the full date, never a replacement for it.
+  assert.match(source, /"Danas" : "Today"\} — \$\{label\}/u);
+  // No route was added for the intent.
+  assert.doesNotMatch(source, /\/danas/u);
 });
