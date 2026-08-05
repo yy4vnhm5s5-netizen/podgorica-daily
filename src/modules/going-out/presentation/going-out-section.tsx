@@ -135,21 +135,25 @@ function getResponsiveCardVisibilityClass(index: number) {
   return "hidden lg:block";
 }
 
+// Matches the canonical /izlasci copy: the empty state describes what Gradom has, not what the
+// city is doing, and the subtitle names the inventory rather than categories the listing model
+// does not store. The city is omitted from the empty sentence only because the whole dashboard is
+// already scoped to one city.
 const montenegrinCopy = {
   all: "Pogledaj sve izlaske",
-  empty: "Trenutno nema najavljenih izlazaka.",
+  empty: "Trenutno nemamo dostupne najave izlazaka.",
   stale: "Prikazani su posljednji dostupni podaci.",
-  subtitle: "Muzika, nastupi i noćni život",
-  title: "Predstojeći nastupi",
+  subtitle: "Izlasci i dešavanja",
+  title: "Izlasci",
   unavailable: "Podaci trenutno nijesu dostupni.",
 } as const;
 
 const englishCopy = {
   all: "All nights out",
-  empty: "There are no upcoming nights out right now.",
+  empty: "We have no listings right now.",
   stale: "The latest available data is shown.",
-  subtitle: "Music, performances and nightlife",
-  title: "Nights out",
+  subtitle: "Nights out and events",
+  title: "Going out",
   unavailable: "Data is currently unavailable.",
 } as const;
 
