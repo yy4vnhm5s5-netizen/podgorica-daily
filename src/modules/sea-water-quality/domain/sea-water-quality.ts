@@ -16,6 +16,9 @@ interface SeaWaterQualityLocation {
   grade: SeaWaterQualityGrade;
   id: number;
   name: string;
+  // The official WKT measurement-zone polygon, verbatim from JPMD. Never a sampling coordinate:
+  // JPMD's own gSirina/gDuzina point fields are null for every record and are not read.
+  officialGeometry?: string;
   samplingDateTime?: string;
   samplingDate?: string;
 }
@@ -37,6 +40,7 @@ interface SeaWaterQualityHistoryLocation {
   firstSeenRound: number;
   lastSeenRound: number;
   measurements: SeaWaterQualityHistoryMeasurement[];
+  officialGeometry?: string;
   presentInLatestRound: boolean;
   sourceLocationId: number;
 }

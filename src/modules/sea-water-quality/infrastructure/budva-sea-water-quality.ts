@@ -42,6 +42,9 @@ const mapResponseSchema = z
       z
         .object({
           datumUzorkovanja: z.string(),
+          // The official measurement-zone polygon. Declared so it survives into the domain; the
+          // sibling gSirina/gDuzina fields are deliberately NOT read — JPMD leaves them null.
+          geometrija: z.string().nullable().optional(),
           id: z.number(),
           kalendar: z.number().optional(),
           naziv: z.string(),
@@ -186,6 +189,7 @@ function parseBudvaSeaWaterQualitySummary(
       id: measurement.id,
       name: measurement.naziv,
       ...(measurement.plaza ? { beachName: measurement.plaza } : {}),
+      ...(measurement.geometrija ? { officialGeometry: measurement.geometrija } : {}),
       ...(measurement.vrijemeUzorkovanja
         ? { samplingDateTime: measurement.vrijemeUzorkovanja }
         : {}),

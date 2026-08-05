@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowRight, ArrowUp, Waves } from "lucide-react";
+import { ArrowDown, ArrowRight, ArrowUp, MapPin, Waves } from "lucide-react";
 import Link from "next/link";
 
 import type {
@@ -7,6 +7,7 @@ import type {
   SeaWaterQualityHistoryMeasurement,
 } from "../domain/sea-water-quality.ts";
 import { getGradeBadgeClassName, gradeLabels } from "./sea-water-quality-grade-styles";
+import { getSeaWaterQualityMapUrl } from "./sea-water-quality-map-point";
 import { getSeaWaterQualityLocationBreadcrumbTrail } from "./sea-water-quality-location-structured-data";
 import {
   getDistinctBeachName,
@@ -60,6 +61,9 @@ function SeaWaterQualityLocationPage({
   });
   const beachName = getDistinctBeachName(location);
   const summary = getSeaWaterQualityLocationSummary(location);
+  // Derived from THIS location's own official polygon — never a sibling's, and never presented as
+  // the sampling coordinate itself (see sea-water-quality-map-point.ts).
+  const mapUrl = getSeaWaterQualityMapUrl(location.officialGeometry);
   const relatedLocations = history ? getRelatedSeaWaterQualityLocations(history, location) : [];
 
   return (
@@ -149,6 +153,19 @@ function SeaWaterQualityLocationPage({
               </span>
             ) : null}
           </div>
+          {mapUrl ? (
+            <a
+              aria-label="Otvori zonu mjernog mjesta na mapi"
+              className="mt-3 inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              href={mapUrl}
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              <MapPin aria-hidden="true" className="size-4" strokeWidth={1.8} />
+              Zona mjernog mjesta na mapi
+              <NewTabNotice locale={locale} />
+            </a>
+          ) : null}
         </section>
       ) : null}
 

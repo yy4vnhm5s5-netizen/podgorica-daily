@@ -124,6 +124,11 @@ function mergeSeaWaterQualityHistory({
         existing?.measurements ?? [],
         createHistoryMeasurement(location, round),
       ),
+      // Carried so the detail page can offer a map focus for the official zone. Falls back to the
+      // stored value when a round omits it, so an existing snapshot never loses its geometry.
+      ...(location.officialGeometry ?? existing?.officialGeometry
+        ? { officialGeometry: location.officialGeometry ?? existing?.officialGeometry }
+        : {}),
       presentInLatestRound: true,
       sourceLocationId: location.id,
     };
@@ -188,6 +193,7 @@ function mergeSeaWaterQualityHistoryBackfill({
         firstSeenRound: round,
         lastSeenRound: round,
         measurements: [measurement],
+        ...(location.officialGeometry ? { officialGeometry: location.officialGeometry } : {}),
         presentInLatestRound: false,
         sourceLocationId: location.id,
       };
