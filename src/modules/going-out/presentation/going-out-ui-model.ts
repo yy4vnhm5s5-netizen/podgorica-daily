@@ -2,7 +2,7 @@ import { getLocaleTag, type Locale } from "../../../shared/config/locale.ts";
 import { formatDateTime } from "../../../shared/lib/date.ts";
 
 import type { GoingOutEvent } from "../domain/going-out-event.ts";
-import { selectUpcomingGoingOutEvents } from "../domain/going-out-event.ts";
+import { getLocalIsoDate, selectUpcomingGoingOutEvents } from "../domain/going-out-event.ts";
 import type { GoingOutCacheState } from "../infrastructure/montegigs-going-out.ts";
 
 type GoingOutDisplayState = "empty" | "events" | "stale" | "unavailable";
@@ -57,12 +57,19 @@ function groupGoingOutEventsByDate(events: readonly GoingOutEvent[]): readonly G
     .map(([date, groupedEvents]) => ({ date, events: groupedEvents }));
 }
 
-function formatGoingOutDateHeading(date: string, locale: Locale) {
+// The heading is always the calendar date; when that date is today in Podgorica it is additionally
+// marked rather than replaced, so "tomorrow" still reads as a date and the marker cannot mislead.
+// "Today" is decided by the same helper that decides which listings count as upcoming, so the two
+// can never disagree, and the route renders per request (revalidate = 0) so this is request time
+// and never build time.
+function formatGoingOutDateHeading(date: string, locale: Locale, now = new Date()) {
   const label = formatDateTime(new Date(`${date}T12:00:00.000Z`), {
     formatOptions: { dateStyle: "full", timeStyle: undefined },
     locale: getLocaleTag(locale),
   }).label;
-  return label ? `${label[0].toLocaleUpperCase(getLocaleTag(locale))}${label.slice(1)}` : label;
+  if (!label) return label;
+  if (date === getLocalIsoDate(now)) return `${locale === "me" ? "Danas" : "Today"} — ${label}`;
+  return `${label[0].toLocaleUpperCase(getLocaleTag(locale))}${label.slice(1)}`;
 }
 
 // The grouped /izlasci card sits under a day heading that already states the date, so it shows

@@ -70,7 +70,32 @@ test("invents no day and returns nothing for an empty list", () => {
 });
 
 test("renders a full Montenegrin date heading, capitalised", () => {
-  assert.equal(formatGoingOutDateHeading("2026-08-04", "me"), "Utorak, 4. avgust 2026.");
+  // A fixed "now" on a different day, so the assertion never depends on when the suite runs.
+  const otherDay = new Date("2026-08-20T09:00:00.000Z");
+
+  assert.equal(formatGoingOutDateHeading("2026-08-04", "me", otherDay), "Utorak, 4. avgust 2026.");
+});
+
+test("marks today without replacing the date, and leaves other days alone", () => {
+  const duringToday = new Date("2026-08-04T09:00:00.000Z");
+  const today = formatGoingOutDateHeading("2026-08-04", "me", duringToday);
+
+  assert.match(today, /^Danas — /u);
+  // The calendar date survives the marker: a reader still sees which day it is.
+  assert.match(today, /utorak, 4\. avgust 2026\./u);
+  assert.equal(
+    formatGoingOutDateHeading("2026-08-05", "me", duringToday),
+    "Srijeda, 5. avgust 2026.",
+  );
+});
+
+test("today is decided in Podgorica time, matching the upcoming filter", () => {
+  // 23:30 UTC on 4 August is already 5 August in Podgorica (UTC+2), and the same helper decides
+  // which listings count as upcoming — so the marker and the filter cannot disagree.
+  const lateEvening = new Date("2026-08-04T23:30:00.000Z");
+
+  assert.match(formatGoingOutDateHeading("2026-08-05", "me", lateEvening), /^Danas — /u);
+  assert.doesNotMatch(formatGoingOutDateHeading("2026-08-04", "me", lateEvening), /^Danas/u);
 });
 
 test("the page groups by day and demotes the card title below the day heading", async () => {

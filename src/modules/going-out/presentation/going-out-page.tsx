@@ -68,7 +68,11 @@ function GoingOutPage({ city, events, locale, state }: GoingOutPageProps) {
         </div>
       ) : (
         <EmptyState
-          description={displayState === "unavailable" ? copy.unavailable : copy.empty}
+          description={
+            displayState === "unavailable"
+              ? copy.unavailable
+              : copy.empty.replace("{city}", cityName)
+          }
           title={copy.title.replace("{city}", cityName)}
         />
       )}
@@ -128,19 +132,24 @@ function GoingOutPageCard({ event, locale }: { event: GoingOutEvent; locale: Loc
   );
 }
 
+// Only what a listing actually carries: a title, the day, and — when the source gave them — a
+// start time and a venue. There is no category, description, organiser, performer or price in the
+// model, so the copy names none of them, and it never claims to cover everything happening in the
+// city. The empty state describes Gradom's own listings, not the city's nightlife.
 const montenegrinCopy = {
   description:
-    "Pronađite koncerte, DJ večeri, svirke, žurke i druge izlaske u {city} na jednom mjestu.",
-  empty: "Trenutno nema najavljenih izlazaka.",
+    "Pregled predstojećih izlazaka i dešavanja u {city}, grupisan po danima, sa vremenom početka i mjestom kada su poznati.",
+  empty: "Trenutno nemamo dostupne najave izlazaka u {city}.",
   source: "Pogledajte na MonteGigs-u",
   stale: "Prikazani su posljednji dostupni podaci.",
-  title: "Izlasci u {city} – koncerti, žurke i noćni život",
+  title: "Izlasci u {city}",
   unavailable: "Podaci trenutno nijesu dostupni.",
 } as const;
 
 const englishCopy = {
-  description: "Upcoming music performances, parties and other nights out in {city}.",
-  empty: "There are no upcoming nights out right now.",
+  description:
+    "Upcoming nights out and events in {city}, grouped by day, with start time and venue where known.",
+  empty: "We have no listings for {city} right now.",
   source: "View on MonteGigs",
   stale: "The latest available data is shown.",
   title: "Nights out in {city}",

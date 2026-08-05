@@ -25,8 +25,11 @@ async function generateMetadata({ params }: GoingOutRouteProps): Promise<Metadat
   const context = resolveActiveCityFeatureRoute(slug, "goingOut");
   if (!context || !isCityPublicFeatureRouteAvailable(context.city, "goingOut")) return {};
   const cityName = getCityName(context.city, "locative");
-  const title = `Izlasci u ${cityName} – koncerti, žurke i noćni život`;
-  const description = `Pronađite koncerte, DJ večeri, svirke, žurke i druge izlaske u ${cityName} na jednom mjestu.`;
+  // The title used to append a list of nightlife categories the listing model does not store —
+  // a keyword tail rather than a description of the page. "dešavanja" stays because it is the same
+  // inventory under the word people actually search for, and it remains true on any day.
+  const title = `Izlasci i dešavanja u ${cityName}`;
+  const description = `Predstojeći izlasci i dešavanja u ${cityName}, grupisani po danima, sa vremenom početka i mjestom kada su poznati. Izvor: MonteGigs.`;
   const metadataTitle = getPageTitle(title);
 
   return createPublicRouteMetadata({
