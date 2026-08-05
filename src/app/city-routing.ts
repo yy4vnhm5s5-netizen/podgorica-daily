@@ -68,9 +68,13 @@ function getCityLandingMetadata(context: CityContext) {
       : []),
     ...(supportsCityCapability(context.city, "electricity") ? ["servisnim obavještenjima"] : []),
   ];
+  // "za grad" governs the accusative, and the apposition has to agree with it: production shipped
+  // "za grad Podgorica" and "za grad Budva" because the nominative default was used here. The four
+  // masculine names are identical in both cases, which is why only two of six looked wrong.
+  const cityName = getCityName(context.city, "accusative");
   const description = availableServices.length
-    ? `Pouzdane lokalne informacije za grad ${getCityName(context.city)}, sa podacima o ${availableServices.join(", ")}.`
-    : `Pouzdane lokalne informacije za grad ${getCityName(context.city)}.`;
+    ? `Pouzdane lokalne informacije za grad ${cityName}, sa podacima o ${availableServices.join(", ")}.`
+    : `Pouzdane lokalne informacije za grad ${cityName}.`;
 
   return createPublicRouteMetadata({ canonical, description, title: getCityLandingTitle(context) });
 }

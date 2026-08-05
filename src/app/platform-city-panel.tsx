@@ -25,6 +25,7 @@ import type {
   CityHighlightVisual,
   PlatformCityCardData,
 } from "@/app/platform-homepage-data";
+import { getCityName } from "@/shared/config/cities";
 import { cn } from "@/shared/lib/utils";
 
 const highlightIcons = {
@@ -136,7 +137,8 @@ function CityCard({ card }: { card: PlatformCityCardData }) {
                 {card.city.name}
               </h3>
               <p className="max-w-sm text-sm leading-5 text-muted-foreground">
-                {card.city.description ?? `Lokalne informacije za grad ${card.city.name}.`}
+                {card.city.description ??
+                  `Lokalne informacije za grad ${getCityName(card.city, "accusative")}.`}
               </p>
             </div>
           </div>

@@ -16,7 +16,12 @@ import {
   resolveActiveCityRoute,
 } from "./city-routing.ts";
 import { resolveCityContextCapability } from "@/config/city-context";
-import { createCityContext, supportsCityCapability } from "@/shared/config/cities";
+import {
+  createCityContext,
+  getActiveCities,
+  getCityName,
+  supportsCityCapability,
+} from "@/shared/config/cities";
 import type { City } from "@/shared/types/city";
 
 function city(overrides: Partial<City> = {}): City {
@@ -70,15 +75,19 @@ test("uses capability-aware metadata and summary routes for a future city", () =
 });
 
 test("advertises sea-water coverage on the hub of every city that declares the capability", () => {
-  for (const cityId of ["bar", "budva", "kotor", "tivat"]) {
+  for (const cityId of ["bar", "budva", "kotor", "tivat", "ulcinj"]) {
     const context = createCityContext(cityId);
     const description = getCityLandingMetadata(context).description ?? "";
 
     assert.equal(supportsCityCapability(context.city, "seaWaterQuality"), true);
     assert.match(getCityLandingTitle(context), /plaže/u, `${cityId} title must mention beaches`);
     assert.match(description, /plažama i kvalitetu mora/u, `${cityId} description`);
-    // The locative city form and the canonical must be unaffected by the added wording.
-    assert.match(description, new RegExp(`za grad ${context.city.name}`, "u"));
+    // "za grad" governs the accusative — this assertion used to encode the nominative, which is
+    // how "za grad Budva" reached production.
+    assert.match(
+      description,
+      new RegExp(`za grad ${getCityName(context.city, "accusative")}`, "u"),
+    );
     assert.equal(getCityLandingMetadata(context).alternates?.canonical, `/${context.city.slug}`);
   }
 });
@@ -278,4 +287,39 @@ test("Kotor exposes only its capability-supported public routes", () => {
   assert.equal(isCityPublicFeatureRouteAvailable(kotor, "water"), true);
   assert.equal(isCityPublicFeatureRouteAvailable(kotor, "railway"), false);
   assert.equal(isCityPublicFeatureRouteAvailable(kotor, "seaWaterQuality"), true);
+});
+
+test("every city hub description agrees in case with the preposition governing it", () => {
+  // The registry carries every form; only two of six names differ between nominative and
+  // accusative, which is exactly why the wrong one survived unnoticed in production.
+  for (const city of getActiveCities()) {
+    const context = createCityContext(city.id);
+    const description = getCityLandingMetadata(context).description ?? "";
+
+    assert.match(
+      description,
+      new RegExp(`za grad ${getCityName(city, "accusative")}[,.]`, "u"),
+      city.id,
+    );
+    if (getCityName(city, "accusative") !== city.name) {
+      assert.doesNotMatch(description, new RegExp(`za grad ${city.name}[,.]`, "u"), city.id);
+    }
+  }
+});
+
+test("the registry blurb names every service group the city actually has", () => {
+  // Kotor gained beaches and Ulcinj gained electricity and water after their blurbs were written,
+  // so both under-described the city on its homepage card. This pins the drift, not the wording:
+  // a broad group ("plaže", "servisne informacije"), never an exhaustive capability list.
+  for (const city of getActiveCities()) {
+    const blurb = city.description ?? "";
+    assert.notEqual(blurb, "", city.id);
+
+    if (supportsCityCapability(city, "seaWaterQuality")) {
+      assert.match(blurb, /plaž/iu, `${city.id} has beaches but does not mention them`);
+    }
+    if (supportsCityCapability(city, "electricity") || supportsCityCapability(city, "water")) {
+      assert.match(blurb, /servisne informacije|struja/iu, `${city.id} has service alerts`);
+    }
+  }
 });
