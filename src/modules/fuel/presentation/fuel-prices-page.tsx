@@ -1,5 +1,4 @@
 import {
-  Droplet,
   ExternalLink,
   Fuel,
   Minus,
@@ -54,25 +53,26 @@ const copy = {
 // The cache keeps the full official history; a page shows a readable slice of it.
 const historyRowLimit = 12;
 
-// Fuel identity only: the gradient, the top border and the icon container. Written out in full
-// because Tailwind only ships classes it can see in the source — a class name composed at runtime
-// would be purged and render unstyled. The -700 text shade is used rather than -600 because -600
-// on the matching -50 tint measures 3.6:1, below the 4.5:1 this design requires.
-const fuelCardAccents: Record<FuelProductId, { icon: string; surface: string }> = {
+// Fuel identity: the gradient, the top border and the product name itself, which now carries the
+// identity instead of a decorative icon. Written out in full because Tailwind only ships classes it
+// can see in the source — a class name composed at runtime would be purged and render unstyled.
+// The -700 text shade is used rather than -600 because -600 on the matching -50 tint measures
+// 3.6:1, below the 4.5:1 this design requires.
+const fuelCardAccents: Record<FuelProductId, { name: string; surface: string }> = {
   eurodiesel: {
-    icon: "bg-amber-100 text-amber-700",
+    name: "text-amber-700",
     surface: "border-t-2 border-t-amber-500 bg-gradient-to-br from-amber-50 to-amber-100",
   },
   eurosuper95: {
-    icon: "bg-emerald-100 text-emerald-700",
+    name: "text-emerald-700",
     surface: "border-t-2 border-t-emerald-500 bg-gradient-to-br from-emerald-50 to-emerald-100",
   },
   eurosuper98: {
-    icon: "bg-blue-100 text-blue-700",
+    name: "text-blue-700",
     surface: "border-t-2 border-t-blue-500 bg-gradient-to-br from-blue-50 to-blue-100",
   },
   heatingOil: {
-    icon: "bg-violet-100 text-violet-700",
+    name: "text-violet-700",
     surface: "border-t-2 border-t-violet-500 bg-gradient-to-br from-violet-50 to-violet-100",
   },
 };
@@ -83,13 +83,6 @@ const changeBadges: Record<FuelPriceChangeDirection, string> = {
   decrease: "bg-emerald-50 text-emerald-700",
   increase: "bg-red-50 text-red-700",
   unchanged: "bg-slate-100 text-slate-700",
-};
-
-const fuelCardIcons: Record<FuelProductId, LucideIcon> = {
-  eurodiesel: Fuel,
-  eurosuper95: Fuel,
-  eurosuper98: Fuel,
-  heatingOil: Droplet,
 };
 
 const changeIcons: Record<FuelPriceChangeDirection, LucideIcon> = {
@@ -271,7 +264,6 @@ function FuelPriceCard({ change, locale, priceCents, productId }: FuelPriceCardP
   const accent = fuelCardAccents[productId];
   const localeTag = getLocaleTag(locale);
   const price = formatFuelPrice(priceCents, localeTag);
-  const ProductIcon = fuelCardIcons[productId];
   const ChangeIcon = change ? changeIcons[change.direction] : undefined;
 
   return (
@@ -285,20 +277,12 @@ function FuelPriceCard({ change, locale, priceCents, productId }: FuelPriceCardP
       role="group"
     >
       <CardContent className="p-4 pt-4 sm:p-5 sm:pt-5">
-        {/* The name owns the header row on its own. Sharing it with the change badge left too
-            little width in the four-column layout, and the official product name is information
-            the page exists to carry — it wraps if it must, but it is never shortened. */}
-        <div className="flex items-center gap-3">
-          <span
-            className={cn(
-              "flex size-10 shrink-0 items-center justify-center rounded-full",
-              accent.icon,
-            )}
-          >
-            <ProductIcon aria-hidden="true" className="size-5" />
-          </span>
-          <span className="text-sm font-medium leading-snug">{fuelProductNames[productId]}</span>
-        </div>
+        {/* The name is the card's identifier now, in the fuel's own accent colour. Uppercase is
+            styling only: the accessible label still uses the official mixed-case name. It owns the
+            row alone and wraps if it must, but it is never shortened. */}
+        <p className={cn("text-sm font-bold uppercase leading-snug tracking-wide", accent.name)}>
+          {fuelProductNames[productId]}
+        </p>
         <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
           <p className="text-2xl font-bold tracking-tight">
             <span className="tabular-nums">{price}</span>{" "}

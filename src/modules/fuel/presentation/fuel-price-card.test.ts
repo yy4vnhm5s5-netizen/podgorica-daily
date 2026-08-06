@@ -68,14 +68,45 @@ test("each card is a group with its own accessible name", async () => {
   assert.deepEqual(label?.[1], "productId, priceCents, localeTag, change");
 });
 
-test("every icon is decorative, because the text already carries the meaning", async () => {
+test("no fuel or droplet icon is rendered inside a card", async () => {
+  const source = await pageSource();
   const card = await cardSource();
 
-  const icons = [...card.matchAll(/<(ProductIcon|ChangeIcon)\b([^>]*)>/gu)];
-  assert.equal(icons.length, 2);
+  // The product name is the identifier now; the decorative glyph is gone, imports included.
+  assert.doesNotMatch(card, /<(?:Fuel|Droplet|ProductIcon)\b/u);
+  assert.doesNotMatch(source, /\bDroplet\b/u);
+  assert.doesNotMatch(source, /fuelCardIcons/u);
+});
+
+test("the only icon left in a card is the change indicator, and it stays decorative", async () => {
+  const card = await cardSource();
+
+  const icons = [...card.matchAll(/<(ChangeIcon)\b([^>]*)>/gu)];
+  assert.equal(icons.length, 1);
   for (const [, name, attributes] of icons) {
     assert.match(attributes, /aria-hidden="true"/u, `${name} must be hidden from assistive tech`);
   }
+});
+
+test("the page heading keeps its own fuel icon", async () => {
+  const source = await pageSource();
+
+  // Only the cards lost their icons: the H1 mark is untouched.
+  assert.match(source, /icon=\{Fuel\}/u);
+  assert.match(source, /id="gorivo-heading"/u);
+});
+
+test("the product name is uppercased by styling, not by rewriting the official name", async () => {
+  const card = await cardSource();
+  const source = await pageSource();
+
+  const [, nameClasses] = /className=\{cn\("([^"]*)", accent\.name\)\}/u.exec(card) ?? [];
+  assert.ok(nameClasses, "the product name must carry its own class list");
+  assert.match(nameClasses, /\buppercase\b/u);
+  assert.match(nameClasses, /\bfont-bold\b/u);
+  // The domain names keep their official casing, so the accessible label is unaffected.
+  assert.doesNotMatch(source, /toUpperCase/u);
+  assert.match(card, /\{fuelProductNames\[productId\]\}/u);
 });
 
 test("each fuel has its own accent, and no two share one", async () => {
@@ -93,8 +124,11 @@ test("each fuel has its own accent, and no two share one", async () => {
   const accentKeys = [...accents.matchAll(/^\s*(\w+):/gmu)].map(([, key]) => key);
   assert.deepEqual(
     [...new Set(accentKeys)].sort(),
-    ["eurodiesel", "eurosuper95", "eurosuper98", "heatingOil", "icon", "surface"],
+    ["eurodiesel", "eurosuper95", "eurosuper98", "heatingOil", "name", "surface"],
   );
+  // Each identity now colours the product name, one distinct family each.
+  const nameTones = [...accents.matchAll(/name: "text-([a-z]+)-700"/gu)].map(([, tone]) => tone);
+  assert.deepEqual(nameTones.sort(), ["amber", "blue", "emerald", "violet"]);
 });
 
 test("accent classes are written out, never composed at runtime", async () => {
@@ -165,11 +199,12 @@ test("nothing in the card can truncate or clamp the product name", async () => {
   ]) {
     assert.doesNotMatch(card, shortener, `card must not apply ${String(shortener)} to its content`);
   }
-  // The name has the header row to itself, so it cannot be squeezed by the change badge.
-  const [, header] = /<div className="flex items-center gap-3">([\s\S]*?)<\/div>/u.exec(card) ?? [];
-  assert.ok(header);
-  assert.match(header, /\{fuelProductNames\[productId\]\}/u);
-  assert.doesNotMatch(header, /changeBadges|ChangeIcon/u);
+  // The name stands alone in its own element, so the change badge cannot squeeze it.
+  const namePattern = /<p className=\{cn\([^}]*accent\.name\)\}>([\s\S]*?)<\/p>/u;
+  const [, nameElement] = namePattern.exec(card) ?? [];
+  assert.ok(nameElement);
+  assert.match(nameElement, /\{fuelProductNames\[productId\]\}/u);
+  assert.doesNotMatch(nameElement, /changeBadges|ChangeIcon/u);
 });
 
 test("the price, unit and hint are in the card, with figures aligned", async () => {
