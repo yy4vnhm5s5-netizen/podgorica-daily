@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-import { fuelProductIds } from "../domain/fuel-price.ts";
+import { fuelProductIds, fuelProductNames } from "../domain/fuel-price.ts";
 import { getFuelCardLabel } from "./fuel-card-label.ts";
 
 const pageSource = async () => readFile(new URL("./fuel-prices-page.tsx", import.meta.url), "utf8");
@@ -136,6 +136,40 @@ test("the badge icon and the amount share one semantic state", async () => {
   assert.match(icons, /decrease: TrendingDown/u);
   assert.match(icons, /increase: TrendingUp/u);
   assert.match(icons, /unchanged: Minus/u);
+});
+
+test("the full official product name is rendered, never a shortened one", async () => {
+  const card = await cardSource();
+
+  // The card prints the domain name verbatim; nothing rewrites or abbreviates it on the way out.
+  assert.match(card, /\{fuelProductNames\[productId\]\}/u);
+  assert.deepEqual(
+    fuelProductIds.map((productId) => fuelProductNames[productId]),
+    ["Eurosuper 95", "Eurosuper 98", "Eurodizel", "Lož ulje"],
+  );
+  // "Eurosuper 95" and "Eurosuper 98" are the two that were being cut to "Eurosupe…".
+  for (const name of ["Eurosuper 95", "Eurosuper 98"]) {
+    assert.equal(Object.values(fuelProductNames).includes(name), true);
+  }
+});
+
+test("nothing in the card can truncate or clamp the product name", async () => {
+  const card = await cardSource();
+
+  for (const shortener of [
+    /\btruncate\b/u,
+    /\btext-ellipsis\b/u,
+    /\bline-clamp-\d/u,
+    /\boverflow-hidden\b/u,
+    /\btext-clip\b/u,
+  ]) {
+    assert.doesNotMatch(card, shortener, `card must not apply ${String(shortener)} to its content`);
+  }
+  // The name has the header row to itself, so it cannot be squeezed by the change badge.
+  const [, header] = /<div className="flex items-center gap-3">([\s\S]*?)<\/div>/u.exec(card) ?? [];
+  assert.ok(header);
+  assert.match(header, /\{fuelProductNames\[productId\]\}/u);
+  assert.doesNotMatch(header, /changeBadges|ChangeIcon/u);
 });
 
 test("the price, unit and hint are in the card, with figures aligned", async () => {

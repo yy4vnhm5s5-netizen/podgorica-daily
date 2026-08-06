@@ -284,18 +284,24 @@ function FuelPriceCard({ change, locale, priceCents, productId }: FuelPriceCardP
       role="group"
     >
       <CardContent className="p-4 pt-4 sm:p-5 sm:pt-5">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex min-w-0 items-center gap-3">
-            <span
-              className={cn(
-                "flex size-10 shrink-0 items-center justify-center rounded-full",
-                accent.icon,
-              )}
-            >
-              <ProductIcon aria-hidden="true" className="size-5" />
-            </span>
-            <span className="truncate text-sm font-medium">{fuelProductNames[productId]}</span>
-          </div>
+        {/* The name owns the header row on its own. Sharing it with the change badge left too
+            little width in the four-column layout, and the official product name is information
+            the page exists to carry — it wraps if it must, but it is never shortened. */}
+        <div className="flex items-center gap-3">
+          <span
+            className={cn(
+              "flex size-10 shrink-0 items-center justify-center rounded-full",
+              accent.icon,
+            )}
+          >
+            <ProductIcon aria-hidden="true" className="size-5" />
+          </span>
+          <span className="text-sm font-medium leading-snug">{fuelProductNames[productId]}</span>
+        </div>
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+          <p className="text-2xl font-bold tracking-tight">
+            <span className="tabular-nums">{price}</span> €/l
+          </p>
           {change && ChangeIcon ? (
             <span
               className={cn(
@@ -310,9 +316,6 @@ function FuelPriceCard({ change, locale, priceCents, productId }: FuelPriceCardP
             </span>
           ) : null}
         </div>
-        <p className="mt-2 text-2xl font-bold tracking-tight">
-          <span className="tabular-nums">{price}</span> €/l
-        </p>
         <p className="mt-1 text-xs text-muted-foreground">{copy.lastPrice}</p>
       </CardContent>
     </Card>
