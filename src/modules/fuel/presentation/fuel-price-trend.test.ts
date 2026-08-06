@@ -7,6 +7,7 @@ import {
   fuelProductIds,
   type FuelPriceCalculation,
 } from "../domain/fuel-price.ts";
+import { formatFuelDay } from "./fuel-day-label.ts";
 import { getTrendPoints } from "./fuel-price-trend-model.ts";
 
 const trendSource = async () =>
@@ -188,4 +189,43 @@ test("every product is offered, in the official display order", async () => {
   // The selector is generated from the domain list, so a product can never be silently dropped.
   assert.match(source, /fuelProductIds\.map\(\(candidate\)/u);
   assert.deepEqual(fuelProductIds, ["eurosuper95", "eurosuper98", "eurodiesel", "heatingOil"]);
+});
+
+test("only serializable props cross the server-to-client boundary", async () => {
+  const page = await pageSource();
+  const trend = await trendSource();
+
+  const [, passedProps] = /<FuelPriceTrend([^>]*)\/>/u.exec(page) ?? [];
+  assert.ok(passedProps, "the page must render FuelPriceTrend as a self-closing element");
+  assert.deepEqual(
+    [...passedProps.matchAll(/(\w+)=\{/gu)].map(([, name]) => name).sort(),
+    ["calculations", "localeTag"],
+  );
+  // A callback prop is exactly what crashed the route: functions are not serializable.
+  assert.doesNotMatch(page, /formatDay=\{/u);
+
+  const [, declaredProps] = /interface FuelPriceTrendProps \{([\s\S]*?)\n\}/u.exec(trend) ?? [];
+  assert.ok(declaredProps, "the trend must declare its props interface");
+  // No function type, no Date, no Map/Set: the prop type cannot admit an unserializable value.
+  assert.doesNotMatch(declaredProps, /=>|\bDate\b|\bMap<|\bSet</u);
+});
+
+test("both sides of the boundary format a day through the same module", async () => {
+  const page = await pageSource();
+  const trend = await trendSource();
+
+  assert.match(page, /formatFuelDay\(date, getLocaleTag\(locale\)\)/u);
+  assert.match(trend, /formatFuelDay\(points\[0\]\.effectiveDate, localeTag\)/u);
+  // The chart labels the day the prices took effect, never the day the article was published.
+  assert.doesNotMatch(trend, /publishedAt/u);
+});
+
+test("a day label states the effective day, not the day before it", () => {
+  const label = formatFuelDay("2026-08-04", "sr-Latn-ME");
+
+  // Noon UTC keeps the label inside the Podgorica day; a midnight instant could render the 3rd.
+  assert.match(label, /\b4\b/u);
+  assert.match(label, /2026/u);
+  assert.notEqual(label, "2026-08-04");
+  assert.notEqual(label, formatFuelDay("2026-08-03", "sr-Latn-ME"));
 });

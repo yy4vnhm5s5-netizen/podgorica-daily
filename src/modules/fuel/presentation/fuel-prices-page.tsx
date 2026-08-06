@@ -8,6 +8,7 @@ import {
   type FuelPriceCalculation,
   type FuelPriceChange,
 } from "../domain/fuel-price";
+import { formatFuelDay } from "./fuel-day-label";
 import { FuelPriceTrend } from "./fuel-price-trend";
 import type { FuelPricesReadResult } from "../infrastructure/gov-me-fuel-prices";
 import { EmptyState } from "@/shared/components/empty-state";
@@ -15,7 +16,6 @@ import { NewTabNotice } from "@/shared/components/new-tab-notice";
 import { SectionTitle } from "@/shared/components/section-title";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { getLocaleTag, type Locale } from "@/shared/config/locale";
-import { formatDateTime } from "@/shared/lib/date";
 
 interface FuelPricesPageProps {
   locale: Locale;
@@ -41,10 +41,7 @@ const copy = {
 const historyRowLimit = 12;
 
 function formatDay(date: string, locale: Locale) {
-  return formatDateTime(new Date(`${date}T12:00:00.000Z`), {
-    formatOptions: { dateStyle: "long", timeStyle: undefined },
-    locale: getLocaleTag(locale),
-  }).label;
+  return formatFuelDay(date, getLocaleTag(locale));
 }
 
 function FuelPricesPage({ locale, result }: FuelPricesPageProps) {
@@ -140,11 +137,10 @@ function FuelPricesPage({ locale, result }: FuelPricesPageProps) {
               {/* The only client boundary on the page: the selector needs state. Current prices,
                   the effective date, the source link and the full history table above and below it
                   all stay server-rendered, so every official value is in the initial HTML. */}
-              <FuelPriceTrend
-                calculations={visible}
-                formatDay={(date) => formatDay(date, locale)}
-                localeTag={getLocaleTag(locale)}
-              />
+              {/* Only serializable props cross into the client: the calculation data and a
+                  locale tag. Date wording comes from the shared formatFuelDay module, which the
+                  chart imports directly — a function prop here is what crashed the route. */}
+              <FuelPriceTrend calculations={visible} localeTag={getLocaleTag(locale)} />
             </section>
           ) : null}
 

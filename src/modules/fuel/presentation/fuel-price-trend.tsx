@@ -10,6 +10,7 @@ import {
   type FuelPriceCalculation,
   type FuelProductId,
 } from "../domain/fuel-price";
+import { formatFuelDay } from "./fuel-day-label";
 import { getTrendPoints, type TrendPoint } from "./fuel-price-trend-model";
 import { getRovingTabIndex } from "@/shared/lib/roving-tab-index";
 import { cn } from "@/shared/lib/utils";
@@ -18,7 +19,7 @@ interface FuelPriceTrendProps {
   // The same normalized calculations the price cards and the history table render. There is no
   // second dataset and no separate historical parser: one official history, three views of it.
   calculations: readonly FuelPriceCalculation[];
-  formatDay: (date: string) => string;
+  // Only serializable values: a function prop cannot cross a Server → Client boundary.
   localeTag: string;
 }
 
@@ -26,7 +27,7 @@ interface FuelPriceTrendProps {
 // actually show a different set of points.
 const recentCount = 6;
 
-function FuelPriceTrend({ calculations, formatDay, localeTag }: FuelPriceTrendProps) {
+function FuelPriceTrend({ calculations, localeTag }: FuelPriceTrendProps) {
   const [productId, setProductId] = useState<FuelProductId>("eurosuper95");
   const [showAll, setShowAll] = useState(false);
   const tabsId = useId();
@@ -131,7 +132,6 @@ function FuelPriceTrend({ calculations, formatDay, localeTag }: FuelPriceTrendPr
             ) : null}
 
             <TrendChart
-              formatDay={formatDay}
               localeTag={localeTag}
               points={points}
               productName={fuelProductNames[productId]}
@@ -195,12 +195,10 @@ const chartHeight = 200;
 const padding = { bottom: 26, left: 46, right: 12, top: 14 };
 
 function TrendChart({
-  formatDay,
   localeTag,
   points,
   productName,
 }: {
-  formatDay: (date: string) => string;
   localeTag: string;
   points: readonly TrendPoint[];
   productName: string;
@@ -258,7 +256,7 @@ function TrendChart({
           <circle className="fill-amber-700" cx={x} cy={y} key={effectiveDate} r={3.5} />
         ))}
         <text className="fill-muted-foreground text-[11px]" x={padding.left} y={chartHeight - 6}>
-          {formatDay(points[0].effectiveDate)}
+          {formatFuelDay(points[0].effectiveDate, localeTag)}
         </text>
         <text
           className="fill-muted-foreground text-[11px]"
@@ -266,7 +264,7 @@ function TrendChart({
           x={chartWidth - padding.right}
           y={chartHeight - 6}
         >
-          {formatDay(points[points.length - 1].effectiveDate)}
+          {formatFuelDay(points[points.length - 1].effectiveDate, localeTag)}
         </text>
       </svg>
       <figcaption className="text-xs text-muted-foreground">
