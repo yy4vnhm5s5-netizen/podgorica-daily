@@ -15,6 +15,7 @@ import {
   getEventDetailPageTitle,
   getPublicCityEventById,
 } from "@/modules/events/presentation/events-ui-model";
+import { createEventDetailMetadataDescription } from "@/modules/events/presentation/event-detail-metadata";
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
 import type { CityEvent } from "@/modules/events/domain/event";
 import { getCityName } from "@/shared/config/cities";
@@ -67,18 +68,11 @@ async function generateMetadata({ params }: EventDetailPageProps): Promise<Metad
 
   if (!event) return {};
 
-  // Fallback only — used when the provider supplied no description. "u" governs the locative, so
-  // the nominative rendered "… u Podgorica." on every such event page. The event's own date is
-  // appended when it parses: without it this sentence carries no fact that distinguishes one
-  // event from the next, and the day is the discriminator a reader (and a search) needs.
-  // Always the event date, never the publication date, and never a time.
+  // Uses provider facts only: the event date (never publication date or an invented time), city
+  // grammar and optional venue, then a bounded plain-text source excerpt for a useful SERP snippet.
   const eventDay = getEventMetadataDay(event, locale);
   const cityLocative = getCityName(context.city, "locative");
-  const description =
-    event.description ??
-    (eventDay
-      ? `Informacije o događaju ${event.title} u ${cityLocative}, ${eventDay}.`
-      : `Informacije o događaju ${event.title} u ${cityLocative}.`);
+  const description = createEventDetailMetadataDescription({ cityLocative, event, eventDay });
 
   return createPublicRouteMetadata({
     canonical: getEventDetailPath(context.city, event.id),

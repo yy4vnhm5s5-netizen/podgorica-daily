@@ -30,7 +30,7 @@ async function generateMetadata({ params }: CinemaPageProps): Promise<Metadata> 
   // city grammar model, so any future cinema city gets its own correct form with no change here.
   const cityName = getCityName(context.city, "locative");
   const title = `Filmovi u ${cityName}`;
-  const description = `Aktuelni program Cineplexx bioskopa u ${cityName}.`;
+  const description = `Aktuelni Cineplexx repertoar u ${cityName}: filmovi i termini projekcija.`;
   const metadataTitle = getPageTitle(title);
 
   return createPublicRouteMetadata({

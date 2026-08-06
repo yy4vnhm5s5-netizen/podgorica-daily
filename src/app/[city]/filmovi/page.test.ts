@@ -62,18 +62,18 @@ test("derives the city form from the shared grammar model rather than naming Pod
   assert.doesNotMatch(source, /bioskopa u [^$]/u, "no city may be hardcoded in the description");
 });
 
-test("gives the meta description the same locative treatment as the title", async () => {
+test("gives the fuller cinema meta description the same locative treatment as the title", async () => {
   const source = await readFile(new URL("./page.tsx", import.meta.url), "utf8");
   const podgorica = getCity("podgorica");
   assert.ok(podgorica);
 
   assert.match(
     source,
-    /const description = `Aktuelni program Cineplexx bioskopa u \$\{cityName\}\.`;/u,
+    /const description = `Aktuelni Cineplexx repertoar u \$\{cityName\}: filmovi i termini projekcija\.`;/u,
   );
   assert.equal(
-    `Aktuelni program Cineplexx bioskopa u ${getCityName(podgorica, "locative")}.`,
-    "Aktuelni program Cineplexx bioskopa u Podgorici.",
+    `Aktuelni Cineplexx repertoar u ${getCityName(podgorica, "locative")}: filmovi i termini projekcija.`,
+    "Aktuelni Cineplexx repertoar u Podgorici: filmovi i termini projekcija.",
   );
 });
 
@@ -88,12 +88,10 @@ test("every cinema-capable city gets a grammatical title, not just Podgorica", (
   }
 });
 
-test("canonical URL and the visible H1 are untouched by the grammar fix", async () => {
+test("canonical URL remains unchanged by the grammar fix", async () => {
   const source = await readFile(new URL("./page.tsx", import.meta.url), "utf8");
 
   assert.match(source, /canonical: getCinemaPath\(context\.city\),/u);
-  // The H1 is the bare word "Filmovi" — it names no city, so it never had this bug.
-  assert.match(source, /title="Filmovi"/u);
 });
 
 test("the listing page keeps the external Cineplexx programme link", async () => {
@@ -137,7 +135,7 @@ test("the H1 change leaves title, description and canonical exactly as they were
   );
   assert.match(
     source,
-    /const description = `Aktuelni program Cineplexx bioskopa u \$\{cityName\}\.`;/u,
+    /const description = `Aktuelni Cineplexx repertoar u \$\{cityName\}: filmovi i termini projekcija\.`;/u,
   );
   assert.match(source, /canonical: getCinemaPath\(context\.city\),/u);
   // Internal linking and provider wiring are untouched by this pass.
