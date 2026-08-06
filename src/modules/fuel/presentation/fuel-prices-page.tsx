@@ -20,6 +20,7 @@ import {
 } from "../domain/fuel-price";
 import { changeWords, getFuelCardLabel } from "./fuel-card-label";
 import { formatFuelDay } from "./fuel-day-label";
+import { fuelUnitLabel } from "./fuel-price-unit";
 import { FuelPriceTrend } from "./fuel-price-trend";
 import type { FuelPricesReadResult } from "../infrastructure/gov-me-fuel-prices";
 import { EmptyState } from "@/shared/components/empty-state";
@@ -300,7 +301,9 @@ function FuelPriceCard({ change, locale, priceCents, productId }: FuelPriceCardP
         </div>
         <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
           <p className="text-2xl font-bold tracking-tight">
-            <span className="tabular-nums">{price}</span> €/l
+            <span className="tabular-nums">{price}</span>{" "}
+            {/* The unit steps down a size so the number stays the dominant thing on the card. */}
+            <span className="text-lg font-semibold">{fuelUnitLabel}</span>
           </p>
           {change && ChangeIcon ? (
             <span

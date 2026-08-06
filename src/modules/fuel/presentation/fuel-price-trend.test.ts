@@ -8,7 +8,11 @@ import {
   type FuelPriceCalculation,
 } from "../domain/fuel-price.ts";
 import { formatFuelDay } from "./fuel-day-label.ts";
-import { getTrendPoints } from "./fuel-price-trend-model.ts";
+import {
+  getTrendPointDetails,
+  getTrendPointLabel,
+  getTrendPoints,
+} from "./fuel-price-trend-model.ts";
 
 const trendSource = async () =>
   readFile(new URL("./fuel-price-trend.tsx", import.meta.url), "utf8");
@@ -228,4 +232,156 @@ test("a day label states the effective day, not the day before it", () => {
   assert.match(label, /2026/u);
   assert.notEqual(label, "2026-08-04");
   assert.notEqual(label, formatFuelDay("2026-08-03", "sr-Latn-ME"));
+});
+
+const flatHistory = [
+  calculation("2026-08-04", { eurosuper95: 170 }),
+  calculation("2026-07-28", { eurosuper95: 170 }),
+];
+
+test("the range selector counts official calculations, not days", async () => {
+  const source = await trendSource();
+
+  // Exact public wording; "promjena" here means one ministry price update.
+  assert.match(source, /`Posljednjih \$\{recentCalculationCount\} promjena`/u);
+  assert.match(source, /const recentCalculationCount = 6;/u);
+  // The short view is the last six stored records — a slice of the series, never a date window.
+  assert.match(source, /allPoints\.slice\(-recentCalculationCount\)/u);
+  // No date arithmetic anywhere: the window is a count of records, never a span of calendar time.
+  const code = source.replace(/\/\/[^\n]*/gu, "");
+  assert.doesNotMatch(code, /setDate|getTime\(\)|Date\.now|86[_]?400/u);
+  assert.match(source, /Sve/u);
+});
+
+test("the latest-six view keeps six calculation records, unchanged prices included", () => {
+  const sixUpdates = [
+    calculation("2026-08-04", { eurosuper95: 175 }),
+    calculation("2026-07-28", { eurosuper95: 175 }),
+    calculation("2026-07-21", { eurosuper95: 174 }),
+    calculation("2026-07-14", { eurosuper95: 174 }),
+    calculation("2026-07-07", { eurosuper95: 170 }),
+    calculation("2026-06-30", { eurosuper95: 168 }),
+    calculation("2026-06-23", { eurosuper95: 165 }),
+  ];
+  const points = getTrendPoints(sixUpdates, "eurosuper95");
+  const shown = points.slice(-6);
+
+  assert.equal(shown.length, 6);
+  // Two of the six repeat the previous price; they are still official calculations and still shown.
+  assert.equal(shown.filter(({ change }) => change?.direction === "unchanged").length, 2);
+  assert.equal(shown[0].effectiveDate, "2026-06-30");
+});
+
+test("a point detail reports the selected product's own official price and date", () => {
+  const points = getTrendPoints(history, "eurodiesel");
+  const details = getTrendPointDetails(points, 2, "Eurodizel");
+
+  assert.equal(details?.effectiveDate, "2026-08-04");
+  assert.equal(details?.priceCents, 185);
+  assert.equal(details?.productName, "Eurodizel");
+  // publishedAt is 2000-01-01 in the fixture: a tooltip built on it would be visibly wrong.
+  assert.notEqual(details?.effectiveDate, "2000-01-01");
+});
+
+test("a point compares against the previous displayed calculation", () => {
+  const points = getTrendPoints(history, "eurosuper95");
+
+  // 177 → 175 against the point before it, with the ministry's own value preferred.
+  assert.deepEqual(getTrendPointDetails(points, 2, "Eurosuper 95")?.change, {
+    cents: 2,
+    direction: "decrease",
+    source: "official",
+  });
+  // 170 → 177 has no official value, so the adjacent difference is used and labelled derived.
+  assert.deepEqual(getTrendPointDetails(points, 1, "Eurosuper 95")?.change, {
+    cents: 7,
+    direction: "increase",
+    source: "derived",
+  });
+});
+
+test("the oldest displayed point invents no comparison", () => {
+  const points = getTrendPoints(history, "eurosuper95");
+
+  assert.equal(getTrendPointDetails(points, 0, "Eurosuper 95")?.change, undefined);
+  // Even when the series is sliced, the first visible point drops a comparison it cannot show.
+  const sliced = points.slice(-2);
+  assert.equal(getTrendPointDetails(sliced, 0, "Eurosuper 95")?.change, undefined);
+  assert.notEqual(getTrendPointDetails(sliced, 1, "Eurosuper 95")?.change, undefined);
+});
+
+test("an unchanged calculation is reported as unchanged", () => {
+  const points = getTrendPoints(flatHistory, "eurosuper95");
+  const details = getTrendPointDetails(points, 1, "Eurosuper 95");
+  assert.ok(details);
+
+  assert.equal(details.change?.direction, "unchanged");
+  // And the spoken form says so rather than reading out a zero.
+  assert.match(getTrendPointLabel(details, "sr-Latn-ME"), /bez promjene/iu);
+});
+
+test("a point label carries date, product and price in words", () => {
+  const points = getTrendPoints(history, "eurosuper95");
+  const details = getTrendPointDetails(points, 2, "Eurosuper 95");
+  assert.ok(details);
+
+  const label = getTrendPointLabel(details, "sr-Latn-ME");
+
+  assert.match(label, /2026/u);
+  assert.match(label, /Eurosuper 95/u);
+  assert.match(label, /1,75 € \/ L/u);
+  assert.match(label, /smanjenje 0,02 eura/u);
+  // A screen reader gets the value from the label, never from where the dot sits.
+  assert.doesNotMatch(label, /cx|cy|svg/iu);
+});
+
+test("chart points respond to hover, focus and tap alike", async () => {
+  const source = await trendSource();
+
+  for (const handler of [/onMouseEnter=/u, /onFocus=/u, /onClick=/u, /onBlur=/u]) {
+    assert.match(source, handler, `points must handle ${String(handler)}`);
+  }
+  // Reachable by keyboard and announced as an activatable thing.
+  assert.match(source, /tabIndex=\{0\}/u);
+  assert.match(source, /role="button"/u);
+  // role="img" would make those points presentational in several screen readers. The comment
+  // explaining that rule must not be mistaken for a violation of it.
+  const markup = source.replace(/\{\/\*[\s\S]*?\*\/\}/gu, "");
+  assert.doesNotMatch(markup, /role="img"/u);
+  assert.match(markup, /role="group"/u);
+  // A finger-sized transparent target, so tapping does not depend on hitting a 3.5px dot.
+  assert.match(source, /r=\{16\}/u);
+});
+
+test("the tooltip shows the official values and no invented ones", async () => {
+  const source = await trendSource();
+
+  assert.match(source, /Promjena u odnosu na prethodni:/u);
+  assert.match(source, /Bez promjene/u);
+  assert.match(source, /formatFuelDay\(details\.effectiveDate, localeTag\)/u);
+  assert.match(source, /details\.productName/u);
+  assert.match(source, /formatFuelPrice\(details\.priceCents, localeTag\)/u);
+  // The comparison row only exists when there is a comparison to make.
+  assert.match(source, /\{details\.change \? \(/u);
+});
+
+test("the tooltip is a plain surface, not a new chart library", async () => {
+  const source = await trendSource();
+  const manifest = JSON.parse(
+    await readFile(new URL("../../../../package.json", import.meta.url), "utf8"),
+  ) as { dependencies: Record<string, string> };
+
+  assert.match(source, /<svg/u);
+  for (const forbidden of ["recharts", "chart.js", "d3", "victory", "nivo", "visx", "echarts"]) {
+    const message = `${forbidden} must not be a dependency`;
+    assert.equal(forbidden in manifest.dependencies, false, message);
+  }
+});
+
+test("the chart still never reads publishedAt", async () => {
+  const source = await trendSource();
+  const model = await readFile(new URL("./fuel-price-trend-model.ts", import.meta.url), "utf8");
+
+  assert.doesNotMatch(source, /publishedAt/u);
+  assert.doesNotMatch(model, /publishedAt/u);
 });

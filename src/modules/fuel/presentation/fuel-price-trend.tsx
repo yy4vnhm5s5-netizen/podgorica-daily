@@ -8,10 +8,22 @@ import {
   fuelProductIds,
   fuelProductNames,
   type FuelPriceCalculation,
+  type FuelPriceChangeDirection,
   type FuelProductId,
 } from "../domain/fuel-price";
 import { formatFuelDay } from "./fuel-day-label";
-import { getTrendPoints, type TrendPoint } from "./fuel-price-trend-model";
+import {
+  formatFuelPriceWithUnit,
+  formatFuelRangeWithUnit,
+  fuelUnitLabel,
+} from "./fuel-price-unit";
+import {
+  getTrendPointDetails,
+  getTrendPointLabel,
+  getTrendPoints,
+  type TrendPoint,
+  type TrendPointDetails,
+} from "./fuel-price-trend-model";
 import { getRovingTabIndex } from "@/shared/lib/roving-tab-index";
 import { cn } from "@/shared/lib/utils";
 
@@ -24,8 +36,10 @@ interface FuelPriceTrendProps {
 }
 
 // "Sve" means every calculation the page passed in. A shorter range is only offered when it would
-// actually show a different set of points.
-const recentCount = 6;
+// actually show a different set of points. The unit is one official calculation — a ministry price
+// update — not a day and not a week: the publications are irregular, and an update that left a
+// product's price unchanged still counts as one.
+const recentCalculationCount = 6;
 
 function FuelPriceTrend({ calculations, localeTag }: FuelPriceTrendProps) {
   const [productId, setProductId] = useState<FuelProductId>("eurosuper95");
@@ -33,8 +47,8 @@ function FuelPriceTrend({ calculations, localeTag }: FuelPriceTrendProps) {
   const tabsId = useId();
 
   const allPoints = getTrendPoints(calculations, productId);
-  const points = showAll ? allPoints : allPoints.slice(-recentCount);
-  const offersRange = allPoints.length > recentCount;
+  const points = showAll ? allPoints : allPoints.slice(-recentCalculationCount);
+  const offersRange = allPoints.length > recentCalculationCount;
   const latest = points.at(-1);
 
   function selectProduct(next: FuelProductId) {
@@ -106,7 +120,7 @@ function FuelPriceTrend({ calculations, localeTag }: FuelPriceTrendProps) {
           <>
             <dl className="grid gap-3 sm:grid-cols-3">
               <Statistic label="Posljednja cijena">
-                {latest ? `${formatFuelPrice(latest.priceCents, localeTag)} €/l` : "—"}
+                {latest ? formatFuelPriceWithUnit(latest.priceCents, localeTag) : "—"}
               </Statistic>
               <Statistic label="Promjena">
                 {latest?.change ? (
@@ -116,14 +130,14 @@ function FuelPriceTrend({ calculations, localeTag }: FuelPriceTrendProps) {
                 )}
               </Statistic>
               <Statistic label="Raspon">
-                {`${formatFuelPrice(minimum, localeTag)}–${formatFuelPrice(maximum, localeTag)} €/l`}
+                {formatFuelRangeWithUnit(minimum, maximum, localeTag)}
               </Statistic>
             </dl>
 
             {offersRange ? (
               <div className="flex flex-wrap gap-1.5">
                 <RangeButton onClick={() => setShowAll(false)} selected={!showAll}>
-                  {`Posljednjih ${recentCount}`}
+                  {`Posljednjih ${recentCalculationCount} promjena`}
                 </RangeButton>
                 <RangeButton onClick={() => setShowAll(true)} selected={showAll}>
                   Sve
@@ -223,55 +237,170 @@ function TrendChart({
   }));
   const line = coordinates.map(({ x, y }) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
 
+  // Hover, focus and tap all select the same point, so no information is mouse-only.
+  const [selected, setSelected] = useState<number | null>(null);
+  const details =
+    selected === null ? undefined : getTrendPointDetails(points, selected, productName);
+  const selectedCoordinate = selected === null ? undefined : coordinates[selected];
+
   return (
     <figure className="space-y-2">
-      <svg
-        aria-label={`Kretanje cijene: ${productName}, ${points.length} zvaničnih obračuna, od ${formatFuelPrice(rawMin, localeTag)} do ${formatFuelPrice(rawMax, localeTag)} €/l`}
-        className="h-auto w-full"
-        role="img"
-        viewBox={`0 0 ${chartWidth} ${chartHeight}`}
-      >
-        <line
-          className="stroke-border"
-          x1={padding.left}
-          x2={chartWidth - padding.right}
-          y1={padding.top + plotHeight}
-          y2={padding.top + plotHeight}
-        />
-        <text className="fill-muted-foreground text-[11px]" x="0" y={padding.top + 4}>
-          {formatFuelPrice(rawMax, localeTag)}
-        </text>
-        <text className="fill-muted-foreground text-[11px]" x="0" y={padding.top + plotHeight}>
-          {formatFuelPrice(rawMin, localeTag)}
-        </text>
-        <polyline
-          className="fill-none stroke-amber-600"
-          points={line}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-        />
-        {/* Every official calculation stays individually visible — the line is only for reading. */}
-        {coordinates.map(({ effectiveDate, x, y }) => (
-          <circle className="fill-amber-700" cx={x} cy={y} key={effectiveDate} r={3.5} />
-        ))}
-        <text className="fill-muted-foreground text-[11px]" x={padding.left} y={chartHeight - 6}>
-          {formatFuelDay(points[0].effectiveDate, localeTag)}
-        </text>
-        <text
-          className="fill-muted-foreground text-[11px]"
-          textAnchor="end"
-          x={chartWidth - padding.right}
-          y={chartHeight - 6}
+      <div className="relative">
+        {/* A group rather than an image: role="img" makes descendants presentational in several
+            screen readers, which would hide the focusable points the chart now relies on. */}
+        <svg
+          aria-label={`Kretanje cijene: ${productName}, ${points.length} zvaničnih obračuna, od ${formatFuelPrice(rawMin, localeTag)} do ${formatFuelPriceWithUnit(rawMax, localeTag)}`}
+          className="h-auto w-full"
+          role="group"
+          viewBox={`0 0 ${chartWidth} ${chartHeight}`}
         >
-          {formatFuelDay(points[points.length - 1].effectiveDate, localeTag)}
-        </text>
-      </svg>
+          <line
+            className="stroke-border"
+            x1={padding.left}
+            x2={chartWidth - padding.right}
+            y1={padding.top + plotHeight}
+            y2={padding.top + plotHeight}
+          />
+          <text className="fill-muted-foreground text-[11px]" x="0" y={padding.top + 4}>
+            {formatFuelPrice(rawMax, localeTag)}
+          </text>
+          <text className="fill-muted-foreground text-[11px]" x="0" y={padding.top + plotHeight}>
+            {formatFuelPrice(rawMin, localeTag)}
+          </text>
+          <polyline
+            className="fill-none stroke-amber-600"
+            points={line}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+          />
+          {/* Every official calculation stays individually visible — the line is only for reading.
+              Each one carries a generous transparent hit area so a fingertip can reach it, and is
+              focusable so the same detail is available without a mouse. */}
+          {coordinates.map(({ effectiveDate, x, y }, index) => {
+            const isSelected = index === selected;
+            const pointDetails = getTrendPointDetails(points, index, productName);
+            return (
+              <g key={effectiveDate}>
+                {isSelected ? (
+                  <circle className="fill-amber-700/20" cx={x} cy={y} r={9} />
+                ) : null}
+                <circle className="fill-amber-700" cx={x} cy={y} r={isSelected ? 5 : 3.5} />
+                <circle
+                  aria-label={
+                    pointDetails ? getTrendPointLabel(pointDetails, localeTag) : undefined
+                  }
+                  className="cursor-pointer fill-transparent focus:outline-none"
+                  cx={x}
+                  cy={y}
+                  onBlur={() => setSelected(null)}
+                  onClick={() => setSelected(index)}
+                  onFocus={() => setSelected(index)}
+                  onMouseEnter={() => setSelected(index)}
+                  onMouseLeave={() => setSelected(null)}
+                  r={16}
+                  role="button"
+                  tabIndex={0}
+                />
+              </g>
+            );
+          })}
+          <text className="fill-muted-foreground text-[11px]" x={padding.left} y={chartHeight - 6}>
+            {formatFuelDay(points[0].effectiveDate, localeTag)}
+          </text>
+          <text
+            className="fill-muted-foreground text-[11px]"
+            textAnchor="end"
+            x={chartWidth - padding.right}
+            y={chartHeight - 6}
+          >
+            {formatFuelDay(points[points.length - 1].effectiveDate, localeTag)}
+          </text>
+        </svg>
+        {details && selectedCoordinate ? (
+          <TrendTooltip
+            details={details}
+            localeTag={localeTag}
+            xRatio={selectedCoordinate.x / chartWidth}
+            yRatio={selectedCoordinate.y / chartHeight}
+          />
+        ) : null}
+      </div>
       <figcaption className="text-xs text-muted-foreground">
         Svaka tačka je jedan zvanični obračun Ministarstva. Potpune vrijednosti su u tabeli ispod.
       </figcaption>
     </figure>
   );
 }
+
+// A small floating surface rather than an SVG overlay: it can use the ordinary card styling, and
+// it can never be clipped by the chart's viewBox. Below the sm breakpoint it simply sits under the
+// chart, which sidesteps edge clipping on the narrowest screens entirely.
+function TrendTooltip({
+  details,
+  localeTag,
+  xRatio,
+  yRatio,
+}: {
+  details: TrendPointDetails;
+  localeTag: string;
+  xRatio: number;
+  yRatio: number;
+}) {
+  // Anchor away from whichever edge the point is near, so the first and last points stay readable.
+  const horizontal =
+    xRatio < 0.25
+      ? "sm:translate-x-0"
+      : xRatio > 0.75
+        ? "sm:-translate-x-full"
+        : "sm:-translate-x-1/2";
+
+  return (
+    <div
+      className={cn(
+        "mt-3 w-max max-w-[15rem] rounded-xl border border-border bg-background p-3 shadow-md",
+        "sm:pointer-events-none sm:absolute sm:z-10 sm:mt-0 sm:-translate-y-[calc(100%+0.75rem)]",
+        horizontal,
+      )}
+      style={{ left: `${xRatio * 100}%`, top: `${yRatio * 100}%` }}
+    >
+      <p className="text-xs text-muted-foreground">
+        {formatFuelDay(details.effectiveDate, localeTag)}
+      </p>
+      <p className="mt-0.5 text-sm font-medium">{details.productName}</p>
+      <p className="mt-1 text-xl font-bold tracking-tight">
+        <span className="tabular-nums">{formatFuelPrice(details.priceCents, localeTag)}</span>{" "}
+        <span className="text-base font-semibold">{fuelUnitLabel}</span>
+      </p>
+      {details.change ? (
+        <>
+          <p className="mt-2 text-xs text-muted-foreground">Promjena u odnosu na prethodni:</p>
+          <p className={cn("text-sm font-semibold", tooltipChangeTone[details.change.direction])}>
+            <TooltipChange change={details.change} localeTag={localeTag} />
+          </p>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
+function TooltipChange({
+  change,
+  localeTag,
+}: {
+  change: NonNullable<TrendPointDetails["change"]>;
+  localeTag: string;
+}) {
+  if (change.direction === "unchanged") return <>Bez promjene</>;
+  const sign = change.direction === "increase" ? "+" : "−";
+  return <>{`${sign}${formatFuelPrice(change.cents, localeTag)} €`}</>;
+}
+
+// The same semantics the price cards use: a rise is red whatever the fuel's identity colour is.
+const tooltipChangeTone: Record<FuelPriceChangeDirection, string> = {
+  decrease: "text-emerald-700",
+  increase: "text-red-700",
+  unchanged: "text-slate-600",
+};
 
 export { FuelPriceTrend, type FuelPriceTrendProps };
