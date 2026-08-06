@@ -6,6 +6,7 @@ import { isFeatureEnabled } from "@/shared/config/features";
 import {
   getAboutPlatformPath,
   getContactPath,
+  getFuelPricesPath,
   getCityPath,
   getPrivacyPolicyPath,
   getTermsOfUsePath,
@@ -68,6 +69,14 @@ function AppFooter({ translations }: AppFooterProps) {
                   <FooterLink href={getContactPath()}>
                     {translations.shell.navigation.contact}
                   </FooterLink>
+                </li>
+              ) : null}
+              {/* One low-noise crawlable link so the national fuel page is not orphaned. It is a
+                  platform utility, not a city feature, so it belongs here rather than in any city
+                  shortcut row. */}
+              {isFeatureEnabled("fuelPrices") ? (
+                <li>
+                  <FooterLink href={getFuelPricesPath()}>Cijene goriva</FooterLink>
                 </li>
               ) : null}
               <li>

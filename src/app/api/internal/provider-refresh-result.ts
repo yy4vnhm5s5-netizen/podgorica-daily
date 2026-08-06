@@ -4,6 +4,7 @@ import type { PodgoricaFlightsCollectorResult } from "@/modules/flights/infrastr
 import type { GoingOutCollectorResult } from "@/modules/going-out/infrastructure/collect-montegigs-going-out";
 import type { BudvaSeaWaterQualityCollectorResult } from "@/modules/sea-water-quality/infrastructure/collect-budva-sea-water-quality";
 import type { ZpcgCollectorResult } from "@/modules/transport/infrastructure/collect-zpcg-railway";
+import type { FuelCollectorResult } from "@/modules/fuel/infrastructure/gov-me-fuel-prices";
 import type { VikUlcinjCollectorResult } from "@/modules/city-alerts/infrastructure/vik-ulcinj";
 import type { VodovodKotorCollectorResult } from "@/modules/city-alerts/infrastructure/vodovod-kotor";
 import type { WeatherCollectorResult } from "@/modules/weather/infrastructure/collect-weather";
@@ -85,6 +86,18 @@ function toCityAlertRefreshEndpointResult(
     ...(summary.cityId ? { cityId: summary.cityId } : {}),
     ...(summary.errorCode ? { errorCode: summary.errorCode } : {}),
     provider,
+    retainedPreviousSnapshot: summary.retainedPreviousSnapshot,
+    state: summary.status,
+    warnings: summary.warnings,
+  };
+}
+
+function toFuelRefreshEndpointResult(result: FuelCollectorResult): ProviderRefreshEndpointResult {
+  const { summary } = result;
+  return {
+    acceptedCount: summary.calculationCount,
+    ...(summary.errorCode ? { errorCode: summary.errorCode } : {}),
+    provider: "fuel-prices",
     retainedPreviousSnapshot: summary.retainedPreviousSnapshot,
     state: summary.status,
     warnings: summary.warnings,
@@ -324,6 +337,7 @@ function toEventRefreshEndpointResult(
 
 export {
   toCityAlertRefreshEndpointResult,
+  toFuelRefreshEndpointResult,
   toVikUlcinjRefreshEndpointResult,
   toVodovodKotorRefreshEndpointResult,
   toEventRefreshEndpointResult,

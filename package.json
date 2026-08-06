@@ -15,6 +15,7 @@
     "collect:vikpg": "node --experimental-strip-types src/modules/city-alerts/infrastructure/collect-vikpg.ts",
     "collect:vodovod-kotor": "node --experimental-strip-types src/modules/city-alerts/infrastructure/collect-vodovod-kotor.ts",
     "collect:vik-ulcinj": "node --experimental-strip-types src/modules/city-alerts/infrastructure/collect-vik-ulcinj.ts",
+    "collect:fuel-prices": "node --experimental-strip-types src/modules/fuel/infrastructure/collect-fuel-prices.ts",
     "collect:zpcg-railway": "node --experimental-strip-types src/modules/transport/infrastructure/collect-zpcg-railway.ts",
     "collect:podgorica-flights": "node --experimental-strip-types src/modules/flights/infrastructure/collect-podgorica-flights.ts",
     "collect:weather": "node --experimental-strip-types src/modules/weather/infrastructure/collect-weather.ts",

@@ -10,6 +10,7 @@ const featureFlags = {
   dailyOverview: true,
   events: env.ENABLE_EVENTS && env.EVENT_PROVIDER_MODE !== "disabled",
   flights: env.ENABLE_FLIGHTS,
+  fuelPrices: env.ENABLE_FUEL_PRICES,
   goingOut: env.ENABLE_GOING_OUT,
   maps: false,
   search: false,

@@ -47,6 +47,10 @@ const environmentSchema = z.object({
   VIKPG_CACHE_PATH: z.string().min(1).optional(),
   VIKPG_CACHE_FRESHNESS_MINUTES: z.coerce.number().int().positive().default(150),
   VIKPG_REFRESH_SECRET: z.string().min(32).optional(),
+  FUEL_CACHE_PATH: z.string().min(1).optional(),
+  // Prices change at most once a week and the collector checks daily, so a snapshot stays
+  // meaningful well past a missed run; 36h marks it stale only after two missed checks.
+  FUEL_CACHE_FRESHNESS_MINUTES: z.coerce.number().int().positive().default(2160),
   VODOVOD_KOTOR_CACHE_PATH: z.string().min(1).optional(),
   VODOVOD_KOTOR_CACHE_FRESHNESS_MINUTES: z.coerce.number().int().positive().default(150),
   VIK_ULCINJ_CACHE_PATH: z.string().min(1).optional(),
@@ -70,6 +74,7 @@ const environmentSchema = z.object({
   DEFAULT_CITY: z.string().default("podgorica"),
   ENABLE_CEDIS: z.enum(["false", "true"]).default("true"),
   ENABLE_VIKPG: z.enum(["false", "true"]).default("true"),
+  ENABLE_FUEL_PRICES: z.enum(["false", "true"]).default("true"),
   ENABLE_VODOVOD_KOTOR: z.enum(["false", "true"]).default("false"),
   ENABLE_VIK_ULCINJ: z.enum(["false", "true"]).default("true"),
   ENABLE_EVENTS: z.enum(["false", "true"]).default("false"),
@@ -140,6 +145,8 @@ const parsedEnvironment = environmentSchema.safeParse({
   VIKPG_CACHE_PATH: process.env.VIKPG_CACHE_PATH,
   VIKPG_CACHE_FRESHNESS_MINUTES: process.env.VIKPG_CACHE_FRESHNESS_MINUTES,
   VIKPG_REFRESH_SECRET: process.env.VIKPG_REFRESH_SECRET,
+  FUEL_CACHE_PATH: process.env.FUEL_CACHE_PATH,
+  FUEL_CACHE_FRESHNESS_MINUTES: process.env.FUEL_CACHE_FRESHNESS_MINUTES,
   VODOVOD_KOTOR_CACHE_PATH: process.env.VODOVOD_KOTOR_CACHE_PATH,
   VODOVOD_KOTOR_CACHE_FRESHNESS_MINUTES: process.env.VODOVOD_KOTOR_CACHE_FRESHNESS_MINUTES,
   VIK_ULCINJ_CACHE_PATH: process.env.VIK_ULCINJ_CACHE_PATH,
@@ -155,6 +162,7 @@ const parsedEnvironment = environmentSchema.safeParse({
   DEFAULT_CITY: process.env.DEFAULT_CITY,
   ENABLE_CEDIS: process.env.ENABLE_CEDIS,
   ENABLE_VIKPG: process.env.ENABLE_VIKPG,
+  ENABLE_FUEL_PRICES: process.env.ENABLE_FUEL_PRICES,
   ENABLE_VODOVOD_KOTOR: process.env.ENABLE_VODOVOD_KOTOR,
   ENABLE_VIK_ULCINJ: process.env.ENABLE_VIK_ULCINJ,
   ENABLE_EVENTS: process.env.ENABLE_EVENTS,
@@ -220,6 +228,9 @@ const resolvedEnvironment = {
   VIKPG_CACHE_PATH:
     parsedEnvironment.data.VIKPG_CACHE_PATH ??
     resolveRuntimeCachePath("vikpg-water-alerts.json", runtimeDataDirectory),
+  FUEL_CACHE_PATH:
+    parsedEnvironment.data.FUEL_CACHE_PATH ??
+    resolveRuntimeCachePath("fuel-prices.json", runtimeDataDirectory),
   VODOVOD_KOTOR_CACHE_PATH:
     parsedEnvironment.data.VODOVOD_KOTOR_CACHE_PATH ??
     resolveRuntimeCachePath("vodovod-kotor-water-alerts.json", runtimeDataDirectory),
@@ -243,6 +254,7 @@ export const env = {
   DEFAULT_CITY: resolvedEnvironment.DEFAULT_CITY,
   ENABLE_CEDIS: resolvedEnvironment.ENABLE_CEDIS === "true",
   ENABLE_VIKPG: resolvedEnvironment.ENABLE_VIKPG === "true",
+  ENABLE_FUEL_PRICES: resolvedEnvironment.ENABLE_FUEL_PRICES === "true",
   ENABLE_VODOVOD_KOTOR: resolvedEnvironment.ENABLE_VODOVOD_KOTOR === "true",
   ENABLE_VIK_ULCINJ: resolvedEnvironment.ENABLE_VIK_ULCINJ === "true",
   ENABLE_EVENTS: resolvedEnvironment.ENABLE_EVENTS === "true",

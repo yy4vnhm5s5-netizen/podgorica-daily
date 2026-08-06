@@ -47,6 +47,11 @@ function getSeaWaterQualityLocationPath(city: CityRouteTarget, slug: string) {
   return `${getSeaWaterQualityPath(city)}/${encodeURIComponent(slug)}`;
 }
 
+// National utility route: fuel prices are set for the whole country, so this is not city-scoped.
+function getFuelPricesPath() {
+  return "/gorivo";
+}
+
 function getPrivacyPolicyPath() {
   return "/politika-privatnosti";
 }
@@ -60,6 +65,7 @@ export {
   getCityPath,
   getCinemaPath,
   getContactPath,
+  getFuelPricesPath,
   getElectricityPath,
   getEventDetailPath,
   getEventsPath,

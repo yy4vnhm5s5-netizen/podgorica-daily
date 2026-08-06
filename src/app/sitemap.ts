@@ -5,15 +5,18 @@ import { getCityEvents } from "@/modules/events/application/get-city-events";
 import { isEventSitemapEligible } from "@/modules/events/domain/event-lifecycle";
 import type { SeaWaterQualityHistoryLocation } from "@/modules/sea-water-quality/domain/sea-water-quality";
 import { getCityEventsForPublicListing } from "@/modules/events/presentation/events-ui-model";
+import { getFuelPrices } from "@/modules/fuel/infrastructure/gov-me-fuel-prices";
 import { getSeaWaterQualityHistory } from "@/modules/sea-water-quality/application/get-sea-water-quality-history";
 import {
   getAboutPlatformPath,
   getContactPath,
   getEventDetailPath,
+  getFuelPricesPath,
   getPrivacyPolicyPath,
   getTermsOfUsePath,
   getSeaWaterQualityLocationPath,
 } from "@/shared/config/public-routes";
+import { isFeatureEnabled } from "@/shared/config/features";
 import { siteConfig } from "@/shared/config/site";
 import { getCitySitemapPaths, isCityPublicFeatureRouteAvailable } from "./city-routing.ts";
 
@@ -68,6 +71,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const globalEntries = [
     createEntry("/", "weekly", 0.9),
     createEntry(getAboutPlatformPath(), "monthly", 0.5),
+    // One evergreen national URL. lastModified is the effective date of the newest official
+    // calculation — a real content-change fact published by the ministry, matching the beach
+    // detail convention of using the source's own date rather than the collector's run time.
+    ...(await getFuelSitemapEntry()),
     createEntry(getContactPath(), "monthly", 0.5),
     createEntry(getTermsOfUsePath(), "yearly", 0.3),
     createEntry(getPrivacyPolicyPath(), "yearly", 0.3),
@@ -157,3 +164,23 @@ async function getSeaWaterQualitySitemapEntries(
 }
 
 export { getSeaWaterQualitySitemapEntries };
+
+async function getFuelSitemapEntry(
+  readFuelPrices: typeof getFuelPrices = getFuelPrices,
+  enabled = isFeatureEnabled("fuelPrices"),
+): Promise<MetadataRoute.Sitemap> {
+  // A disabled feature contributes no URL, so the sitemap never advertises a page that 404s.
+  if (!enabled) return [];
+  const entry = createEntry(getFuelPricesPath(), "weekly", 0.6);
+  try {
+    const { calculations } = await readFuelPrices();
+    const effectiveDate = calculations[0]?.effectiveDate;
+    if (!effectiveDate || !/^\d{4}-\d{2}-\d{2}$/.test(effectiveDate)) return [entry];
+    const lastModified = new Date(`${effectiveDate}T00:00:00.000Z`);
+    return [Number.isNaN(lastModified.getTime()) ? entry : { ...entry, lastModified }];
+  } catch {
+    return [entry];
+  }
+}
+
+export { getFuelSitemapEntry };
