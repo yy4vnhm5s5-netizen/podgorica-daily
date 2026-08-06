@@ -2,7 +2,11 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-import { derivePreviousChange, formatFuelPrice } from "../domain/fuel-price.ts";
+import {
+  derivePreviousChange,
+  formatFuelPrice,
+  mergeFuelCalculations,
+} from "../domain/fuel-price.ts";
 import {
   assertGovMeUrl,
   discoverFuelArticleUrls,
@@ -18,6 +22,8 @@ const fixture = async (name: string) =>
 
 const august = "https://www.gov.me/clanak/nove-cijene-goriva-od-04082026";
 const june = "https://www.gov.me/clanak/nove-cijene-goriva-od-02062026";
+const may19 = "https://www.gov.me/clanak/nove-cijene-goriva-od-19052026";
+const may5 = "https://www.gov.me/clanak/nove-cijene-goriva-od-05052026-2";
 
 type PriceBearing = { prices: { priceCents: number; productId: string }[] };
 
@@ -451,4 +457,93 @@ test("a missing, empty or unreadable cache degrades instead of throwing", async 
   });
   assert.equal(broken.freshnessStatus, "unavailable");
   assert.deepEqual(broken.calculations, []);
+});
+
+// Both articles were reported as article-unparsed by production. They use the ministry's older
+// row shape: "BMB 98 - 1.68 eur/l +0,04 (bez smanjenje akcize 1,85 eur)". The fixtures reproduce
+// that markup exactly, <em> fragments and all.
+test("the 19.05.2026 article parses completely, in the older BMB row shape", async () => {
+  const calculation = parseFuelArticle(await fixture("gov-me-fuel-2026-05-19.html"), may19);
+  assert.ok(calculation);
+
+  assert.equal(priceOf(calculation, "eurosuper95"), 165);
+  assert.equal(priceOf(calculation, "eurosuper98"), 168);
+  assert.equal(priceOf(calculation, "eurodiesel"), 169);
+  assert.equal(priceOf(calculation, "heatingOil"), 173);
+  assert.equal(calculation.effectiveDate, "2026-05-19");
+  assert.equal(calculation.publishedAt, "2026-05-18");
+  // The article states no next calculation, so none is claimed.
+  assert.equal(calculation.nextCalculationDate, undefined);
+});
+
+test("the 05.05.2026 article parses completely too", async () => {
+  const calculation = parseFuelArticle(await fixture("gov-me-fuel-2026-05-05.html"), may5);
+  assert.ok(calculation);
+
+  assert.equal(priceOf(calculation, "eurosuper95"), 161);
+  assert.equal(priceOf(calculation, "eurosuper98"), 165);
+  assert.equal(priceOf(calculation, "eurodiesel"), 171);
+  assert.equal(priceOf(calculation, "heatingOil"), 181);
+  assert.equal(calculation.effectiveDate, "2026-05-05");
+  assert.equal(calculation.publishedAt, "2026-05-04");
+  assert.equal(calculation.nextCalculationDate, undefined);
+});
+
+test("BMB 95 and BMB 98 are the same two petrols the source later calls Eurosuper", async () => {
+  const may = parseFuelArticle(await fixture("gov-me-fuel-2026-05-19.html"), may19);
+  assert.ok(may);
+
+  // The 26.05.2026 article lists EUROSUPER 98 at 1,68 and EUROSUPER 95 at 1,65 with "bez
+  // promjene" against this one, so the rename carries the same prices across.
+  assert.equal(priceOf(may, "eurosuper98"), 168);
+  assert.equal(priceOf(may, "eurosuper95"), 165);
+  assert.equal(may.prices.length, 4);
+});
+
+test("the eur/l unit no longer swallows the official change", async () => {
+  const calculation = parseFuelArticle(await fixture("gov-me-fuel-2026-05-19.html"), may19);
+  assert.ok(calculation);
+  const change = (id: string) => calculation.prices.find((price) => price.productId === id)?.change;
+
+  // Every row states a rise; before the fix the sign sat behind "eur/l" and was dropped.
+  assert.deepEqual(change("eurosuper98"), { cents: 4, direction: "increase", source: "official" });
+  assert.deepEqual(change("eurosuper95"), { cents: 5, direction: "increase", source: "official" });
+  assert.deepEqual(change("eurodiesel"), { cents: 2, direction: "increase", source: "official" });
+  assert.deepEqual(change("heatingOil"), { cents: 1, direction: "increase", source: "official" });
+});
+
+test("the hypothetical no-excise price in brackets is never read as the price", async () => {
+  const may = parseFuelArticle(await fixture("gov-me-fuel-2026-05-19.html"), may19);
+  assert.ok(may);
+
+  // Each row ends with "(bez smanjenje akcize 1,85 eur)" — a price that would apply without the
+  // excise cut. The published maximum retail price is the first value, and only that one is taken.
+  assert.equal(priceOf(may, "eurosuper98"), 168);
+  assert.notEqual(priceOf(may, "eurosuper98"), 185);
+  assert.equal(priceOf(may, "eurodiesel"), 169);
+  assert.notEqual(priceOf(may, "eurodiesel"), 180);
+});
+
+test("the excise paragraphs in those articles are not read as products", async () => {
+  const may = parseFuelArticle(await fixture("gov-me-fuel-2026-05-19.html"), may19);
+  assert.ok(may);
+
+  // "412 eura na 1000 litara (0,412 eura po litru)" sits in the same article and stays ignored.
+  for (const price of may.prices) assert.equal(price.priceCents > 100, true);
+  assert.equal(may.prices.length, 4);
+});
+
+test("both recovered articles merge into history without disturbing it", async () => {
+  const latest = parseFuelArticle(await fixture("gov-me-fuel-2026-08-04.html"), august);
+  const mid = parseFuelArticle(await fixture("gov-me-fuel-2026-05-19.html"), may19);
+  const oldest = parseFuelArticle(await fixture("gov-me-fuel-2026-05-05.html"), may5);
+  assert.ok(latest && mid && oldest);
+
+  const merged = mergeFuelCalculations([latest], [mid, oldest]);
+  assert.deepEqual(
+    merged.map(({ effectiveDate }) => effectiveDate),
+    ["2026-08-04", "2026-05-19", "2026-05-05"],
+  );
+  // Re-running the same parse adds nothing: dedup is by effective date.
+  assert.equal(mergeFuelCalculations(merged, [mid, oldest]).length, 3);
 });

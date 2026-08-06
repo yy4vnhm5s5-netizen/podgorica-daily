@@ -200,16 +200,26 @@ function parseMontenegrinDate(value: string) {
 const productMatchers: { id: FuelProductId; pattern: RegExp }[] = [
   { id: "eurosuper98", pattern: /^EUROSUPER\s*98\b/i },
   { id: "eurosuper95", pattern: /^EUROSUPER\s*95\b/i },
+  // Until late May 2026 the ministry wrote the same two petrols as "BMB 98" / "BMB 95". This is a
+  // rename, not a different product, and the source says so itself: the 26.05.2026 article lists
+  // EUROSUPER 98 at 1,68 and EUROSUPER 95 at 1,65 with "bez promjene" against the 19.05.2026
+  // article, whose BMB 98 and BMB 95 rows carry exactly those prices. The 31.03.2026 and
+  // 07.04.2026 articles go further and print both namings with identical values in one article.
+  { id: "eurosuper98", pattern: /^BMB\s*98\b/i },
+  { id: "eurosuper95", pattern: /^BMB\s*95\b/i },
   { id: "eurodiesel", pattern: /^EURODIZEL\b/i },
   { id: "heatingOil", pattern: /^LO[ŽZ]\s*ULJE\b/i },
 ];
 
 // One price row. "e ur" is a recurring typo in the official source (seen on the diesel row of
-// several articles), so the currency token tolerates the stray space. The change column is
-// optional, may be the words "bez promjene", may put a space between sign and number, and uses a
-// comma or a dot as the decimal separator — sometimes both inside the same article.
+// several articles), so the currency token tolerates the stray space. Older articles write the
+// unit as "eur/l" rather than "eur", and wrap the change in brackets — "1.68 eur/l +0,04" and
+// "1.59 eur/l (+0,03)" both occur — so both are accepted; without them the official Promjena on
+// those articles was silently dropped. The change column is still optional, may be the words
+// "bez promjene", may put a space between sign and number, and uses a comma or a dot as the
+// decimal separator — sometimes both inside the same article.
 const priceRowPattern =
-  /^(.+?)\s+(\d{1,2}[.,]\d{1,2})\s*e\s?ur\b\s*(bez\s+promjene|[+-]\s*\d+[.,]\d{1,2})?/i;
+  /^(.+?)\s+(\d{1,2}[.,]\d{1,2})\s*e\s?ur\b(?:\s*\/\s*l\b)?\s*\(?\s*(bez\s+promjene|[+-]\s*\d+[.,]\d{1,2})?/i;
 
 function toCents(value: string) {
   const [whole, fraction = "0"] = value.replace(",", ".").split(".");
