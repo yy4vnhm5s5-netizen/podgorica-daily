@@ -1,4 +1,6 @@
+import { ArrowRight } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import type { ReactNode } from "react";
 
 import {
@@ -8,6 +10,8 @@ import {
 } from "@/app/platform-homepage-data";
 import { CityCard } from "@/app/platform-city-panel";
 import { PlatformAtmosphere } from "@/app/platform-atmosphere";
+import { PlatformCityIndex } from "@/app/platform-city-index";
+import { getFuelPricesPath } from "@/shared/config/public-routes";
 import { PlatformCitySelector } from "@/app/platform-city-selector";
 import { LastCityContinuation } from "@/app/platform-last-city";
 import {
@@ -121,6 +125,39 @@ function PlatformHomepage({ cards }: PlatformHomepageProps) {
         </div>
         <LastCityContinuation cards={cards} />
         <PlatformCitySelector cards={cards} />
+        <PlatformCityIndex />
+      </section>
+
+      {/* The one national page the platform has. It sits after the city block because choosing a
+          city is still the page's main job, and before the supporting content because a price
+          everyone in the country pays is more useful than an explanation of how the site works.
+          A teaser only: the figures, the chart and the history stay on /gorivo. */}
+      <section aria-labelledby="fuel-heading" className="relative mt-10 sm:mt-12">
+        <div className="rounded-xl border border-amber-200 bg-gradient-to-br from-amber-50 to-amber-100/60 px-5 py-4 sm:px-6 sm:py-5">
+          <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+            <div className="max-w-2xl space-y-1.5">
+              <p className="text-xs font-medium uppercase tracking-wide text-amber-700">
+                Cijela Crna Gora
+              </p>
+              <h2
+                className="text-lg font-semibold tracking-tight text-slate-950 sm:text-xl"
+                id="fuel-heading"
+              >
+                Cijene goriva u Crnoj Gori
+              </h2>
+              <p className="text-sm leading-6 text-muted-foreground">
+                Zvanične maksimalne maloprodajne cijene naftnih derivata, sa datumom važenja.
+              </p>
+            </div>
+            <Link
+              className="focus-visible:ring-ring inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg border border-amber-300 bg-background/80 px-4 text-sm font-semibold text-amber-900 transition-colors hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+              href={getFuelPricesPath()}
+            >
+              Pogledaj cijene goriva
+              <ArrowRight aria-hidden="true" className="size-4" />
+            </Link>
+          </div>
+        </div>
       </section>
 
       {/* More generous gap before this section: it closes out the "decide which city" zone above
