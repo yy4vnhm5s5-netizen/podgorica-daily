@@ -1,4 +1,12 @@
-import { ArrowDown, ArrowUp, ExternalLink, Fuel, Minus } from "lucide-react";
+import {
+  Droplet,
+  ExternalLink,
+  Fuel,
+  Minus,
+  TrendingDown,
+  TrendingUp,
+  type LucideIcon,
+} from "lucide-react";
 
 import {
   derivePreviousChange,
@@ -7,7 +15,10 @@ import {
   fuelProductNames,
   type FuelPriceCalculation,
   type FuelPriceChange,
+  type FuelPriceChangeDirection,
+  type FuelProductId,
 } from "../domain/fuel-price";
+import { changeWords, getFuelCardLabel } from "./fuel-card-label";
 import { formatFuelDay } from "./fuel-day-label";
 import { FuelPriceTrend } from "./fuel-price-trend";
 import type { FuelPricesReadResult } from "../infrastructure/gov-me-fuel-prices";
@@ -16,6 +27,7 @@ import { NewTabNotice } from "@/shared/components/new-tab-notice";
 import { SectionTitle } from "@/shared/components/section-title";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { getLocaleTag, type Locale } from "@/shared/config/locale";
+import { cn } from "@/shared/lib/utils";
 
 interface FuelPricesPageProps {
   locale: Locale;
@@ -25,6 +37,7 @@ interface FuelPricesPageProps {
 const copy = {
   currentHeading: "Aktuelne cijene",
   effectiveFrom: "Cijene važe od",
+  lastPrice: "Posljednja cijena",
   historyHeading: "Prethodne cijene",
   trendHeading: "Kretanje cijena goriva",
   intro: "Aktuelne maksimalne maloprodajne cijene naftnih derivata u Crnoj Gori.",
@@ -39,6 +52,50 @@ const copy = {
 
 // The cache keeps the full official history; a page shows a readable slice of it.
 const historyRowLimit = 12;
+
+// Fuel identity only: the gradient, the top border and the icon container. Written out in full
+// because Tailwind only ships classes it can see in the source — a class name composed at runtime
+// would be purged and render unstyled. The -700 text shade is used rather than -600 because -600
+// on the matching -50 tint measures 3.6:1, below the 4.5:1 this design requires.
+const fuelCardAccents: Record<FuelProductId, { icon: string; surface: string }> = {
+  eurodiesel: {
+    icon: "bg-amber-100 text-amber-700",
+    surface: "border-t-2 border-t-amber-500 bg-gradient-to-br from-amber-50 to-amber-100",
+  },
+  eurosuper95: {
+    icon: "bg-emerald-100 text-emerald-700",
+    surface: "border-t-2 border-t-emerald-500 bg-gradient-to-br from-emerald-50 to-emerald-100",
+  },
+  eurosuper98: {
+    icon: "bg-blue-100 text-blue-700",
+    surface: "border-t-2 border-t-blue-500 bg-gradient-to-br from-blue-50 to-blue-100",
+  },
+  heatingOil: {
+    icon: "bg-violet-100 text-violet-700",
+    surface: "border-t-2 border-t-violet-500 bg-gradient-to-br from-violet-50 to-violet-100",
+  },
+};
+
+// Deliberately independent of fuel identity: a price rise must never read as good news just
+// because that fuel's identity colour happens to be green. Icon and amount share one state.
+const changeBadges: Record<FuelPriceChangeDirection, string> = {
+  decrease: "bg-emerald-50 text-emerald-700",
+  increase: "bg-red-50 text-red-700",
+  unchanged: "bg-slate-100 text-slate-700",
+};
+
+const fuelCardIcons: Record<FuelProductId, LucideIcon> = {
+  eurodiesel: Fuel,
+  eurosuper95: Fuel,
+  eurosuper98: Fuel,
+  heatingOil: Droplet,
+};
+
+const changeIcons: Record<FuelPriceChangeDirection, LucideIcon> = {
+  decrease: TrendingDown,
+  increase: TrendingUp,
+  unchanged: Minus,
+};
 
 function formatDay(date: string, locale: Locale) {
   return formatFuelDay(date, getLocaleTag(locale));
@@ -78,24 +135,22 @@ function FuelPricesPage({ locale, result }: FuelPricesPageProps) {
             </p>
           ) : null}
 
-          <section aria-label={copy.currentHeading} className="grid gap-3 sm:grid-cols-2">
+          <section
+            aria-label={copy.currentHeading}
+            className="grid gap-4 sm:grid-cols-2 md:gap-6 lg:grid-cols-4"
+          >
             {fuelProductIds.map((productId) => {
               const price = current.prices.find((entry) => entry.productId === productId);
               if (!price) return null;
-              const change = derivePreviousChange(current, previous, productId);
 
               return (
-                <Card className="border-border bg-card shadow-none" key={productId}>
-                  <CardContent className="space-y-1 p-4 sm:p-5">
-                    <p className="text-sm font-medium text-muted-foreground">
-                      {fuelProductNames[productId]}
-                    </p>
-                    <p className="text-2xl font-semibold tracking-tight sm:text-3xl">
-                      {formatFuelPrice(price.priceCents, getLocaleTag(locale))} €/l
-                    </p>
-                    <ChangeBadge change={change} locale={locale} />
-                  </CardContent>
-                </Card>
+                <FuelPriceCard
+                  change={derivePreviousChange(current, previous, productId)}
+                  key={productId}
+                  locale={locale}
+                  priceCents={price.priceCents}
+                  productId={productId}
+                />
               );
             })}
           </section>
@@ -204,27 +259,63 @@ function HistoryRow({ calculation, locale }: HistoryRowProps) {
   );
 }
 
-function ChangeBadge({ change, locale }: { change?: FuelPriceChange; locale: Locale }) {
-  if (!change) return null;
-  if (change.direction === "unchanged") {
-    return (
-      <p className="flex items-center gap-1 text-sm text-muted-foreground">
-        <Minus aria-hidden="true" className="size-3.5" />
-        bez promjene
-      </p>
-    );
-  }
+interface FuelPriceCardProps {
+  change?: FuelPriceChange;
+  locale: Locale;
+  priceCents: number;
+  productId: FuelProductId;
+}
 
-  const Icon = change.direction === "increase" ? ArrowUp : ArrowDown;
+function FuelPriceCard({ change, locale, priceCents, productId }: FuelPriceCardProps) {
+  const accent = fuelCardAccents[productId];
+  const localeTag = getLocaleTag(locale);
+  const price = formatFuelPrice(priceCents, localeTag);
+  const ProductIcon = fuelCardIcons[productId];
+  const ChangeIcon = change ? changeIcons[change.direction] : undefined;
+
   return (
-    <p
-      className={`flex items-center gap-1 text-sm ${
-        change.direction === "increase" ? "text-red-700" : "text-emerald-700"
-      }`}
+    <Card
+      aria-label={getFuelCardLabel(productId, priceCents, localeTag, change)}
+      className={cn(
+        "rounded-xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
+        "motion-reduce:transition-none motion-reduce:hover:translate-y-0",
+        accent.surface,
+      )}
+      role="group"
     >
-      <Icon aria-hidden="true" className="size-3.5" />
-      {formatFuelPrice(change.cents, getLocaleTag(locale))} €
-    </p>
+      <CardContent className="p-4 pt-4 sm:p-5 sm:pt-5">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-3">
+            <span
+              className={cn(
+                "flex size-10 shrink-0 items-center justify-center rounded-full",
+                accent.icon,
+              )}
+            >
+              <ProductIcon aria-hidden="true" className="size-5" />
+            </span>
+            <span className="truncate text-sm font-medium">{fuelProductNames[productId]}</span>
+          </div>
+          {change && ChangeIcon ? (
+            <span
+              className={cn(
+                "flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
+                changeBadges[change.direction],
+              )}
+            >
+              <ChangeIcon aria-hidden="true" className="size-4" />
+              {change.direction === "unchanged"
+                ? changeWords.unchanged
+                : `${formatFuelPrice(change.cents, localeTag)} €`}
+            </span>
+          ) : null}
+        </div>
+        <p className="mt-2 text-2xl font-bold tracking-tight">
+          <span className="tabular-nums">{price}</span> €/l
+        </p>
+        <p className="mt-1 text-xs text-muted-foreground">{copy.lastPrice}</p>
+      </CardContent>
+    </Card>
   );
 }
 
