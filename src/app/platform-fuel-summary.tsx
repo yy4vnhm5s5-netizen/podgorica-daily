@@ -23,7 +23,8 @@ function PlatformFuelSummary({ result }: PlatformFuelSummaryProps) {
       ? []
       : fuelProductIds.flatMap((productId) => {
           const price = current.prices.find((entry) => entry.productId === productId);
-          return price ? [{ name: fuelProductNames[productId], productId, ...price }] : [];
+          // `price` already carries productId; spreading it is the only source of that field.
+          return price ? [{ name: fuelProductNames[productId], ...price }] : [];
         });
 
   return (
