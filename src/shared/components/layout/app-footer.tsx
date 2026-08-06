@@ -71,14 +71,6 @@ function AppFooter({ translations }: AppFooterProps) {
                   </FooterLink>
                 </li>
               ) : null}
-              {/* One low-noise crawlable link so the national fuel page is not orphaned. It is a
-                  platform utility, not a city feature, so it belongs here rather than in any city
-                  shortcut row. */}
-              {isFeatureEnabled("fuelPrices") ? (
-                <li>
-                  <FooterLink href={getFuelPricesPath()}>Cijene goriva</FooterLink>
-                </li>
-              ) : null}
               <li>
                 <FooterLink href="/#faq-heading">FAQ</FooterLink>
               </li>
@@ -99,11 +91,20 @@ function AppFooter({ translations }: AppFooterProps) {
             <h2 className="text-sm font-semibold text-foreground" id="footer-tracked-heading">
               Šta pratimo
             </h2>
+            {/* Only rows with a single truthful public destination are links. Everything else here
+                exists city by city — events, flights and beaches all live under /[city]/… and have
+                no national landing page — so those stay plain text rather than pointing somewhere
+                arbitrary. Fuel prices are set nationally and have one canonical page. */}
             <ul className="space-y-1.5 text-sm leading-5 text-muted-foreground">
               <li>Gradske usluge</li>
               <li>Događaji</li>
               <li>Letovi</li>
               <li>Kupališta</li>
+              {isFeatureEnabled("fuelPrices") ? (
+                <li>
+                  <FooterLink href={getFuelPricesPath()}>Cijene goriva</FooterLink>
+                </li>
+              ) : null}
               <li>Lokalne informacije</li>
             </ul>
           </section>
