@@ -2,76 +2,115 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-import { getActiveCities, getCity } from "@/shared/config/cities";
-import { getCityPath, getFuelPricesPath } from "@/shared/config/public-routes";
+import { fuelProductIds, fuelProductNames } from "@/modules/fuel/domain/fuel-price";
+import { getFuelPricesPath } from "@/shared/config/public-routes";
 
 const read = async (file: string) => readFile(new URL(file, import.meta.url), "utf8");
 
-test("every active city has a description a crawler can read, from the registry", async () => {
-  const index = await read("./platform-city-index.tsx");
-
-  // The list is generated from the registry and prints the registry's own sentence — nothing is
-  // written for search engines, and nothing is hidden.
-  assert.match(index, /getActiveCities\(\)/u);
-  assert.match(index, /\{city\.description\}/u);
-  assert.match(index, /href=\{getCityPath\(city\)\}/u);
-  for (const city of getActiveCities()) {
-    assert.equal(typeof city.description, "string", `${city.id} must carry a description`);
-  }
-});
-
-test("the inactive city is absent, because the registry says it is inactive", () => {
-  const cityIds = getActiveCities().map(({ id }) => id);
-
-  assert.equal(cityIds.includes("niksic"), false);
-  assert.equal(getCity("niksic")?.isActive, false);
-  // Six today, but the assertion is the rule, not the count.
-  assert.equal(
-    cityIds.every((id) => getCity(id)?.isActive === true),
-    true,
-  );
-});
-
-test("each active city home URL is a real anchor target", () => {
-  for (const city of getActiveCities()) {
-    assert.equal(getCityPath(city), `/${city.slug}`);
-  }
-});
-
-test("the city tabs are real links, so crawlers and no-JS visitors reach the city", async () => {
-  const selector = await read("./platform-city-selector.tsx");
-
-  // Progressive enhancement: an anchor to the city page that a normal click upgrades to a tab
-  // switch. Modifier clicks are left alone so open-in-new-tab keeps working.
-  assert.match(selector, /href=\{card\.href\}/u);
-  const modifierGuard =
-    /event\.metaKey \|\| event\.altKey \|\| event\.ctrlKey \|\| event\.shiftKey/u;
-  assert.match(selector, modifierGuard);
-  assert.match(selector, /role="tab"/u);
-  assert.match(selector, /aria-selected=\{isSelected\}/u);
-});
-
-test("no second set of dashboard panels is rendered for search engines", async () => {
-  const index = await read("./platform-city-index.tsx");
-
-  // The index is config only: no metrics, no cache reads, no hidden duplicate of the rich panel.
-  assert.doesNotMatch(index, /highlights|shortcuts|loadCityDashboardData|CityCard/u);
-  assert.doesNotMatch(index, /sr-only|hidden|display:\s*none|aria-hidden="true"/u);
-});
-
-test("the fuel teaser links through the route helper and shows no prices", async () => {
+test("the standalone city list is gone, with no empty wrapper left behind", async () => {
   const homepage = await read("./platform-homepage.tsx");
 
-  assert.match(homepage, /href=\{getFuelPricesPath\(\)\}/u);
-  assert.doesNotMatch(homepage, /href="\/gorivo"/u);
-  assert.equal(getFuelPricesPath(), "/gorivo");
-  assert.match(homepage, /Cijene goriva u Crnoj Gori/u);
-  assert.match(homepage, /Pogledaj cijene goriva/u);
-  // A teaser, not a second dashboard: no figures, no products, no dates.
-  assert.doesNotMatch(homepage, /Eurosuper|Eurodizel|Lož ulje|€ \/ L|formatFuelPrice/u);
+  assert.doesNotMatch(homepage, /Svi gradovi/u);
+  assert.doesNotMatch(homepage, /PlatformCityIndex/u);
+  // The city section ends with the selector; nothing hollow follows it.
+  assert.match(homepage, /<PlatformCitySelector cards=\{cards\} \/>\s*<\/section>/u);
 });
 
-test("the fuel teaser sits between the city block and the supporting content", async () => {
+test("the city selector and its rich panel are untouched", async () => {
+  const homepage = await read("./platform-homepage.tsx");
+  const selector = await read("./platform-city-selector.tsx");
+
+  assert.match(homepage, /<PlatformCitySelector cards=\{cards\} \/>/u);
+  assert.match(homepage, /<LastCityContinuation cards=\{cards\} \/>/u);
+  // Tabs are still real links with tab semantics and the progressive-enhancement guard.
+  assert.match(selector, /href=\{card\.href\}/u);
+  assert.match(selector, /role="tab"/u);
+  assert.match(selector, /aria-selected=\{isSelected\}/u);
+  assert.match(selector, /<CityCard card=\{activeCard\} \/>/u);
+});
+
+test("the fuel section is a neutral information card, not a promotional banner", async () => {
+  const fuel = await read("./platform-fuel-summary.tsx");
+
+  assert.match(fuel, /Cijene goriva<\/p>/u);
+  assert.doesNotMatch(fuel, /Cijela Crna Gora/iu);
+  // The specific regression being guarded: no amber container, border or gradient.
+  assert.doesNotMatch(fuel, /amber/u);
+  assert.doesNotMatch(fuel, /bg-gradient-to/u);
+  assert.match(fuel, /rounded-xl border border-border bg-background/u);
+});
+
+test("the fuel heading, supporting sentence and CTA are kept", async () => {
+  const fuel = await read("./platform-fuel-summary.tsx");
+
+  assert.match(fuel, /Cijene goriva u Crnoj Gori/u);
+  const supporting =
+    /Zvanične maksimalne maloprodajne cijene naftnih derivata, sa datumom važenja\./u;
+  assert.match(fuel, supporting);
+  assert.match(fuel, /Pogledaj cijene goriva/u);
+});
+
+test("the CTA is a crawlable link built from the route helper", async () => {
+  const fuel = await read("./platform-fuel-summary.tsx");
+
+  assert.match(fuel, /href=\{getFuelPricesPath\(\)\}/u);
+  assert.doesNotMatch(fuel, /href="\/gorivo"/u);
+  assert.equal(getFuelPricesPath(), "/gorivo");
+});
+
+test("all four products come from the fuel domain, never from local literals", async () => {
+  const fuel = await read("./platform-fuel-summary.tsx");
+
+  assert.deepEqual(
+    fuelProductIds.map((productId) => fuelProductNames[productId]),
+    ["Eurosuper 95", "Eurosuper 98", "Eurodizel", "Lož ulje"],
+  );
+  assert.match(fuel, /fuelProductIds\.flatMap/u);
+  assert.match(fuel, /fuelProductNames\[productId\]/u);
+  // No parallel naming, and no hardcoded product labels.
+  assert.doesNotMatch(fuel, /BMB/u);
+  for (const name of ["Eurosuper 95", "Eurosuper 98", "Eurodizel", "Lož ulje"])
+    assert.doesNotMatch(fuel, new RegExp(`"${name}"`, "u"));
+});
+
+test("prices are read from the snapshot and formatted by the shared helper", async () => {
+  const fuel = await read("./platform-fuel-summary.tsx");
+
+  assert.match(fuel, /current\.prices\.find/u);
+  assert.match(fuel, /formatFuelPriceWithUnit\(priceCents, localeTag\)/u);
+  // The unit string itself is not re-spelled here.
+  assert.doesNotMatch(fuel, /€ \/ L/u);
+  assert.doesNotMatch(fuel, /\d,\d\d/u);
+});
+
+test("the homepage reads the same cached snapshot /gorivo reads", async () => {
+  const route = await read("./page.tsx");
+
+  assert.match(route, /getFuelPrices\(\)/u);
+  assert.match(route, /from "@\/modules\/fuel\/infrastructure\/gov-me-fuel-prices"/u);
+  // No second endpoint, no collector, no client fetching.
+  assert.doesNotMatch(route, /refreshFuelPrices|runFuelPricesCollector|fetch\(/u);
+});
+
+test("an unusable snapshot omits the prices instead of inventing them", async () => {
+  const fuel = await read("./platform-fuel-summary.tsx");
+
+  assert.match(fuel, /result\.freshnessStatus === "unavailable" \|\| !current\s*\?\s*\[\]/u);
+  // The row is conditional; the heading and CTA are not.
+  assert.match(fuel, /\{prices\.length > 0 \? \(/u);
+  assert.doesNotMatch(fuel, /N\/A|0,00|"—"/u);
+});
+
+test("the fuel section stays server-rendered", async () => {
+  const fuel = await read("./platform-fuel-summary.tsx");
+  const homepage = await read("./platform-homepage.tsx");
+
+  assert.doesNotMatch(fuel, /"use client"/u);
+  assert.doesNotMatch(homepage, /"use client"/u);
+  assert.doesNotMatch(fuel, /useState|useEffect/u);
+});
+
+test("the homepage section order is city block, fuel, then supporting content", async () => {
   const homepage = await read("./platform-homepage.tsx");
   const order = [...homepage.matchAll(/aria-labelledby="([a-z-]+)"/gu)].map(([, id]) => id);
 
@@ -82,19 +121,4 @@ test("the fuel teaser sits between the city block and the supporting content", a
     "how-it-works-heading",
     "faq-heading",
   ]);
-});
-
-test("the homepage additions stay server-rendered", async () => {
-  const homepage = await read("./platform-homepage.tsx");
-  const index = await read("./platform-city-index.tsx");
-
-  // The selector remains the page's only client boundary.
-  assert.doesNotMatch(homepage, /"use client"/u);
-  assert.doesNotMatch(index, /"use client"/u);
-});
-
-test("the last-city continuation is still wired into the city block", async () => {
-  const homepage = await read("./platform-homepage.tsx");
-
-  assert.match(homepage, /<LastCityContinuation cards=\{cards\} \/>/u);
 });
