@@ -1,5 +1,5 @@
 const contentClassPattern =
-  /\b(?:article-content|ba-blog-post-body|ba-item-text-content|content-body|entry-content|event-content|event-description|post-content|single-post-content|elementor-widget-theme-post-content)\b/i;
+  /\b(?:article-content|ba-blog-post-body|ba-item-text-content|content-body|entry-content|event-content|event-description|post-content|single-post-content|elementor-widget-theme-post-content|wp_editor)\b/i;
 
 function extractEventContentHtml(html: string) {
   const document = removeNonContentBlocks(html);

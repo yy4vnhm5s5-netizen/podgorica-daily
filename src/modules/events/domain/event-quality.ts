@@ -81,6 +81,33 @@ const defaultEventQualityPolicy: EventQualityPolicy = {
   warnOnMissingVenue: true,
 };
 
+// How long ago the event happened, in days; negative for one still ahead. Undefined when the
+// event carries no parseable date at all, which every caller has to decide about for itself.
+function getEventAgeDays(
+  event: Pick<CityEvent, "startDate" | "startsAt">,
+  now: Date,
+): number | undefined {
+  const eventDate = event.startsAt ?? event.startDate;
+  if (!eventDate) return undefined;
+  const eventTime = new Date(eventDate).getTime();
+  return Number.isNaN(eventTime) ? undefined : (now.getTime() - eventTime) / 86_400_000;
+}
+
+// The same window the quality pipeline enforces, exposed so a collector can decide *before* doing
+// work whether an event is one the platform would keep at all. An undatable event is outside the
+// window here: there is no date to judge, so nothing should be spent on it. Sharing one definition
+// is the point — a second, copied day count would drift from the policy the platform actually
+// applies.
+function isEventWithinQualityWindow(
+  event: Pick<CityEvent, "startDate" | "startsAt">,
+  policy: EventQualityPolicy = defaultEventQualityPolicy,
+  now = new Date(),
+) {
+  const ageDays = getEventAgeDays(event, now);
+  if (ageDays === undefined) return false;
+  return ageDays <= policy.maximumPastDays && -ageDays <= policy.maximumFutureDays;
+}
+
 function assessEventQuality(
   event: CityEvent,
   validCityIds: readonly CityId[],
@@ -109,15 +136,11 @@ function assessEventQuality(
   if (!event.startsAt && policy.warnOnMissingStartTime) add("missing-start-time", "warning");
   if (event.startDate && !event.startsAt) add("date-only-event", "warning");
   if (event.title.trim().length < 3) add("suspicious-title", "warning");
-  const eventDate = event.startsAt ?? event.startDate;
-  if (eventDate) {
-    const eventTime = new Date(eventDate).getTime();
-    if (!Number.isNaN(eventTime)) {
-      const ageDays = (now.getTime() - eventTime) / 86_400_000;
-      if (ageDays > policy.maximumPastDays) add("excessively-old-event", "error");
-      if (-ageDays > policy.maximumFutureDays) add("excessively-future-event", "error");
-      if (ageDays > 0 && event.status === "scheduled") add("stale-event", "warning");
-    }
+  const ageDays = getEventAgeDays(event, now);
+  if (ageDays !== undefined) {
+    if (ageDays > policy.maximumPastDays) add("excessively-old-event", "error");
+    if (-ageDays > policy.maximumFutureDays) add("excessively-future-event", "error");
+    if (ageDays > 0 && event.status === "scheduled") add("stale-event", "warning");
   }
   const duplicateReferences = new Set(
     event.sourceReferences.map(({ sourceId, sourceUrl }) => `${sourceId}|${sourceUrl}`),
@@ -239,6 +262,8 @@ function createDiagnostics({
 export {
   assessEventQuality,
   defaultEventQualityPolicy,
+  getEventAgeDays,
+  isEventWithinQualityWindow,
   runEventQualityPipeline,
   type EventQualityCode,
   type EventQualityDiagnostics,

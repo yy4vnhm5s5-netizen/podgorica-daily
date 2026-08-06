@@ -16,7 +16,10 @@ import {
   getPublicCityEventById,
 } from "@/modules/events/presentation/events-ui-model";
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
+import type { CityEvent } from "@/modules/events/domain/event";
 import { getCityName } from "@/shared/config/cities";
+import { getLocaleTag, type Locale } from "@/shared/config/locale";
+import { formatDateTime } from "@/shared/lib/date";
 import { getPageTitle } from "@/shared/config/site";
 import { getEventDetailPath } from "@/shared/config/public-routes";
 import { getTranslations } from "@/shared/lib/translations";
@@ -41,8 +44,23 @@ const getCachedEventDetailContext = cache((slug: string) =>
 );
 const getCachedCityEvents = cache(getCityEvents);
 
+// The day the event happens, in the same long Montenegrin form the page body uses. Returns
+// undefined for an event whose dates do not parse, so the fallback stays as it was.
+function getEventMetadataDay(event: CityEvent, locale: Locale) {
+  const value = event.startsAt ?? event.startDate;
+  if (!value) return undefined;
+  const date = new Date(event.startsAt ? value : `${value}T12:00:00.000Z`);
+  if (Number.isNaN(date.getTime())) return undefined;
+
+  return formatDateTime(date, {
+    formatOptions: { dateStyle: "long", timeStyle: undefined },
+    locale: getLocaleTag(locale),
+  }).label;
+}
+
 async function generateMetadata({ params }: EventDetailPageProps): Promise<Metadata> {
   const { city: slug, eventId } = await params;
+  const locale = "me" as const;
   const context = getCachedEventDetailContext(slug);
   if (!context) return {};
   const event = getPublicCityEventById((await getCachedCityEvents(context)).events, eventId);
@@ -50,10 +68,17 @@ async function generateMetadata({ params }: EventDetailPageProps): Promise<Metad
   if (!event) return {};
 
   // Fallback only — used when the provider supplied no description. "u" governs the locative, so
-  // the nominative rendered "… u Podgorica." on every such event page.
+  // the nominative rendered "… u Podgorica." on every such event page. The event's own date is
+  // appended when it parses: without it this sentence carries no fact that distinguishes one
+  // event from the next, and the day is the discriminator a reader (and a search) needs.
+  // Always the event date, never the publication date, and never a time.
+  const eventDay = getEventMetadataDay(event, locale);
+  const cityLocative = getCityName(context.city, "locative");
   const description =
     event.description ??
-    `Informacije o događaju ${event.title} u ${getCityName(context.city, "locative")}.`;
+    (eventDay
+      ? `Informacije o događaju ${event.title} u ${cityLocative}, ${eventDay}.`
+      : `Informacije o događaju ${event.title} u ${cityLocative}.`);
 
   return createPublicRouteMetadata({
     canonical: getEventDetailPath(context.city, event.id),
