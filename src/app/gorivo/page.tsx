@@ -4,6 +4,10 @@ import { notFound } from "next/navigation";
 import { createPublicRouteMetadata } from "@/app/public-route-metadata";
 import { PlatformCityDiscovery } from "@/app/platform-city-discovery";
 import { getFuelPrices } from "@/modules/fuel/infrastructure/gov-me-fuel-prices";
+import {
+  createFuelBreadcrumbStructuredData,
+  serializeFuelStructuredData,
+} from "@/modules/fuel/presentation/fuel-structured-data";
 import { FuelPricesPage } from "@/modules/fuel/presentation/fuel-prices-page";
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
 import { getFuelPricesPath } from "@/shared/config/public-routes";
@@ -34,6 +38,13 @@ async function FuelRoute() {
 
   return (
     <DashboardLayout city={getMainCity()} homeHref="/" translations={getTranslations("me")}>
+      {/* Server-rendered, so it is in the initial HTML a crawler reads. */}
+      <script
+        dangerouslySetInnerHTML={{
+          __html: serializeFuelStructuredData(createFuelBreadcrumbStructuredData()),
+        }}
+        type="application/ld+json"
+      />
       <FuelPricesPage locale="me" result={result} />
       <PlatformCityDiscovery />
     </DashboardLayout>
