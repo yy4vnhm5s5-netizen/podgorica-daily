@@ -16,11 +16,17 @@ function PlatformCityDiscovery() {
       <h2 className="text-lg font-semibold tracking-tight" id="gradovi-heading">
         Informacije iz gradova
       </h2>
-      <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+      {/* Two columns from the smallest screen up: one column made six full-width rows, which was
+          needlessly tall for what is a short link list. Three columns from lg keeps the desktop
+          layout as it was. */}
+      <ul className="grid grid-cols-2 gap-2 lg:grid-cols-3">
         {cities.map((city) => (
           <li key={city.id}>
+            {/* Only the horizontal padding and the icon gap tighten on mobile — at 320 px a column
+                is ~140 px wide, and the extra 8 px is what keeps "Podgorica" from crowding the
+                edge. Vertical padding stays, so the touch target does not shrink. */}
             <Link
-              className="focus-visible:ring-ring flex items-center gap-3 rounded-xl border border-border p-3 transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2"
+              className="focus-visible:ring-ring flex items-center gap-2 rounded-xl border border-border px-2.5 py-3 transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 sm:gap-3 sm:px-3"
               href={getCityPath(city)}
             >
               <CityIdentityIcon cityId={city.id} size="sm" />
