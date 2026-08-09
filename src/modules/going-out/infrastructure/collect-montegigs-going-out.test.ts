@@ -51,6 +51,35 @@ test("reports retained cache on a failed MonteGigs collection", async () => {
   );
 });
 
+test("reports bounded detail-enrichment coverage without source content", async () => {
+  const output: string[] = [];
+  await runMonteGigsGoingOutCollector({
+    cachePath: "/tmp/gradom-going-out-collector-details/cache.json",
+    refresh: async () => ({
+      acceptedEvents: 6,
+      detailCoverage: {
+        addressCount: 2,
+        candidateEvents: 6,
+        descriptionCount: 4,
+        detailFetchAttempted: 6,
+        detailFetchSucceeded: 5,
+        informationUrlCount: 3,
+        organizerCount: 2,
+      },
+      retainedPreviousSnapshot: false,
+      snapshot: null,
+      success: true,
+      warnings: ["montegigs-detail-enrichment-incomplete"],
+    }),
+    writeOutput: (line) => output.push(line),
+  });
+
+  assert.equal(
+    output[0],
+    "provider=montegigs-going-out cityId=podgorica state=success accepted=6 snapshot=unavailable retainedPreviousSnapshot=false detailCandidates=6 detailFetched=5/6 detailDescriptions=4 detailAddresses=2 detailOrganizers=2 detailInformationUrls=3",
+  );
+});
+
 test("uses independent city locks and reports city-aware diagnostics", async () => {
   const podgorica = createCityContext("podgorica");
   const budva = createCityContext("budva");

@@ -36,10 +36,14 @@ test("keeps the composite ID independent from source identity and optional enric
     title: "Summer Jam",
   });
   const enriched = normalizeGoingOutEvent({
+    address: " Trg od kina, Kotor ",
     city: "podgorica",
+    description: " Koncert na otvorenom uz lokalne izvođače. ",
     eventType: "  Concert ",
     genre: " Pop ",
+    informationUrl: "https://example.org/program/summer-jam",
     isFree: true,
+    organizer: " Organizator događaja ",
     performers: [" Željko Samardžić ", "željko samardžić", "", " Slađa Allegro "],
     priceLabel: "10",
     sourceEventId: "5520",
@@ -52,9 +56,13 @@ test("keeps the composite ID independent from source identity and optional enric
   assert.ok(enriched);
   assert.equal(baseline.id, enriched.id);
   assert.equal(enriched.sourceEventId, "5520");
+  assert.equal(enriched.address, "Trg od kina, Kotor");
+  assert.equal(enriched.description, "Koncert na otvorenom uz lokalne izvođače.");
   assert.equal(enriched.eventType, "Concert");
   assert.equal(enriched.genre, "Pop");
+  assert.equal(enriched.informationUrl, "https://example.org/program/summer-jam");
   assert.equal(enriched.isFree, true);
+  assert.equal(enriched.organizer, "Organizator događaja");
   assert.equal(enriched.priceLabel, undefined);
   assert.deepEqual(enriched.performers, ["Željko Samardžić", "Slađa Allegro"]);
   assert.equal(

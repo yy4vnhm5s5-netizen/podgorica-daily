@@ -15,8 +15,11 @@ import {
   sortAndDeduplicateGoingOutEvents,
   type GoingOutEvent,
 } from "../domain/going-out-event.ts";
+import { parseMonteGigsEventDetail, type MonteGigsEventDetail } from "./montegigs-event-details.ts";
 
 const maximumResponseLength = 1_500_000;
+const maximumDetailRequestsPerCityRefresh = 12;
+const detailRequestConcurrency = 3;
 
 const monteGigsCitySources = {
   bar: {
@@ -105,11 +108,22 @@ interface MonteGigsEventLink {
 
 interface GoingOutRefreshResult {
   acceptedEvents: number;
+  detailCoverage?: GoingOutDetailCoverage;
   errorCode?: string;
   retainedPreviousSnapshot: boolean;
   snapshot: GoingOutCacheSnapshot | null;
   success: boolean;
   warnings: string[];
+}
+
+interface GoingOutDetailCoverage {
+  addressCount: number;
+  candidateEvents: number;
+  descriptionCount: number;
+  detailFetchAttempted: number;
+  detailFetchSucceeded: number;
+  informationUrlCount: number;
+  organizerCount: number;
 }
 
 interface GoingOutCacheResult {
@@ -429,6 +443,81 @@ function parseMonteGigsEvents(
   };
 }
 
+async function enrichMonteGigsEventDetails({
+  events,
+  httpClient,
+}: {
+  events: readonly GoingOutEvent[];
+  httpClient: GoingOutHttpClient;
+}) {
+  const candidateUrls = [...new Set(events.map((event) => event.sourceUrl))].slice(
+    0,
+    maximumDetailRequestsPerCityRefresh,
+  );
+  const detailsBySourceUrl = new Map<string, MonteGigsEventDetail>();
+  let detailFetchSucceeded = 0;
+
+  await mapWithConcurrency(candidateUrls, detailRequestConcurrency, async (sourceUrl) => {
+    try {
+      const response = await httpClient.get(sourceUrl);
+      assertMonteGigsDetailUrl(response.finalUrl, sourceUrl);
+      const sourceEventId = eventIdFromMonteGigsUrl(sourceUrl);
+      if (!sourceEventId) return;
+
+      const event = events.find((candidate) => candidate.sourceUrl === sourceUrl);
+      const details = parseMonteGigsEventDetail(response.body, {
+        sourceEventId,
+        sourceUrl,
+        ...(event?.venue ? { venue: event.venue } : {}),
+      });
+      detailsBySourceUrl.set(sourceUrl, details);
+      detailFetchSucceeded += 1;
+    } catch {
+      // Detail enrichment is intentionally fail-open. The listing record remains authoritative.
+    }
+  });
+
+  const enrichedEvents = events.map((event) => ({
+    ...event,
+    ...detailsBySourceUrl.get(event.sourceUrl),
+  }));
+  const detailCoverage: GoingOutDetailCoverage = {
+    addressCount: enrichedEvents.filter((event) => Boolean(event.address)).length,
+    candidateEvents: candidateUrls.length,
+    descriptionCount: enrichedEvents.filter((event) => Boolean(event.description)).length,
+    detailFetchAttempted: candidateUrls.length,
+    detailFetchSucceeded,
+    informationUrlCount: enrichedEvents.filter((event) => Boolean(event.informationUrl)).length,
+    organizerCount: enrichedEvents.filter((event) => Boolean(event.organizer)).length,
+  };
+
+  return {
+    detailCoverage,
+    events: enrichedEvents,
+    warnings:
+      detailFetchSucceeded === candidateUrls.length
+        ? []
+        : ["montegigs-detail-enrichment-incomplete"],
+  };
+}
+
+async function mapWithConcurrency<Value>(
+  values: readonly Value[],
+  concurrency: number,
+  operation: (value: Value) => Promise<void>,
+) {
+  let nextIndex = 0;
+  const worker = async () => {
+    while (nextIndex < values.length) {
+      const value = values[nextIndex];
+      nextIndex += 1;
+      if (value !== undefined) await operation(value);
+    }
+  };
+
+  await Promise.all(Array.from({ length: Math.min(concurrency, values.length) }, () => worker()));
+}
+
 async function refreshMonteGigsGoingOut({
   cachePath,
   context,
@@ -461,23 +550,28 @@ async function refreshMonteGigsGoingOut({
     if (!parsed.recognized) {
       return retainPrevious(previous, "montegigs-parser-failed", parsed.warnings);
     }
+    const enriched = await enrichMonteGigsEventDetails({
+      events: parsed.events,
+      httpClient,
+    });
 
     const snapshot: GoingOutCacheSnapshot = {
       cityId: source.cityId,
-      events: sortAndDeduplicateGoingOutEvents(parsed.events),
+      events: sortAndDeduplicateGoingOutEvents(enriched.events),
       fetchedAt: now.toISOString(),
       lastSuccessfulRefreshAt: now.toISOString(),
-      parserWarnings: parsed.warnings,
+      parserWarnings: [...parsed.warnings, ...enriched.warnings],
       schemaVersion: 1,
       sourceUrl: response.finalUrl,
     };
     await writeJsonCache(snapshot, resolvedCachePath);
     return {
       acceptedEvents: snapshot.events.length,
+      detailCoverage: enriched.detailCoverage,
       retainedPreviousSnapshot: false,
       snapshot,
       success: true,
-      warnings: parsed.warnings,
+      warnings: snapshot.parserWarnings,
     };
   } catch (error) {
     return retainPrevious(
@@ -530,7 +624,9 @@ async function readGoingOutCacheSnapshot(
     const sourceEventId = eventIdFromMonteGigsUrl(event.sourceUrl);
     if (
       !sourceEventId ||
-      (event.sourceEventId !== undefined && event.sourceEventId !== sourceEventId)
+      (event.sourceEventId !== undefined && event.sourceEventId !== sourceEventId) ||
+      (event.informationUrl !== undefined &&
+        !isValidExternalInformationUrl(event.informationUrl, event.sourceUrl))
     ) {
       return null;
     }
@@ -579,6 +675,30 @@ function assertMonteGigsListingUrl(value: string, cityId: MonteGigsSupportedCity
       "montegigs-city-source-rejected",
       "MonteGigs redirected to an unexpected city listing.",
     );
+  }
+}
+
+function assertMonteGigsDetailUrl(value: string, sourceUrl: string) {
+  assertMonteGigsUrl(value);
+  if (new URL(value).pathname !== new URL(sourceUrl).pathname) {
+    throw new MonteGigsFetchError(
+      "montegigs-city-source-rejected",
+      "MonteGigs redirected to an unexpected event detail.",
+    );
+  }
+}
+
+function isValidExternalInformationUrl(value: string, sourceUrl: string) {
+  try {
+    const url = new URL(value);
+    const source = new URL(sourceUrl);
+    return (
+      url.protocol === "https:" &&
+      url.toString() !== source.toString() &&
+      url.hostname !== source.hostname
+    );
+  } catch {
+    return false;
   }
 }
 
@@ -731,12 +851,20 @@ function extractEventMetadata(value: string) {
 }
 
 const goingOutEventSchema = z.object({
+  address: z.string().min(1).max(500).optional(),
   city: z.enum(["bar", "podgorica", "budva", "kotor", "tivat", "ulcinj"]),
+  description: z.string().min(1).max(4_000).optional(),
   eventType: z.string().min(1).optional(),
   genre: z.string().min(1).optional(),
   id: z.string().min(1),
   imageUrl: z.string().url().optional(),
+  informationUrl: z
+    .string()
+    .url()
+    .refine((value) => new URL(value).protocol === "https:")
+    .optional(),
   isFree: z.literal(true).optional(),
+  organizer: z.string().min(1).max(250).optional(),
   performers: z.array(z.string().min(1)).min(1).optional(),
   priceLabel: z.string().min(1).optional(),
   sourceName: z.literal("MonteGigs"),
@@ -761,6 +889,7 @@ const goingOutCacheSnapshotSchema = z.object({
 
 export {
   MonteGigsFetchError,
+  assertMonteGigsDetailUrl,
   assertMonteGigsListingUrl,
   assertMonteGigsUrl,
   createMonteGigsHttpClient,
@@ -775,6 +904,7 @@ export {
   type GoingOutCacheResult,
   type GoingOutCacheSnapshot,
   type GoingOutCacheState,
+  type GoingOutDetailCoverage,
   type GoingOutHttpClient,
   type GoingOutHttpResponse,
   type GoingOutRefreshResult,

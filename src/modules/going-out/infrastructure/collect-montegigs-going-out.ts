@@ -133,6 +133,16 @@ async function runMonteGigsGoingOutCollector({
       `accepted=${result.acceptedEvents}`,
       `snapshot=${snapshotState}`,
       `retainedPreviousSnapshot=${result.retainedPreviousSnapshot}`,
+      ...(result.detailCoverage
+        ? [
+            `detailCandidates=${result.detailCoverage.candidateEvents}`,
+            `detailFetched=${result.detailCoverage.detailFetchSucceeded}/${result.detailCoverage.detailFetchAttempted}`,
+            `detailDescriptions=${result.detailCoverage.descriptionCount}`,
+            `detailAddresses=${result.detailCoverage.addressCount}`,
+            `detailOrganizers=${result.detailCoverage.organizerCount}`,
+            `detailInformationUrls=${result.detailCoverage.informationUrlCount}`,
+          ]
+        : []),
       ...(result.errorCode ? [`error=${result.errorCode}`] : []),
     ].join(" ");
     writeOutput(output);

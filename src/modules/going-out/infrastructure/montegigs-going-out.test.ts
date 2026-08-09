@@ -34,6 +34,11 @@ const kotorBoundariesFixturePath = join(
   "__fixtures__",
   "montegigs-kotor-event-boundaries.html",
 );
+const kotorDetailFixturePath = join(
+  import.meta.dirname,
+  "__fixtures__",
+  "montegigs-kotor-detail-jsonld.html",
+);
 const podgorica = createCityContext("podgorica");
 const budva = createCityContext("budva");
 const tivat = createCityContext("tivat");
@@ -309,23 +314,139 @@ test("round-trips enriched listing fields through the same city snapshot", async
   assert.equal(eventsBySourceEventId.get("7906")?.priceLabel, undefined);
 });
 
-test("uses only the existing listing request for enrichment", async () => {
+test("enriches a listing snapshot from matching detail responses and fails open per event", async () => {
   const requestedUrls: string[] = [];
-  const html = await readFile(budvaPayloadEnrichmentFixturePath, "utf8");
+  const listing = await readFile(kotorBoundariesFixturePath, "utf8");
+  const detail = await readFile(kotorDetailFixturePath, "utf8");
+  const cachePath = join(await mkdtemp(join(tmpdir(), "gradom-going-out-details-")), "kotor.json");
 
-  await refreshMonteGigsGoingOut({
-    cachePath: join(await mkdtemp(join(tmpdir(), "gradom-going-out-requests-")), "budva.json"),
-    context: budva,
+  const refreshed = await refreshMonteGigsGoingOut({
+    cachePath,
+    context: kotor,
     httpClient: {
       get: async (url) => {
         requestedUrls.push(url);
-        return response(html, "budva");
+        if (url.endsWith("/me/events/kotor")) return response(listing, "kotor");
+        if (url.includes("/7465-")) return detailResponse(detail, url);
+        throw new Error("detail unavailable");
       },
     },
     now: new Date("2026-08-01T10:00:00.000Z"),
   });
 
-  assert.deepEqual(requestedUrls, ["https://staging.montegigs.me/me/events/budva"]);
+  assert.equal(refreshed.success, true);
+  assert.deepEqual(requestedUrls, [
+    "https://staging.montegigs.me/me/events/kotor",
+    "https://staging.montegigs.me/me/events/kotor/7465-20260812-koncert-u-kotoru",
+    "https://staging.montegigs.me/me/events/kotor/7467-20260813-vecernji-program",
+  ]);
+  assert.equal(refreshed.snapshot?.events.length, 2);
+  assert.deepEqual(
+    refreshed.snapshot?.events.find((event) => event.sourceEventId === "7465"),
+    {
+      address: "Trg od kina, Kotor",
+      city: "kotor",
+      description: "Koncert na otvorenom uz lokalne izvođače i goste večeri.",
+      id: "https://staging.montegigs.me/me/events/kotor/7465-20260812-koncert-u-kotoru|2026-08-12|20:30|koncert u kotoru",
+      imageUrl: "https://staging.montegigs.me/images/kotor-concert.jpg",
+      informationUrl: "https://kotorart.me/program/koncert-u-kotoru",
+      organizer: "KotorArt",
+      sourceName: "MonteGigs",
+      sourceEventId: "7465",
+      sourceUrl: "https://staging.montegigs.me/me/events/kotor/7465-20260812-koncert-u-kotoru",
+      startDate: "2026-08-12",
+      startsAt: "2026-08-12T18:30:00.000Z",
+      title: "Koncert u Kotoru",
+      venue: "Pjaca od kina",
+    },
+  );
+  assert.equal(
+    refreshed.snapshot?.events.find((event) => event.sourceEventId === "7467")?.description,
+    undefined,
+  );
+  assert.deepEqual(refreshed.detailCoverage, {
+    addressCount: 1,
+    candidateEvents: 2,
+    descriptionCount: 1,
+    detailFetchAttempted: 2,
+    detailFetchSucceeded: 1,
+    informationUrlCount: 1,
+    organizerCount: 1,
+  });
+  assert.ok(refreshed.warnings.includes("montegigs-detail-enrichment-incomplete"));
+  const snapshot = await readGoingOutCacheSnapshot(cachePath, "kotor");
+  assert.equal(
+    snapshot?.events.find((event) => event.sourceEventId === "7465")?.informationUrl,
+    "https://kotorart.me/program/koncert-u-kotoru",
+  );
+});
+
+test("deduplicates details and caps concurrent detail work at twelve upcoming event URLs", async () => {
+  const listing = Array.from({ length: 14 }, (_, index) => {
+    const id = 8_000 + index;
+    return `<article><a href="/me/events/budva/${id}-202608${String(index + 1).padStart(2, "0")}-event-${id}"><h3>Event ${id}</h3></a><p>${index + 1}. avg • Budva</p></article>`;
+  }).join("\n");
+  let activeDetails = 0;
+  let maximumActiveDetails = 0;
+  const detailUrls: string[] = [];
+
+  const refreshed = await refreshMonteGigsGoingOut({
+    cachePath: join(await mkdtemp(join(tmpdir(), "gradom-going-out-cap-")), "budva.json"),
+    context: budva,
+    httpClient: {
+      get: async (url) => {
+        if (url.endsWith("/me/events/budva")) return response(`<main>${listing}</main>`, "budva");
+        detailUrls.push(url);
+        activeDetails += 1;
+        maximumActiveDetails = Math.max(maximumActiveDetails, activeDetails);
+        await new Promise((resolve) => setTimeout(resolve, 2));
+        activeDetails -= 1;
+        return detailResponse("<main></main>", url);
+      },
+    },
+    now: new Date("2026-08-01T10:00:00.000Z"),
+  });
+
+  assert.equal(refreshed.success, true);
+  assert.equal(refreshed.snapshot?.events.length, 14);
+  assert.equal(detailUrls.length, 12);
+  assert.equal(new Set(detailUrls).size, 12);
+  assert.ok(maximumActiveDetails <= 3);
+  assert.deepEqual(refreshed.detailCoverage, {
+    addressCount: 0,
+    candidateEvents: 12,
+    descriptionCount: 0,
+    detailFetchAttempted: 12,
+    detailFetchSucceeded: 12,
+    informationUrlCount: 0,
+    organizerCount: 0,
+  });
+});
+
+test("rejects a detail response that redirects to a different source event", async () => {
+  const listing = await readFile(kotorBoundariesFixturePath, "utf8");
+  const detail = await readFile(kotorDetailFixturePath, "utf8");
+  const refreshed = await refreshMonteGigsGoingOut({
+    cachePath: join(await mkdtemp(join(tmpdir(), "gradom-going-out-mismatch-")), "kotor.json"),
+    context: kotor,
+    httpClient: {
+      get: async (url) =>
+        url.endsWith("/me/events/kotor")
+          ? response(listing, "kotor")
+          : detailResponse(
+              detail,
+              "https://staging.montegigs.me/me/events/kotor/9999-20260812-other-event",
+            ),
+    },
+    now: new Date("2026-08-01T10:00:00.000Z"),
+  });
+
+  assert.equal(refreshed.success, true);
+  assert.equal(
+    refreshed.snapshot?.events.every((event) => event.description === undefined),
+    true,
+  );
+  assert.equal(refreshed.detailCoverage?.detailFetchSucceeded, 0);
 });
 
 test("allows only the configured MonteGigs listing host", () => {
@@ -453,6 +574,16 @@ function response(
     contentType: "text/html",
     finalUrl: `https://staging.montegigs.me/me/events/${city}`,
     requestedUrl: `https://staging.montegigs.me/me/events/${city}`,
+    status: 200,
+  };
+}
+
+function detailResponse(body: string, url: string) {
+  return {
+    body,
+    contentType: "text/html",
+    finalUrl: url,
+    requestedUrl: url,
     status: 200,
   };
 }

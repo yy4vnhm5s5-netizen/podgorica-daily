@@ -111,7 +111,17 @@ test("the canonical stays self-referencing and no structured data was added", as
 test("does not render listing enrichment fields before a dedicated UI phase", async () => {
   const presentation = `${await pageSource()}\n${await sectionSource()}`;
 
-  for (const field of ["performers", "eventType", "genre", "isFree", "priceLabel"]) {
+  for (const field of [
+    "address",
+    "description",
+    "eventType",
+    "genre",
+    "informationUrl",
+    "isFree",
+    "organizer",
+    "performers",
+    "priceLabel",
+  ]) {
     assert.doesNotMatch(presentation, new RegExp(`event\\.${field}`, "u"), field);
   }
 });

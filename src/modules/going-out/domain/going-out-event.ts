@@ -2,12 +2,16 @@ import { toZonedIso } from "../../../shared/lib/date.ts";
 import type { CityId } from "@/shared/types/city";
 
 interface GoingOutEvent {
+  address?: string;
   city: CityId;
+  description?: string;
   eventType?: string;
   genre?: string;
   id: string;
   imageUrl?: string;
+  informationUrl?: string;
   isFree?: boolean;
+  organizer?: string;
   performers?: readonly string[];
   priceLabel?: string;
   sourceName: "MonteGigs";
@@ -20,11 +24,15 @@ interface GoingOutEvent {
 }
 
 interface GoingOutEventCandidate {
+  address?: string;
   city: CityId;
+  description?: string;
   eventType?: string;
   genre?: string;
   imageUrl?: string;
+  informationUrl?: string;
   isFree?: boolean;
+  organizer?: string;
   performers?: readonly string[];
   priceLabel?: string;
   sourceEventId?: string;
@@ -55,18 +63,26 @@ function normalizeGoingOutEvent(candidate: GoingOutEventCandidate): GoingOutEven
   const startTime = normalizeTime(candidate.startTime);
   const startsAt = startTime ? toZonedIso({ date: startDate, time: startTime }) : undefined;
   const performers = normalizePerformers(candidate.performers);
+  const address = normalizeOptionalText(candidate.address);
+  const description = normalizeDescription(candidate.description);
   const eventType = normalizeOptionalText(candidate.eventType);
   const genre = normalizeOptionalText(candidate.genre);
+  const informationUrl = normalizeInformationUrl(candidate.informationUrl, sourceUrl);
   const isFree = candidate.isFree === true ? true : undefined;
+  const organizer = normalizeOptionalText(candidate.organizer);
   const priceLabel = isFree ? undefined : normalizeOptionalText(candidate.priceLabel);
 
   return {
+    ...(address ? { address } : {}),
     city: candidate.city,
+    ...(description ? { description } : {}),
     ...(eventType ? { eventType } : {}),
     ...(genre ? { genre } : {}),
     id: createGoingOutEventId({ sourceUrl, startDate, startTime, title }),
     ...(normalizeUrl(candidate.imageUrl) ? { imageUrl: normalizeUrl(candidate.imageUrl) } : {}),
+    ...(informationUrl ? { informationUrl } : {}),
     ...(isFree ? { isFree } : {}),
+    ...(organizer ? { organizer } : {}),
     ...(performers ? { performers } : {}),
     ...(priceLabel ? { priceLabel } : {}),
     sourceName: "MonteGigs",
@@ -170,6 +186,17 @@ function normalizeOptionalText(value: string | undefined) {
   return normalized || undefined;
 }
 
+// A provider description is optional source material, not a UI excerpt. Reject an unexpectedly
+// large value instead of silently storing a truncated account of an event.
+const maximumGoingOutDescriptionLength = 4_000;
+
+function normalizeDescription(value: string | undefined) {
+  const normalized = normalizeOptionalText(value);
+  return normalized && normalized.length <= maximumGoingOutDescriptionLength
+    ? normalized
+    : undefined;
+}
+
 function normalizePerformers(value: readonly string[] | undefined) {
   if (!value) return undefined;
 
@@ -197,6 +224,14 @@ function normalizeUrl(value: string | undefined) {
   }
 }
 
+function normalizeInformationUrl(value: string | undefined, sourceUrl: string) {
+  const normalized = normalizeUrl(value);
+  if (!normalized || normalized === sourceUrl) return undefined;
+
+  const url = new URL(normalized);
+  return url.hostname === "staging.montegigs.me" ? undefined : normalized;
+}
+
 function decodeHtml(value: string) {
   return value
     .replace(/&nbsp;/gi, " ")
@@ -210,6 +245,7 @@ export {
   createGoingOutEventId,
   getLocalIsoDate,
   normalizeGoingOutEvent,
+  maximumGoingOutDescriptionLength,
   selectUpcomingGoingOutEvents,
   sortAndDeduplicateGoingOutEvents,
   type GoingOutEvent,
