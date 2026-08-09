@@ -2,6 +2,7 @@ import type { CityAlertCollectorResult } from "@/modules/city-alerts/infrastruct
 import type { EventRefreshSummary } from "@/modules/events/infrastructure/events-refresh-runner";
 import type { PodgoricaFlightsCollectorResult } from "@/modules/flights/infrastructure/collect-podgorica-flights";
 import type { GoingOutCollectorResult } from "@/modules/going-out/infrastructure/collect-montegigs-going-out";
+import type { GoingOutDetailCoverage } from "@/modules/going-out/infrastructure/montegigs-going-out";
 import type { BudvaSeaWaterQualityCollectorResult } from "@/modules/sea-water-quality/infrastructure/collect-budva-sea-water-quality";
 import type { ZpcgCollectorResult } from "@/modules/transport/infrastructure/collect-zpcg-railway";
 import type { FuelCollectorResult } from "@/modules/fuel/infrastructure/gov-me-fuel-prices";
@@ -22,6 +23,10 @@ interface ProviderRefreshEndpointResult {
   warnings: readonly string[];
 }
 
+interface GoingOutRefreshEndpointResult extends ProviderRefreshEndpointResult {
+  detailCoverage?: GoingOutDetailCoverage;
+}
+
 interface MultiCityAlertRefreshEndpointResult {
   cities: readonly ProviderRefreshEndpointResult[];
   provider: "cedis";
@@ -35,7 +40,7 @@ interface MultiCityFlightsRefreshEndpointResult {
 }
 
 interface MultiCityGoingOutRefreshEndpointResult {
-  cities: readonly ProviderRefreshEndpointResult[];
+  cities: readonly GoingOutRefreshEndpointResult[];
   provider: "montegigs-going-out";
   state: RefreshEndpointState;
 }
@@ -179,13 +184,18 @@ function toMultiCityFlightsRefreshEndpointResult(
 
 function toGoingOutRefreshEndpointResult(
   result: GoingOutCollectorResult,
-): ProviderRefreshEndpointResult {
-  return toSingleProviderRefreshEndpointResult(
+): GoingOutRefreshEndpointResult {
+  const endpointResult = toSingleProviderRefreshEndpointResult(
     "montegigs-going-out",
     result,
     (refresh) => refresh.acceptedEvents,
     result.cityId,
   );
+
+  return {
+    ...endpointResult,
+    ...(result.refresh?.detailCoverage ? { detailCoverage: result.refresh.detailCoverage } : {}),
+  };
 }
 
 function toMultiCityGoingOutRefreshEndpointResult(
@@ -351,6 +361,7 @@ export {
   toSeaWaterQualityRefreshEndpointResult,
   toZpcgRefreshEndpointResult,
   type EventRefreshEndpointResult,
+  type GoingOutRefreshEndpointResult,
   type MultiCityAlertRefreshEndpointResult,
   type MultiCityFlightsRefreshEndpointResult,
   type MultiCityGoingOutRefreshEndpointResult,

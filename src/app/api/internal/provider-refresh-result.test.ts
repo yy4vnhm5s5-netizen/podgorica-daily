@@ -74,6 +74,7 @@ test("maps fixed-provider refresh outcomes without exposing cache paths", () => 
   });
   assert.equal(retainedFlights.state, "retained");
   assert.equal(retainedFlights.acceptedCount, 4);
+  assert.equal("detailCoverage" in cedis, false);
   assert.equal(JSON.stringify(cedis).includes("/private/"), false);
 });
 
