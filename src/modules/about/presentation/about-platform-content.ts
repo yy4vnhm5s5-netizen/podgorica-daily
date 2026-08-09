@@ -3,6 +3,8 @@ import { siteConfig } from "@/shared/config/site";
 const aboutPlatformContent = {
   description:
     "Saznajte kako Gradom.me objedinjuje lokalne informacije za Podgoricu, Budvu, Kotor i Tivat — od vremena i servisnih obavještenja do događaja, izlazaka, plaža i prevoza.",
+  metadataDescription:
+    "Gradom.me objedinjuje lokalne informacije za gradove Crne Gore — gradske servise, vrijeme, događaje, plaže i prevoz.",
   heading: "O platformi Gradom.me",
   sections: [
     {

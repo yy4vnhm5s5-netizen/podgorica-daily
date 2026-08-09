@@ -10,7 +10,7 @@ import { getPageTitle } from "@/shared/config/site";
 function generateMetadata(): Metadata {
   return createPublicRouteMetadata({
     canonical: getAboutPlatformPath(),
-    description: aboutPlatformContent.description,
+    description: aboutPlatformContent.metadataDescription,
     title: getPageTitle("O platformi"),
   });
 }

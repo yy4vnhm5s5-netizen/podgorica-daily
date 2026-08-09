@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import { createPublicRouteMetadata } from "@/app/public-route-metadata";
@@ -24,8 +25,9 @@ test("provides the page heading and only currently public information categories
   assert.match(aboutPlatformContent.sections[1].body[0] ?? "", /vrijeme/i);
   assert.match(aboutPlatformContent.sections[1].body[0] ?? "", /letove/i);
   assert.match(aboutPlatformContent.sections[1].body[0] ?? "", /bioskopski program/i);
-  assert.match(aboutPlatformContent.description, /Gradom\.me/i);
-  assert.match(aboutPlatformContent.description, /Podgoricu, Budvu, Kotor i Tivat/i);
+  assert.match(aboutPlatformContent.metadataDescription, /Gradom\.me/i);
+  assert.match(aboutPlatformContent.metadataDescription, /gradove Crne Gore/i);
+  assert.doesNotMatch(aboutPlatformContent.metadataDescription, /Podgoricu|Budvu|Kotor|Tivat/u);
   assert.doesNotMatch(aboutPlatformContent.sections[1].body[0] ?? "", /saobraćaj/i);
 });
 
@@ -53,10 +55,18 @@ test("creates minimal AboutPage and breadcrumb structured data without organizat
   assert.equal(JSON.stringify(structuredData).includes("Organization"), false);
 });
 
-test("uses a self-referencing canonical with page-specific metadata", () => {
+test("uses a self-referencing canonical with concise page-specific metadata", async () => {
+  const route = await readFile(
+    new URL("../../../app/o-platformi/page.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(route, /description: aboutPlatformContent\.metadataDescription/u);
+  assert.match(route, /title: getPageTitle\("O platformi"\)/u);
+  assert.match(route, /canonical: getAboutPlatformPath\(\)/u);
+
   const metadata = createPublicRouteMetadata({
     canonical: getAboutPlatformPath(),
-    description: aboutPlatformContent.description,
+    description: aboutPlatformContent.metadataDescription,
     title: getPageTitle("O platformi"),
   });
 
@@ -67,5 +77,7 @@ test("uses a self-referencing canonical with page-specific metadata", () => {
       ? metadata.title.absolute
       : metadata.title;
   assert.equal(title, "O platformi | Gradom.me");
-  assert.equal(metadata.description, aboutPlatformContent.description);
+  assert.equal(metadata.description, aboutPlatformContent.metadataDescription);
+  assert.equal(metadata.openGraph?.description, aboutPlatformContent.metadataDescription);
+  assert.equal(metadata.twitter?.description, aboutPlatformContent.metadataDescription);
 });
