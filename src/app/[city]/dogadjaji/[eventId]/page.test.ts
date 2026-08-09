@@ -9,7 +9,7 @@ import { getActiveCities, getCity, getCityName } from "@/shared/config/cities";
 test("builds event metadata through the bounded shared description generator", async () => {
   const source = await readFile(new URL("./page.tsx", import.meta.url), "utf8");
 
-  assert.match(source, /import \{ createEventDetailMetadataDescription \} from/u);
+  assert.match(source, /createEventDetailMetadataDescription,/u);
   assert.match(
     source,
     /const description = createEventDetailMetadataDescription\(\{ cityLocative, event, eventDay \}\);/u,
@@ -33,11 +33,18 @@ test("resolves the grammatical locative form for every active city", () => {
   }
 });
 
-test("description generation leaves title, canonical and JSON-LD untouched", async () => {
+test("metadata helpers leave the visible title, canonical and JSON-LD untouched", async () => {
   const source = await readFile(new URL("./page.tsx", import.meta.url), "utf8");
+  const detailSource = await readFile(
+    new URL("../../../../modules/events/presentation/event-detail.tsx", import.meta.url),
+    "utf8",
+  );
 
   assert.match(source, /canonical: getEventDetailPath\(context\.city, event\.id\),/u);
-  assert.match(source, /title: getPageTitle\(getEventDetailPageTitle\(event, context\.city\)\)/u);
+  assert.match(
+    source,
+    /title: createEventDetailMetadataTitle\(\{ city: context\.city, event \}\),/u,
+  );
   assert.match(source, /createEventStructuredData\(event\)/u);
   assert.match(source, /createEventBreadcrumbStructuredData\(context\.city, event\)/u);
   // Expired-event lifecycle: unknown IDs still 404, and the detail component still derives its
@@ -47,4 +54,5 @@ test("description generation leaves title, canonical and JSON-LD untouched", asy
     source,
     /<EventDetail city=\{context\.city\} event=\{event\} locale=\{locale\} \/>/u,
   );
+  assert.match(detailSource, /<h1[^>]*>\{event\.title\}<\/h1>/u);
 });

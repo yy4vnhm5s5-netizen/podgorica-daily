@@ -11,17 +11,16 @@ import {
   createEventStructuredData,
   serializeStructuredData,
 } from "@/modules/events/presentation/event-structured-data";
+import { getPublicCityEventById } from "@/modules/events/presentation/events-ui-model";
 import {
-  getEventDetailPageTitle,
-  getPublicCityEventById,
-} from "@/modules/events/presentation/events-ui-model";
-import { createEventDetailMetadataDescription } from "@/modules/events/presentation/event-detail-metadata";
+  createEventDetailMetadataDescription,
+  createEventDetailMetadataTitle,
+} from "@/modules/events/presentation/event-detail-metadata";
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
 import type { CityEvent } from "@/modules/events/domain/event";
 import { getCityName } from "@/shared/config/cities";
 import { getLocaleTag, type Locale } from "@/shared/config/locale";
 import { formatDateTime } from "@/shared/lib/date";
-import { getPageTitle } from "@/shared/config/site";
 import { getEventDetailPath } from "@/shared/config/public-routes";
 import { getTranslations } from "@/shared/lib/translations";
 
@@ -78,7 +77,7 @@ async function generateMetadata({ params }: EventDetailPageProps): Promise<Metad
     canonical: getEventDetailPath(context.city, event.id),
     description,
     ...(event.imageUrl ? { imageUrl: event.imageUrl } : {}),
-    title: getPageTitle(getEventDetailPageTitle(event, context.city)),
+    title: createEventDetailMetadataTitle({ city: context.city, event }),
   });
 }
 
