@@ -13,6 +13,7 @@ const events: GoingOutEvent[] = Array.from({ length: 7 }, (_, index) => ({
   city: "podgorica",
   id: `event-${index}`,
   sourceName: "MonteGigs",
+  sourceEventId: String(index),
   sourceUrl: `https://staging.montegigs.me/me/events/podgorica/${index}-202607${String(22 + index).padStart(2, "0")}-event`,
   startDate: `2026-07-${String(22 + index).padStart(2, "0")}`,
   title: `Event ${index}`,

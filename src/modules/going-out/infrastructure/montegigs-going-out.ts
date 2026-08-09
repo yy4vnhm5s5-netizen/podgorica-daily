@@ -86,6 +86,15 @@ interface GoingOutParseResult {
   warnings: string[];
 }
 
+interface MonteGigsPayloadEvent {
+  eventType?: string;
+  genre?: string;
+  isFree?: boolean;
+  performers?: readonly string[];
+  priceLabel?: string;
+  startTime?: string;
+}
+
 interface MonteGigsEventLink {
   cityId: string;
   content: string;
@@ -224,35 +233,116 @@ function createMonteGigsHttpClient({
   };
 }
 
-// MonteGigs renders each card as "date • venue" and never prints a clock time, but the same HTML
-// response embeds the React Query payload the page was hydrated from, and that carries the source's
-// own `time` field. This reads ONLY that field, keyed by the event's numeric MonteGigs id, and
-// leaves every other payload value (venue address, cost, genre, event_type, status, artists)
-// deliberately unread — the rendered markup remains the source of truth for everything else.
+// MonteGigs renders each card as "date • venue" but embeds its listing data in the hydration
+// payload. This parser reads only the explicit per-event values accepted by the Going Out model:
+// numeric source id, time, artists, event type, genre and entry cost. It intentionally does not
+// promote venue details, status, contacts, addresses or other payload fields in this phase.
 //
 // Best-effort by construction: an absent, renamed or unparseable payload yields an empty map and
-// collection proceeds exactly as before, simply without start times.
-function extractMonteGigsEventTimes(html: string): ReadonlyMap<string, string> {
-  const times = new Map<string, string>();
-  // The payload is embedded with escaped quotes inside a script tag, so unescape before matching.
+// collection proceeds from the rendered listing exactly as before.
+function extractMonteGigsEventPayloads(html: string): ReadonlyMap<string, MonteGigsPayloadEvent> {
+  const payloads = new Map<string, MonteGigsPayloadEvent>();
   const payload = html.replace(/\\"/g, '"');
 
-  for (const match of payload.matchAll(
-    /\{"time":(null|"[^"]*")[\s\S]{0,4000}?"id":(\d+),"date":"\d{4}-\d{2}-\d{2}"/g,
-  )) {
-    const time = normalizeMonteGigsPayloadTime(match[1]);
-    if (time) times.set(match[2], time);
+  for (const match of payload.matchAll(/"events"\s*:\s*\[/g)) {
+    const openingBracket = (match.index ?? 0) + match[0].lastIndexOf("[");
+    const serializedEvents = extractJsonArray(payload, openingBracket);
+    if (!serializedEvents) continue;
+
+    try {
+      const events: unknown = JSON.parse(serializedEvents);
+      if (!Array.isArray(events)) continue;
+
+      for (const event of events) {
+        if (!isPayloadRecord(event)) continue;
+        const sourceEventId = normalizeMonteGigsPayloadId(event.id);
+        if (!sourceEventId) continue;
+
+        const cost = normalizeMonteGigsPayloadText(event.cost);
+        const startTime = normalizeMonteGigsPayloadTime(event.time);
+        const eventType = normalizeMonteGigsPayloadText(event.event_type);
+        const genre = normalizeMonteGigsPayloadText(event.genre);
+        const performers = extractMonteGigsPerformers(event.eventArtists);
+        const isFree = cost?.toLocaleLowerCase("en-US") === "free" ? true : undefined;
+        payloads.set(sourceEventId, {
+          ...(startTime ? { startTime } : {}),
+          ...(eventType ? { eventType } : {}),
+          ...(genre ? { genre } : {}),
+          ...(isFree ? { isFree } : {}),
+          ...(performers ? { performers } : {}),
+          ...(!isFree && cost ? { priceLabel: cost } : {}),
+        });
+      }
+    } catch {
+      // Hydration enrichment is optional; an invalid payload never invalidates the listing.
+    }
   }
 
-  return times;
+  return payloads;
+}
+
+function extractJsonArray(value: string, openingBracket: number) {
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let index = openingBracket; index < value.length; index += 1) {
+    const character = value[index];
+    if (!character) continue;
+
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (character === "\\") escaped = true;
+      else if (character === '"') inString = false;
+      continue;
+    }
+
+    if (character === '"') inString = true;
+    else if (character === "[") depth += 1;
+    else if (character === "]") {
+      depth -= 1;
+      if (depth === 0) return value.slice(openingBracket, index + 1);
+    }
+  }
+
+  return undefined;
+}
+
+function isPayloadRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function normalizeMonteGigsPayloadId(value: unknown) {
+  return typeof value === "number" && Number.isSafeInteger(value) && value >= 0
+    ? String(value)
+    : typeof value === "string" && /^\d+$/u.test(value.trim())
+      ? value.trim()
+      : undefined;
+}
+
+function normalizeMonteGigsPayloadText(value: unknown) {
+  const normalized = typeof value === "string" ? value.replace(/\s+/g, " ").trim() : "";
+  return normalized || undefined;
+}
+
+function extractMonteGigsPerformers(value: unknown) {
+  if (!Array.isArray(value)) return undefined;
+
+  const performers = value.flatMap((performer) => {
+    if (!isPayloadRecord(performer)) return [];
+    const name = normalizeMonteGigsPayloadText(performer.name);
+    return name ? [name] : [];
+  });
+
+  return performers.length > 0 ? performers : undefined;
 }
 
 // Accepts only a well-formed clock value the source actually stated. "00:00" is deliberately
 // rejected: it appears on records that otherwise look time-less, so we treat it as MonteGigs'
 // "unset" placeholder rather than asserting a genuine midnight start we cannot verify.
-function normalizeMonteGigsPayloadTime(raw: string) {
-  if (raw === "null") return undefined;
-  const match = /^"(\d{1,2}):(\d{2})"$/.exec(raw);
+function normalizeMonteGigsPayloadTime(raw: unknown) {
+  if (typeof raw !== "string") return undefined;
+  const match = /^(\d{1,2}):(\d{2})$/.exec(raw.trim());
   if (!match) return undefined;
   const hour = Number(match[1]);
   const minute = Number(match[2]);
@@ -284,7 +374,7 @@ function parseMonteGigsEvents(
   }
 
   const listing = extractMonteGigsListingContent(html);
-  const payloadTimes = extractMonteGigsEventTimes(html);
+  const payloadEvents = extractMonteGigsEventPayloads(html);
   const allEventLinks = findMonteGigsEventLinks(listing);
   const eventLinks = allEventLinks.filter(({ cityId }) => cityId === source.cityId);
   const recognized = eventLinks.length > 0;
@@ -295,6 +385,8 @@ function parseMonteGigsEvents(
     const cardWindow = extractMonteGigsEventWindow(listing, eventLink, allEventLinks);
     const sourceUrl = new URL(eventLink.href, source.listingUrl).toString();
     const startDate = dateFromMonteGigsUrl(sourceUrl);
+    const sourceEventId = eventIdFromMonteGigsUrl(sourceUrl);
+    const payloadEvent = sourceEventId ? payloadEvents.get(sourceEventId) : undefined;
     const title =
       firstHeading(eventLink.content) ||
       plainText(eventLink.content) ||
@@ -306,13 +398,18 @@ function parseMonteGigsEvents(
     );
     const event = normalizeGoingOutEvent({
       city: source.cityId,
+      ...(payloadEvent?.eventType ? { eventType: payloadEvent.eventType } : {}),
+      ...(payloadEvent?.genre ? { genre: payloadEvent.genre } : {}),
       ...(imageUrl ? { imageUrl } : {}),
+      ...(payloadEvent?.isFree ? { isFree: true } : {}),
+      ...(payloadEvent?.performers ? { performers: payloadEvent.performers } : {}),
+      ...(payloadEvent?.priceLabel ? { priceLabel: payloadEvent.priceLabel } : {}),
+      ...(sourceEventId ? { sourceEventId } : {}),
       sourceUrl,
       startDate: startDate ?? "",
       // Payload time first (the card markup carries none); the DOM reader stays as a fallback in
       // case MonteGigs ever prints a time again.
-      startTime:
-        payloadTimes.get(eventIdFromMonteGigsUrl(sourceUrl) ?? "") ?? extractTime(cardWindow),
+      startTime: payloadEvent?.startTime ?? extractTime(cardWindow),
       title,
       venue: extractVenue(cardWindow),
     });
@@ -420,10 +517,27 @@ async function getCachedMonteGigsGoingOut({
   };
 }
 
-async function readGoingOutCacheSnapshot(cachePath: string, cityId: MonteGigsSupportedCityId) {
+async function readGoingOutCacheSnapshot(
+  cachePath: string,
+  cityId: MonteGigsSupportedCityId,
+): Promise<GoingOutCacheSnapshot | null> {
   const snapshot = await readJsonCache<unknown>(cachePath);
   const parsed = goingOutCacheSnapshotSchema.safeParse(snapshot);
-  return parsed.success && parsed.data.cityId === cityId ? parsed.data : null;
+  if (!parsed.success || parsed.data.cityId !== cityId) return null;
+
+  const events: GoingOutEvent[] = [];
+  for (const event of parsed.data.events) {
+    const sourceEventId = eventIdFromMonteGigsUrl(event.sourceUrl);
+    if (
+      !sourceEventId ||
+      (event.sourceEventId !== undefined && event.sourceEventId !== sourceEventId)
+    ) {
+      return null;
+    }
+    events.push({ ...event, sourceEventId });
+  }
+
+  return { ...parsed.data, events };
 }
 
 function retainPrevious(
@@ -618,9 +732,15 @@ function extractEventMetadata(value: string) {
 
 const goingOutEventSchema = z.object({
   city: z.enum(["bar", "podgorica", "budva", "kotor", "tivat", "ulcinj"]),
+  eventType: z.string().min(1).optional(),
+  genre: z.string().min(1).optional(),
   id: z.string().min(1),
   imageUrl: z.string().url().optional(),
+  isFree: z.literal(true).optional(),
+  performers: z.array(z.string().min(1)).min(1).optional(),
+  priceLabel: z.string().min(1).optional(),
   sourceName: z.literal("MonteGigs"),
+  sourceEventId: z.string().regex(/^\d+$/).optional(),
   sourceUrl: z.string().url(),
   startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   startsAt: z.string().datetime().optional(),

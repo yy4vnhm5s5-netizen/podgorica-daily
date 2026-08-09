@@ -22,6 +22,11 @@ const podgoricaFixturePath = join(
   "montegigs-podgorica-listing.html",
 );
 const budvaFixturePath = join(import.meta.dirname, "__fixtures__", "montegigs-budva-listing.html");
+const budvaPayloadEnrichmentFixturePath = join(
+  import.meta.dirname,
+  "__fixtures__",
+  "montegigs-budva-payload-enrichment.html",
+);
 const kotorFixturePath = join(import.meta.dirname, "__fixtures__", "montegigs-kotor-listing.html");
 const barFixturePath = join(import.meta.dirname, "__fixtures__", "montegigs-bar-listing.html");
 const kotorBoundariesFixturePath = join(
@@ -245,6 +250,7 @@ test("accepts and round-trips a Tivat cache snapshot through the widened city sc
   assert.notEqual(snapshot, null);
   assert.equal(snapshot?.cityId, "tivat");
   assert.equal(snapshot?.events[0]?.city, "tivat");
+  assert.equal(snapshot?.events[0]?.sourceEventId, "1");
 
   const cached = await getCachedMonteGigsGoingOut({
     cachePath,
@@ -275,6 +281,51 @@ test("reads the atomically written cache without a live request", async () => {
   });
   assert.equal(cached.state, "stale");
   assert.equal(cached.events.length, 2);
+});
+
+test("round-trips enriched listing fields through the same city snapshot", async () => {
+  const cachePath = join(
+    await mkdtemp(join(tmpdir(), "gradom-going-out-enrichment-")),
+    "budva.json",
+  );
+  const html = await readFile(budvaPayloadEnrichmentFixturePath, "utf8");
+
+  const refreshed = await refreshMonteGigsGoingOut({
+    cachePath,
+    context: budva,
+    httpClient: { get: async () => response(html, "budva") },
+    now: new Date("2026-08-01T10:00:00.000Z"),
+  });
+  const snapshot = await readGoingOutCacheSnapshot(cachePath, "budva");
+
+  assert.equal(refreshed.success, true);
+  assert.equal(snapshot?.events.length, 3);
+  const eventsBySourceEventId = new Map(
+    snapshot?.events.map((event) => [event.sourceEventId, event]),
+  );
+  assert.deepEqual(eventsBySourceEventId.get("7497")?.performers, ["Jakov Jozinović"]);
+  assert.equal(eventsBySourceEventId.get("7497")?.priceLabel, "30-40");
+  assert.equal(eventsBySourceEventId.get("7906")?.isFree, true);
+  assert.equal(eventsBySourceEventId.get("7906")?.priceLabel, undefined);
+});
+
+test("uses only the existing listing request for enrichment", async () => {
+  const requestedUrls: string[] = [];
+  const html = await readFile(budvaPayloadEnrichmentFixturePath, "utf8");
+
+  await refreshMonteGigsGoingOut({
+    cachePath: join(await mkdtemp(join(tmpdir(), "gradom-going-out-requests-")), "budva.json"),
+    context: budva,
+    httpClient: {
+      get: async (url) => {
+        requestedUrls.push(url);
+        return response(html, "budva");
+      },
+    },
+    now: new Date("2026-08-01T10:00:00.000Z"),
+  });
+
+  assert.deepEqual(requestedUrls, ["https://staging.montegigs.me/me/events/budva"]);
 });
 
 test("allows only the configured MonteGigs listing host", () => {

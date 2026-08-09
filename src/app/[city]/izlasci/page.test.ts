@@ -13,6 +13,11 @@ const pageSource = async () =>
     new URL("../../../modules/going-out/presentation/going-out-page.tsx", import.meta.url),
     "utf8",
   );
+const sectionSource = async () =>
+  readFile(
+    new URL("../../../modules/going-out/presentation/going-out-section.tsx", import.meta.url),
+    "utf8",
+  );
 
 const goingOutCities = () =>
   getActiveCities().filter((city) => isCityPublicFeatureRouteAvailable(city, "goingOut"));
@@ -101,4 +106,12 @@ test("the canonical stays self-referencing and no structured data was added", as
   assert.match(route, /canonical: getGoingOutPath\(context\.city\)/u);
   assert.doesNotMatch(route, /ld\+json/u);
   assert.doesNotMatch(await pageSource(), /ld\+json|schema\.org/u);
+});
+
+test("does not render listing enrichment fields before a dedicated UI phase", async () => {
+  const presentation = `${await pageSource()}\n${await sectionSource()}`;
+
+  for (const field of ["performers", "eventType", "genre", "isFree", "priceLabel"]) {
+    assert.doesNotMatch(presentation, new RegExp(`event\\.${field}`, "u"), field);
+  }
 });

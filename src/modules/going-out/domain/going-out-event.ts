@@ -3,9 +3,15 @@ import type { CityId } from "@/shared/types/city";
 
 interface GoingOutEvent {
   city: CityId;
+  eventType?: string;
+  genre?: string;
   id: string;
   imageUrl?: string;
+  isFree?: boolean;
+  performers?: readonly string[];
+  priceLabel?: string;
   sourceName: "MonteGigs";
+  sourceEventId: string;
   sourceUrl: string;
   startDate: string;
   startsAt?: string;
@@ -15,7 +21,13 @@ interface GoingOutEvent {
 
 interface GoingOutEventCandidate {
   city: CityId;
+  eventType?: string;
+  genre?: string;
   imageUrl?: string;
+  isFree?: boolean;
+  performers?: readonly string[];
+  priceLabel?: string;
+  sourceEventId?: string;
   sourceUrl: string;
   startDate: string;
   startTime?: string;
@@ -27,17 +39,38 @@ function normalizeGoingOutEvent(candidate: GoingOutEventCandidate): GoingOutEven
   const title = normalizeText(candidate.title);
   const startDate = candidate.startDate.trim();
   const sourceUrl = normalizeUrl(candidate.sourceUrl);
+  const sourceEventId = sourceEventIdFromSourceUrl(sourceUrl);
+  const suppliedSourceEventId = normalizeSourceEventId(candidate.sourceEventId);
 
-  if (!title || !isIsoDate(startDate) || !sourceUrl) return undefined;
+  if (
+    !title ||
+    !isIsoDate(startDate) ||
+    !sourceUrl ||
+    !sourceEventId ||
+    (suppliedSourceEventId !== undefined && suppliedSourceEventId !== sourceEventId)
+  ) {
+    return undefined;
+  }
 
   const startTime = normalizeTime(candidate.startTime);
   const startsAt = startTime ? toZonedIso({ date: startDate, time: startTime }) : undefined;
+  const performers = normalizePerformers(candidate.performers);
+  const eventType = normalizeOptionalText(candidate.eventType);
+  const genre = normalizeOptionalText(candidate.genre);
+  const isFree = candidate.isFree === true ? true : undefined;
+  const priceLabel = isFree ? undefined : normalizeOptionalText(candidate.priceLabel);
 
   return {
     city: candidate.city,
+    ...(eventType ? { eventType } : {}),
+    ...(genre ? { genre } : {}),
     id: createGoingOutEventId({ sourceUrl, startDate, startTime, title }),
     ...(normalizeUrl(candidate.imageUrl) ? { imageUrl: normalizeUrl(candidate.imageUrl) } : {}),
+    ...(isFree ? { isFree } : {}),
+    ...(performers ? { performers } : {}),
+    ...(priceLabel ? { priceLabel } : {}),
     sourceName: "MonteGigs",
+    sourceEventId,
     sourceUrl,
     startDate,
     ...(startsAt ? { startsAt } : {}),
@@ -121,6 +154,37 @@ function normalizeTime(value: string | undefined) {
   const minute = Number(match[2]);
   if (hour > 23 || minute > 59) return undefined;
   return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+}
+
+function normalizeSourceEventId(value: string | undefined) {
+  const normalized = value?.trim();
+  return normalized && /^\d+$/u.test(normalized) ? normalized : undefined;
+}
+
+function sourceEventIdFromSourceUrl(sourceUrl: string | undefined) {
+  return normalizeSourceEventId(/\/(\d+)-\d{8}-/u.exec(sourceUrl ?? "")?.[1]);
+}
+
+function normalizeOptionalText(value: string | undefined) {
+  const normalized = normalizeText(value ?? "");
+  return normalized || undefined;
+}
+
+function normalizePerformers(value: readonly string[] | undefined) {
+  if (!value) return undefined;
+
+  const seen = new Set<string>();
+  const performers = value.flatMap((performer) => {
+    const normalized = normalizeOptionalText(performer);
+    if (!normalized) return [];
+
+    const key = normalized.toLocaleLowerCase("sr-Latn-ME");
+    if (seen.has(key)) return [];
+    seen.add(key);
+    return [normalized];
+  });
+
+  return performers.length > 0 ? performers : undefined;
 }
 
 function normalizeUrl(value: string | undefined) {

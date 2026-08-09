@@ -160,6 +160,7 @@ test("uses the same available Going Out result as the city page and does not tur
     city: "budva",
     id: "budva-going-out",
     sourceName: "MonteGigs",
+    sourceEventId: "1",
     sourceUrl: "https://staging.montegigs.me/me/events/budva/1-20991231-party",
     startDate: "2099-12-31",
     title: "Budva party",

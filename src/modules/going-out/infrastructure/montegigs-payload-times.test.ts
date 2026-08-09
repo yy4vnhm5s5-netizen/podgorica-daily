@@ -7,10 +7,11 @@ import { createCityContext } from "@/shared/config/cities";
 
 const fixtures = new URL("./__fixtures__/", import.meta.url);
 const context = createCityContext("kotor");
+const budva = createCityContext("budva");
 const now = new Date("2026-08-01T10:00:00.000Z");
 
-const parseFixture = async (name: string) =>
-  parseMonteGigsEvents(await readFile(new URL(name, fixtures), "utf8"), context, now);
+const parseFixture = async (name: string, city = context) =>
+  parseMonteGigsEvents(await readFile(new URL(name, fixtures), "utf8"), city, now);
 
 // MonteGigs renders "date • venue" and never prints a clock time; the same response embeds the
 // React Query payload the page hydrated from, which carries the source's own `time`.
@@ -94,15 +95,60 @@ test("keeps venue, source URL and city untouched by the enrichment", async () =>
   assert.ok(event);
   assert.equal(event.venue, "Crkva Sv. Duha");
   assert.equal(event.city, "kotor");
+  assert.equal(event.sourceEventId, "3638");
   assert.match(event.sourceUrl, /^https:\/\/staging\.montegigs\.me\/me\/events\/kotor\/3638-/u);
 });
 
-test("reads only `time` from the payload, no other field", async () => {
-  const source = await readFile(new URL("../montegigs-going-out.ts", import.meta.url), "utf8");
-  const extractor = /function extractMonteGigsEventTimes[\s\S]*?\n\}/u.exec(source)?.[0];
+test("preserves explicit performers, type, genre and source cost labels from the hydration payload", async () => {
+  const parsed = await parseFixture("montegigs-budva-payload-enrichment.html", budva);
+  const bySourceEventId = new Map(parsed.events.map((event) => [event.sourceEventId, event]));
+
+  assert.deepEqual(bySourceEventId.get("7497"), {
+    city: "budva",
+    eventType: "Concert",
+    genre: "Pop-folk",
+    id: "https://staging.montegigs.me/me/events/budva/7497-20260809-jakov-jozinovic-live-in-budva|2026-08-09||jakov jozinović live in budva",
+    imageUrl: "https://staging.montegigs.me/media/events/7925.jpg",
+    performers: ["Jakov Jozinović"],
+    priceLabel: "30-40",
+    sourceEventId: "7497",
+    sourceName: "MonteGigs",
+    sourceUrl:
+      "https://staging.montegigs.me/me/events/budva/7497-20260809-jakov-jozinovic-live-in-budva",
+    startDate: "2026-08-09",
+    title: "Jakov Jozinović Live in Budva",
+    venue: "Top Hill",
+  });
+  assert.deepEqual(bySourceEventId.get("7906")?.performers, [
+    "Danijel Đukić",
+    "Tea Šufta",
+    "Double D",
+  ]);
+  assert.equal(bySourceEventId.get("7906")?.isFree, true);
+  assert.equal(bySourceEventId.get("7906")?.priceLabel, undefined);
+  assert.equal(bySourceEventId.get("7024")?.priceLabel, "TBA");
+});
+
+test("omits optional enrichment fields when the hydration payload is unavailable", async () => {
+  const html = await readFile(new URL("montegigs-kotor-payload-times.html", fixtures), "utf8");
+  const withoutPayload = html.replace(/<script[\s\S]*?<\/script>/gu, "");
+  const event = parseMonteGigsEvents(withoutPayload, context, now).events[0];
+
+  assert.ok(event);
+  assert.equal(event.sourceEventId, "3638");
+  assert.equal(event.performers, undefined);
+  assert.equal(event.eventType, undefined);
+  assert.equal(event.genre, undefined);
+  assert.equal(event.isFree, undefined);
+  assert.equal(event.priceLabel, undefined);
+});
+
+test("reads only the approved enrichment fields from the hydration payload", async () => {
+  const source = await readFile(new URL("./montegigs-going-out.ts", import.meta.url), "utf8");
+  const extractor = /function extractMonteGigsEventPayloads[\s\S]*?\n\}/u.exec(source)?.[0];
   assert.ok(extractor);
 
-  for (const field of ["address", "cost", "genre", "event_type", "status", "venue_id", "artist"]) {
+  for (const field of ["address", "status", "venue_id", "organizer", "end_date", "end_time"]) {
     assert.doesNotMatch(extractor, new RegExp(field, "u"), field);
   }
 });
