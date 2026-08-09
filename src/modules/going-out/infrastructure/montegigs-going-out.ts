@@ -20,6 +20,9 @@ import { parseMonteGigsEventDetail, type MonteGigsEventDetail } from "./montegig
 const maximumResponseLength = 1_500_000;
 const maximumDetailRequestsPerCityRefresh = 12;
 const detailRequestConcurrency = 3;
+const detailCacheFreshnessHours = 12;
+const detailCacheStaleFallbackHours = 72;
+const detailCacheRetentionDays = 14;
 
 const monteGigsCitySources = {
   bar: {
@@ -120,10 +123,34 @@ interface GoingOutDetailCoverage {
   addressCount: number;
   candidateEvents: number;
   descriptionCount: number;
+  detailCacheHits: number;
+  detailCacheMisses: number;
+  detailCacheStale: number;
+  detailCacheStaleFallbacks: number;
+  detailCacheWriteFailures: number;
+  detailEnrichedEvents: number;
   detailFetchAttempted: number;
   detailFetchSucceeded: number;
   informationUrlCount: number;
   organizerCount: number;
+}
+
+interface MonteGigsDetailCacheEntry extends MonteGigsEventDetail {
+  fetchedAt: string;
+  lastSeenAt: string;
+  sourceEventId: string;
+  sourceUrl: string;
+}
+
+interface MonteGigsDetailCacheSnapshot {
+  cityId: MonteGigsSupportedCityId;
+  entries: MonteGigsDetailCacheEntry[];
+  schemaVersion: 1;
+  updatedAt: string;
+}
+
+interface MonteGigsDetailCacheReadResult {
+  entries: ReadonlyMap<string, MonteGigsDetailCacheEntry>;
 }
 
 interface GoingOutCacheResult {
@@ -444,61 +471,305 @@ function parseMonteGigsEvents(
 }
 
 async function enrichMonteGigsEventDetails({
+  cityId,
+  detailCachePath,
   events,
   httpClient,
+  now,
 }: {
+  cityId: MonteGigsSupportedCityId;
+  detailCachePath: string;
   events: readonly GoingOutEvent[];
   httpClient: GoingOutHttpClient;
+  now: Date;
 }) {
-  const candidateUrls = [...new Set(events.map((event) => event.sourceUrl))].slice(
+  const sourceCandidates = createDetailCandidates(events);
+  const detailCache = await readMonteGigsDetailCache(detailCachePath, cityId);
+  const detailsBySourceEventId = new Map<string, MonteGigsEventDetail>();
+  const staleEntries = new Map<string, MonteGigsDetailCacheEntry>();
+  const missingCandidates: DetailCandidate[] = [];
+  const staleCandidates: DetailCandidate[] = [];
+  let detailCacheHits = 0;
+
+  for (const candidate of sourceCandidates) {
+    const cached = detailCache.entries.get(candidate.sourceEventId);
+    if (!cached || !isMatchingMonteGigsDetailCacheEntry(cached, candidate)) {
+      missingCandidates.push(candidate);
+      continue;
+    }
+
+    if (isMonteGigsDetailCacheFresh(cached, now)) {
+      detailCacheHits += 1;
+      detailsBySourceEventId.set(candidate.sourceEventId, detailFieldsFromCache(cached));
+      continue;
+    }
+
+    staleCandidates.push(candidate);
+    staleEntries.set(candidate.sourceEventId, cached);
+  }
+
+  const networkCandidates = [...missingCandidates, ...staleCandidates].slice(
     0,
     maximumDetailRequestsPerCityRefresh,
   );
-  const detailsBySourceUrl = new Map<string, MonteGigsEventDetail>();
+  const fetchedDetails = new Map<string, MonteGigsEventDetail>();
+  const staleFallbackSourceEventIds = new Set<string>();
+  const networkSourceEventIds = new Set(
+    networkCandidates.map((candidate) => candidate.sourceEventId),
+  );
+  for (const candidate of staleCandidates) {
+    if (networkSourceEventIds.has(candidate.sourceEventId)) continue;
+    const stale = staleEntries.get(candidate.sourceEventId);
+    if (stale && isMonteGigsDetailCacheUsableAsFallback(stale, now)) {
+      detailsBySourceEventId.set(candidate.sourceEventId, detailFieldsFromCache(stale));
+      staleFallbackSourceEventIds.add(candidate.sourceEventId);
+    }
+  }
   let detailFetchSucceeded = 0;
 
-  await mapWithConcurrency(candidateUrls, detailRequestConcurrency, async (sourceUrl) => {
+  await mapWithConcurrency(networkCandidates, detailRequestConcurrency, async (candidate) => {
     try {
-      const response = await httpClient.get(sourceUrl);
-      assertMonteGigsDetailUrl(response.finalUrl, sourceUrl);
-      const sourceEventId = eventIdFromMonteGigsUrl(sourceUrl);
-      if (!sourceEventId) return;
-
-      const event = events.find((candidate) => candidate.sourceUrl === sourceUrl);
+      const response = await httpClient.get(candidate.sourceUrl);
+      assertMonteGigsDetailUrl(response.finalUrl, candidate.sourceUrl);
       const details = parseMonteGigsEventDetail(response.body, {
-        sourceEventId,
-        sourceUrl,
-        ...(event?.venue ? { venue: event.venue } : {}),
+        sourceEventId: candidate.sourceEventId,
+        sourceUrl: candidate.sourceUrl,
+        ...(candidate.event.venue ? { venue: candidate.event.venue } : {}),
       });
-      detailsBySourceUrl.set(sourceUrl, details);
+      fetchedDetails.set(candidate.sourceEventId, details);
+      detailsBySourceEventId.set(candidate.sourceEventId, details);
       detailFetchSucceeded += 1;
     } catch {
+      const stale = staleEntries.get(candidate.sourceEventId);
+      if (stale && isMonteGigsDetailCacheUsableAsFallback(stale, now)) {
+        detailsBySourceEventId.set(candidate.sourceEventId, detailFieldsFromCache(stale));
+        staleFallbackSourceEventIds.add(candidate.sourceEventId);
+      }
       // Detail enrichment is intentionally fail-open. The listing record remains authoritative.
     }
   });
 
   const enrichedEvents = events.map((event) => ({
     ...event,
-    ...detailsBySourceUrl.get(event.sourceUrl),
+    ...detailsBySourceEventId.get(event.sourceEventId),
   }));
   const detailCoverage: GoingOutDetailCoverage = {
     addressCount: enrichedEvents.filter((event) => Boolean(event.address)).length,
-    candidateEvents: candidateUrls.length,
+    candidateEvents: sourceCandidates.length,
     descriptionCount: enrichedEvents.filter((event) => Boolean(event.description)).length,
-    detailFetchAttempted: candidateUrls.length,
+    detailCacheHits,
+    detailCacheMisses: missingCandidates.length,
+    detailCacheStale: staleCandidates.length,
+    detailCacheStaleFallbacks: staleFallbackSourceEventIds.size,
+    detailCacheWriteFailures: 0,
+    detailEnrichedEvents: enrichedEvents.filter(hasMonteGigsDetailFields).length,
+    detailFetchAttempted: networkCandidates.length,
     detailFetchSucceeded,
     informationUrlCount: enrichedEvents.filter((event) => Boolean(event.informationUrl)).length,
     organizerCount: enrichedEvents.filter((event) => Boolean(event.organizer)).length,
   };
 
+  const cacheWriteFailed = await writeMonteGigsDetailCache({
+    cachePath: detailCachePath,
+    cityId,
+    currentCandidates: sourceCandidates,
+    entries: detailCache.entries,
+    fetchedDetails,
+    now,
+  });
+  if (cacheWriteFailed) detailCoverage.detailCacheWriteFailures = 1;
+
   return {
     detailCoverage,
     events: enrichedEvents,
-    warnings:
-      detailFetchSucceeded === candidateUrls.length
+    warnings: [
+      ...(detailFetchSucceeded === networkCandidates.length
         ? []
-        : ["montegigs-detail-enrichment-incomplete"],
+        : ["montegigs-detail-enrichment-incomplete"]),
+      ...(cacheWriteFailed ? ["montegigs-detail-cache-write-failed"] : []),
+    ],
   };
+}
+
+interface DetailCandidate {
+  event: GoingOutEvent;
+  sourceEventId: string;
+  sourceUrl: string;
+}
+
+function createDetailCandidates(events: readonly GoingOutEvent[]) {
+  const candidates = new Map<string, DetailCandidate>();
+  for (const event of [...events].sort(compareGoingOutEventsByStart)) {
+    if (!candidates.has(event.sourceEventId)) {
+      candidates.set(event.sourceEventId, {
+        event,
+        sourceEventId: event.sourceEventId,
+        sourceUrl: event.sourceUrl,
+      });
+    }
+  }
+  return [...candidates.values()];
+}
+
+function compareGoingOutEventsByStart(left: GoingOutEvent, right: GoingOutEvent) {
+  return (
+    left.startDate.localeCompare(right.startDate) ||
+    (left.startsAt ?? "").localeCompare(right.startsAt ?? "") ||
+    left.sourceEventId.localeCompare(right.sourceEventId)
+  );
+}
+
+function detailFieldsFromCache(entry: MonteGigsDetailCacheEntry): MonteGigsEventDetail {
+  return {
+    ...(entry.address ? { address: entry.address } : {}),
+    ...(entry.description ? { description: entry.description } : {}),
+    ...(entry.informationUrl ? { informationUrl: entry.informationUrl } : {}),
+    ...(entry.organizer ? { organizer: entry.organizer } : {}),
+  };
+}
+
+function hasMonteGigsDetailFields(event: GoingOutEvent) {
+  return Boolean(event.address || event.description || event.informationUrl || event.organizer);
+}
+
+function isMatchingMonteGigsDetailCacheEntry(
+  entry: MonteGigsDetailCacheEntry,
+  candidate: DetailCandidate,
+) {
+  return (
+    entry.sourceEventId === candidate.sourceEventId &&
+    eventIdFromMonteGigsUrl(entry.sourceUrl) === entry.sourceEventId &&
+    eventIdFromMonteGigsUrl(candidate.sourceUrl) === candidate.sourceEventId &&
+    monteGigsCityIdFromSourceUrl(entry.sourceUrl) === candidate.event.city &&
+    monteGigsCityIdFromSourceUrl(candidate.sourceUrl) === candidate.event.city
+  );
+}
+
+function detailCacheAgeMs(entry: MonteGigsDetailCacheEntry, now: Date) {
+  return now.getTime() - new Date(entry.fetchedAt).getTime();
+}
+
+function isMonteGigsDetailCacheFresh(entry: MonteGigsDetailCacheEntry, now: Date) {
+  const age = detailCacheAgeMs(entry, now);
+  return Number.isFinite(age) && age <= detailCacheFreshnessHours * 60 * 60_000;
+}
+
+function isMonteGigsDetailCacheUsableAsFallback(entry: MonteGigsDetailCacheEntry, now: Date) {
+  const age = detailCacheAgeMs(entry, now);
+  return Number.isFinite(age) && age <= detailCacheStaleFallbackHours * 60 * 60_000;
+}
+
+async function readMonteGigsDetailCache(
+  cachePath: string,
+  cityId: MonteGigsSupportedCityId | undefined,
+): Promise<MonteGigsDetailCacheReadResult> {
+  if (!cityId) return { entries: new Map() };
+
+  const raw = await readJsonCache<unknown>(cachePath);
+  const header = monteGigsDetailCacheSnapshotHeaderSchema.safeParse(raw);
+  if (!header.success || header.data.cityId !== cityId) return { entries: new Map() };
+
+  const entries = new Map<string, MonteGigsDetailCacheEntry>();
+  for (const value of header.data.entries) {
+    const parsed = monteGigsDetailCacheEntrySchema.safeParse(value);
+    if (!parsed.success) continue;
+    const entry = parsed.data;
+    if (
+      !isMonteGigsDetailCacheSourceUrl(entry.sourceUrl) ||
+      eventIdFromMonteGigsUrl(entry.sourceUrl) !== entry.sourceEventId ||
+      monteGigsCityIdFromSourceUrl(entry.sourceUrl) !== cityId ||
+      (entry.informationUrl !== undefined &&
+        !isValidExternalInformationUrl(entry.informationUrl, entry.sourceUrl))
+    ) {
+      continue;
+    }
+
+    const previous = entries.get(entry.sourceEventId);
+    if (!previous || entry.fetchedAt > previous.fetchedAt) entries.set(entry.sourceEventId, entry);
+  }
+  return { entries };
+}
+
+function isMonteGigsDetailCacheSourceUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && url.hostname === "staging.montegigs.me";
+  } catch {
+    return false;
+  }
+}
+
+function monteGigsCityIdFromSourceUrl(sourceUrl: string) {
+  return /\/me\/events\/([a-z0-9-]+)\/\d+-\d{8}-/u.exec(sourceUrl)?.[1];
+}
+
+async function writeMonteGigsDetailCache({
+  cachePath,
+  cityId,
+  currentCandidates,
+  entries,
+  fetchedDetails,
+  now,
+}: {
+  cachePath: string;
+  cityId: MonteGigsSupportedCityId | undefined;
+  currentCandidates: readonly DetailCandidate[];
+  entries: ReadonlyMap<string, MonteGigsDetailCacheEntry>;
+  fetchedDetails: ReadonlyMap<string, MonteGigsEventDetail>;
+  now: Date;
+}) {
+  if (!cityId) return false;
+
+  const currentBySourceEventId = new Map(
+    currentCandidates.map((candidate) => [candidate.sourceEventId, candidate]),
+  );
+  const retainedEntries = [...entries.values()].flatMap((entry) => {
+    const current = currentBySourceEventId.get(entry.sourceEventId);
+    if (current) {
+      return [
+        {
+          ...entry,
+          lastSeenAt: now.toISOString(),
+          sourceUrl: current.sourceUrl,
+        },
+      ];
+    }
+    return isMonteGigsDetailCacheWithinRetention(entry, now) ? [entry] : [];
+  });
+  const bySourceEventId = new Map(
+    retainedEntries.map((entry) => [entry.sourceEventId, entry] as const),
+  );
+  for (const [sourceEventId, details] of fetchedDetails) {
+    const current = currentBySourceEventId.get(sourceEventId);
+    if (!current) continue;
+    bySourceEventId.set(sourceEventId, {
+      ...details,
+      fetchedAt: now.toISOString(),
+      lastSeenAt: now.toISOString(),
+      sourceEventId,
+      sourceUrl: current.sourceUrl,
+    });
+  }
+
+  const snapshot: MonteGigsDetailCacheSnapshot = {
+    cityId,
+    entries: [...bySourceEventId.values()].sort((left, right) =>
+      left.sourceEventId.localeCompare(right.sourceEventId),
+    ),
+    schemaVersion: 1,
+    updatedAt: now.toISOString(),
+  };
+  try {
+    await writeJsonCache(snapshot, cachePath);
+    return false;
+  } catch {
+    return true;
+  }
+}
+
+function isMonteGigsDetailCacheWithinRetention(entry: MonteGigsDetailCacheEntry, now: Date) {
+  const age = now.getTime() - new Date(entry.lastSeenAt).getTime();
+  return Number.isFinite(age) && age <= detailCacheRetentionDays * 24 * 60 * 60_000;
 }
 
 async function mapWithConcurrency<Value>(
@@ -521,11 +792,13 @@ async function mapWithConcurrency<Value>(
 async function refreshMonteGigsGoingOut({
   cachePath,
   context,
+  detailCachePath,
   httpClient = createMonteGigsHttpClient(),
   now = new Date(),
 }: {
   cachePath?: string;
   context: CityContext;
+  detailCachePath?: string;
   httpClient?: GoingOutHttpClient;
   now?: Date;
 }): Promise<GoingOutRefreshResult> {
@@ -542,6 +815,11 @@ async function refreshMonteGigsGoingOut({
   }
 
   const resolvedCachePath = cachePath ?? getGoingOutCachePath(source.cityId);
+  const resolvedDetailCachePath =
+    detailCachePath ??
+    (cachePath
+      ? getGoingOutDetailCachePathForSnapshot(cachePath)
+      : getGoingOutDetailCachePath(source.cityId));
   const previous = await readGoingOutCacheSnapshot(resolvedCachePath, source.cityId);
   try {
     const response = await httpClient.get(source.listingUrl);
@@ -551,8 +829,11 @@ async function refreshMonteGigsGoingOut({
       return retainPrevious(previous, "montegigs-parser-failed", parsed.warnings);
     }
     const enriched = await enrichMonteGigsEventDetails({
+      cityId: source.cityId,
+      detailCachePath: resolvedDetailCachePath,
       events: parsed.events,
       httpClient,
+      now,
     });
 
     const snapshot: GoingOutCacheSnapshot = {
@@ -709,6 +990,17 @@ function getMonteGigsCitySource(cityId: CityId) {
 function getGoingOutCachePath(cityId: MonteGigsSupportedCityId) {
   if (cityId === "podgorica") return env.GOING_OUT_CACHE_PATH;
   return resolveRuntimeCachePath(`montegigs-going-out-${cityId}.json`, env.RUNTIME_DATA_DIR);
+}
+
+function getGoingOutDetailCachePath(cityId: MonteGigsSupportedCityId) {
+  return resolveRuntimeCachePath(
+    `montegigs-going-out-${cityId}-detail-enrichment.json`,
+    env.RUNTIME_DATA_DIR,
+  );
+}
+
+function getGoingOutDetailCachePathForSnapshot(cachePath: string) {
+  return `${cachePath}.detail-enrichment.json`;
 }
 
 function isMonteGigsSupportedCityId(cityId: CityId): cityId is MonteGigsSupportedCityId {
@@ -887,6 +1179,28 @@ const goingOutCacheSnapshotSchema = z.object({
   sourceUrl: z.string().url(),
 });
 
+const monteGigsDetailCacheEntrySchema = z.object({
+  address: z.string().min(1).max(500).optional(),
+  description: z.string().min(1).max(4_000).optional(),
+  fetchedAt: z.string().datetime(),
+  informationUrl: z
+    .string()
+    .url()
+    .refine((value) => new URL(value).protocol === "https:")
+    .optional(),
+  lastSeenAt: z.string().datetime(),
+  organizer: z.string().min(1).max(250).optional(),
+  sourceEventId: z.string().regex(/^\d+$/),
+  sourceUrl: z.string().url(),
+});
+
+const monteGigsDetailCacheSnapshotHeaderSchema = z.object({
+  cityId: z.enum(["bar", "podgorica", "budva", "kotor", "tivat", "ulcinj"]),
+  entries: z.array(z.unknown()),
+  schemaVersion: z.literal(1),
+  updatedAt: z.string().datetime(),
+});
+
 export {
   MonteGigsFetchError,
   assertMonteGigsDetailUrl,
@@ -895,11 +1209,13 @@ export {
   createMonteGigsHttpClient,
   getCachedMonteGigsGoingOut,
   getGoingOutCachePath,
+  getGoingOutDetailCachePath,
   getMonteGigsCitySource,
   isMonteGigsSupportedCityId,
   monteGigsCitySources,
   parseMonteGigsEvents,
   readGoingOutCacheSnapshot,
+  readMonteGigsDetailCache,
   refreshMonteGigsGoingOut,
   type GoingOutCacheResult,
   type GoingOutCacheSnapshot,
@@ -908,5 +1224,7 @@ export {
   type GoingOutHttpClient,
   type GoingOutHttpResponse,
   type GoingOutRefreshResult,
+  type MonteGigsDetailCacheEntry,
+  type MonteGigsDetailCacheSnapshot,
   type MonteGigsSupportedCityId,
 };

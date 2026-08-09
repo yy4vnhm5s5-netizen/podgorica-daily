@@ -9,8 +9,10 @@ import {
   createMonteGigsHttpClient,
   getCachedMonteGigsGoingOut,
   getGoingOutCachePath,
+  getGoingOutDetailCachePath,
   getMonteGigsCitySource,
   parseMonteGigsEvents,
+  readMonteGigsDetailCache,
   readGoingOutCacheSnapshot,
   refreshMonteGigsGoingOut,
 } from "./montegigs-going-out.ts";
@@ -368,6 +370,12 @@ test("enriches a listing snapshot from matching detail responses and fails open 
     addressCount: 1,
     candidateEvents: 2,
     descriptionCount: 1,
+    detailCacheHits: 0,
+    detailCacheMisses: 2,
+    detailCacheStale: 0,
+    detailCacheStaleFallbacks: 0,
+    detailCacheWriteFailures: 0,
+    detailEnrichedEvents: 1,
     detailFetchAttempted: 2,
     detailFetchSucceeded: 1,
     informationUrlCount: 1,
@@ -414,13 +422,374 @@ test("deduplicates details and caps concurrent detail work at twelve upcoming ev
   assert.ok(maximumActiveDetails <= 3);
   assert.deepEqual(refreshed.detailCoverage, {
     addressCount: 0,
-    candidateEvents: 12,
+    candidateEvents: 14,
     descriptionCount: 0,
+    detailCacheHits: 0,
+    detailCacheMisses: 14,
+    detailCacheStale: 0,
+    detailCacheStaleFallbacks: 0,
+    detailCacheWriteFailures: 0,
+    detailEnrichedEvents: 0,
     detailFetchAttempted: 12,
     detailFetchSucceeded: 12,
     informationUrlCount: 0,
     organizerCount: 0,
   });
+});
+
+test("progressively fills a cold detail cache and makes no detail requests once all upcoming events are warm", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "gradom-going-out-detail-progressive-"));
+  const cachePath = join(directory, "budva.json");
+  const detailCachePath = join(directory, "budva-details.json");
+  const listing = createMonteGigsListing(
+    Array.from({ length: 34 }, (_, index) => ({
+      id: String(9_000 + index),
+      title: `Event ${index + 1}`,
+    })),
+  );
+  const requestedDetails: string[] = [];
+  const client = {
+    get: async (url: string) => {
+      if (url.endsWith("/me/events/budva")) return response(listing, "budva");
+      requestedDetails.push(url);
+      return detailResponse(createMonteGigsDetail(url), url);
+    },
+  };
+  const firstRefreshAt = new Date("2026-08-01T10:00:00.000Z");
+
+  const first = await refreshMonteGigsGoingOut({
+    cachePath,
+    context: budva,
+    detailCachePath,
+    httpClient: client,
+    now: firstRefreshAt,
+  });
+  const second = await refreshMonteGigsGoingOut({
+    cachePath,
+    context: budva,
+    detailCachePath,
+    httpClient: client,
+    now: new Date("2026-08-01T13:00:00.000Z"),
+  });
+  const third = await refreshMonteGigsGoingOut({
+    cachePath,
+    context: budva,
+    detailCachePath,
+    httpClient: client,
+    now: new Date("2026-08-01T16:00:00.000Z"),
+  });
+  const requestsAfterThreeRefreshes = requestedDetails.length;
+  const warm = await refreshMonteGigsGoingOut({
+    cachePath,
+    context: budva,
+    detailCachePath,
+    httpClient: client,
+    now: new Date("2026-08-01T19:00:00.000Z"),
+  });
+  const staleBudgeted = await refreshMonteGigsGoingOut({
+    cachePath,
+    context: budva,
+    detailCachePath,
+    httpClient: client,
+    now: new Date("2026-08-02T17:00:00.000Z"),
+  });
+
+  assert.equal(requestedDetails.length, 46);
+  assert.equal(requestsAfterThreeRefreshes, 34);
+  assert.deepEqual(
+    [first, second, third].map(({ detailCoverage }) => ({
+      detailCacheHits: detailCoverage?.detailCacheHits,
+      detailCacheMisses: detailCoverage?.detailCacheMisses,
+      detailFetchAttempted: detailCoverage?.detailFetchAttempted,
+      detailEnrichedEvents: detailCoverage?.detailEnrichedEvents,
+    })),
+    [
+      {
+        detailCacheHits: 0,
+        detailCacheMisses: 34,
+        detailFetchAttempted: 12,
+        detailEnrichedEvents: 12,
+      },
+      {
+        detailCacheHits: 12,
+        detailCacheMisses: 22,
+        detailFetchAttempted: 12,
+        detailEnrichedEvents: 24,
+      },
+      {
+        detailCacheHits: 24,
+        detailCacheMisses: 10,
+        detailFetchAttempted: 10,
+        detailEnrichedEvents: 34,
+      },
+    ],
+  );
+  assert.equal(warm.detailCoverage?.detailCacheHits, 34);
+  assert.equal(warm.detailCoverage?.detailFetchAttempted, 0);
+  assert.equal(staleBudgeted.detailCoverage?.detailCacheStale, 34);
+  assert.equal(staleBudgeted.detailCoverage?.detailFetchAttempted, 12);
+  assert.equal(staleBudgeted.detailCoverage?.detailCacheStaleFallbacks, 22);
+  assert.equal(staleBudgeted.detailCoverage?.detailEnrichedEvents, 34);
+  assert.equal(
+    warm.snapshot?.events.every((event) => Boolean(event.description)),
+    true,
+  );
+  assert.equal((await readMonteGigsDetailCache(detailCachePath, "budva")).entries.size, 34);
+});
+
+test("reuses source-event keyed details while keeping the current listing authoritative", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "gradom-going-out-detail-source-id-"));
+  const cachePath = join(directory, "budva.json");
+  const detailCachePath = join(directory, "budva-details.json");
+  const initialListing = createMonteGigsListing([
+    { id: "9300", title: "Original title" },
+    { id: "9301", title: "Existing event" },
+  ]);
+  const changedListing = createMonteGigsListing([
+    { id: "9300", title: "Updated listing title" },
+    { id: "9301", title: "Existing event" },
+    { id: "9302", title: "New event" },
+  ]);
+  const replacementIdListing = createMonteGigsListing([
+    { id: "9303", title: "Replacement source event" },
+    { id: "9301", title: "Existing event" },
+    { id: "9302", title: "New event" },
+  ]);
+  const requestedDetails: string[] = [];
+  let listing = initialListing;
+  const client = {
+    get: async (url: string) => {
+      if (url.endsWith("/me/events/budva")) return response(listing, "budva");
+      requestedDetails.push(url);
+      return detailResponse(createMonteGigsDetail(url), url);
+    },
+  };
+
+  await refreshMonteGigsGoingOut({
+    cachePath,
+    context: budva,
+    detailCachePath,
+    httpClient: client,
+    now: new Date("2026-08-01T10:00:00.000Z"),
+  });
+  requestedDetails.length = 0;
+  listing = changedListing;
+  const changedTitle = await refreshMonteGigsGoingOut({
+    cachePath,
+    context: budva,
+    detailCachePath,
+    httpClient: client,
+    now: new Date("2026-08-01T13:00:00.000Z"),
+  });
+
+  assert.deepEqual(requestedDetails.map(monteGigsSourceIdFromUrl), ["9302"]);
+  assert.equal(
+    changedTitle.snapshot?.events.find((event) => event.sourceEventId === "9300")?.title,
+    "Updated listing title",
+  );
+  assert.equal(
+    changedTitle.snapshot?.events.find((event) => event.sourceEventId === "9300")?.description,
+    "Opis 9300",
+  );
+  assert.equal(changedTitle.detailCoverage?.detailCacheHits, 2);
+  assert.equal(changedTitle.detailCoverage?.detailCacheMisses, 1);
+
+  requestedDetails.length = 0;
+  listing = replacementIdListing;
+  await refreshMonteGigsGoingOut({
+    cachePath,
+    context: budva,
+    detailCachePath,
+    httpClient: client,
+    now: new Date("2026-08-01T16:00:00.000Z"),
+  });
+  assert.deepEqual(requestedDetails.map(monteGigsSourceIdFromUrl), ["9303"]);
+});
+
+test("fetches a repeated source event only once per refresh", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "gradom-going-out-detail-duplicate-"));
+  const cachePath = join(directory, "budva.json");
+  const detailCachePath = join(directory, "budva-details.json");
+  const sourceUrl = "/me/events/budva/9350-20260820-shared-event";
+  const listing = `<main><article><a href="${sourceUrl}"><h3>Shared event A</h3></a><p>20. avg • Budva</p></article><article><a href="${sourceUrl}"><h3>Shared event B</h3></a><p>20. avg • Budva</p></article></main>`;
+  let detailRequests = 0;
+
+  const refreshed = await refreshMonteGigsGoingOut({
+    cachePath,
+    context: budva,
+    detailCachePath,
+    httpClient: {
+      get: async (url) => {
+        if (url.endsWith("/me/events/budva")) return response(listing, "budva");
+        detailRequests += 1;
+        return detailResponse(createMonteGigsDetail(url), url);
+      },
+    },
+    now: new Date("2026-08-01T10:00:00.000Z"),
+  });
+
+  assert.equal(detailRequests, 1);
+  assert.equal(refreshed.detailCoverage?.candidateEvents, 1);
+  assert.equal(refreshed.snapshot?.events.length, 2);
+});
+
+test("does not reuse a detail cache entry from a different MonteGigs city path", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "gradom-going-out-detail-source-scope-"));
+  const cachePath = join(directory, "budva.json");
+  const detailCachePath = join(directory, "budva-details.json");
+  const sourceEventId = "9360";
+  await writeFile(
+    detailCachePath,
+    JSON.stringify({
+      cityId: "budva",
+      entries: [
+        {
+          ...createDetailCacheEntry(sourceEventId, "2026-08-01T09:00:00.000Z"),
+          description: "Wrong city detail",
+          sourceUrl: `https://staging.montegigs.me/me/events/kotor/${sourceEventId}-20260820-event-${sourceEventId}`,
+        },
+      ],
+      schemaVersion: 1,
+      updatedAt: "2026-08-01T09:00:00.000Z",
+    }),
+    "utf8",
+  );
+  let detailRequests = 0;
+  const refreshed = await refreshMonteGigsGoingOut({
+    cachePath,
+    context: budva,
+    detailCachePath,
+    httpClient: {
+      get: async (url) => {
+        if (url.endsWith("/me/events/budva")) {
+          return response(
+            createMonteGigsListing([{ id: sourceEventId, title: "Budva event" }]),
+            "budva",
+          );
+        }
+        detailRequests += 1;
+        return detailResponse(createMonteGigsDetail(url), url);
+      },
+    },
+    now: new Date("2026-08-01T10:00:00.000Z"),
+  });
+
+  assert.equal(detailRequests, 1);
+  assert.equal(refreshed.detailCoverage?.detailCacheMisses, 1);
+  assert.equal(refreshed.snapshot?.events[0]?.description, "Opis 9360");
+});
+
+test("revalidates stale entries, uses a bounded stale fallback on failure, and fails open after it expires", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "gradom-going-out-detail-stale-"));
+  const cachePath = join(directory, "budva.json");
+  const detailCachePath = join(directory, "budva-details.json");
+  const listing = createMonteGigsListing([{ id: "9400", title: "Stale event" }]);
+  let failDetails = false;
+  const client = {
+    get: async (url: string) => {
+      if (url.endsWith("/me/events/budva")) return response(listing, "budva");
+      if (failDetails) throw new Error("detail unavailable");
+      return detailResponse(createMonteGigsDetail(url), url);
+    },
+  };
+
+  await refreshMonteGigsGoingOut({
+    cachePath,
+    context: budva,
+    detailCachePath,
+    httpClient: client,
+    now: new Date("2026-08-01T10:00:00.000Z"),
+  });
+  failDetails = true;
+  const staleFallback = await refreshMonteGigsGoingOut({
+    cachePath,
+    context: budva,
+    detailCachePath,
+    httpClient: client,
+    now: new Date("2026-08-01T23:00:00.000Z"),
+  });
+  const expiredFallback = await refreshMonteGigsGoingOut({
+    cachePath,
+    context: budva,
+    detailCachePath,
+    httpClient: client,
+    now: new Date("2026-08-04T12:00:00.000Z"),
+  });
+
+  assert.equal(staleFallback.snapshot?.events[0]?.description, "Opis 9400");
+  assert.equal(staleFallback.detailCoverage?.detailCacheStale, 1);
+  assert.equal(staleFallback.detailCoverage?.detailCacheStaleFallbacks, 1);
+  assert.ok(staleFallback.warnings.includes("montegigs-detail-enrichment-incomplete"));
+  assert.equal(expiredFallback.snapshot?.events[0]?.description, undefined);
+  assert.equal(expiredFallback.detailCoverage?.detailCacheStaleFallbacks, 0);
+});
+
+test("tolerates malformed detail cache entries, isolates cache-write failures, and cleans only expired missing entries", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "gradom-going-out-detail-cache-failure-"));
+  const cachePath = join(directory, "budva.json");
+  const detailCachePath = join(directory, "budva-details.json");
+  const listing = createMonteGigsListing([{ id: "9500", title: "Current event" }]);
+  let detailRequests = 0;
+  const client = {
+    get: async (url: string) => {
+      if (url.endsWith("/me/events/budva")) return response(listing, "budva");
+      detailRequests += 1;
+      return detailResponse(createMonteGigsDetail(url), url);
+    },
+  };
+  await writeFile(detailCachePath, "{not-json", "utf8");
+
+  const malformedCache = await refreshMonteGigsGoingOut({
+    cachePath,
+    context: budva,
+    detailCachePath,
+    httpClient: client,
+    now: new Date("2026-08-01T10:00:00.000Z"),
+  });
+  assert.equal(malformedCache.success, true);
+  assert.equal(malformedCache.snapshot?.events[0]?.description, "Opis 9500");
+
+  const recentMissingEntry = createDetailCacheEntry("9501", "2026-07-28T10:00:00.000Z");
+  const expiredMissingEntry = createDetailCacheEntry("9502", "2026-07-10T10:00:00.000Z");
+  await writeFile(
+    detailCachePath,
+    JSON.stringify({
+      cityId: "budva",
+      entries: [
+        ...(await readMonteGigsDetailCache(detailCachePath, "budva")).entries.values(),
+        recentMissingEntry,
+        expiredMissingEntry,
+        { sourceEventId: "broken" },
+      ],
+      schemaVersion: 1,
+      updatedAt: "2026-08-01T10:00:00.000Z",
+    }),
+    "utf8",
+  );
+  await refreshMonteGigsGoingOut({
+    cachePath,
+    context: budva,
+    detailCachePath,
+    httpClient: client,
+    now: new Date("2026-08-01T11:00:00.000Z"),
+  });
+  assert.equal(detailRequests, 1);
+  const cleaned = await readMonteGigsDetailCache(detailCachePath, "budva");
+  assert.equal(cleaned.entries.has("9501"), true);
+  assert.equal(cleaned.entries.has("9502"), false);
+
+  const blockedDirectory = join(directory, "blocked");
+  await writeFile(blockedDirectory, "not-a-directory", "utf8");
+  const detailCacheWriteFailure = await refreshMonteGigsGoingOut({
+    cachePath,
+    context: budva,
+    detailCachePath: join(blockedDirectory, "details.json"),
+    httpClient: client,
+    now: new Date("2026-08-01T12:00:00.000Z"),
+  });
+  assert.equal(detailCacheWriteFailure.success, true);
+  assert.equal(detailCacheWriteFailure.detailCoverage?.detailCacheWriteFailures, 1);
+  assert.ok(detailCacheWriteFailure.warnings.includes("montegigs-detail-cache-write-failed"));
 });
 
 test("rejects a detail response that redirects to a different source event", async () => {
@@ -481,6 +850,8 @@ test("uses explicit city sources and independent city cache paths", () => {
   assert.notEqual(getGoingOutCachePath("podgorica"), getGoingOutCachePath("tivat"));
   assert.notEqual(getGoingOutCachePath("budva"), getGoingOutCachePath("tivat"));
   assert.notEqual(getGoingOutCachePath("kotor"), getGoingOutCachePath("budva"));
+  assert.notEqual(getGoingOutDetailCachePath("podgorica"), getGoingOutDetailCachePath("budva"));
+  assert.notEqual(getGoingOutDetailCachePath("budva"), getGoingOutDetailCachePath("kotor"));
 });
 
 test("keeps Budva and Podgorica snapshots isolated through independent retention and freshness", async () => {
@@ -564,6 +935,34 @@ test("retries a transient MonteGigs response through the injected client", async
   assert.equal(calls, 2);
   assert.equal(value.status, 200);
 });
+
+function createMonteGigsListing(events: readonly { id: string; title: string }[]) {
+  return `<main>${events
+    .map(({ id, title }, index) => {
+      const date = new Date(Date.UTC(2026, 7, index + 2));
+      const compactDate = date.toISOString().slice(0, 10).replaceAll("-", "");
+      return `<article><a href="/me/events/budva/${id}-${compactDate}-event-${id}"><h3>${title}</h3></a><p>${date.getUTCDate()}. avg • Budva</p></article>`;
+    })
+    .join("")}</main>`;
+}
+
+function createMonteGigsDetail(sourceUrl: string) {
+  return `<main><h2>Opis</h2><p>Opis ${monteGigsSourceIdFromUrl(sourceUrl)}</p></main>`;
+}
+
+function monteGigsSourceIdFromUrl(sourceUrl: string) {
+  return /\/events\/budva\/(\d+)-/u.exec(sourceUrl)?.[1] ?? "unknown";
+}
+
+function createDetailCacheEntry(sourceEventId: string, fetchedAt: string) {
+  return {
+    description: `Opis ${sourceEventId}`,
+    fetchedAt,
+    lastSeenAt: fetchedAt,
+    sourceEventId,
+    sourceUrl: `https://staging.montegigs.me/me/events/budva/${sourceEventId}-20260820-event-${sourceEventId}`,
+  };
+}
 
 function response(
   body: string,

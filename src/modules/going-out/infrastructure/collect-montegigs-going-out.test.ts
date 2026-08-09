@@ -61,6 +61,12 @@ test("reports bounded detail-enrichment coverage without source content", async 
         addressCount: 2,
         candidateEvents: 6,
         descriptionCount: 4,
+        detailCacheHits: 2,
+        detailCacheMisses: 3,
+        detailCacheStale: 1,
+        detailCacheStaleFallbacks: 1,
+        detailCacheWriteFailures: 0,
+        detailEnrichedEvents: 4,
         detailFetchAttempted: 6,
         detailFetchSucceeded: 5,
         informationUrlCount: 3,
@@ -76,7 +82,7 @@ test("reports bounded detail-enrichment coverage without source content", async 
 
   assert.equal(
     output[0],
-    "provider=montegigs-going-out cityId=podgorica state=success accepted=6 snapshot=unavailable retainedPreviousSnapshot=false detailCandidates=6 detailFetched=5/6 detailDescriptions=4 detailAddresses=2 detailOrganizers=2 detailInformationUrls=3",
+    "provider=montegigs-going-out cityId=podgorica state=success accepted=6 snapshot=unavailable retainedPreviousSnapshot=false detailCandidates=6 detailCacheHits=2 detailCacheMisses=3 detailCacheStale=1 detailCacheStaleFallbacks=1 detailCacheWriteFailures=0 detailEnrichedEvents=4 detailFetched=5/6 detailDescriptions=4 detailAddresses=2 detailOrganizers=2 detailInformationUrls=3",
   );
 });
 

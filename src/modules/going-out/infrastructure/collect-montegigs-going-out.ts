@@ -14,6 +14,7 @@ import type { City, CityContext, CityId } from "../../../shared/types/city.ts";
 import {
   createMonteGigsHttpClient,
   getGoingOutCachePath,
+  getGoingOutDetailCachePath,
   getMonteGigsCitySource,
   refreshMonteGigsGoingOut,
   type GoingOutCacheState,
@@ -115,6 +116,7 @@ async function runMonteGigsGoingOutCollector({
         refreshMonteGigsGoingOut({
           cachePath: resolvedCachePath,
           context,
+          detailCachePath: getGoingOutDetailCachePath(source.cityId),
           httpClient: createMonteGigsHttpClient(),
         }))
     )();
@@ -136,6 +138,12 @@ async function runMonteGigsGoingOutCollector({
       ...(result.detailCoverage
         ? [
             `detailCandidates=${result.detailCoverage.candidateEvents}`,
+            `detailCacheHits=${result.detailCoverage.detailCacheHits}`,
+            `detailCacheMisses=${result.detailCoverage.detailCacheMisses}`,
+            `detailCacheStale=${result.detailCoverage.detailCacheStale}`,
+            `detailCacheStaleFallbacks=${result.detailCoverage.detailCacheStaleFallbacks}`,
+            `detailCacheWriteFailures=${result.detailCoverage.detailCacheWriteFailures}`,
+            `detailEnrichedEvents=${result.detailCoverage.detailEnrichedEvents}`,
             `detailFetched=${result.detailCoverage.detailFetchSucceeded}/${result.detailCoverage.detailFetchAttempted}`,
             `detailDescriptions=${result.detailCoverage.descriptionCount}`,
             `detailAddresses=${result.detailCoverage.addressCount}`,
