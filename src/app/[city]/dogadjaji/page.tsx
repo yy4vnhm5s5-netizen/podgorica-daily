@@ -12,8 +12,8 @@ import {
   getCityEventsForPublicListing,
   parseEventsUiFilters,
 } from "@/modules/events/presentation/events-ui-model";
+import { CityFeatureDiscovery } from "@/shared/components/city-feature-discovery";
 import { ErrorState } from "@/shared/components/error-state";
-import { ExploreCityLinks } from "@/shared/components/explore-city-links";
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
 import { SectionTitle } from "@/shared/components/section-title";
 import { getCityName } from "@/shared/config/cities";
@@ -122,7 +122,7 @@ async function EventsPage({ params, searchParams }: EventsPageProps) {
           />
           {/* Only on the successful branch: the error branch below is already a dead end for the
               user, and pointing them at other modules there would bury the actual failure. */}
-          <ExploreCityLinks city={context.city} exclude={["events"]} />
+          <CityFeatureDiscovery city={context.city} currentFeature="events" />
         </section>
       </DashboardLayout>
     );

@@ -16,7 +16,11 @@ test("events page title and H1 are built per-city, not from the shared Podgorica
   assert.match(source, /`Događaji u \$\{cityName\}`/u);
   assert.match(source, /getEventsPageHeading\(getCityName\(context\.city, "locative"\)\)/u);
   // Used for both the metadata title and both the success/error-path H1s.
-  assert.equal((source.match(/getEventsPageHeading\(getCityName\(context\.city, "locative"\)\)/gu) ?? []).length, 2);
+  assert.equal(
+    (source.match(/getEventsPageHeading\(getCityName\(context\.city, "locative"\)\)/gu) ?? [])
+      .length,
+    2,
+  );
   assert.equal((source.match(/title=\{heading\}/gu) ?? []).length, 2);
 });
 
@@ -77,4 +81,19 @@ test("the day heading marks today in the city timezone, without replacing the da
   assert.match(source, /"Danas" : "Today"\} — \$\{label\}/u);
   // No route was added for the intent.
   assert.doesNotMatch(source, /\/danas/u);
+});
+
+test("uses shared city discovery after Events content without a duplicate neutral block", async () => {
+  const source = await readFile(new URL("./page.tsx", import.meta.url), "utf8");
+
+  assert.match(
+    source,
+    /import \{ CityFeatureDiscovery \} from "@\/shared\/components\/city-feature-discovery";/u,
+  );
+  assert.match(source, /<CityFeatureDiscovery city=\{context\.city\} currentFeature="events" \/>/u);
+  assert.doesNotMatch(source, /ExploreCityLinks/u);
+  assert.ok(
+    source.indexOf('<CityFeatureDiscovery city={context.city} currentFeature="events" />') >
+      source.indexOf("<EventsList"),
+  );
 });

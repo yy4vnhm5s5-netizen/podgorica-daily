@@ -9,7 +9,6 @@ import { getCityPath } from "@/shared/config/public-routes";
 // Which public route families render the shared contextual-navigation block, and with which
 // feature excluded. Each entry is the file that owns that route's rendered body.
 const rollout = [
-  { exclude: "events", file: "src/app/[city]/dogadjaji/page.tsx", route: "/[city]/dogadjaji" },
   {
     exclude: "seaWaterQuality",
     file: "src/modules/sea-water-quality/presentation/sea-water-quality-location-page.tsx",

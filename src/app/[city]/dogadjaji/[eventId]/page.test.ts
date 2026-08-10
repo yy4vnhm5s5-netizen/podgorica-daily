@@ -55,4 +55,5 @@ test("metadata helpers leave the visible title, canonical and JSON-LD untouched"
     /<EventDetail city=\{context\.city\} event=\{event\} locale=\{locale\} \/>/u,
   );
   assert.match(detailSource, /<h1[^>]*>\{event\.title\}<\/h1>/u);
+  assert.doesNotMatch(detailSource, /CityFeatureDiscovery/u);
 });

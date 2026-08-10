@@ -117,6 +117,36 @@ test("derives Going Out discovery from public same-city capabilities", () => {
   }
 });
 
+test("derives Events discovery from public same-city capabilities", () => {
+  const expected = {
+    podgorica: ["goingOut", "electricity", "flights"],
+    tivat: ["goingOut", "seaWaterQuality", "electricity", "flights"],
+  } as const;
+
+  for (const [cityId, keys] of Object.entries(expected) as readonly [
+    keyof typeof expected,
+    readonly string[],
+  ][]) {
+    const discovery = getCityFeatureDiscovery(requireCity(cityId), "events", allFeaturesEnabled);
+
+    assert.equal(discovery.heading, `Još iz ${getGenitive(cityId)}`, cityId);
+    assert.deepEqual(
+      discovery.links.map(({ key }) => key),
+      keys,
+      cityId,
+    );
+    assert.equal(
+      discovery.links.some(({ key }) => key === "events"),
+      false,
+      cityId,
+    );
+    assert.ok(
+      discovery.links.every(({ href }) => href.startsWith(`/${cityId}/`)),
+      `${cityId} must only link within its own canonical city route space`,
+    );
+  }
+});
+
 test("uses public feature availability and never fabricates unavailable destinations", () => {
   const discovery = getCityFeatureDiscovery(requireCity("tivat"), "electricity", {
     isFeatureEnabled: (feature) => feature !== "goingOut" && feature !== "seaWaterQuality",
