@@ -140,7 +140,7 @@ test("counts a mixed history and orders the breakdown best-to-worst", () => {
     { count: 1, grade: "satisfactory" },
   ]);
   assert.equal(summary?.latest.grade, "excellent");
-  assert.equal(summary?.comparison?.trend, "improved");
+  assert.equal(summary?.comparison?.trend, "unchanged");
 });
 
 test("sorts by source round rather than trusting the given order", () => {

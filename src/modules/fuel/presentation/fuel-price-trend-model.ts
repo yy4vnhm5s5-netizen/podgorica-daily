@@ -1,14 +1,13 @@
-import { changeWords } from "./fuel-card-label";
-import { formatFuelDay } from "./fuel-day-label";
-import { formatFuelPriceWithUnit } from "./fuel-price-unit";
+import { changeWords } from "./fuel-card-label.ts";
+import { formatFuelDay } from "./fuel-day-label.ts";
+import { formatFuelPriceWithUnit } from "./fuel-price-unit.ts";
 import {
   derivePreviousChange,
   formatFuelPrice,
   type FuelPriceCalculation,
   type FuelPriceChange,
   type FuelProductId,
-} from "../domain/fuel-price";
-
+} from "../domain/fuel-price.ts";
 
 interface TrendPoint {
   change?: FuelPriceChange;

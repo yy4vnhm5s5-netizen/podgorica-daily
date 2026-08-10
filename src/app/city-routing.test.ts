@@ -188,6 +188,7 @@ test("sitemap paths contain only active canonical city paths", () => {
     "/kotor",
     "/podgorica",
     "/tivat",
+    "/ulcinj",
   ]);
 });
 

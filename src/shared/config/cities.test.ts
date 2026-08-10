@@ -205,6 +205,7 @@ test("exposes a verified genitive form for every registered city", () => {
     niksic: "Nikšića",
     podgorica: "Podgorice",
     tivat: "Tivta",
+    ulcinj: "Ulcinja",
   };
 
   const registered = Object.values(cityRegistry);
@@ -224,6 +225,7 @@ test("adding the genitive leaves the other three forms untouched", () => {
     niksic: ["Nikšić", "Nikšić", "Nikšiću"],
     podgorica: ["Podgorica", "Podgoricu", "Podgorici"],
     tivat: ["Tivat", "Tivat", "Tivtu"],
+    ulcinj: ["Ulcinj", "Ulcinj", "Ulcinju"],
   };
 
   for (const city of Object.values(cityRegistry)) {

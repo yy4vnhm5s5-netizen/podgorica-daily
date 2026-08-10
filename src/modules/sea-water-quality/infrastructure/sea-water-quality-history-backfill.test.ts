@@ -119,19 +119,31 @@ test("backfills every supported city from one fetch per city and round", async (
 
     assert.equal(result.state, "success");
     assert.deepEqual(result.resolvedRounds, [4, 5]);
-    assert.deepEqual(
-      result.cities.map((city) => city.cityId).sort(),
-      ["bar", "budva", "kotor", "tivat"],
-    );
-    // 4 supported cities x 2 rounds, using the verified municipality ids only.
-    assert.equal(requests.length, 8);
-    assert.deepEqual(
-      [...new Set(requests.map((request) => request.get("opstina")))].sort(),
-      ["1", "2", "3", "4"],
-    );
+    assert.deepEqual(result.cities.map((city) => city.cityId).sort(), [
+      "bar",
+      "budva",
+      "kotor",
+      "tivat",
+      "ulcinj",
+    ]);
+    // 5 supported cities x 2 rounds, using the verified municipality ids only.
+    assert.equal(requests.length, 10);
+    assert.deepEqual([...new Set(requests.map((request) => request.get("opstina")))].sort(), [
+      "1",
+      "2",
+      "3",
+      "4",
+      "6",
+    ]);
     assert.deepEqual([...new Set(requests.map((request) => request.get("godina")))], ["2026"]);
 
-    const expectedCounts: Record<string, number> = { bar: 15, budva: 34, kotor: 15, tivat: 10 };
+    const expectedCounts: Record<string, number> = {
+      bar: 15,
+      budva: 34,
+      kotor: 15,
+      tivat: 10,
+      ulcinj: 18,
+    };
     for (const city of result.cities) {
       assert.equal(city.state, "success");
       const snapshot = await readSeaWaterQualityHistoryCache(city.historyPath);

@@ -88,7 +88,7 @@ test("refreshes the active city batch with bounded concurrency and preserves per
 
     assert.equal(results.length, getActiveWeatherContexts().length);
     assert.equal(results.find((result) => result.cityId === "kotor")?.state, "failed");
-    assert.equal(results.filter((result) => result.state === "success").length, 4);
+    assert.equal(results.filter((result) => result.state === "success").length, results.length - 1);
     assert.ok(maximumActive <= weatherRefreshConcurrency);
   } finally {
     await rm(directory, { force: true, recursive: true });

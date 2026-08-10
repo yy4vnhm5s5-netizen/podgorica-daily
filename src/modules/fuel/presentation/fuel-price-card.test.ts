@@ -4,6 +4,7 @@ import test from "node:test";
 
 import { fuelProductIds, fuelProductNames } from "../domain/fuel-price.ts";
 import { getFuelCardLabel } from "./fuel-card-label.ts";
+import { fuelUnitLabel } from "./fuel-price-unit.ts";
 
 const pageSource = async () => readFile(new URL("./fuel-prices-page.tsx", import.meta.url), "utf8");
 
@@ -122,10 +123,14 @@ test("each fuel has its own accent, and no two share one", async () => {
   assert.equal([...accents.matchAll(/border-t-2 border-t-[a-z]+-500/gu)].length, 4);
   // Identity covers the surface and the icon only — the change badge is not its business.
   const accentKeys = [...accents.matchAll(/^\s*(\w+):/gmu)].map(([, key]) => key);
-  assert.deepEqual(
-    [...new Set(accentKeys)].sort(),
-    ["eurodiesel", "eurosuper95", "eurosuper98", "heatingOil", "name", "surface"],
-  );
+  assert.deepEqual([...new Set(accentKeys)].sort(), [
+    "eurodiesel",
+    "eurosuper95",
+    "eurosuper98",
+    "heatingOil",
+    "name",
+    "surface",
+  ]);
   // Each identity now colours the product name, one distinct family each.
   const nameTones = [...accents.matchAll(/name: "text-([a-z]+)-700"/gu)].map(([, tone]) => tone);
   assert.deepEqual(nameTones.sort(), ["amber", "blue", "emerald", "violet"]);
@@ -211,7 +216,8 @@ test("the price, unit and hint are in the card, with figures aligned", async () 
   const card = await cardSource();
 
   assert.match(card, /tabular-nums/u);
-  assert.match(card, /€\/l/u);
+  assert.match(card, /\{fuelUnitLabel\}/u);
+  assert.equal(fuelUnitLabel, "€ / L");
   assert.match(card, /\{copy\.lastPrice\}/u);
   assert.match(await pageSource(), /lastPrice: "Posljednja cijena"/u);
 });

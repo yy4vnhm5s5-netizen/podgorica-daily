@@ -269,7 +269,7 @@ test("accumulated official history is never truncated by a refresh", async () =>
     prices: [{ priceCents: 150 + index, productId: "eurosuper95" as const }],
     publishedAt: "2025-11-30",
     sourceName: "Ministarstvo energetike i rudarstva",
-    sourceUrl: june,
+    sourceUrl: `https://www.gov.me/clanak/archived-fuel-calculation-${index}`,
   }));
   const stored = new Map(archived.map((entry) => [entry.effectiveDate, entry]));
   const previous: FuelCacheSnapshot = {
@@ -297,7 +297,10 @@ test("accumulated official history is never truncated by a refresh", async () =>
   assert.equal(dates.length, stored.size + 2);
   for (const archivedDate of stored.keys()) assert.equal(dates.includes(archivedDate), true);
   // Still newest-first, so the page can slice the head for display.
-  assert.deepEqual([...dates], [...dates].sort((left, right) => right.localeCompare(left)));
+  assert.deepEqual(
+    [...dates],
+    [...dates].sort((left, right) => right.localeCompare(left)),
+  );
 });
 
 test("re-parsing an already stored calculation replaces it instead of duplicating it", async () => {

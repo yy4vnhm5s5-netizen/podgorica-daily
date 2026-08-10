@@ -4,7 +4,7 @@ import {
   type FuelPriceChange,
   type FuelPriceChangeDirection,
   type FuelProductId,
-} from "../domain/fuel-price";
+} from "../domain/fuel-price.ts";
 
 // Spoken form of the move. The card shows the direction as an arrow and an accent colour, neither
 // of which a screen reader conveys, so the accessible name says it in words instead.

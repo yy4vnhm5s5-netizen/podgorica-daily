@@ -1,4 +1,4 @@
-import { formatFuelPrice } from "../domain/fuel-price";
+import { formatFuelPrice } from "../domain/fuel-price.ts";
 
 // One spelling of the per-litre unit for the whole page: the cards, the chart statistics, the
 // chart's accessible description and the point tooltip. Spaced around the slash and an uppercase

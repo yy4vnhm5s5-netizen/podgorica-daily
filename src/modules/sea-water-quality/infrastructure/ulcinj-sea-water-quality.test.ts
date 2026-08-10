@@ -29,7 +29,7 @@ test("maps Ulcinj to municipality 6, not the previously assumed 18", () => {
 
 // The 18 real Ulcinj sampling points observed in every 2026 round. Velika Plaža is the largest
 // single-beach group on the platform, which is the regression this fixture exists for.
-const ulcinjLocations: readonly SeaWaterQualityHistoryLocation[] = [
+const ulcinjLocations: SeaWaterQualityHistoryLocation[] = [
   { beachName: "ADA BOJANA", name: "Ada Bojana", slug: "ada-bojana" },
   { beachName: "BOROVA SUMA", name: "Borova šuma 01", slug: "borova-suma-01" },
   { beachName: "MALA PLAZA", name: "Mala plaža", slug: "mala-plaza" },

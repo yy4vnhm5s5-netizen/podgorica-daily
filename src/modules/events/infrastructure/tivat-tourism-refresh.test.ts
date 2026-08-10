@@ -62,6 +62,8 @@ test("fetches every discovered page and combines candidates across them", async 
   assert.deepEqual(requestedUrls, [
     "https://tivat.travel/dogadjaji/",
     "https://tivat.travel/dogadjaji/page/2/",
+    "https://tivat.travel/dogadjaji/koncert-na-trgu/",
+    "https://tivat.travel/dogadjaji/izlozba-u-galeriji/",
   ]);
   assert.equal(result.fetchedPageCount, 2);
   assert.equal(result.snapshot?.events.length, 2);

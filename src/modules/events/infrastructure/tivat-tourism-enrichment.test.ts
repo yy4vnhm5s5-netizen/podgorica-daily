@@ -10,7 +10,7 @@ import type { EventCacheSnapshot } from "./events-cache.ts";
 import { createCityContext } from "@/shared/config/cities";
 
 const fixture = async (name: string) =>
-  readFile(new URL(`../__fixtures__/${name}`, import.meta.url), "utf8");
+  readFile(new URL(`./__fixtures__/${name}`, import.meta.url), "utf8");
 
 const saborUrl = "https://tivat.travel/dogadjaji/11-srpski-sabor/";
 const festaUrl = "https://tivat.travel/dogadjaji/festa-od-ribe-i-vina-u-krasicima/";
@@ -115,7 +115,10 @@ test("a failed detail fetch keeps the listing event instead of dropping it", asy
   assert.equal(sabor.description, undefined);
   // The other event is unaffected: one bad page does not fail the run.
   assert.ok(eventNamed(snapshot, "fešta"));
-  assert.equal(snapshot?.parserWarnings.some((warning) => warning.includes("detail page")), true);
+  assert.equal(
+    snapshot?.parserWarnings.some((warning) => warning.includes("detail page")),
+    true,
+  );
 });
 
 test("each detail page is requested exactly once", async () => {

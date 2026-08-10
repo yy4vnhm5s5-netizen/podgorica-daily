@@ -9,11 +9,17 @@ import {
 
 // Shapes captured from the live JPMD response. Velika Plaža 01 and 02 are adjacent official
 // measurement zones on one beach — the case that must never collapse to a single map target.
-const velikaPlaza01 = "POLYGON ((19.2436066035853 41.9084257385294, 19.2432884999473 41.9075564674321, 19.2424619340759 41.9077280134668, 19.2436066035853 41.9084257385294))";
-const velikaPlaza02 = "POLYGON ((19.2468734 41.9065873, 19.2470001 41.9060002, 19.2465003 41.9061004, 19.2468734 41.9065873))";
+const velikaPlaza01 =
+  "POLYGON ((19.2436066035853 41.9084257385294, 19.2432884999473 41.9075564674321, 19.2424619340759 41.9077280134668, 19.2436066035853 41.9084257385294))";
+const velikaPlaza02 =
+  "POLYGON ((19.2468734 41.9065873, 19.2470001 41.9060002, 19.2465003 41.9061004, 19.2468734 41.9065873))";
 
 const pageSource = async () =>
   readFile(new URL("./sea-water-quality-location-page.tsx", import.meta.url), "utf8");
+
+function stripStandaloneComments(source: string) {
+  return source.replace(/\/\*[\s\S]*?\*\/|^\s*\/\/.*$/gmu, "");
+}
 
 test("reads WKT longitude-first and returns the polygon's own first vertex", () => {
   const point = getRepresentativeMapPoint(velikaPlaza01);
@@ -78,10 +84,14 @@ test("rejects coordinates outside the possible range", () => {
 });
 
 test("never reads the null point fields JPMD publishes", async () => {
-  const source = await readFile(new URL("./sea-water-quality-map-point.ts", import.meta.url), "utf8");
+  const source = await readFile(
+    new URL("./sea-water-quality-map-point.ts", import.meta.url),
+    "utf8",
+  );
+  const executableSource = stripStandaloneComments(source);
 
   // gSirina/gDuzina are null in every JPMD record; using them would render nothing, forever.
-  assert.doesNotMatch(source, /gSirina|gDuzina/u, "except where named in the explanatory comment");
+  assert.doesNotMatch(executableSource, /gSirina|gDuzina/u);
 });
 
 test("the CTA renders only with a usable map point, from this location's own geometry", async () => {

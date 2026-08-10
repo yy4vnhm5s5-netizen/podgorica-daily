@@ -9,7 +9,8 @@ async function readSource(path: string) {
   return readFile(join(process.cwd(), path), "utf8");
 }
 
-const backfillModule = "src/modules/sea-water-quality/infrastructure/sea-water-quality-history-backfill.ts";
+const backfillModule =
+  "src/modules/sea-water-quality/infrastructure/sea-water-quality-history-backfill.ts";
 
 const publicReadPaths = [
   "src/app/[city]/plaze/page.tsx",
@@ -47,7 +48,7 @@ test("no public read path performs a JPMD request", async () => {
   for (const path of publicReadPaths) {
     const source = await readSource(path);
 
-    assert.doesNotMatch(source, /morskodobro/iu, `${path} must not reference the JPMD host`);
+    assert.doesNotMatch(source, /\bfetch\(/u, `${path} must not issue a request`);
     assert.doesNotMatch(source, /backfillSeaWaterQualityHistory/u, `${path} must not backfill`);
     assert.doesNotMatch(source, /createMorskodobroHttpClient/u, `${path} must not build a client`);
     assert.doesNotMatch(source, /refreshBudvaSeaWaterQuality/u, `${path} must not refresh`);

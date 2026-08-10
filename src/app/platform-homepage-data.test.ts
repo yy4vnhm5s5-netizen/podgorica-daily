@@ -148,6 +148,12 @@ test("creates platform metadata and structured data only from public city cards"
       position: 5,
       url: "https://gradom.me/tivat",
     },
+    {
+      "@type": "ListItem",
+      name: "Ulcinj",
+      position: 6,
+      url: "https://gradom.me/ulcinj",
+    },
   ]);
   assert.equal(JSON.stringify(structuredData).includes("bar"), true);
   assert.equal(JSON.stringify(structuredData).includes("budva"), true);

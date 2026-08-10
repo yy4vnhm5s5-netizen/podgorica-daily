@@ -5,7 +5,7 @@ import test from "node:test";
 import { parseTivatTourismEventDetail } from "./tivat-tourism-detail-parser.ts";
 
 const fixture = async (name: string) =>
-  readFile(new URL(`../__fixtures__/${name}`, import.meta.url), "utf8");
+  readFile(new URL(`./__fixtures__/${name}`, import.meta.url), "utf8");
 
 test("takes the place the source marks, verbatim", async () => {
   const detail = parseTivatTourismEventDetail(await fixture("tivat-tourism-detail-sabor.html"));

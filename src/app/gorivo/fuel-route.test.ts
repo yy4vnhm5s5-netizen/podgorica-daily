@@ -63,7 +63,9 @@ test("sitemap lastModified is the effective date, not the run time", async () =>
     true,
   );
 
-  assert.equal(entries[0]?.lastModified?.toISOString(), "2026-08-04T00:00:00.000Z");
+  const lastModified = entries[0]?.lastModified;
+  assert.ok(lastModified instanceof Date);
+  assert.equal(lastModified.toISOString(), "2026-08-04T00:00:00.000Z");
 });
 
 test("an unreadable snapshot still yields the URL, just without a claimed date", async () => {
