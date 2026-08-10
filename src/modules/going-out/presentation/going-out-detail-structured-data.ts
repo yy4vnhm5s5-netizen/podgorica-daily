@@ -47,8 +47,9 @@ function createGoingOutDetailStructuredData(
   city: City,
 ): GoingOutDetailStructuredData | undefined {
   const startDate = getStructuredDataStartDate(event);
+  const address = event.address?.trim();
   const venue = event.venue?.trim();
-  if (!startDate || !venue) return undefined;
+  if (!startDate || !venue || !address) return undefined;
 
   return {
     "@context": "https://schema.org",
@@ -69,7 +70,7 @@ function createGoingOutDetailStructuredData(
         "@type": "PostalAddress",
         addressCountry: "ME",
         addressLocality: city.name,
-        ...(event.address ? { streetAddress: event.address } : {}),
+        streetAddress: address,
       },
       name: venue,
     },

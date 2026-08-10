@@ -70,8 +70,29 @@ test("uses generic Event unless the source event type is explicitly music semant
   );
 });
 
-test("withholds Event markup when the provider did not name a venue", () => {
+test("withholds Event markup when the provider did not name a venue or source-backed address", () => {
   assert.equal(createGoingOutDetailStructuredData(event({ venue: undefined }), city), undefined);
+  assert.equal(createGoingOutDetailStructuredData(event({ address: undefined }), city), undefined);
+});
+
+test("keeps BreadcrumbList available when Event markup is withheld for a missing address", () => {
+  const withoutAddress = event({ address: undefined });
+
+  assert.equal(createGoingOutDetailStructuredData(withoutAddress, city), undefined);
+  assert.deepEqual(
+    createGoingOutDetailBreadcrumbStructuredData(city, withoutAddress).itemListElement.map(
+      ({ item, name, position }) => ({ item, name, position }),
+    ),
+    [
+      { item: "https://gradom.me/kotor", name: "Kotor", position: 1 },
+      { item: "https://gradom.me/kotor/izlasci", name: "Izlasci", position: 2 },
+      {
+        item: "https://gradom.me/kotor/izlasci/montegigs-7465",
+        name: "Koncert u Kotoru",
+        position: 3,
+      },
+    ],
+  );
 });
 
 test("uses one breadcrumb trail for visible navigation and BreadcrumbList", () => {

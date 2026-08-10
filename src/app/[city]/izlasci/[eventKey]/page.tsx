@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { cache } from "react";
 
-import { resolveActiveCityFeatureRoute } from "@/app/city-routing";
+import {
+  isCityPublicFeatureRouteAvailable,
+  resolveActiveCityFeatureRoute,
+} from "@/app/city-routing";
 import { createPublicRouteMetadata } from "@/app/public-route-metadata";
 import { getGoingOutEvents } from "@/modules/going-out/application/get-going-out-events";
 import { resolvePublicGoingOutDetail } from "@/modules/going-out/application/going-out-public-detail";
@@ -35,7 +38,9 @@ const getCachedGoingOutEvents = cache(getGoingOutEvents);
 
 async function getPublicDetail(slug: string, eventKey: string) {
   const context = getCachedContext(slug);
-  if (!context) return undefined;
+  if (!context || !isCityPublicFeatureRouteAvailable(context.city, "goingOut")) {
+    return undefined;
+  }
 
   const result = await getCachedGoingOutEvents(context);
   const event = resolvePublicGoingOutDetail({
