@@ -3,26 +3,26 @@ import type { FlightCacheState } from "../infrastructure/podgorica-flights";
 import type { Locale } from "../../../shared/config/locale.ts";
 import { formatRelativeTime } from "../../../shared/lib/date.ts";
 
-type PodgoricaFlightsDisplayState = "empty" | "flights" | "stale" | "unavailable";
+type AirportFlightsDisplayState = "empty" | "flights" | "stale" | "unavailable";
 type FlightDirectionGroup = "arrival" | "departure";
 
-interface PodgoricaFlightGroups {
+interface AirportFlightGroups {
   arrival: Flight[];
   departure: Flight[];
 }
 
-function getPodgoricaFlightsDisplayState({
+function getAirportFlightsDisplayState({
   flightCount,
   state,
 }: {
   flightCount: number;
   state: FlightCacheState;
-}): PodgoricaFlightsDisplayState {
+}): AirportFlightsDisplayState {
   if (flightCount > 0) return state === "stale" ? "stale" : "flights";
   return state === "unavailable" ? "unavailable" : "empty";
 }
 
-function getPodgoricaFlightsUpdatedLabel({
+function getAirportFlightsUpdatedLabel({
   lastSuccessfulRefreshAt,
   locale,
   now = new Date(),
@@ -42,7 +42,7 @@ function getPodgoricaFlightsUpdatedLabel({
   })}`;
 }
 
-function getPodgoricaFlightGroups(flights: readonly Flight[]): PodgoricaFlightGroups {
+function getAirportFlightGroups(flights: readonly Flight[]): AirportFlightGroups {
   const sortedFlights = sortAndDeduplicateFlights(flights);
 
   return {
@@ -51,12 +51,12 @@ function getPodgoricaFlightGroups(flights: readonly Flight[]): PodgoricaFlightGr
   };
 }
 
-function getUpcomingPodgoricaFlightGroups(
+function getUpcomingAirportFlightGroups(
   flights: readonly Flight[],
   now = new Date(),
   limit = 3,
-): PodgoricaFlightGroups {
-  const groups = getPodgoricaFlightGroups(flights);
+): AirportFlightGroups {
+  const groups = getAirportFlightGroups(flights);
 
   return {
     arrival: selectUpcomingFlights(groups.arrival, now, limit),
@@ -65,11 +65,11 @@ function getUpcomingPodgoricaFlightGroups(
 }
 
 export {
-  getPodgoricaFlightGroups,
-  getPodgoricaFlightsDisplayState,
-  getPodgoricaFlightsUpdatedLabel,
-  getUpcomingPodgoricaFlightGroups,
+  getAirportFlightGroups,
+  getAirportFlightsDisplayState,
+  getAirportFlightsUpdatedLabel,
+  getUpcomingAirportFlightGroups,
   type FlightDirectionGroup,
-  type PodgoricaFlightsDisplayState,
-  type PodgoricaFlightGroups,
+  type AirportFlightsDisplayState,
+  type AirportFlightGroups,
 };

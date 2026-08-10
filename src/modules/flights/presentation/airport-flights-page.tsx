@@ -1,11 +1,12 @@
 import { Plane, PlaneLanding, PlaneTakeoff } from "lucide-react";
 
 import type { Flight } from "../domain/flight";
+import type { AirportFlightsSource } from "../infrastructure/airport-flights-config";
 import type { FlightCacheState } from "../infrastructure/podgorica-flights";
 import {
-  getPodgoricaFlightsDisplayState,
-  getPodgoricaFlightsUpdatedLabel,
-  getUpcomingPodgoricaFlightGroups,
+  getAirportFlightsDisplayState,
+  getAirportFlightsUpdatedLabel,
+  getUpcomingAirportFlightGroups,
 } from "./podgorica-flights-ui-model";
 import { EmptyState } from "@/shared/components/empty-state";
 import { ErrorState } from "@/shared/components/error-state";
@@ -17,6 +18,7 @@ import { getLocaleTag, type Locale } from "@/shared/config/locale";
 import { formatDateTime } from "@/shared/lib/date";
 
 interface AirportFlightsPageProps {
+  airport: AirportFlightsSource;
   flights: readonly Flight[];
   lastSuccessfulRefreshAt?: string;
   locale: Locale;
@@ -24,18 +26,21 @@ interface AirportFlightsPageProps {
 }
 
 function AirportFlightsPage({
+  airport,
   flights,
   lastSuccessfulRefreshAt,
   locale,
   state,
 }: AirportFlightsPageProps) {
   const copy = locale === "me" ? montenegrinCopy : englishCopy;
-  const groups = getUpcomingPodgoricaFlightGroups(flights, new Date(), 5);
-  const displayState = getPodgoricaFlightsDisplayState({
+  const title = airport.displayName;
+  const description = copy.description(airport.displayName);
+  const groups = getUpcomingAirportFlightGroups(flights, new Date(), 5);
+  const displayState = getAirportFlightsDisplayState({
     flightCount: groups.arrival.length + groups.departure.length,
     state,
   });
-  const updatedLabel = getPodgoricaFlightsUpdatedLabel({ lastSuccessfulRefreshAt, locale });
+  const updatedLabel = getAirportFlightsUpdatedLabel({ lastSuccessfulRefreshAt, locale });
 
   return (
     <section aria-labelledby="flights-heading" className="space-y-6" id="flights">
@@ -45,14 +50,14 @@ function AirportFlightsPage({
           icon={Plane}
           iconClassName="bg-gradient-to-br from-sky-400 to-sky-600 text-white shadow-sky-900/20"
           id="flights-heading"
-          title={copy.title}
+          title={title}
         />
-        <p className="max-w-2xl text-sm leading-6 text-muted-foreground">{copy.description}</p>
+        <p className="max-w-2xl text-sm leading-6 text-muted-foreground">{description}</p>
       </div>
       {displayState === "unavailable" ? (
-        <ErrorState description={copy.unavailable} title={copy.title} />
+        <ErrorState description={copy.unavailable} title={title} />
       ) : displayState === "empty" ? (
-        <EmptyState description={copy.empty} title={copy.title} />
+        <EmptyState description={copy.empty} title={title} />
       ) : (
         <div className="space-y-8">
           {displayState === "stale" ? (
@@ -84,7 +89,7 @@ function AirportFlightsPage({
       )}
       <a
         className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-        href="https://montenegroairports.com/aerodrom-podgorica/destinacije/"
+        href={airport.officialPageUrl}
         rel="noopener noreferrer"
         target="_blank"
       >
@@ -173,26 +178,19 @@ function FlightValue({ label, value }: { label: string; value: string }) {
   );
 }
 
-// The airport this surface represents, single-sourced so the page's H1 and the route's document
-// title cannot drift apart (see app/[city]/letovi/page.tsx). Deliberately named for Podgorica:
-// flights is a Podgorica-only capability today, and a second airport would have to revisit both
-// call sites rather than silently inherit this name.
-const podgoricaAirportName = "Aerodrom Podgorica";
-
 const montenegrinCopy = {
   airline: "Avio-kompanija",
   arrival: "Dolazak",
   arrivals: "Dolasci",
   departure: "Odlazak",
   departures: "Odlasci",
-  description:
-    "Aktuelni red letenja za Aerodrom Podgorica — dolasci i odlasci iz zvaničnih podataka Aerodroma Crne Gore.",
+  description: (airportName: string) =>
+    `Aktuelni red letenja za ${airportName} — dolasci i odlasci iz zvaničnih podataka Aerodroma Crne Gore.`,
   empty: "Trenutno nema dostupnih letova.",
   flightNumber: "Broj leta",
   stale: "Prikazani podaci mogu biti zastarjeli.",
   status: "Status",
   source: "Kompletan red letenja na sajtu Aerodroma Crne Gore ↗",
-  title: podgoricaAirportName,
   unavailable: "Podaci trenutno nijesu dostupni.",
 };
 const englishCopy = {
@@ -201,15 +199,14 @@ const englishCopy = {
   arrivals: "Arrivals",
   departure: "Departure",
   departures: "Departures",
-  description:
-    "Current Podgorica Airport schedule — arrivals and departures from official Airports of Montenegro data.",
+  description: (airportName: string) =>
+    `Current ${airportName} schedule — arrivals and departures from official Airports of Montenegro data.`,
   empty: "There are no flights available right now.",
   flightNumber: "Flight number",
   stale: "Displayed data may be outdated.",
   status: "Status",
   source: "Full flight schedule on the Airports of Montenegro website ↗",
-  title: "Podgorica Airport",
   unavailable: "Data is temporarily unavailable.",
 };
 
-export { AirportFlightsPage, podgoricaAirportName, type AirportFlightsPageProps };
+export { AirportFlightsPage, type AirportFlightsPageProps };

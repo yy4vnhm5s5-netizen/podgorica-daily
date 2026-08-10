@@ -1,11 +1,18 @@
 import assert from "node:assert/strict";
+import { mkdtemp } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import test from "node:test";
 
-import { getActiveFlightsContexts, runPodgoricaFlightsCollector } from "./collect-podgorica-flights.ts";
+import {
+  getActiveFlightsContexts,
+  runActiveFlightsCollectors,
+  runAirportFlightsCollector,
+} from "./collect-podgorica-flights.ts";
 
 test("reports a successful Podgorica Airport cache refresh", async () => {
   const lines: string[] = [];
-  const result = await runPodgoricaFlightsCollector({
+  const result = await runAirportFlightsCollector({
     cachePath: "/tmp/gradom-flights-collector-success/flights.json",
     refresh: async () => ({
       acceptedFlights: 3,
@@ -21,16 +28,16 @@ test("reports a successful Podgorica Airport cache refresh", async () => {
   assert.equal(result.state, "success");
   assert.equal(result.cityId, "podgorica");
   assert.deepEqual(lines, [
-    "provider=podgorica-airport cityId=podgorica state=success accepted=3 cache=written cache_path=/tmp/gradom-flights-collector-success/flights.json",
+    "provider=montenegro-airports-flights cityId=podgorica state=success accepted=3 cache=written cache_path=/tmp/gradom-flights-collector-success/flights.json",
   ]);
 });
 
 test("returns a non-zero result when no cache can be retained", async () => {
-  const result = await runPodgoricaFlightsCollector({
+  const result = await runAirportFlightsCollector({
     cachePath: "/tmp/gradom-flights-collector-failure/flights.json",
     refresh: async () => ({
       acceptedFlights: 0,
-      errorCode: "podgorica-flights-parser-failed",
+      errorCode: "airport-flights-parser-failed",
       retainedPreviousSnapshot: false,
       snapshot: null,
       success: false,
@@ -43,17 +50,17 @@ test("returns a non-zero result when no cache can be retained", async () => {
   assert.equal(result.state, "failed");
   assert.equal(
     result.output,
-    "provider=podgorica-airport cityId=podgorica state=failed accepted=0 cache=unavailable cache_path=/tmp/gradom-flights-collector-failure/flights.json error=podgorica-flights-parser-failed reason=tables-unavailable",
+    "provider=montenegro-airports-flights cityId=podgorica state=failed accepted=0 cache=unavailable cache_path=/tmp/gradom-flights-collector-failure/flights.json error=airport-flights-parser-failed reason=tables-unavailable",
   );
 });
 
 test("never emits a success state when the refresh reports a cache write failure", async () => {
   const lines: string[] = [];
-  const result = await runPodgoricaFlightsCollector({
+  const result = await runAirportFlightsCollector({
     cachePath: "/tmp/gradom-flights-collector-cache-write-failure/flights.json",
     refresh: async () => ({
       acceptedFlights: 0,
-      errorCode: "podgorica-flights-cache-write-failed",
+      errorCode: "airport-flights-cache-write-failed",
       retainedPreviousSnapshot: false,
       snapshot: null,
       success: false,
@@ -65,15 +72,82 @@ test("never emits a success state when the refresh reports a cache write failure
   assert.equal(result.exitCode, 1);
   assert.equal(result.state, "failed");
   assert.deepEqual(lines, [
-    "provider=podgorica-airport cityId=podgorica state=failed accepted=0 cache=unavailable cache_path=/tmp/gradom-flights-collector-cache-write-failure/flights.json error=podgorica-flights-cache-write-failed",
+    "provider=montenegro-airports-flights cityId=podgorica state=failed accepted=0 cache=unavailable cache_path=/tmp/gradom-flights-collector-cache-write-failure/flights.json error=airport-flights-cache-write-failed",
   ]);
 });
 
-test("collects only Podgorica until another city has a verified airport code and capability", () => {
+test("collects every active city with Flights capability and an approved airport source", () => {
   const contexts = getActiveFlightsContexts();
 
   assert.deepEqual(
     contexts.map((context) => context.city.id),
-    ["podgorica"],
+    ["podgorica", "tivat"],
   );
+});
+
+test("keeps each active airport result independent when one city refresh fails", async () => {
+  const results = await runActiveFlightsCollectors({
+    runCollector: async (context) => ({
+      cityId: context.city.id,
+      exitCode: context.city.id === "tivat" ? 1 : 0,
+      output: "",
+      refresh: null,
+      state: context.city.id === "tivat" ? "failed" : "success",
+    }),
+  });
+
+  assert.deepEqual(
+    results.map(({ cityId, state }) => ({ cityId, state })),
+    [
+      { cityId: "podgorica", state: "success" },
+      { cityId: "tivat", state: "failed" },
+    ],
+  );
+});
+
+test("uses distinct city locks for concurrent Podgorica and Tivat refreshes", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "airport-flights-locks-"));
+  let releasePodgorica: (() => void) | undefined;
+  let startPodgorica: (() => void) | undefined;
+  const podgoricaStarted = new Promise<void>((resolve) => {
+    startPodgorica = resolve;
+  });
+  const podgoricaRefresh = new Promise<void>((resolve) => {
+    releasePodgorica = resolve;
+  });
+
+  const podgorica = runAirportFlightsCollector({
+    cachePath: join(directory, "podgorica-flights.json"),
+    refresh: async () => {
+      startPodgorica?.();
+      await podgoricaRefresh;
+      return {
+        acceptedFlights: 1,
+        retainedPreviousSnapshot: false,
+        snapshot: null,
+        success: true,
+        warnings: [],
+      };
+    },
+    writeOutput: () => undefined,
+  });
+  await podgoricaStarted;
+
+  const tivat = await runAirportFlightsCollector({
+    cachePath: join(directory, "tivat-flights.json"),
+    cityId: "tivat",
+    refresh: async () => ({
+      acceptedFlights: 1,
+      retainedPreviousSnapshot: false,
+      snapshot: null,
+      success: true,
+      warnings: [],
+    }),
+    writeOutput: () => undefined,
+  });
+  releasePodgorica?.();
+  const completedPodgorica = await podgorica;
+
+  assert.equal(tivat.state, "success");
+  assert.equal(completedPodgorica.state, "success");
 });

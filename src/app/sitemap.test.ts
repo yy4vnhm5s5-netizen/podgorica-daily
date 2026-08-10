@@ -81,7 +81,7 @@ test("publishes only canonical indexable public routes", async () => {
   // is Podgorica-only — it must not get a /filmovi sitemap entry that can only ever 404 or show
   // "no movies". See isCityCinemaRouteAvailable in city-routing.ts.
   assert.equal(urls.includes("/tivat/filmovi"), false);
-  assert.equal(urls.includes("/tivat/letovi"), false);
+  assert.equal(urls.filter((path) => path === "/tivat/letovi").length, 1);
 });
 
 test("adds only capability-supported beach detail URLs from local history snapshots", async () => {

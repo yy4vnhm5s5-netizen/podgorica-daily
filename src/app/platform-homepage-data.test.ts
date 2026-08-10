@@ -65,7 +65,7 @@ test("derives generic city cards from every active registry city", () => {
   assert.ok(tivat);
   assert.deepEqual(
     tivat.shortcuts.map((shortcut) => shortcut.label),
-    ["Događaji", "Izlasci", "Plaže", "Struja"],
+    ["Događaji", "Izlasci", "Letovi", "Plaže", "Struja"],
   );
   assert.deepEqual(
     tivat.highlights.map((highlight) => highlight.key),

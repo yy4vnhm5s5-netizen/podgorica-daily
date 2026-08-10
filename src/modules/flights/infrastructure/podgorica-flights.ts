@@ -15,22 +15,16 @@ import {
   type Flight,
   type FlightDirection,
 } from "../domain/flight.ts";
+import {
+  airportFlightsSources,
+  createAirportFlightsUrl,
+  getAirportFlightsSource,
+  getAirportFlightsSourceBySelector,
+  isFlightsSupportedCityId,
+  montenegroAirportsFeedUrl,
+  type FlightsSupportedCityId,
+} from "./airport-flights-config.ts";
 
-const montenegroAirportsBaseUrl = "https://montenegroairports.com/aerodromixs/cache-flights.php";
-
-// Airports of Montenegro serves every airport's flight feed from this one endpoint, selected by
-// the `airport` query parameter (Podgorica is "pg"). Tivat Airport is part of the same official
-// system (montenegroairports.com/aerodrom-tivat/), but its selector code does not appear anywhere
-// in this repository and has not been verified against the live endpoint — it must not be
-// guessed. Add a `tivat: "<verified-code>"` entry here once confirmed, and only then add
-// "flights" to Tivat's capabilities in src/shared/config/cities.ts.
-const montenegroAirportsCodes = {
-  podgorica: "pg",
-} as const;
-
-type FlightsSupportedCityId = keyof typeof montenegroAirportsCodes;
-
-const podgoricaFlightsUrl = buildMontenegroAirportsUrl("podgorica");
 const defaultPodgoricaFlightsCachePath = env.PODGORICA_FLIGHTS_CACHE_PATH;
 const maximumResponseLength = 2_000_000;
 const maximumDiagnosticBodyPreviewLength = 200;
@@ -58,22 +52,13 @@ function defaultSleep(delayMs: number) {
   });
 }
 
-function buildMontenegroAirportsUrl(cityId: FlightsSupportedCityId) {
-  return `${montenegroAirportsBaseUrl}?airport=${montenegroAirportsCodes[cityId]}`;
-}
-
-function isFlightsSupportedCityId(cityId: string): cityId is FlightsSupportedCityId {
-  return Object.hasOwn(montenegroAirportsCodes, cityId);
-}
-
-// Mirrors the CEDIS (getCedisCachePath) and MonteGigs (getGoingOutCachePath) derived-sibling-path
-// convention: Podgorica keeps the existing configured cache path for backward compatibility;
-// every other supported airport gets a sibling file derived from the same directory, so no new
-// per-city environment variable is needed.
+// Podgorica keeps its legacy configured cache path for production compatibility. Every additional
+// approved airport gets a city-named sibling, so each airport owns a separate atomic snapshot
+// without needing another environment variable.
 function getFlightsCachePath(cityId: FlightsSupportedCityId) {
   return cityId === "podgorica"
     ? defaultPodgoricaFlightsCachePath
-    : join(dirname(defaultPodgoricaFlightsCachePath), `podgorica-flights-${cityId}.json`);
+    : join(dirname(defaultPodgoricaFlightsCachePath), `${cityId}-flights.json`);
 }
 
 const rawFlightSchema = z
@@ -92,6 +77,21 @@ const rawFlightsPayloadSchema = z
     value: z.array(rawFlightSchema),
   })
   .passthrough();
+
+const rawTivatFlightSchema = z
+  .object({
+    BrojLeta: z.string().nullable().optional(),
+    Datum: z.string().nullable().optional(),
+    Grad: z.string().nullable().optional(),
+    Kompanija: z.string().nullable().optional(),
+    KompanijaNaziv: z.string().nullable().optional(),
+    Planirano: z.string().nullable().optional(),
+    StatusMN: z.string().nullable().optional(),
+    TipLeta: z.string().nullable().optional(),
+  })
+  .passthrough();
+
+const rawTivatFlightsPayloadSchema = z.array(rawTivatFlightSchema);
 
 type FlightCacheState = "fresh" | "stale" | "unavailable";
 
@@ -167,11 +167,11 @@ type FetchImplementation = (
 
 class PodgoricaFlightsFetchError extends Error {
   readonly code:
-    | "podgorica-flights-host-rejected"
-    | "podgorica-flights-invalid-content-type"
-    | "podgorica-flights-request-failed"
-    | "podgorica-flights-response-too-large"
-    | "podgorica-flights-timeout";
+    | "airport-flights-host-rejected"
+    | "airport-flights-invalid-content-type"
+    | "airport-flights-request-failed"
+    | "airport-flights-response-too-large"
+    | "airport-flights-timeout";
   readonly elapsedMs?: number;
   readonly attemptCount?: number;
   readonly failureCategory: PodgoricaFlightsRequestFailureCategory;
@@ -184,11 +184,11 @@ class PodgoricaFlightsFetchError extends Error {
 
   constructor(
     code:
-      | "podgorica-flights-host-rejected"
-      | "podgorica-flights-invalid-content-type"
-      | "podgorica-flights-request-failed"
-      | "podgorica-flights-response-too-large"
-      | "podgorica-flights-timeout",
+      | "airport-flights-host-rejected"
+      | "airport-flights-invalid-content-type"
+      | "airport-flights-request-failed"
+      | "airport-flights-response-too-large"
+      | "airport-flights-timeout",
     message: string,
     {
       attemptCount,
@@ -282,8 +282,8 @@ function createPodgoricaFlightsHttpClient({
           if (!response.ok) {
             const responseMetadata = await getFailureResponseMetadata(response);
             latestError = new PodgoricaFlightsFetchError(
-              "podgorica-flights-request-failed",
-              `Aerodrom Podgorica returned HTTP ${response.status}.`,
+              "airport-flights-request-failed",
+              `Airport flight feed returned HTTP ${response.status}.`,
               {
                 attemptCount: attempt + 1,
                 elapsedMs: Date.now() - requestStartedAt,
@@ -308,8 +308,8 @@ function createPodgoricaFlightsHttpClient({
           const contentType = response.headers?.get("content-type") ?? null;
           if (!isJsonLikeContentType(contentType)) {
             throw new PodgoricaFlightsFetchError(
-              "podgorica-flights-invalid-content-type",
-              "Aerodrom Podgorica did not return the public flight-feed format.",
+              "airport-flights-invalid-content-type",
+              "Airport flight feed did not return the expected public format.",
               {
                 attemptCount: attempt + 1,
                 finalHostname,
@@ -326,8 +326,8 @@ function createPodgoricaFlightsHttpClient({
           const body = await response.text();
           if (!body.trim()) {
             throw new PodgoricaFlightsFetchError(
-              "podgorica-flights-request-failed",
-              "Aerodrom Podgorica returned an empty flight feed.",
+              "airport-flights-request-failed",
+              "Airport flight feed returned an empty response.",
               {
                 attemptCount: attempt + 1,
                 finalHostname,
@@ -342,8 +342,8 @@ function createPodgoricaFlightsHttpClient({
           }
           if (body.length > maximumResponseLength) {
             throw new PodgoricaFlightsFetchError(
-              "podgorica-flights-response-too-large",
-              "Aerodrom Podgorica response exceeded the allowed size.",
+              "airport-flights-response-too-large",
+              "Airport flight-feed response exceeded the allowed size.",
               {
                 attemptCount: attempt + 1,
                 finalHostname,
@@ -369,20 +369,18 @@ function createPodgoricaFlightsHttpClient({
           if (error instanceof PodgoricaFlightsFetchError) {
             latestError = withRequestElapsedTime(error, Date.now() - requestStartedAt);
             if (
-              error.code === "podgorica-flights-host-rejected" ||
-              error.code === "podgorica-flights-invalid-content-type" ||
-              error.code === "podgorica-flights-response-too-large"
+              error.code === "airport-flights-host-rejected" ||
+              error.code === "airport-flights-invalid-content-type" ||
+              error.code === "airport-flights-response-too-large"
             ) {
               break;
             }
           } else {
             latestError = new PodgoricaFlightsFetchError(
+              isTimeoutError(error) ? "airport-flights-timeout" : "airport-flights-request-failed",
               isTimeoutError(error)
-                ? "podgorica-flights-timeout"
-                : "podgorica-flights-request-failed",
-              isTimeoutError(error)
-                ? "Aerodrom Podgorica request timed out."
-                : "Aerodrom Podgorica request failed.",
+                ? "Airport flight-feed request timed out."
+                : "Airport flight-feed request failed.",
               {
                 attemptCount: attempt + 1,
                 elapsedMs: Date.now() - requestStartedAt,
@@ -409,7 +407,7 @@ function createPodgoricaFlightsHttpClient({
       throw (
         latestError ??
         new PodgoricaFlightsFetchError(
-          "podgorica-flights-request-failed",
+          "airport-flights-request-failed",
           "Flight-feed request failed.",
           {
             elapsedMs: Date.now() - requestStartedAt,
@@ -482,6 +480,73 @@ function parsePodgoricaFlights(payload: string): PodgoricaFlightsParseResult {
   };
 }
 
+function parseTivatFlights(payload: string): PodgoricaFlightsParseResult {
+  const parsedJson = parseJson(payload);
+  if (!parsedJson.success) return parserFailure("tivat-flights-json-invalid");
+
+  const parsedPayload = rawTivatFlightsPayloadSchema.safeParse(parsedJson.value);
+  if (!parsedPayload.success) return parserFailure("tivat-flights-json-array-missing");
+
+  const flights: Flight[] = [];
+  const warnings = new Set<string>();
+  let rejected = 0;
+
+  for (const record of parsedPayload.data) {
+    const direction = getTivatFlightDirection(record.TipLeta);
+    const scheduled = getTivatAirportLocalDateTime(record.Datum, record.Planirano);
+    if (!direction) {
+      rejected += 1;
+      warnings.add("tivat-flights-record-direction-missing");
+      continue;
+    }
+    if (!scheduled) {
+      rejected += 1;
+      warnings.add("tivat-flights-record-scheduled-time-invalid");
+      continue;
+    }
+
+    const flightNumber = getTivatFlightNumber(record.Kompanija, record.BrojLeta);
+    const flight = normalizeFlight({
+      ...(record.KompanijaNaziv ? { airline: record.KompanijaNaziv } : {}),
+      direction,
+      ...(flightNumber ? { flightNumber } : {}),
+      location: record.Grad ?? "",
+      scheduledDate: scheduled.date,
+      scheduledTime: scheduled.time,
+      ...(record.StatusMN ? { status: record.StatusMN } : {}),
+    });
+    if (flight) flights.push(flight);
+    else {
+      rejected += 1;
+      warnings.add("tivat-flights-record-location-missing");
+    }
+  }
+
+  if (parsedPayload.data.length > 0 && flights.length === 0) {
+    return {
+      flights: [],
+      recognized: false,
+      records: parsedPayload.data.length,
+      rejected,
+      warnings: [...warnings, "tivat-flights-no-valid-records"],
+    };
+  }
+
+  return {
+    flights: sortAndDeduplicateFlights(flights),
+    recognized: true,
+    records: parsedPayload.data.length,
+    rejected,
+    warnings: [...warnings],
+  };
+}
+
+function parseAirportFlights(cityId: FlightsSupportedCityId, payload: string) {
+  return getAirportFlightsSource(cityId).parserKind === "tivat"
+    ? parseTivatFlights(payload)
+    : parsePodgoricaFlights(payload);
+}
+
 // Error codes retainPrevious() can receive that are not backed by a PodgoricaFlightsFetchError
 // instance — parsePodgoricaFlights rejects structurally valid-but-unusable upstream content
 // (an unrecognized payload shape, or a well-formed-but-empty one) before any
@@ -489,21 +554,21 @@ function parsePodgoricaFlights(payload: string): PodgoricaFlightsParseResult {
 // exception are pipeline faults, not upstream feed behavior at all. Named here (not inline
 // string literals) so the classification helper below and the code that actually produces them
 // cannot silently drift apart.
-const podgoricaFlightsParserFailedErrorCode = "podgorica-flights-parser-failed";
-const podgoricaFlightsEmptyResponseErrorCode = "podgorica-flights-empty-response";
-const podgoricaFlightsCacheWriteFailedErrorCode = "podgorica-flights-cache-write-failed";
-const podgoricaFlightsRefreshFailedErrorCode = "podgorica-flights-refresh-failed";
+const podgoricaFlightsParserFailedErrorCode = "airport-flights-parser-failed";
+const podgoricaFlightsEmptyResponseErrorCode = "airport-flights-empty-response";
+const podgoricaFlightsCacheWriteFailedErrorCode = "airport-flights-cache-write-failed";
+const podgoricaFlightsRefreshFailedErrorCode = "airport-flights-refresh-failed";
 
 // One conscious true/false decision per PodgoricaFlightsFetchError code, not a bare string list:
 // Record<PodgoricaFlightsFetchError["code"], boolean> forces this object to have a key for every
 // member of that closed union, so adding a new FetchError code without updating this file is a
 // compile error rather than a silent classification gap.
 const podgoricaFlightsFetchErrorIsUpstream: Record<PodgoricaFlightsFetchError["code"], boolean> = {
-  "podgorica-flights-host-rejected": true,
-  "podgorica-flights-invalid-content-type": true,
-  "podgorica-flights-request-failed": true,
-  "podgorica-flights-response-too-large": true,
-  "podgorica-flights-timeout": true,
+  "airport-flights-host-rejected": true,
+  "airport-flights-invalid-content-type": true,
+  "airport-flights-request-failed": true,
+  "airport-flights-response-too-large": true,
+  "airport-flights-timeout": true,
 };
 
 // Whether a failed refreshPodgoricaFlights() result reflects the upstream feed's own behavior
@@ -545,7 +610,7 @@ async function refreshPodgoricaFlights({
 
   try {
     const response = await httpClient.get(requestUrl);
-    const parsed = parsePodgoricaFlights(response.body);
+    const parsed = parseAirportFlights(cityId, response.body);
     if (!parsed.recognized) {
       emitPodgoricaFlightsFailureDiagnostic({
         attemptCount: response.attemptCount ?? 1,
@@ -659,7 +724,7 @@ async function getCachedPodgoricaFlights(
 }
 
 function createPodgoricaFlightsUrl(cityId: FlightsSupportedCityId = "podgorica") {
-  return buildMontenegroAirportsUrl(cityId);
+  return createAirportFlightsUrl(cityId);
 }
 
 function assertPodgoricaFlightsUrl(value: string) {
@@ -671,16 +736,14 @@ function assertPodgoricaFlightsUrl(value: string) {
       !["montenegroairports.com", "www.montenegroairports.com"].includes(url.hostname) ||
       url.pathname !== "/aerodromixs/cache-flights.php" ||
       !airportCode ||
-      !Object.values(montenegroAirportsCodes).includes(
-        airportCode as (typeof montenegroAirportsCodes)[FlightsSupportedCityId],
-      )
+      !getAirportFlightsSourceBySelector(airportCode)
     ) {
       throw new Error("unapproved host or path");
     }
   } catch {
     throw new PodgoricaFlightsFetchError(
-      "podgorica-flights-host-rejected",
-      "Podgorica Airport flight-feed URL is not allowed.",
+      "airport-flights-host-rejected",
+      "Airport flight-feed URL is not allowed.",
     );
   }
 }
@@ -714,8 +777,8 @@ function toRequestFailure(
   }
 
   return new PodgoricaFlightsFetchError(
-    "podgorica-flights-request-failed",
-    "Podgorica Airport request URL is not allowed.",
+    "airport-flights-request-failed",
+    "Airport flight-feed request URL is not allowed.",
     metadata,
   );
 }
@@ -783,11 +846,63 @@ function getFlightDirection(value: string | null | undefined): FlightDirection |
   return undefined;
 }
 
+function getTivatFlightDirection(value: string | null | undefined): FlightDirection | undefined {
+  const normalized = value?.trim().toLocaleUpperCase("en");
+  if (normalized === "I") return "arrival";
+  if (normalized === "O") return "departure";
+  return undefined;
+}
+
 function getAirportLocalDateTime(value: string | null | undefined) {
   const match = value?.trim().match(/^(\d{4}-\d{2}-\d{2})[T\s](\d{1,2}:\d{2})/);
   if (!match) return undefined;
 
   return { date: match[1], time: normalizeTime(match[2]) };
+}
+
+function getTivatAirportLocalDateTime(
+  dateValue: string | null | undefined,
+  timeValue: string | null | undefined,
+) {
+  const dateMatch = dateValue?.trim().match(/^(\d{2})-(\d{2})-(\d{4})$/);
+  const timeMatch = timeValue?.trim().match(/^(\d{2})(\d{2})$/);
+  if (!dateMatch || !timeMatch) return undefined;
+
+  const [, dayText, monthText, yearText] = dateMatch;
+  const [, hourText, minuteText] = timeMatch;
+  const day = Number(dayText);
+  const month = Number(monthText);
+  const year = Number(yearText);
+  const hour = Number(hourText);
+  const minute = Number(minuteText);
+  const candidate = new Date(Date.UTC(year, month - 1, day));
+  if (
+    candidate.getUTCFullYear() !== year ||
+    candidate.getUTCMonth() !== month - 1 ||
+    candidate.getUTCDate() !== day ||
+    hour > 23 ||
+    minute > 59
+  ) {
+    return undefined;
+  }
+
+  return {
+    date: `${yearText}-${monthText}-${dayText}`,
+    time: `${hourText}:${minuteText}`,
+  };
+}
+
+function getTivatFlightNumber(
+  carrier: string | null | undefined,
+  number: string | null | undefined,
+) {
+  const normalizedCarrier = carrier?.trim();
+  const normalizedNumber = number?.trim();
+  if (!normalizedCarrier) return normalizedNumber;
+  if (!normalizedNumber) return normalizedCarrier;
+  return normalizedNumber.startsWith(normalizedCarrier)
+    ? normalizedNumber
+    : `${normalizedCarrier} ${normalizedNumber}`;
 }
 
 function normalizeTime(value: string) {
@@ -896,14 +1011,14 @@ function emitPodgoricaFlightsFailureDiagnostic({
   diagnostic({
     totalAttemptCount: attemptCount,
     errorCode,
-    event: "podgorica-flights-request-failed",
+    event: "airport-flights-request-failed",
     failureCategory,
     failureType: getFailureType(failureCategory),
     finalState: "failed",
     ...(elapsedMs !== undefined ? { elapsedMs } : {}),
     ...(finalHostname ? { finalHostname } : {}),
     ...(httpStatus !== undefined ? { httpStatus } : {}),
-    provider: "podgorica-airport",
+    provider: "montenegro-airports-flights",
     ...getRetainedSnapshotDiagnostic(previous, diagnosticNow),
     retryCountPerformed: Math.max(0, attemptCount - 1),
     ...(responseMetadata.responseBodyPreview
@@ -954,11 +1069,11 @@ async function emitRetryDiagnosticAndWait({
     attemptNumber: attempt + 1,
     delayMs,
     ...(error?.code ? { errorCode: error.code } : {}),
-    event: "podgorica-flights-retry-scheduled",
+    event: "airport-flights-retry-scheduled",
     ...(error?.failureCategory ? { failureCategory: error.failureCategory } : {}),
     ...(error?.httpStatus !== undefined ? { httpStatus: error.httpStatus } : {}),
     nextAttemptNumber: attempt + 2,
-    provider: "podgorica-airport",
+    provider: "montenegro-airports-flights",
     totalAttempts: retries + 1,
   });
   await sleep(delayMs);
@@ -1005,21 +1120,49 @@ function getRetainedSnapshotDiagnostic(previous: PodgoricaFlightsCacheSnapshot |
   };
 }
 
+const assertAirportFlightsUrl = assertPodgoricaFlightsUrl;
+const createAirportFlightsHttpClient = createPodgoricaFlightsHttpClient;
+const emitAirportFlightsDiagnostic = emitPodgoricaFlightsDiagnostic;
+const getCachedAirportFlights = getCachedPodgoricaFlights;
+const isAirportFlightsUpstreamErrorCode = isPodgoricaFlightsUpstreamErrorCode;
+const refreshAirportFlights = refreshPodgoricaFlights;
+
+type AirportFlightsCacheSnapshot = PodgoricaFlightsCacheSnapshot;
+type AirportFlightsCacheResult = PodgoricaFlightsCacheResult;
+type AirportFlightsDiagnosticEmitter = PodgoricaFlightsDiagnosticEmitter;
+type AirportFlightsHttpClient = PodgoricaFlightsHttpClient;
+type AirportFlightsRefreshResult = PodgoricaFlightsRefreshResult;
+
 export {
+  airportFlightsSources,
+  assertAirportFlightsUrl,
   assertPodgoricaFlightsUrl,
+  createAirportFlightsHttpClient,
+  createAirportFlightsUrl,
   createPodgoricaFlightsHttpClient,
   createPodgoricaFlightsUrl,
   defaultPodgoricaFlightsCachePath,
+  emitAirportFlightsDiagnostic,
   emitPodgoricaFlightsDiagnostic,
+  getAirportFlightsSource,
+  getCachedAirportFlights,
   getCachedPodgoricaFlights,
   getFlightsCachePath,
+  isAirportFlightsUpstreamErrorCode,
   isFlightsSupportedCityId,
   isPodgoricaFlightsUpstreamErrorCode,
-  montenegroAirportsCodes,
+  montenegroAirportsFeedUrl,
+  parseAirportFlights,
   parsePodgoricaFlights,
-  podgoricaFlightsUrl,
+  parseTivatFlights,
+  refreshAirportFlights,
   refreshPodgoricaFlights,
   PodgoricaFlightsFetchError,
+  type AirportFlightsCacheResult,
+  type AirportFlightsCacheSnapshot,
+  type AirportFlightsDiagnosticEmitter,
+  type AirportFlightsHttpClient,
+  type AirportFlightsRefreshResult,
   type FlightCacheState,
   type FlightsSupportedCityId,
   type PodgoricaFlightsCacheSnapshot,

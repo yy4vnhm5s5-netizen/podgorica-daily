@@ -33,8 +33,8 @@ test("an audited upstream-unavailable outcome (e.g. Flights, after its own error
   const post = createRefreshPostHandler({
     refresh: async () => ({
       acceptedCount: 0,
-      errorCode: "podgorica-flights-request-failed",
-      provider: "podgorica-flights",
+      errorCode: "airport-flights-request-failed",
+      provider: "montenegro-airports-flights",
       retainedPreviousSnapshot: false,
       state: "upstream-unavailable" as const,
       warnings: [],

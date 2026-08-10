@@ -23,7 +23,7 @@ test("dashboard loader avoids unsupported city queries before cache access", asy
       calls.goingOut += 1;
       return { events: [], state: "unavailable" };
     },
-    async getPodgoricaFlights() {
+    async getAirportFlights() {
       calls.flights += 1;
       return { flights: [], state: "unavailable" };
     },
@@ -57,7 +57,7 @@ test("dashboard loader calls every capability-supported query for Podgorica", as
       calls.goingOut += 1;
       return { events: [], state: "unavailable" };
     },
-    async getPodgoricaFlights() {
+    async getAirportFlights() {
       calls.flights += 1;
       return { flights: [], state: "unavailable" };
     },
@@ -71,6 +71,35 @@ test("dashboard loader calls every capability-supported query for Podgorica", as
   });
 
   assert.deepEqual(calls, { events: 1, flights: 1, goingOut: 1, railway: 1, weather: 1 });
+});
+
+test("dashboard loader includes the shared Flights query for Tivat", async () => {
+  const context = createCityContext("tivat");
+  let flightsCalls = 0;
+
+  await loadCityDashboardData(context, {
+    async getAirportFlights() {
+      flightsCalls += 1;
+      return { flights: [], state: "unavailable" };
+    },
+    async getCityEvents() {
+      return getEmptyCityEventsReadModel();
+    },
+    async getCurrentWeather() {
+      return { status: "empty" };
+    },
+    async getGoingOutEvents() {
+      return { events: [], state: "unavailable" };
+    },
+    async getRailwayDepartures() {
+      return { departures: [], state: "unavailable" };
+    },
+    isFeatureEnabled() {
+      return true;
+    },
+  });
+
+  assert.equal(flightsCalls, 1);
 });
 
 test("dashboard loader can skip transport snapshots for platform city cards without skipping other summaries", async () => {
@@ -103,7 +132,7 @@ test("dashboard loader can skip transport snapshots for platform city cards with
         calls.goingOut += 1;
         return { events: [], state: "unavailable" };
       },
-      async getPodgoricaFlights() {
+      async getAirportFlights() {
         calls.flights += 1;
         return { flights: [], state: "unavailable" };
       },
@@ -149,7 +178,7 @@ test("dashboard loader calls sea water quality for Kotor but not unsupported pro
       calls.goingOut += 1;
       return { events: [], state: "unavailable" };
     },
-    async getPodgoricaFlights() {
+    async getAirportFlights() {
       calls.flights += 1;
       return { flights: [], state: "unavailable" };
     },
@@ -193,7 +222,7 @@ test("dashboard loader queries Bar's approved weather, Going Out, and sea-water 
       calls.goingOut += 1;
       return { events: [], state: "unavailable" };
     },
-    async getPodgoricaFlights() {
+    async getAirportFlights() {
       calls.flights += 1;
       return { flights: [], state: "unavailable" };
     },
@@ -230,7 +259,7 @@ test("dashboard loader keeps other city data available when one highlight source
     async getGoingOutEvents() {
       return { events: [], state: "unavailable" };
     },
-    async getPodgoricaFlights() {
+    async getAirportFlights() {
       return { flights: [], state: "unavailable" };
     },
     async getRailwayDepartures() {

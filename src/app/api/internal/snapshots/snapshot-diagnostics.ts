@@ -1,5 +1,5 @@
 import type { EventCacheSnapshot } from "@/modules/events/infrastructure/events-cache";
-import type { PodgoricaFlightsCacheSnapshot } from "@/modules/flights/infrastructure/podgorica-flights";
+import type { AirportFlightsCacheSnapshot } from "@/modules/flights/infrastructure/podgorica-flights";
 import type { ZpcgRailwayCacheSnapshot } from "@/modules/transport/infrastructure/zpcg-railway";
 import { selectUpcomingFlights } from "@/modules/flights/domain/flight";
 import { selectHomepageCinemaProgramme } from "@/modules/events/presentation/cineplexx-programme-ui-model";
@@ -32,8 +32,8 @@ async function getFileBackedSnapshotDiagnostics(
 ): Promise<FileBackedSnapshotDiagnostics> {
   const [flights, railway, cineplexx] = await Promise.all([
     createFileSnapshotDiagnostic<
-      PodgoricaFlightsCacheSnapshot,
-      PodgoricaFlightsCacheSnapshot["flights"][number]
+      AirportFlightsCacheSnapshot,
+      AirportFlightsCacheSnapshot["flights"][number]
     >({
       cachePath: cachePaths.flights,
       getDisplayableRecordCount: (flights) =>

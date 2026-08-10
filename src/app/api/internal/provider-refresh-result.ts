@@ -1,6 +1,6 @@
 import type { CityAlertCollectorResult } from "@/modules/city-alerts/infrastructure/city-alerts-collector";
 import type { EventRefreshSummary } from "@/modules/events/infrastructure/events-refresh-runner";
-import type { PodgoricaFlightsCollectorResult } from "@/modules/flights/infrastructure/collect-podgorica-flights";
+import type { AirportFlightsCollectorResult } from "@/modules/flights/infrastructure/collect-podgorica-flights";
 import type { GoingOutCollectorResult } from "@/modules/going-out/infrastructure/collect-montegigs-going-out";
 import type { GoingOutDetailCoverage } from "@/modules/going-out/infrastructure/montegigs-going-out";
 import type { BudvaSeaWaterQualityCollectorResult } from "@/modules/sea-water-quality/infrastructure/collect-budva-sea-water-quality";
@@ -10,7 +10,7 @@ import type { VikUlcinjCollectorResult } from "@/modules/city-alerts/infrastruct
 import type { VodovodKotorCollectorResult } from "@/modules/city-alerts/infrastructure/vodovod-kotor";
 import type { WeatherCollectorResult } from "@/modules/weather/infrastructure/collect-weather";
 import type { RefreshEndpointState } from "./refresh-post-handler";
-import { isPodgoricaFlightsUpstreamErrorCode } from "@/modules/flights/infrastructure/podgorica-flights";
+import { isAirportFlightsUpstreamErrorCode } from "@/modules/flights/infrastructure/podgorica-flights";
 
 interface ProviderRefreshEndpointResult {
   acceptedCount: number;
@@ -35,7 +35,7 @@ interface MultiCityAlertRefreshEndpointResult {
 
 interface MultiCityFlightsRefreshEndpointResult {
   cities: readonly ProviderRefreshEndpointResult[];
-  provider: "podgorica-flights";
+  provider: "montenegro-airports-flights";
   state: RefreshEndpointState;
 }
 
@@ -144,10 +144,10 @@ function toMultiCityAlertRefreshEndpointResult(
 }
 
 function toFlightsRefreshEndpointResult(
-  result: PodgoricaFlightsCollectorResult,
+  result: AirportFlightsCollectorResult,
 ): ProviderRefreshEndpointResult {
   const endpointResult = toSingleProviderRefreshEndpointResult(
-    "podgorica-flights",
+    "montenegro-airports-flights",
     result,
     (refresh) => refresh.acceptedFlights,
     result.cityId,
@@ -161,7 +161,7 @@ function toFlightsRefreshEndpointResult(
   // The upstream-vs-operational classification is owned by podgorica-flights.ts (the module that
   // actually produces these error codes), not duplicated here as a separate list that could drift
   // out of sync with it.
-  if (!isPodgoricaFlightsUpstreamErrorCode(endpointResult.errorCode)) {
+  if (!isAirportFlightsUpstreamErrorCode(endpointResult.errorCode)) {
     return { ...endpointResult, state: "operational-failure" };
   }
   if (endpointResult.state === "unavailable") {
@@ -171,13 +171,13 @@ function toFlightsRefreshEndpointResult(
 }
 
 function toMultiCityFlightsRefreshEndpointResult(
-  results: readonly PodgoricaFlightsCollectorResult[],
+  results: readonly AirportFlightsCollectorResult[],
 ): MultiCityFlightsRefreshEndpointResult {
   const cities = results.map((result) => toFlightsRefreshEndpointResult(result));
 
   return {
     cities,
-    provider: "podgorica-flights",
+    provider: "montenegro-airports-flights",
     state: aggregateMultiCityRefreshState(cities),
   };
 }

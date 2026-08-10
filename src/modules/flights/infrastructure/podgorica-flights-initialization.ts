@@ -1,28 +1,28 @@
 import { ensureCacheDirectory, readJsonCache } from "../../../shared/lib/cache.ts";
 
 import {
-  runPodgoricaFlightsCollector,
-  type PodgoricaFlightsCollectorResult,
+  runAirportFlightsCollector,
+  type AirportFlightsCollectorResult,
 } from "./collect-podgorica-flights.ts";
-import type { FlightsSupportedCityId, PodgoricaFlightsCacheSnapshot } from "./podgorica-flights.ts";
+import type { FlightsSupportedCityId, AirportFlightsCacheSnapshot } from "./podgorica-flights.ts";
 
-interface InitializePodgoricaFlightsDependencies {
+interface InitializeAirportFlightsDependencies {
   cachePath: string;
   cityId?: FlightsSupportedCityId;
   ensureDirectory?: (cachePath: string) => Promise<void>;
   log?: (message: string) => void;
-  readCache?: (cachePath: string) => Promise<PodgoricaFlightsCacheSnapshot | null>;
-  refresh?: () => Promise<PodgoricaFlightsCollectorResult>;
+  readCache?: (cachePath: string) => Promise<AirportFlightsCacheSnapshot | null>;
+  refresh?: () => Promise<AirportFlightsCollectorResult>;
 }
 
-async function initializePodgoricaFlights({
+async function initializeAirportFlights({
   cachePath,
   cityId = "podgorica",
   ensureDirectory = ensureCacheDirectory,
   log = console.info,
-  readCache = (path) => readJsonCache<PodgoricaFlightsCacheSnapshot>(path),
-  refresh = () => runPodgoricaFlightsCollector({ cachePath, cityId }),
-}: InitializePodgoricaFlightsDependencies): Promise<"cache-found" | "failed" | "refreshed"> {
+  readCache = (path) => readJsonCache<AirportFlightsCacheSnapshot>(path),
+  refresh = () => runAirportFlightsCollector({ cachePath, cityId }),
+}: InitializeAirportFlightsDependencies): Promise<"cache-found" | "failed" | "refreshed"> {
   try {
     await ensureDirectory(cachePath);
     const snapshot = await readCache(cachePath);
@@ -51,4 +51,4 @@ async function initializePodgoricaFlights({
   }
 }
 
-export { initializePodgoricaFlights, type InitializePodgoricaFlightsDependencies };
+export { initializeAirportFlights, type InitializeAirportFlightsDependencies };

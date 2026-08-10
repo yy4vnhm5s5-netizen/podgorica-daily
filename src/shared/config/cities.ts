@@ -82,13 +82,9 @@ const cityRegistry: Record<string, City> = {
     slug: "podgorica",
     timezone: "Europe/Podgorica",
   },
-  // Flights capability intentionally withheld: Airports of Montenegro's `airport=` selector code
-  // for Tivat is not yet verified against a live/repository-confirmed source (see
-  // podgorica-flights.ts's montenegroAirportsCodes map). The multi-airport architecture is in
-  // place; only the capability flag is pending that verification.
   tivat: {
     accusativeName: "Tivat",
-    capabilities: ["electricity", "events", "goingOut", "seaWaterQuality", "weather"],
+    capabilities: ["electricity", "events", "flights", "goingOut", "seaWaterQuality", "weather"],
     country: "Montenegro",
     description: "Struja, događaji, izlasci, plaže i lokalne informacije za Tivat.",
     genitiveName: "Tivta",

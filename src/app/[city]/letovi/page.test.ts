@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import { isFlightsSupportedCityId } from "@/modules/flights/infrastructure/podgorica-flights";
-import { podgoricaAirportName } from "@/modules/flights/presentation/airport-flights-page";
+import { airportFlightsSources } from "@/modules/flights/infrastructure/airport-flights-config";
 import { getCity } from "@/shared/config/cities";
 import { getCitySitemapPaths } from "@/app/city-routing";
 import { getFlightsPath } from "@/shared/config/public-routes";
@@ -15,16 +15,16 @@ const flightsCopy = async () =>
     "utf8",
   );
 
-const requirePodgorica = () => {
-  const podgorica = getCity("podgorica");
-  assert.ok(podgorica);
-  return podgorica;
+const requireCity = (cityId: "podgorica" | "tivat") => {
+  const city = getCity(cityId);
+  assert.ok(city);
+  return city;
 };
 
 test("the document title names the airport the page is about", () => {
   // Search demand reaching this page is "aerodrom podgorica" and its variants; a title describing
   // the city instead ("Letovi iz Podgorice") never contained the word at all.
-  const title = getPageTitle(`${podgoricaAirportName} — dolasci i odlasci`);
+  const title = getPageTitle(`${airportFlightsSources.podgorica.displayName} — dolasci i odlasci`);
 
   assert.match(title, /Aerodrom Podgorica/u);
   assert.match(title, /dolasci/iu);
@@ -34,21 +34,18 @@ test("the document title names the airport the page is about", () => {
   assert.ok(title.length <= 70, `title is ${title.length} characters`);
 });
 
-test("the title and the page H1 name the same airport", async () => {
-  // They are generated in different layers, so they are single-sourced from one constant.
-  assert.equal(podgoricaAirportName, "Aerodrom Podgorica");
-  assert.match(await flightsCopy(), /title: podgoricaAirportName,/u);
+test("the title and page H1 use the configured airport source", async () => {
+  const source = await flightsCopy();
+  assert.match(source, /airport\.displayName/u);
+  assert.match(source, /airport=\{airport\}/u);
+  assert.equal(airportFlightsSources.tivat.displayName, "Aerodrom Tivat");
 });
 
 test("the intro copy states both flight directions and the real source", async () => {
   const source = await flightsCopy();
-  const description = /description:\s*\n?\s*"([^"]+Aerodrom Podgorica[^"]+)"/u.exec(source)?.[1];
-  assert.ok(description, "the Montenegrin intro sentence must exist");
-
-  assert.match(description, /red letenja/iu);
-  assert.match(description, /dolasci/iu);
-  assert.match(description, /odlasci/iu);
-  assert.match(description, /Aerodroma Crne Gore/u);
+  assert.match(source, /Aktuelni red letenja za \$\{airportName\}/u);
+  assert.match(source, /dolasci i odlasci/u);
+  assert.match(source, /Aerodroma Crne Gore/u);
 });
 
 test("no copy claims data the feed does not carry", async () => {
@@ -71,7 +68,7 @@ test("no copy claims data the feed does not carry", async () => {
 });
 
 test("one canonical flights URL, with no alias or doorway route", () => {
-  const podgorica = requirePodgorica();
+  const podgorica = requireCity("podgorica");
   const paths = getCitySitemapPaths(podgorica);
 
   assert.equal(getFlightsPath(podgorica), "/podgorica/letovi");
@@ -82,10 +79,20 @@ test("one canonical flights URL, with no alias or doorway route", () => {
   }
 });
 
-test("Tivat still has no verified airport code, so it gets neither the capability nor a page", () => {
-  const tivat = getCity("tivat");
-  assert.ok(tivat);
+test("Tivat has a verified airport source, flights capability and one canonical page", () => {
+  const tivat = requireCity("tivat");
 
-  assert.equal(tivat.capabilities?.includes("flights"), false);
-  assert.equal(isFlightsSupportedCityId("tivat"), false);
+  assert.equal(tivat.capabilities?.includes("flights"), true);
+  assert.equal(isFlightsSupportedCityId("tivat"), true);
+  assert.equal(getFlightsPath(tivat), "/tivat/letovi");
+  assert.equal(getCitySitemapPaths(tivat).filter((path) => path === "/tivat/letovi").length, 1);
+});
+
+test("Tivat route metadata derives airport identity and canonical URL from shared configuration", async () => {
+  const route = await readFile(new URL("./page.tsx", import.meta.url), "utf8");
+
+  assert.match(route, /getAirportFlightsSourceForCity\(context\.city\.id\)/u);
+  assert.match(route, /getFlightsPageTitle\(airport\.displayName\)/u);
+  assert.match(route, /Red letenja za \$\{airport\.displayName\}/u);
+  assert.match(route, /canonical: getFlightsPath\(context\.city\)/u);
 });

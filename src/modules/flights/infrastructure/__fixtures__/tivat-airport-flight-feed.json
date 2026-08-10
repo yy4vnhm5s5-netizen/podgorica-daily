@@ -1,0 +1,28 @@
+[
+  {
+    "TipLeta": "O",
+    "Datum": "10-08-2026",
+    "Planirano": "0640",
+    "Grad": "Istanbul",
+    "KompanijaNaziv": "Air Montenegro",
+    "Kompanija": "4O",
+    "BrojLeta": "402",
+    "StatusMN": "Poletio"
+  },
+  {
+    "TipLeta": "I",
+    "Datum": "10-08-2026",
+    "Planirano": "1135",
+    "Grad": "Beograd",
+    "KompanijaNaziv": "Air Serbia",
+    "Kompanija": "JU",
+    "BrojLeta": "680",
+    "StatusMN": "Sletio"
+  },
+  {
+    "TipLeta": "O",
+    "Datum": "31-02-2026",
+    "Planirano": "2500",
+    "Grad": "Neispravan zapis"
+  }
+]

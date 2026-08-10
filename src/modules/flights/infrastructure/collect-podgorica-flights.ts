@@ -5,39 +5,37 @@ import { createCityContext, getActiveCities, supportsCityCapability } from "@/sh
 import type { City, CityContext, CityId } from "@/shared/types/city";
 
 import {
-  createPodgoricaFlightsHttpClient,
+  createAirportFlightsHttpClient,
   getFlightsCachePath,
   isFlightsSupportedCityId,
-  refreshPodgoricaFlights,
+  refreshAirportFlights,
   type FlightsSupportedCityId,
-  type PodgoricaFlightsRefreshResult,
+  type AirportFlightsRefreshResult,
 } from "./podgorica-flights.ts";
 
-interface PodgoricaFlightsCollectorDependencies {
+interface AirportFlightsCollectorDependencies {
   cachePath?: string;
   cityId?: FlightsSupportedCityId;
-  refresh?: () => Promise<PodgoricaFlightsRefreshResult>;
+  refresh?: () => Promise<AirportFlightsRefreshResult>;
   writeOutput?: (line: string) => void;
 }
 
-interface PodgoricaFlightsCollectorResult {
+interface AirportFlightsCollectorResult {
   cityId: string;
   exitCode: 0 | 1;
   output: string;
-  refresh: PodgoricaFlightsRefreshResult | null;
+  refresh: AirportFlightsRefreshResult | null;
   state: "already-running" | "failed" | "success";
 }
 
 interface ActiveFlightsCollectorDependencies {
   cities?: readonly City[];
   createContext?: (cityId: CityId) => CityContext;
-  runCollector?: (context: CityContext) => Promise<PodgoricaFlightsCollectorResult>;
+  runCollector?: (context: CityContext) => Promise<AirportFlightsCollectorResult>;
 }
 
 // Mirrors getActiveCedisContexts: only cities that are active, declare the "flights" capability,
-// and have a verified Airports of Montenegro selector code are collected. Today that is Podgorica
-// only — Tivat's code is not yet verified, so it has no "flights" capability and is excluded here
-// automatically, the same way an unsupported CEDIS municipality is excluded there.
+// and have a configured official Airports of Montenegro selector are collected.
 function getActiveFlightsContexts(
   cities: readonly City[] = getActiveCities(),
   createContext: (cityId: CityId) => CityContext = createCityContext,
@@ -45,24 +43,26 @@ function getActiveFlightsContexts(
   return cities
     .filter(
       (city) =>
-        city.isActive && supportsCityCapability(city, "flights") && isFlightsSupportedCityId(city.id),
+        city.isActive &&
+        supportsCityCapability(city, "flights") &&
+        isFlightsSupportedCityId(city.id),
     )
     .map((city) => createContext(city.id));
 }
 
-async function runPodgoricaFlightsCollector({
+async function runAirportFlightsCollector({
   cachePath,
   cityId = "podgorica",
   refresh,
   writeOutput = console.log,
-}: PodgoricaFlightsCollectorDependencies = {}): Promise<PodgoricaFlightsCollectorResult> {
+}: AirportFlightsCollectorDependencies = {}): Promise<AirportFlightsCollectorResult> {
   const resolvedCachePath = cachePath ?? getFlightsCachePath(cityId);
   const lock = await acquireRefreshLock(dirname(resolvedCachePath), {
-    lockFileName: `.podgorica-flights-refresh-${cityId}.lock`,
+    lockFileName: `.airport-flights-refresh-${cityId}.lock`,
   });
   if (!("release" in lock)) {
     const output = [
-      "provider=podgorica-airport",
+      "provider=montenegro-airports-flights",
       `cityId=${cityId}`,
       "state=already-running",
       "accepted=0",
@@ -77,10 +77,10 @@ async function runPodgoricaFlightsCollector({
     const result = await (
       refresh ??
       (() =>
-        refreshPodgoricaFlights({
+        refreshAirportFlights({
           cachePath: resolvedCachePath,
           cityId,
-          httpClient: createPodgoricaFlightsHttpClient(),
+          httpClient: createAirportFlightsHttpClient(),
         }))
     )();
     const state = result.success ? "success" : "failed";
@@ -90,7 +90,7 @@ async function runPodgoricaFlightsCollector({
         ? "retained"
         : "unavailable";
     const output = [
-      "provider=podgorica-airport",
+      "provider=montenegro-airports-flights",
       `cityId=${cityId}`,
       `state=${state}`,
       `accepted=${result.acceptedFlights}`,
@@ -111,9 +111,9 @@ async function runActiveFlightsCollectors({
   cities,
   createContext,
   runCollector = (context) =>
-    runPodgoricaFlightsCollector({ cityId: context.city.id as FlightsSupportedCityId }),
+    runAirportFlightsCollector({ cityId: context.city.id as FlightsSupportedCityId }),
 }: ActiveFlightsCollectorDependencies = {}) {
-  const results: PodgoricaFlightsCollectorResult[] = [];
+  const results: AirportFlightsCollectorResult[] = [];
 
   for (const context of getActiveFlightsContexts(cities, createContext)) {
     results.push(await runCollector(context));
@@ -135,8 +135,8 @@ if (process.argv[1]?.endsWith("collect-podgorica-flights.ts")) {
 export {
   getActiveFlightsContexts,
   runActiveFlightsCollectors,
-  runPodgoricaFlightsCollector,
+  runAirportFlightsCollector,
   type ActiveFlightsCollectorDependencies,
-  type PodgoricaFlightsCollectorDependencies,
-  type PodgoricaFlightsCollectorResult,
+  type AirportFlightsCollectorDependencies,
+  type AirportFlightsCollectorResult,
 };

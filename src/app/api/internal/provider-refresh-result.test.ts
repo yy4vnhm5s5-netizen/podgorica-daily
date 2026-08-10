@@ -53,10 +53,10 @@ test("maps fixed-provider refresh outcomes without exposing cache paths", () => 
   const retainedFlights = toFlightsRefreshEndpointResult({
     cityId: "podgorica",
     exitCode: 1,
-    output: "provider=podgorica-airport state=failed cache=retained",
+    output: "provider=montenegro-airports-flights state=failed cache=retained",
     refresh: {
       acceptedFlights: 4,
-      errorCode: "podgorica-flights-request-failed",
+      errorCode: "airport-flights-request-failed",
       retainedPreviousSnapshot: true,
       snapshot: null,
       success: false,
@@ -285,7 +285,7 @@ test("maps a single sea water quality collector result with its city id", () => 
 
 test("classifies a cold-start Flights failure with no cache and a genuine upstream error as upstream-unavailable, not unavailable", () => {
   const result = toFlightsRefreshEndpointResult(
-    flightsResult({ errorCode: "podgorica-flights-request-failed" }),
+    flightsResult({ errorCode: "airport-flights-request-failed" }),
   );
 
   assert.equal(result.state, "upstream-unavailable");
@@ -293,7 +293,7 @@ test("classifies a cold-start Flights failure with no cache and a genuine upstre
 
 test("classifies a Flights cache-write failure as an operational failure, even with no previous snapshot to retain", () => {
   const result = toFlightsRefreshEndpointResult(
-    flightsResult({ errorCode: "podgorica-flights-cache-write-failed" }),
+    flightsResult({ errorCode: "airport-flights-cache-write-failed" }),
   );
 
   assert.equal(result.state, "operational-failure");
@@ -302,7 +302,7 @@ test("classifies a Flights cache-write failure as an operational failure, even w
 test("classifies a Flights cache-write failure as an operational failure even when a previous snapshot was retained", () => {
   const result = toFlightsRefreshEndpointResult(
     flightsResult({
-      errorCode: "podgorica-flights-cache-write-failed",
+      errorCode: "airport-flights-cache-write-failed",
       retainedPreviousSnapshot: true,
     }),
   );
@@ -312,7 +312,7 @@ test("classifies a Flights cache-write failure as an operational failure even wh
 
 test("classifies the generic Flights refresh-failed fallback (an exception that was not a PodgoricaFlightsFetchError) as an operational failure", () => {
   const result = toFlightsRefreshEndpointResult(
-    flightsResult({ errorCode: "podgorica-flights-refresh-failed" }),
+    flightsResult({ errorCode: "airport-flights-refresh-failed" }),
   );
 
   assert.equal(result.state, "operational-failure");
@@ -320,7 +320,7 @@ test("classifies the generic Flights refresh-failed fallback (an exception that 
 
 test("leaves a genuine upstream Flights failure as retained when a previous snapshot exists", () => {
   const result = toFlightsRefreshEndpointResult(
-    flightsResult({ errorCode: "podgorica-flights-timeout", retainedPreviousSnapshot: true }),
+    flightsResult({ errorCode: "airport-flights-timeout", retainedPreviousSnapshot: true }),
   );
 
   assert.equal(result.state, "retained");
@@ -328,12 +328,12 @@ test("leaves a genuine upstream Flights failure as retained when a previous snap
 
 test("aggregates a multi-city Flights refresh: any operational failure wins over upstream-unavailable or retained", () => {
   const operational = toMultiCityFlightsRefreshEndpointResult([
-    flightsResult({ cityId: "podgorica", errorCode: "podgorica-flights-cache-write-failed" }),
+    flightsResult({ cityId: "podgorica", errorCode: "airport-flights-cache-write-failed" }),
   ]);
   assert.equal(operational.state, "operational-failure");
 
   const allUpstreamUnavailable = toMultiCityFlightsRefreshEndpointResult([
-    flightsResult({ cityId: "podgorica", errorCode: "podgorica-flights-request-failed" }),
+    flightsResult({ cityId: "podgorica", errorCode: "airport-flights-request-failed" }),
   ]);
   assert.equal(allUpstreamUnavailable.state, "upstream-unavailable");
 });

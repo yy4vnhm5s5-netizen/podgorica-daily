@@ -41,9 +41,9 @@ while true; do
   hour_minute="$(date +%H:%M)"
   minute="$(date +%M)"
 
-  # Podgorica Airport: every 15 minutes.
+  # Airports of Montenegro flights: every 15 minutes for every configured active airport.
   case "$minute" in
-    00|15|30|45) run_collector "podgorica-flights" "pnpm run collect:podgorica-flights" ;;
+    00|15|30|45) run_collector "airport-flights" "pnpm run collect:airport-flights" ;;
   esac
 
   # Each exact local-time case keeps collectors staggered and independently schedulable.

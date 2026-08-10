@@ -15,13 +15,15 @@ import {
   isFlightsSupportedCityId,
   isPodgoricaFlightsUpstreamErrorCode,
   parsePodgoricaFlights,
+  parseTivatFlights,
   PodgoricaFlightsFetchError,
   refreshPodgoricaFlights,
-  type FlightsSupportedCityId,
   type PodgoricaFlightsHttpClient,
 } from "./podgorica-flights.ts";
+import { airportFlightsSources, createAirportFlightsUrl } from "./airport-flights-config.ts";
 
 const fixture = new URL("./__fixtures__/podgorica-airport-flight-feed.json", import.meta.url);
+const tivatFixture = new URL("./__fixtures__/tivat-airport-flight-feed.json", import.meta.url);
 
 test("parses the official Podgorica Airport public flight-feed format", async () => {
   const parsed = parsePodgoricaFlights(await readFile(fixture, "utf8"));
@@ -45,6 +47,86 @@ test("parses the official Podgorica Airport public flight-feed format", async ()
       ["arrival", "Istanbul", "11:40", "TK 1085", "Expected", "2026-07-22T09:40:00.000Z"],
       ["departure", "Beč", "13:05", "OS 738", "Gate Open", "2026-07-22T11:05:00.000Z"],
     ],
+  );
+});
+
+test("parses the official Tivat Airport public flight-feed format deterministically", async () => {
+  const parsed = parseTivatFlights(await readFile(tivatFixture, "utf8"));
+
+  assert.equal(parsed.recognized, true);
+  assert.equal(parsed.rejected, 1);
+  assert.deepEqual(
+    parsed.flights.map(
+      ({
+        airline,
+        direction,
+        flightNumber,
+        location,
+        scheduledAt,
+        scheduledDate,
+        scheduledTime,
+        status,
+      }) => ({
+        airline,
+        direction,
+        flightNumber,
+        location,
+        scheduledAt,
+        scheduledDate,
+        scheduledTime,
+        status,
+      }),
+    ),
+    [
+      {
+        airline: "Air Montenegro",
+        direction: "departure",
+        flightNumber: "4O 402",
+        location: "Istanbul",
+        scheduledAt: "2026-08-10T04:40:00.000Z",
+        scheduledDate: "2026-08-10",
+        scheduledTime: "06:40",
+        status: "Poletio",
+      },
+      {
+        airline: "Air Serbia",
+        direction: "arrival",
+        flightNumber: "JU 680",
+        location: "Beograd",
+        scheduledAt: "2026-08-10T09:35:00.000Z",
+        scheduledDate: "2026-08-10",
+        scheduledTime: "11:35",
+        status: "Sletio",
+      },
+    ],
+  );
+  assert.deepEqual(parsed.warnings, ["tivat-flights-record-scheduled-time-invalid"]);
+});
+
+test("keeps Podgorica and Tivat airport source configuration explicit", () => {
+  assert.deepEqual(airportFlightsSources, {
+    podgorica: {
+      cityId: "podgorica",
+      displayName: "Aerodrom Podgorica",
+      feedSelector: "pg",
+      officialPageUrl: "https://montenegroairports.com/aerodrom-podgorica/",
+      parserKind: "podgorica",
+    },
+    tivat: {
+      cityId: "tivat",
+      displayName: "Aerodrom Tivat",
+      feedSelector: "tv",
+      officialPageUrl: "https://montenegroairports.com/aerodrom-tivat/",
+      parserKind: "tivat",
+    },
+  });
+  assert.equal(
+    createAirportFlightsUrl("podgorica"),
+    "https://montenegroairports.com/aerodromixs/cache-flights.php?airport=pg",
+  );
+  assert.equal(
+    createAirportFlightsUrl("tivat"),
+    "https://montenegroairports.com/aerodromixs/cache-flights.php?airport=tv",
   );
 });
 
@@ -154,7 +236,7 @@ test("retains a non-empty previous snapshot when the response is structurally va
 
   assert.equal(result.success, false);
   assert.equal(result.retainedPreviousSnapshot, true);
-  assert.equal(result.errorCode, "podgorica-flights-empty-response");
+  assert.equal(result.errorCode, "airport-flights-empty-response");
   assert.equal(result.acceptedFlights, flights.length);
   assert.equal(result.snapshot?.flights.length, flights.length);
   assert.equal(cached.flights.length, flights.length);
@@ -193,6 +275,45 @@ test("uses the same atomically written cache for homepage and all-flights reads"
   assert.equal(cached.flights.length, 4);
   assert.equal(cached.state, "fresh");
   assert.equal(cached.lastSuccessfulRefreshAt, "2026-07-22T08:00:00.000Z");
+});
+
+test("keeps Podgorica and Tivat snapshots isolated through write, failure retention, and read", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "airport-flights-isolation-"));
+  const podgoricaCachePath = join(directory, "podgorica-flights.json");
+  const tivatCachePath = join(directory, "tivat-flights.json");
+  const now = () => new Date("2026-08-10T08:00:00.000Z");
+
+  const podgorica = await refreshPodgoricaFlights({
+    cachePath: podgoricaCachePath,
+    cityId: "podgorica",
+    httpClient: responseClient(await readFile(fixture, "utf8")),
+    now,
+  });
+  const tivat = await refreshPodgoricaFlights({
+    cachePath: tivatCachePath,
+    cityId: "tivat",
+    httpClient: responseClient(await readFile(tivatFixture, "utf8")),
+    now,
+  });
+  const retainedTivat = await refreshPodgoricaFlights({
+    cachePath: tivatCachePath,
+    cityId: "tivat",
+    diagnostic: () => {},
+    httpClient: responseClient(JSON.stringify([{ TipLeta: "O", Datum: "invalid" }])),
+    now,
+  });
+
+  assert.equal(podgorica.success, true);
+  assert.equal(tivat.success, true);
+  assert.equal(retainedTivat.retainedPreviousSnapshot, true);
+  assert.equal(
+    (await getCachedPodgoricaFlights(podgoricaCachePath, now())).flights[0]?.location,
+    "Beograd",
+  );
+  assert.equal(
+    (await getCachedPodgoricaFlights(tivatCachePath, now())).flights[0]?.location,
+    "Istanbul",
+  );
 });
 
 test("preserves an explicitly configured absolute cache path", async () => {
@@ -238,9 +359,9 @@ test("surfaces a cache persistence failure and retains the earlier snapshot", as
   });
 
   assert.equal(result.success, false);
-  assert.equal(result.errorCode, "podgorica-flights-cache-write-failed");
+  assert.equal(result.errorCode, "airport-flights-cache-write-failed");
   assert.equal(result.retainedPreviousSnapshot, true);
-  assert.equal(result.snapshot?.lastRefreshError, "podgorica-flights-cache-write-failed");
+  assert.equal(result.snapshot?.lastRefreshError, "airport-flights-cache-write-failed");
 });
 
 test("accepts only the official public flight-feed endpoint and JSON-like responses", async () => {
@@ -348,7 +469,7 @@ test("classifies HTTP status, timeout, and redirect failures without exposing re
       timeoutClient.get("https://montenegroairports.com/aerodromixs/cache-flights.php?airport=pg"),
     (error: unknown) => {
       assert.ok(error instanceof PodgoricaFlightsFetchError);
-      assert.equal(error.code, "podgorica-flights-timeout");
+      assert.equal(error.code, "airport-flights-timeout");
       assert.equal(error.failureCategory, "timeout");
       return true;
     },
@@ -667,7 +788,7 @@ test("an empty but well-formed response still cannot replace a previous non-empt
   const cached = await getCachedPodgoricaFlights(cachePath, new Date("2026-07-22T08:05:00.000Z"));
 
   assert.equal(result.success, false);
-  assert.equal(result.errorCode, "podgorica-flights-empty-response");
+  assert.equal(result.errorCode, "airport-flights-empty-response");
   assert.equal(result.retainedPreviousSnapshot, true);
   assert.equal(cached.flights.length, flights.length);
 });
@@ -771,17 +892,17 @@ test("retains a valid snapshot and emits safe diagnostics after a DNS request fa
   });
 
   assert.equal(result.success, false);
-  assert.equal(result.errorCode, "podgorica-flights-request-failed");
+  assert.equal(result.errorCode, "airport-flights-request-failed");
   assert.equal(result.retainedPreviousSnapshot, true);
   assert.deepEqual(diagnostics, [
     {
       elapsedMs: diagnostics[0]?.elapsedMs,
-      errorCode: "podgorica-flights-request-failed",
-      event: "podgorica-flights-request-failed",
+      errorCode: "airport-flights-request-failed",
+      event: "airport-flights-request-failed",
       failureCategory: "dns",
       failureType: "network",
       finalState: "failed",
-      provider: "podgorica-airport",
+      provider: "montenegro-airports-flights",
       retainedPreviousSnapshot: true,
       retainedRecordCount: 0,
       retainedSnapshotAgeMs: 300_000,
@@ -836,14 +957,14 @@ test("retains cache-backed flights after an HTTP 500 without exposing the refres
   assert.deepEqual(diagnostics, [
     {
       elapsedMs: diagnostics[0]?.elapsedMs,
-      errorCode: "podgorica-flights-request-failed",
-      event: "podgorica-flights-request-failed",
+      errorCode: "airport-flights-request-failed",
+      event: "airport-flights-request-failed",
       failureCategory: "http-status",
       failureType: "http",
       finalHostname: "montenegroairports.com",
       finalState: "failed",
       httpStatus: 500,
-      provider: "podgorica-airport",
+      provider: "montenegro-airports-flights",
       responseContentType: "text/html",
       retainedPreviousSnapshot: true,
       retainedRecordCount: flights.length,
@@ -889,14 +1010,14 @@ test("emits a bounded safe preview and final retry metadata for an HTTP failure"
   assert.deepEqual(diagnostics, [
     {
       elapsedMs: diagnostics[0]?.elapsedMs,
-      errorCode: "podgorica-flights-request-failed",
-      event: "podgorica-flights-request-failed",
+      errorCode: "airport-flights-request-failed",
+      event: "airport-flights-request-failed",
       failureCategory: "http-status",
       failureType: "http",
       finalHostname: "montenegroairports.com",
       finalState: "failed",
       httpStatus: 500,
-      provider: "podgorica-airport",
+      provider: "montenegro-airports-flights",
       responseBodyPreview: responseBody.slice(0, 200),
       responseContentLength: responseBody.length,
       responseContentType: "application/problem+json",
@@ -929,16 +1050,16 @@ test("identifies an HTML response that fails JSON parsing", async () => {
     },
   });
 
-  assert.equal(result.errorCode, "podgorica-flights-parser-failed");
+  assert.equal(result.errorCode, "airport-flights-parser-failed");
   assert.deepEqual(diagnostics[0], {
-    errorCode: "podgorica-flights-parser-failed",
-    event: "podgorica-flights-request-failed",
+    errorCode: "airport-flights-parser-failed",
+    event: "airport-flights-request-failed",
     failureCategory: "response-format",
     failureType: "parser",
     finalHostname: "montenegroairports.com",
     finalState: "failed",
     httpStatus: 200,
-    provider: "podgorica-airport",
+    provider: "montenegro-airports-flights",
     responseBodyPreview: "<html><title>Maintenance</title></html>",
     responseContentLength: 39,
     responseContentType: "text/html; charset=utf-8",
@@ -958,10 +1079,10 @@ test("emits one parseable metadata-only request failure diagnostic", () => {
   try {
     emitPodgoricaFlightsDiagnostic({
       elapsedMs: 125,
-      errorCode: "podgorica-flights-request-failed",
-      event: "podgorica-flights-request-failed",
+      errorCode: "airport-flights-request-failed",
+      event: "airport-flights-request-failed",
       failureCategory: "dns",
-      provider: "podgorica-airport",
+      provider: "montenegro-airports-flights",
       upstreamHostname: "montenegroairports.com",
     });
   } finally {
@@ -971,32 +1092,37 @@ test("emits one parseable metadata-only request failure diagnostic", () => {
   assert.equal(messages.length, 1);
   assert.deepEqual(JSON.parse(messages[0] ?? "{}"), {
     elapsedMs: 125,
-    errorCode: "podgorica-flights-request-failed",
-    event: "podgorica-flights-request-failed",
+    errorCode: "airport-flights-request-failed",
+    event: "airport-flights-request-failed",
     failureCategory: "dns",
-    provider: "podgorica-airport",
+    provider: "montenegro-airports-flights",
     upstreamHostname: "montenegroairports.com",
   });
 });
 
-test("supports only Podgorica until a verified Airports of Montenegro airport code is added for another city", () => {
+test("supports each explicitly configured Airports of Montenegro airport", () => {
   assert.equal(isFlightsSupportedCityId("podgorica"), true);
-  assert.equal(isFlightsSupportedCityId("tivat"), false);
+  assert.equal(isFlightsSupportedCityId("tivat"), true);
   assert.equal(isFlightsSupportedCityId("budva"), false);
 });
 
-test("builds the Podgorica request URL from the airport-code map, not a separate literal", () => {
+test("builds request URLs from the airport configuration", () => {
   assert.equal(
     createPodgoricaFlightsUrl("podgorica"),
     "https://montenegroairports.com/aerodromixs/cache-flights.php?airport=pg",
   );
 });
 
-test("rejects a request URL whose airport code is not in the known-airport allowlist", () => {
+test("accepts configured airport URLs and rejects an unknown selector", () => {
+  assert.doesNotThrow(() =>
+    assertPodgoricaFlightsUrl(
+      "https://montenegroairports.com/aerodromixs/cache-flights.php?airport=tv",
+    ),
+  );
   assert.throws(
     () =>
       assertPodgoricaFlightsUrl(
-        "https://montenegroairports.com/aerodromixs/cache-flights.php?airport=tv",
+        "https://montenegroairports.com/aerodromixs/cache-flights.php?airport=xx",
       ),
     PodgoricaFlightsFetchError,
   );
@@ -1010,33 +1136,30 @@ test("keeps Podgorica's cache path backward compatible with the configured env p
   assert.equal(getFlightsCachePath("podgorica"), defaultPodgoricaFlightsCachePath);
 });
 
-test("derives a sibling cache path for any non-Podgorica supported city, mirroring the CEDIS convention", () => {
-  // "tivat" is not a real member of FlightsSupportedCityId yet (its airport code is unverified —
-  // see the comment above montenegroAirportsCodes in podgorica-flights.ts), but the derivation
-  // function's logic is generic and worth verifying directly ahead of that city being added.
-  const derivedPath = getFlightsCachePath("tivat" as FlightsSupportedCityId);
+test("uses an isolated city-named cache path for Tivat", () => {
+  const derivedPath = getFlightsCachePath("tivat");
   const podgoricaPath = getFlightsCachePath("podgorica");
 
   assert.notEqual(derivedPath, podgoricaPath);
-  assert.match(derivedPath, /podgorica-flights-tivat\.json$/u);
+  assert.match(derivedPath, /tivat-flights\.json$/u);
 });
 
 test("classifies every known upstream Flights error code as upstream, and everything else as not", () => {
   for (const errorCode of [
-    "podgorica-flights-empty-response",
-    "podgorica-flights-host-rejected",
-    "podgorica-flights-invalid-content-type",
-    "podgorica-flights-parser-failed",
-    "podgorica-flights-request-failed",
-    "podgorica-flights-response-too-large",
-    "podgorica-flights-timeout",
+    "airport-flights-empty-response",
+    "airport-flights-host-rejected",
+    "airport-flights-invalid-content-type",
+    "airport-flights-parser-failed",
+    "airport-flights-request-failed",
+    "airport-flights-response-too-large",
+    "airport-flights-timeout",
   ]) {
     assert.equal(isPodgoricaFlightsUpstreamErrorCode(errorCode), true, errorCode);
   }
 
   for (const errorCode of [
-    "podgorica-flights-cache-write-failed",
-    "podgorica-flights-refresh-failed",
+    "airport-flights-cache-write-failed",
+    "airport-flights-refresh-failed",
     "some-unrelated-or-future-error-code",
   ]) {
     assert.equal(isPodgoricaFlightsUpstreamErrorCode(errorCode), false, errorCode);

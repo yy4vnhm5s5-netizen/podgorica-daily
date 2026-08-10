@@ -2,7 +2,7 @@
 
 ## Architecture
 
-Railway is a managed deployment option for the current multi-city rollout. Create one Web service and attach one persistent volume at `/app/.runtime`. Set `RUNTIME_DATA_DIR=/app/.runtime`; the validated cache defaults then keep city-scoped City Alerts and Going Out snapshots, together with Events, Cineplexx, Podgorica Airport Flights, and ŽPCG snapshots, below that mount. Do not create a second service that expects to share the same file-cache volume: Railway volumes attach to individual services and cannot be used as a concurrent shared filesystem.
+Railway is a managed deployment option for the current multi-city rollout. Create one Web service and attach one persistent volume at `/app/.runtime`. Set `RUNTIME_DATA_DIR=/app/.runtime`; the validated cache defaults then keep city-scoped City Alerts, Going Out, and Airports of Montenegro Flights snapshots, together with Events, Cineplexx, and ŽPCG snapshots, below that mount. Do not create a second service that expects to share the same file-cache volume: Railway volumes attach to individual services and cannot be used as a concurrent shared filesystem.
 
 The Web service serves cached application data only. Visitor requests never scrape providers. When enabled, production startup starts one non-blocking refresh only if a provider snapshot is absent or unusable. This boot initialization makes an empty mounted cache useful; it is not a periodic scheduler. Fixed protected endpoints invoke existing collectors on the Web service, which owns the mounted cache, atomic writes, and locks. Railway's cron configuration does not itself establish a confidential custom-header request contract, so use a trigger service that can send authenticated POST requests to the Web service.
 
@@ -46,7 +46,7 @@ The trigger never mounts or writes `/app/.runtime`; the Web service owns the mou
 | Going Out, every three hours for all active supported cities   | `35 */3 * * *`            | `/api/internal/going-out/refresh`         | `GOING_OUT_REFRESH_SECRET`         |
 | Sea Water Quality, daily for active supported cities           | `45 2 * * *`              | `/api/internal/sea-water-quality/refresh` | `SEA_WATER_QUALITY_REFRESH_SECRET` |
 | Cineplexx, daily at 04:00 UTC                                  | `0 4 * * *`               | `/api/internal/cineplexx/refresh`         | `CINEPLEXX_REFRESH_SECRET`         |
-| Fuel prices, daily at 03:40 UTC                                 | `40 3 * * *`              | `/api/internal/fuel/refresh`              | `INTERNAL_REFRESH_TOKEN`           |
+| Fuel prices, daily at 03:40 UTC                                | `40 3 * * *`              | `/api/internal/fuel/refresh`              | `INTERNAL_REFRESH_TOKEN`           |
 | ŽPCG, 06:45 and 18:45 Podgorica time                           | see daylight-saving table | `/api/internal/zpcg/refresh`              | `ZPCG_RAILWAY_REFRESH_SECRET`      |
 
 Configure each trigger with its own explicit variables and command:

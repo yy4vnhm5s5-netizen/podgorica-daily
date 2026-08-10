@@ -19,7 +19,10 @@ test("uses Europe/Podgorica civil time and schedules Cineplexx once daily", asyn
 test("keeps every provider on its intended independent cadence", async () => {
   const scheduler = await readFile(schedulerPath, "utf8");
 
-  assert.match(scheduler, /00\|15\|30\|45\) run_collector "podgorica-flights"/);
+  assert.match(
+    scheduler,
+    /00\|15\|30\|45\) run_collector "airport-flights" "pnpm run collect:airport-flights"/,
+  );
   assert.match(scheduler, /00:10\|00:40[\s\S]*23:40[\s\S]*run_collector "vikpg"/);
   assert.match(scheduler, /00:20\)\s*run_collector "vodovod-kotor"/);
   assert.match(scheduler, /01:25\|07:25\|13:25\|19:25\) run_collector "cedis"/);

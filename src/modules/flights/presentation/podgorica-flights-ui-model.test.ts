@@ -3,19 +3,19 @@ import test from "node:test";
 
 import type { Flight } from "../domain/flight.ts";
 import {
-  getPodgoricaFlightGroups,
-  getPodgoricaFlightsDisplayState,
-  getPodgoricaFlightsUpdatedLabel,
-  getUpcomingPodgoricaFlightGroups,
+  getAirportFlightGroups,
+  getAirportFlightsDisplayState,
+  getAirportFlightsUpdatedLabel,
+  getUpcomingAirportFlightGroups,
 } from "./podgorica-flights-ui-model.ts";
 
 test("distinguishes available, empty, stale, and unavailable flight card states", () => {
-  assert.equal(getPodgoricaFlightsDisplayState({ flightCount: 3, state: "fresh" }), "flights");
-  assert.equal(getPodgoricaFlightsDisplayState({ flightCount: 3, state: "stale" }), "stale");
-  assert.equal(getPodgoricaFlightsDisplayState({ flightCount: 0, state: "fresh" }), "empty");
-  assert.equal(getPodgoricaFlightsDisplayState({ flightCount: 0, state: "stale" }), "empty");
+  assert.equal(getAirportFlightsDisplayState({ flightCount: 3, state: "fresh" }), "flights");
+  assert.equal(getAirportFlightsDisplayState({ flightCount: 3, state: "stale" }), "stale");
+  assert.equal(getAirportFlightsDisplayState({ flightCount: 0, state: "fresh" }), "empty");
+  assert.equal(getAirportFlightsDisplayState({ flightCount: 0, state: "stale" }), "empty");
   assert.equal(
-    getPodgoricaFlightsDisplayState({ flightCount: 0, state: "unavailable" }),
+    getAirportFlightsDisplayState({ flightCount: 0, state: "unavailable" }),
     "unavailable",
   );
 });
@@ -38,18 +38,18 @@ test("groups and limits upcoming arrivals and departures consistently for the ho
     flight("departure", "Madrid", "2026-07-22T16:30:00.000Z"),
   ];
 
-  const allGroups = getPodgoricaFlightGroups(flights);
-  const upcomingGroups = getUpcomingPodgoricaFlightGroups(
+  const allGroups = getAirportFlightGroups(flights);
+  const upcomingGroups = getUpcomingAirportFlightGroups(
     flights,
     new Date("2026-07-22T08:30:00.000Z"),
     1,
   );
-  const pageGroups = getUpcomingPodgoricaFlightGroups(
+  const pageGroups = getUpcomingAirportFlightGroups(
     flights,
     new Date("2026-07-22T08:30:00.000Z"),
     5,
   );
-  const homepageGroups = getUpcomingPodgoricaFlightGroups(
+  const homepageGroups = getUpcomingAirportFlightGroups(
     flights,
     new Date("2026-07-22T08:30:00.000Z"),
     3,
@@ -91,7 +91,7 @@ test("uses only the last successful cache refresh for a localized update label",
   const now = new Date("2026-07-22T10:00:00.000Z");
 
   assert.equal(
-    getPodgoricaFlightsUpdatedLabel({
+    getAirportFlightsUpdatedLabel({
       lastSuccessfulRefreshAt: "2026-07-22T09:52:00.000Z",
       locale: "me",
       now,
@@ -99,7 +99,7 @@ test("uses only the last successful cache refresh for a localized update label",
     "Ažurirano prije 8 minuta",
   );
   assert.equal(
-    getPodgoricaFlightsUpdatedLabel({
+    getAirportFlightsUpdatedLabel({
       lastSuccessfulRefreshAt: "2026-07-22T08:00:00.000Z",
       locale: "en",
       now,
@@ -107,7 +107,7 @@ test("uses only the last successful cache refresh for a localized update label",
     "Updated 2 hours ago",
   );
   assert.equal(
-    getPodgoricaFlightsUpdatedLabel({
+    getAirportFlightsUpdatedLabel({
       lastSuccessfulRefreshAt: "not-a-date",
       locale: "me",
       now,

@@ -4,11 +4,12 @@ import { Plane, PlaneLanding, PlaneTakeoff } from "lucide-react";
 import { useId, useState, type KeyboardEvent } from "react";
 
 import type { Flight } from "../domain/flight";
+import { getAirportFlightsSourceForCity } from "../infrastructure/airport-flights-config";
 import type { FlightCacheState } from "../infrastructure/podgorica-flights";
 import {
-  getUpcomingPodgoricaFlightGroups,
-  getPodgoricaFlightsDisplayState,
-  getPodgoricaFlightsUpdatedLabel,
+  getAirportFlightsDisplayState,
+  getAirportFlightsUpdatedLabel,
+  getUpcomingAirportFlightGroups,
   type FlightDirectionGroup,
 } from "./podgorica-flights-ui-model";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
@@ -35,16 +36,20 @@ function AirportFlightsCard({
   locale,
   state,
 }: AirportFlightsCardProps) {
-  const copy = locale === "me" ? montenegrinCopy : englishCopy;
+  const airport = getAirportFlightsSourceForCity(city.id);
+  const copy = {
+    ...(locale === "me" ? montenegrinCopy : englishCopy),
+    title: airport?.displayName ?? (locale === "me" ? "Aerodrom" : "Airport"),
+  };
   const [selectedDirection, setSelectedDirection] = useState<FlightDirectionGroup>("arrival");
   const panelId = useId();
-  const upcoming = getUpcomingPodgoricaFlightGroups(flights, new Date(), 3);
+  const upcoming = getUpcomingAirportFlightGroups(flights, new Date(), 3);
   const selectedFlights = upcoming[selectedDirection];
-  const displayState = getPodgoricaFlightsDisplayState({
+  const displayState = getAirportFlightsDisplayState({
     flightCount: selectedFlights.length,
     state,
   });
-  const updatedLabel = getPodgoricaFlightsUpdatedLabel({ lastSuccessfulRefreshAt, locale });
+  const updatedLabel = getAirportFlightsUpdatedLabel({ lastSuccessfulRefreshAt, locale });
   const tabs: readonly FlightDirectionGroup[] = ["arrival", "departure"];
 
   function selectDirection(direction: FlightDirectionGroup) {
@@ -209,7 +214,6 @@ const montenegrinCopy = {
   stale: "Prikazani podaci mogu biti zastarjeli.",
   subtitle: "Dolasci i odlasci",
   tabsLabel: "Izaberite dolaske ili odlaske",
-  title: "Aerodrom Podgorica",
   unavailable: "Podaci trenutno nijesu dostupni.",
 };
 const englishCopy = {
@@ -223,7 +227,6 @@ const englishCopy = {
   stale: "Displayed data may be outdated.",
   subtitle: "Arrivals and departures",
   tabsLabel: "Choose arrivals or departures",
-  title: "Podgorica Airport",
   unavailable: "Data is temporarily unavailable.",
 };
 

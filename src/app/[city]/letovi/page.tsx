@@ -6,11 +6,9 @@ import {
   resolveActiveCityFeatureRoute,
 } from "@/app/city-routing";
 import { createPublicRouteMetadata } from "@/app/public-route-metadata";
-import { getPodgoricaFlights } from "@/modules/flights/application/get-podgorica-flights";
-import {
-  AirportFlightsPage,
-  podgoricaAirportName,
-} from "@/modules/flights/presentation/airport-flights-page";
+import { getAirportFlights } from "@/modules/flights/application/get-podgorica-flights";
+import { getAirportFlightsSourceForCity } from "@/modules/flights/infrastructure/airport-flights-config";
+import { AirportFlightsPage } from "@/modules/flights/presentation/airport-flights-page";
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
 import { getFlightsPath } from "@/shared/config/public-routes";
 import { getPageTitle } from "@/shared/config/site";
@@ -26,20 +24,22 @@ interface FlightsPageProps {
 // says. The previous "Letovi iz Podgorice" described the city instead, so the page's title never
 // contained the word "aerodrom" at all while every search that reaches it is an airport lookup.
 // Both directions are named because arrivals are searched for as often as the airport itself.
-// The airport name comes from the presentation constant so the title and the H1 stay in step.
-function getFlightsPageTitle() {
-  return `${podgoricaAirportName} — dolasci i odlasci`;
+// The airport name comes from the configured source so the title and the H1 stay in step.
+function getFlightsPageTitle(airportName: string) {
+  return `${airportName} — dolasci i odlasci`;
 }
 
 async function generateMetadata({ params }: FlightsPageProps): Promise<Metadata> {
   const { city: slug } = await params;
   const context = resolveActiveCityFeatureRoute(slug, "flights");
   if (!context || !isCityPublicFeatureRouteAvailable(context.city, "flights")) return {};
-  const title = getFlightsPageTitle();
+  const airport = getAirportFlightsSourceForCity(context.city.id);
+  if (!airport) return {};
+  const title = getFlightsPageTitle(airport.displayName);
   // Only what the feed actually carries: destination/origin, IATA flight number and the scheduled
   // time. No airline (the feed has no such field), no estimated or actual times, no gate, delay or
   // cancellation, and nothing described as live.
-  const description = `Red letenja za ${podgoricaAirportName}: predstojeći dolasci i odlasci sa destinacijom, brojem leta i planiranim vremenom. Zvanični podaci Aerodroma Crne Gore.`;
+  const description = `Red letenja za ${airport.displayName}: predstojeći dolasci i odlasci sa destinacijom, brojem leta i planiranim vremenom. Zvanični podaci Aerodroma Crne Gore.`;
   const metadataTitle = getPageTitle(title);
 
   return createPublicRouteMetadata({
@@ -55,11 +55,14 @@ async function FlightsPage({ params }: FlightsPageProps) {
   const context = resolveActiveCityFeatureRoute(slug, "flights");
   if (!context) notFound();
   if (!isCityPublicFeatureRouteAvailable(context.city, "flights")) notFound();
-  const result = await getPodgoricaFlights(context);
+  const airport = getAirportFlightsSourceForCity(context.city.id);
+  if (!airport) notFound();
+  const result = await getAirportFlights(context);
 
   return (
     <DashboardLayout city={context.city} translations={getTranslations(locale)}>
       <AirportFlightsPage
+        airport={airport}
         flights={result.flights}
         lastSuccessfulRefreshAt={result.lastSuccessfulRefreshAt}
         locale={locale}

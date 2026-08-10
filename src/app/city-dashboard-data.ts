@@ -2,7 +2,7 @@ import {
   getCityEvents,
   getEmptyCityEventsReadModel,
 } from "@/modules/events/application/get-city-events";
-import { getPodgoricaFlights } from "@/modules/flights/application/get-podgorica-flights";
+import { getAirportFlights } from "@/modules/flights/application/get-podgorica-flights";
 import { getGoingOutEvents } from "@/modules/going-out/application/get-going-out-events";
 import { getBudvaSeaWaterQuality } from "@/modules/sea-water-quality/application/get-budva-sea-water-quality";
 import { getRailwayDepartures } from "@/modules/transport/application/get-railway-departures";
@@ -18,7 +18,7 @@ interface CityDashboardDependencies {
   getCityEvents: typeof getCityEvents;
   getCurrentWeather: typeof getCurrentWeather;
   getGoingOutEvents: typeof getGoingOutEvents;
-  getPodgoricaFlights: typeof getPodgoricaFlights;
+  getAirportFlights: typeof getAirportFlights;
   getRailwayDepartures: typeof getRailwayDepartures;
   isFeatureEnabled: typeof isFeatureEnabled;
 }
@@ -37,7 +37,7 @@ const defaultDependencies: CityDashboardDependencies = {
   getCityEvents,
   getCurrentWeather,
   getGoingOutEvents,
-  getPodgoricaFlights,
+  getAirportFlights,
   getRailwayDepartures,
   isFeatureEnabled,
 };
@@ -55,7 +55,7 @@ async function loadCityDashboardData(
       ? resolvedDependencies.getCityEvents(context).catch(() => getEmptyCityEventsReadModel())
       : Promise.resolve(getEmptyCityEventsReadModel()),
     includeFlights && resolvedDependencies.isFeatureEnabled("flights") && capabilities.flights
-      ? resolvedDependencies.getPodgoricaFlights(context).catch(() => null)
+      ? resolvedDependencies.getAirportFlights(context).catch(() => null)
       : Promise.resolve(null),
     resolvedDependencies.isFeatureEnabled("goingOut") && capabilities.goingOut
       ? resolvedDependencies.getGoingOutEvents(context).catch(() => null)

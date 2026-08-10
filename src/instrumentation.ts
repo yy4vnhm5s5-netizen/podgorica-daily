@@ -16,7 +16,7 @@ import { initializeEventCaches } from "@/modules/events/infrastructure/events-in
 import { refreshAllEvents } from "@/modules/events/infrastructure/events-refresh";
 import { defaultTivatTourismEventCachePath } from "@/modules/events/infrastructure/tivat-tourism-event-provider";
 import { getActiveFlightsContexts } from "@/modules/flights/infrastructure/collect-podgorica-flights";
-import { initializePodgoricaFlights } from "@/modules/flights/infrastructure/podgorica-flights-initialization";
+import { initializeAirportFlights } from "@/modules/flights/infrastructure/podgorica-flights-initialization";
 import {
   getFlightsCachePath,
   type FlightsSupportedCityId,
@@ -76,7 +76,7 @@ export function register() {
 
   if (env.ENABLE_FLIGHTS) {
     for (const context of getActiveFlightsContexts()) {
-      void initializePodgoricaFlights({
+      void initializeAirportFlights({
         cachePath: getFlightsCachePath(context.city.id as FlightsSupportedCityId),
         cityId: context.city.id as FlightsSupportedCityId,
       });
