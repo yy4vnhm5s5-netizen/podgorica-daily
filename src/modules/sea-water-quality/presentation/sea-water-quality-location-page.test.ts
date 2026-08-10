@@ -15,7 +15,7 @@ test("renders user-facing beach history without exposing the raw JPMD source rou
   assert.doesNotMatch(source, /\{measurement\.sourceRound\}<\/td>/u);
 });
 
-test("offers contextual same-city navigation without linking back to the beach listing", async () => {
+test("offers shared colorful same-city navigation without linking back to the beach listing", async () => {
   const source = await readFile(
     new URL("./sea-water-quality-location-page.tsx", import.meta.url),
     "utf8",
@@ -23,9 +23,10 @@ test("offers contextual same-city navigation without linking back to the beach l
 
   assert.match(
     source,
-    /import \{ ExploreCityLinks \} from "@\/shared\/components\/explore-city-links";/u,
+    /import \{ CityFeatureDiscovery \} from "@\/shared\/components\/city-feature-discovery";/u,
   );
-  assert.match(source, /<ExploreCityLinks city=\{city\} exclude=\{\["seaWaterQuality"\]\} \/>/u);
+  assert.match(source, /<CityFeatureDiscovery city=\{city\} currentFeature="seaWaterQuality" \/>/u);
+  assert.doesNotMatch(source, /ExploreCityLinks/u);
 });
 
 test("renders the visible breadcrumb from the same trail as the structured data", async () => {
@@ -91,7 +92,7 @@ test("adds the measurement summary without disturbing the existing page structur
   assert.match(source, /getSeaWaterQualityLocationBreadcrumbTrail\(\{/u);
   assert.match(source, /Istorija uzorkovanja/u);
   assert.match(source, /Najnoviji rezultat/u);
-  assert.match(source, /<ExploreCityLinks city=\{city\} exclude=\{\["seaWaterQuality"\]\} \/>/u);
+  assert.match(source, /<CityFeatureDiscovery city=\{city\} currentFeature="seaWaterQuality" \/>/u);
 });
 
 test("keeps the summary free of safety, cleanliness or compliance claims", async () => {
@@ -196,10 +197,7 @@ test("labels the previous measurement and shows its date only when one exists", 
     /<span className=\{getGradeBadgeClassName\(summary\.comparison\.previous\.grade\)\}>/u,
   );
   // No date in the data means no date rendered — never a fabricated or placeholder one.
-  assert.match(
-    source,
-    /\{formatMeasurementDate\(summary\.comparison\.previous, locale\) \? \(/u,
-  );
+  assert.match(source, /\{formatMeasurementDate\(summary\.comparison\.previous, locale\) \? \(/u);
   assert.doesNotMatch(source, /Prethodno:[\s\S]{0,200}"—"/u);
 });
 
@@ -260,8 +258,9 @@ test("the related section navigates only, with no client-side handlers", async (
     new URL("./sea-water-quality-location-page.tsx", import.meta.url),
     "utf8",
   );
-  const block =
-    /\{relatedLocations\.length > 0 \? \(([\s\S]*?)\n {6}\) : null\}/u.exec(source)?.[1];
+  const block = /\{relatedLocations\.length > 0 \? \(([\s\S]*?)\n {6}\) : null\}/u.exec(
+    source,
+  )?.[1];
   assert.ok(block);
 
   assert.match(block, /<nav aria-labelledby="druga-mjerna-mjesta-heading"/u);
@@ -269,7 +268,7 @@ test("the related section navigates only, with no client-side handlers", async (
   for (const banned of [/onClick/u, /router\.push/u, /rel="nofollow"/u, /<button/u]) {
     assert.doesNotMatch(block, banned, String(banned));
   }
-  // Visually secondary: it borrows the ExploreCityLinks chip treatment, not the grade badges.
+  // Visually secondary: it remains separate from the grade badges.
   assert.doesNotMatch(block, /getGradeBadgeClassName|gradeStyles|gradeLabels/u);
 });
 

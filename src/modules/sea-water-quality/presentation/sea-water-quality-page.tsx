@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import type { BudvaSeaWaterQualityCacheResult } from "../application/get-budva-sea-water-quality";
 import { gradeLabels, gradeOrder, gradeStyles } from "./sea-water-quality-grade-styles";
+import { CityFeatureDiscovery } from "@/shared/components/city-feature-discovery";
 import { ErrorState } from "@/shared/components/error-state";
 import { InCardEmptyNote } from "@/shared/components/in-card-empty-note";
 import { NewTabNotice } from "@/shared/components/new-tab-notice";
@@ -149,6 +150,7 @@ function SeaWaterQualityPage({ city, locale, locationSlugs, result }: SeaWaterQu
         Izvor: Javno preduzeće za upravljanje morskim dobrom Crne Gore
         <NewTabNotice locale={locale} />
       </a>
+      <CityFeatureDiscovery city={city} currentFeature="seaWaterQuality" />
     </section>
   );
 }

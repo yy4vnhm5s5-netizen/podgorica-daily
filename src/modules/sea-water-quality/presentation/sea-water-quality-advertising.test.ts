@@ -17,10 +17,7 @@ test("uses the registry's city form, never a hardcoded one", () => {
   const bar = getCity("bar");
   assert.ok(bar);
 
-  assert.match(
-    getSeaWaterQualityAdvertisingDescription(bar, "listing"),
-    /plaže u Baru\.$/u,
-  );
+  assert.match(getSeaWaterQualityAdvertisingDescription(bar, "listing"), /plaže u Baru\.$/u);
   for (const city of getActiveCities()) {
     const copy = getSeaWaterQualityAdvertisingDescription(city, "listing");
     assert.doesNotMatch(copy, new RegExp(`plaže u ${city.name}\\.`, "u"), city.id);
@@ -131,7 +128,7 @@ test("the detail banner sits after the summary and before the history", async ()
   assert.ok(at("Sažetak mjerenja") < at("<AdvertisingCard"));
   assert.ok(at("<AdvertisingCard") < at("Istorija uzorkovanja"));
   assert.ok(at("Istorija uzorkovanja") < at("Druga mjerna mjesta na istoj plaži"));
-  assert.ok(at("Druga mjerna mjesta na istoj plaži") < at("<ExploreCityLinks"));
+  assert.ok(at("Druga mjerna mjesta na istoj plaži") < at("<CityFeatureDiscovery"));
 });
 
 test("the listing banner sits after the overview and before the beach table", async () => {
@@ -170,7 +167,7 @@ test("leaves the beach pages' existing content and structure intact", async () =
   assert.match(source, /getSeaWaterQualityLocationBreadcrumbTrail\(\{/u);
   assert.match(source, /const summary = getSeaWaterQualityLocationSummary\(location\);/u);
   assert.match(source, /getRelatedSeaWaterQualityLocations\(history, location\)/u);
-  assert.match(source, /<ExploreCityLinks city=\{city\} exclude=\{\["seaWaterQuality"\]\} \/>/u);
+  assert.match(source, /<CityFeatureDiscovery city=\{city\} currentFeature="seaWaterQuality" \/>/u);
   // No structured data was added by this pass.
   assert.doesNotMatch(source, /application\/ld\+json/u);
 });

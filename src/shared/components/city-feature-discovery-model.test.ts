@@ -117,6 +117,43 @@ test("derives Going Out discovery from public same-city capabilities", () => {
   }
 });
 
+test("derives Sea Water discovery from public same-city capabilities", () => {
+  const expected = {
+    bar: ["goingOut", "electricity"],
+    budva: ["goingOut", "electricity"],
+    kotor: ["goingOut", "electricity"],
+    tivat: ["events", "goingOut", "electricity", "flights"],
+    ulcinj: ["goingOut", "electricity"],
+  } as const;
+
+  for (const [cityId, keys] of Object.entries(expected) as readonly [
+    keyof typeof expected,
+    readonly string[],
+  ][]) {
+    const discovery = getCityFeatureDiscovery(
+      requireCity(cityId),
+      "seaWaterQuality",
+      allFeaturesEnabled,
+    );
+
+    assert.equal(discovery.heading, `Još iz ${getGenitive(cityId)}`, cityId);
+    assert.deepEqual(
+      discovery.links.map(({ key }) => key),
+      keys,
+      cityId,
+    );
+    assert.equal(
+      discovery.links.some(({ key }) => key === "seaWaterQuality"),
+      false,
+      cityId,
+    );
+    assert.ok(
+      discovery.links.every(({ href }) => href.startsWith(`/${cityId}/`)),
+      `${cityId} must only link within its own canonical city route space`,
+    );
+  }
+});
+
 test("derives Events discovery from public same-city capabilities", () => {
   const expected = {
     podgorica: ["goingOut", "electricity", "flights"],

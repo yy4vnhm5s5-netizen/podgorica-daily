@@ -71,3 +71,20 @@ test("preserves the existing detail-link behaviour and accessible focus state", 
   assert.doesNotMatch(source, /onClick/u);
   assert.doesNotMatch(source, /router\.push/u);
 });
+
+test("adds the shared city discovery after the listing source without a data dependency", async () => {
+  const source = await pageSource();
+
+  assert.match(
+    source,
+    /import \{ CityFeatureDiscovery \} from "@\/shared\/components\/city-feature-discovery";/u,
+  );
+  assert.match(source, /<CityFeatureDiscovery city=\{city\} currentFeature="seaWaterQuality" \/>/u);
+  assert.doesNotMatch(source, /ExploreCityLinks/u);
+  assert.ok(
+    source.indexOf("https://monitoring.morskodobro.me") < source.indexOf("<CityFeatureDiscovery"),
+  );
+  for (const banned of [/"use client"/u, /fetch\(/u, /jpmd-client|backfill/iu]) {
+    assert.doesNotMatch(source, banned, String(banned));
+  }
+});

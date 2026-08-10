@@ -24,7 +24,7 @@ test("titles every coastal beach listing with the locative city form", () => {
   }
 });
 
-test("resolves the four live coastal cities to their real grammatical forms", () => {
+test("resolves every live coastal city to its real grammatical form", () => {
   const titles = seaWaterCities().map(
     (city) => `Plaže u ${getCityName(city, "locative")} i kvalitet mora`,
   );
@@ -34,6 +34,7 @@ test("resolves the four live coastal cities to their real grammatical forms", ()
     "Plaže u Budvi i kvalitet mora",
     "Plaže u Kotoru i kvalitet mora",
     "Plaže u Tivtu i kvalitet mora",
+    "Plaže u Ulcinju i kvalitet mora",
   ]);
 });
 

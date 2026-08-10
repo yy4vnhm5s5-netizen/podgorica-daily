@@ -21,8 +21,8 @@ import {
   seaWaterQualityAdvertisingCta,
   seaWaterQualityAdvertisingTitle,
 } from "./sea-water-quality-advertising.ts";
+import { CityFeatureDiscovery } from "@/shared/components/city-feature-discovery";
 import { AdvertisingCard } from "@/shared/components/dashboard/advertising-card";
-import { ExploreCityLinks } from "@/shared/components/explore-city-links";
 import { NewTabNotice } from "@/shared/components/new-tab-notice";
 import { SectionTitle } from "@/shared/components/section-title";
 import { getLocaleTag, type Locale } from "@/shared/config/locale";
@@ -132,9 +132,7 @@ function SeaWaterQualityLocationPage({
             Najnoviji rezultat
           </h2>
           <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
-            <span
-              className={getGradeBadgeClassName(latestMeasurement.grade)}
-            >
+            <span className={getGradeBadgeClassName(latestMeasurement.grade)}>
               {gradeLabels[latestMeasurement.grade]}
             </span>
             {latestMeasurement.samplingDateTime ? (
@@ -245,9 +243,7 @@ function SeaWaterQualityLocationPage({
               {[...location.measurements].reverse().map((measurement) => (
                 <tr key={measurement.sourceRound}>
                   <td className="px-4 py-3">
-                    <span
-                      className={getGradeBadgeClassName(measurement.grade)}
-                    >
+                    <span className={getGradeBadgeClassName(measurement.grade)}>
                       {gradeLabels[measurement.grade]}
                     </span>
                   </td>
@@ -310,7 +306,7 @@ function SeaWaterQualityLocationPage({
 
       {/* The beach listing this page already belongs to is excluded, so the block only offers
           genuinely different destinations within the same city. */}
-      <ExploreCityLinks city={city} exclude={["seaWaterQuality"]} />
+      <CityFeatureDiscovery city={city} currentFeature="seaWaterQuality" />
     </section>
   );
 }

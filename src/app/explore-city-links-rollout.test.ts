@@ -6,13 +6,13 @@ import { getActiveCities } from "@/shared/config/cities";
 import { getExploreCityLinks } from "@/shared/config/explore-city-links";
 import { getCityPath } from "@/shared/config/public-routes";
 
-// Which public route families render the shared contextual-navigation block, and with which
-// feature excluded. Each entry is the file that owns that route's rendered body.
+// Going Out detail deliberately retains the neutral cross-navigation treatment. Colorful
+// CityFeatureDiscovery is reserved for the approved listing/detail rollouts that use it.
 const rollout = [
   {
-    exclude: "seaWaterQuality",
-    file: "src/modules/sea-water-quality/presentation/sea-water-quality-location-page.tsx",
-    route: "/[city]/plaze/[slug]",
+    exclude: "goingOut",
+    file: "src/modules/going-out/presentation/going-out-detail.tsx",
+    route: "/[city]/izlasci/[eventKey]",
   },
 ] as const;
 
