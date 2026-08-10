@@ -9,7 +9,8 @@ test("renders source-backed details without inventing optional facts", async () 
   assert.match(source, /title=\{event\.title\}/u);
   assert.match(source, /label="Datum i vrijeme"/u);
   assert.match(source, /label="Mjesto" value=\{event\.venue\}/u);
-  assert.match(source, /label="Adresa" value=\{event\.address\}/u);
+  assert.match(source, /getGoingOutDetailAddress\(event\.address, city\)/u);
+  assert.match(source, /label="Adresa" value=\{address\}/u);
   assert.match(source, /label="Izvođači"/u);
   assert.match(source, /label="Organizator" value=\{event\.organizer\}/u);
   assert.match(source, /event\.isFree \? "Besplatan ulaz" : event\.priceLabel/u);
@@ -17,6 +18,7 @@ test("renders source-backed details without inventing optional facts", async () 
   assert.match(source, /Izvor:/u);
   assert.match(source, />\s*MonteGigs\s*</u);
   assert.match(source, /if \(!value\) return null;/u);
+  assert.doesNotMatch(source, /label="Tip događaja"|label="Žanr"/u);
   assert.doesNotMatch(source, /cijena u eurima|dostupne ulaznice|dostupnost ulaznica/iu);
 });
 

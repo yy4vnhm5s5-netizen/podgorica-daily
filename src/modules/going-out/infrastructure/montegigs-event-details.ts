@@ -1,3 +1,5 @@
+import { decodeHtmlEntities } from "../domain/going-out-event.ts";
+
 interface MonteGigsEventDetail {
   address?: string;
   description?: string;
@@ -209,13 +211,7 @@ function isBoilerplate(value: string) {
 }
 
 function stripHtml(value: string) {
-  return value
-    .replace(/<[^>]+>/gu, " ")
-    .replace(/&nbsp;/giu, " ")
-    .replace(/&amp;/giu, "&")
-    .replace(/&quot;/giu, '"')
-    .replace(/&#39;/gu, "'")
-    .replace(/&#(\d+);/gu, (_, code: string) => String.fromCodePoint(Number(code)));
+  return decodeHtmlEntities(value.replace(/<[^>]+>/gu, " "));
 }
 
 function sameText(left: string, right: string | undefined) {

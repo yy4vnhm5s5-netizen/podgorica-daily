@@ -106,6 +106,22 @@ test("keeps the explicit visible description when it conflicts with JSON-LD", ()
   );
 });
 
+test("decodes HTML entities before enriched detail text reaches the normal snapshot", () => {
+  const html = `
+    <script type="application/ld+json">
+      {"@type":"MusicEvent","url":"${kotorSourceUrl}","description":"predstavu „Valja odit&#x27; na more” &amp; program&nbsp;sa &quot;gostima&quot;"}
+    </script>
+  `;
+
+  const result = parseMonteGigsEventDetail(html, {
+    sourceEventId: "7465",
+    sourceUrl: kotorSourceUrl,
+  });
+
+  assert.equal(result.description, 'predstavu „Valja odit\' na more” & program sa "gostima"');
+  assert.doesNotMatch(result.description ?? "", /&#x27;|&amp;|&nbsp;|&quot;/u);
+});
+
 test("does not turn a performer or an absent description into an organizer or source prose", () => {
   const html = `
     <main>

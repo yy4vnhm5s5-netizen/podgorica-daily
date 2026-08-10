@@ -157,7 +157,7 @@ function isIsoDate(value: string) {
 }
 
 function normalizeText(value: string) {
-  return decodeHtml(value)
+  return decodeHtmlEntities(value)
     .replace(/\s+/g, " ")
     .replace(/^[-–—\s]+|[-–—\s]+$/g, "")
     .trim();
@@ -232,17 +232,38 @@ function normalizeInformationUrl(value: string | undefined, sourceUrl: string) {
   return url.hostname === "staging.montegigs.me" ? undefined : normalized;
 }
 
-function decodeHtml(value: string) {
+function decodeHtmlEntities(value: string) {
   return value
-    .replace(/&nbsp;/gi, " ")
-    .replace(/&amp;/gi, "&")
-    .replace(/&quot;/gi, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&#(\d+);/g, (_, code: string) => String.fromCodePoint(Number(code)));
+    .replace(/&(nbsp|amp|quot|apos|lt|gt);/giu, (_, entity: string) => {
+      return namedHtmlEntities[entity.toLocaleLowerCase("en-US")] ?? _;
+    })
+    .replace(/&#(?:x([0-9a-f]+)|([0-9]+));/giu, (entity, hexadecimal, decimal) => {
+      const codePoint = Number.parseInt(hexadecimal ?? decimal ?? "", hexadecimal ? 16 : 10);
+      return isSafeHtmlCodePoint(codePoint) ? String.fromCodePoint(codePoint) : entity;
+    });
+}
+
+const namedHtmlEntities: Readonly<Record<string, string>> = {
+  amp: "&",
+  apos: "'",
+  gt: ">",
+  lt: "<",
+  nbsp: " ",
+  quot: '"',
+};
+
+function isSafeHtmlCodePoint(value: number) {
+  return (
+    Number.isInteger(value) &&
+    value >= 0x20 &&
+    value <= 0x10ffff &&
+    (value < 0xd800 || value > 0xdfff)
+  );
 }
 
 export {
   createGoingOutEventId,
+  decodeHtmlEntities,
   getLocalIsoDate,
   normalizeGoingOutEvent,
   maximumGoingOutDescriptionLength,

@@ -77,6 +77,24 @@ test("keeps the composite ID independent from source identity and optional enric
   );
 });
 
+test("decodes ordinary HTML entities into stable plain-text enrichment", () => {
+  const event = normalizeGoingOutEvent({
+    city: "tivat",
+    description:
+      "  predstavu „Valja odit&#x27; na more” &amp; program&nbsp;sa &quot;gostima&quot; i &#39;muzičarima&#39;  ",
+    sourceUrl: "https://staging.montegigs.me/me/events/tivat/7010-20260812-valja-odit",
+    startDate: "2026-08-12",
+    title: "Valja odit&#x27; na more",
+  });
+
+  assert.equal(event?.title, "Valja odit' na more");
+  assert.equal(
+    event?.description,
+    "predstavu „Valja odit' na more” & program sa \"gostima\" i 'muzičarima'",
+  );
+  assert.doesNotMatch(event?.description ?? "", /&#x27;|&#39;|&quot;|&amp;|&nbsp;/u);
+});
+
 test("filters past days in Europe/Podgorica and keeps deterministic ordering", () => {
   const events = [
     normalizeGoingOutEvent({

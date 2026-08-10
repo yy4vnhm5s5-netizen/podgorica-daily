@@ -4,6 +4,7 @@ import { formatDateTime } from "../../../shared/lib/date.ts";
 import type { GoingOutEvent } from "../domain/going-out-event.ts";
 import { getLocalIsoDate, selectUpcomingGoingOutEvents } from "../domain/going-out-event.ts";
 import type { GoingOutCacheState } from "../infrastructure/montegigs-going-out.ts";
+import type { City } from "@/shared/types/city";
 
 type GoingOutDisplayState = "empty" | "events" | "stale" | "unavailable";
 
@@ -96,10 +97,26 @@ function formatGoingOutSchedule(event: GoingOutEvent, locale: Locale) {
   return `${date} · ${time}`;
 }
 
+// Addresses are source facts, but a bare city name adds no context beside the dedicated city
+// field. This comparison is intentionally narrow: only equivalent trimmed, case-insensitive city
+// labels disappear; street addresses that happen to include the city remain visible.
+function getGoingOutDetailAddress(address: string | undefined, city: City) {
+  if (!address || normalizeComparableAddress(address) === normalizeComparableAddress(city.name)) {
+    return undefined;
+  }
+
+  return address;
+}
+
+function normalizeComparableAddress(value: string) {
+  return value.replace(/\s+/gu, " ").trim().toLocaleLowerCase("sr-Latn-ME");
+}
+
 export {
   formatGoingOutDateHeading,
   formatGoingOutSchedule,
   formatGoingOutTime,
+  getGoingOutDetailAddress,
   getAvailableGoingOutEvents,
   getGoingOutDisplayState,
   getGoingOutPageEvents,

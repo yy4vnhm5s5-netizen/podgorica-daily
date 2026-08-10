@@ -1,9 +1,9 @@
-import { CalendarClock, ExternalLink, MapPin, Music2, Tag, Ticket, Users } from "lucide-react";
+import { CalendarClock, ExternalLink, MapPin, Music2, Ticket, Users } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
 import type { GoingOutEvent } from "../domain/going-out-event.ts";
-import { formatGoingOutSchedule } from "./going-out-ui-model";
+import { formatGoingOutSchedule, getGoingOutDetailAddress } from "./going-out-ui-model";
 import { getGoingOutDetailBreadcrumbTrail } from "./going-out-detail-structured-data";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { ExploreCityLinks } from "@/shared/components/explore-city-links";
@@ -23,6 +23,7 @@ interface GoingOutDetailProps {
 function GoingOutDetail({ city, event, locale, stale }: GoingOutDetailProps) {
   const breadcrumb = getGoingOutDetailBreadcrumbTrail(city, event);
   const admission = event.isFree ? "Besplatan ulaz" : event.priceLabel;
+  const address = getGoingOutDetailAddress(event.address, city);
 
   return (
     <article className="mx-auto max-w-3xl space-y-6">
@@ -88,14 +89,12 @@ function GoingOutDetail({ city, event, locale, stale }: GoingOutDetailProps) {
             />
             <GoingOutDetailItem icon={MapPin} label="Grad" value={city.name} />
             <GoingOutDetailItem icon={MapPin} label="Mjesto" value={event.venue} />
-            <GoingOutDetailItem icon={MapPin} label="Adresa" value={event.address} />
+            <GoingOutDetailItem icon={MapPin} label="Adresa" value={address} />
             <GoingOutDetailItem
               icon={Users}
               label="Izvođači"
               value={event.performers?.join(", ")}
             />
-            <GoingOutDetailItem icon={Tag} label="Tip događaja" value={event.eventType} />
-            <GoingOutDetailItem icon={Music2} label="Žanr" value={event.genre} />
             <GoingOutDetailItem icon={Ticket} label="Ulaz" value={admission} />
             <GoingOutDetailItem icon={Users} label="Organizator" value={event.organizer} />
           </dl>

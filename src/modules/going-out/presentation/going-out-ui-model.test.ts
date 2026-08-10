@@ -5,9 +5,11 @@ import type { GoingOutEvent } from "../domain/going-out-event.ts";
 import {
   formatGoingOutSchedule,
   getAvailableGoingOutEvents,
+  getGoingOutDetailAddress,
   getGoingOutDisplayState,
   getHomepageGoingOutEvents,
 } from "./going-out-ui-model.ts";
+import { createCityContext } from "@/shared/config/cities";
 
 const events: GoingOutEvent[] = Array.from({ length: 7 }, (_, index) => ({
   city: "podgorica",
@@ -49,4 +51,14 @@ test("renders an explicit source time when MonteGigs provides one", () => {
   );
 
   assert.match(schedule, /20:30/u);
+});
+
+test("suppresses only an address that is effectively the same as the displayed city", () => {
+  const tivat = createCityContext("tivat").city;
+
+  assert.equal(getGoingOutDetailAddress("  TIVAT  ", tivat), undefined);
+  assert.equal(
+    getGoingOutDetailAddress("Trg od kulture 1, Tivat", tivat),
+    "Trg od kulture 1, Tivat",
+  );
 });
