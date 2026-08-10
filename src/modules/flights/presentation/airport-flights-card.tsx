@@ -47,7 +47,7 @@ function AirportFlightsCard({
   const upcoming = getUpcomingAirportFlightGroups(flights, new Date(), 3);
   const selectedFlights = upcoming[selectedDirection];
   const displayState = getAirportFlightsDisplayState({
-    flightCount: selectedFlights.length,
+    flightCount: upcoming.arrival.length + upcoming.departure.length,
     state,
   });
   const updatedLabel = getAirportFlightsUpdatedLabel({ lastSuccessfulRefreshAt, locale });
@@ -132,7 +132,7 @@ function AirportFlightsCard({
             );
           })}
         </div>
-        {displayState === "flights" || displayState === "stale" ? (
+        {(displayState === "flights" || displayState === "stale") && selectedFlights.length > 0 ? (
           <ul
             aria-labelledby={`${panelId}-${selectedDirection}`}
             className="divide-y divide-primary/10"
@@ -148,16 +148,18 @@ function AirportFlightsCard({
             <InCardEmptyNote icon={Plane}>
               {displayState === "unavailable"
                 ? copy.unavailable
-                : selectedDirection === "arrival"
-                  ? copy.arrivalEmpty
-                  : copy.departureEmpty}
+                : displayState === "stale-empty"
+                  ? copy.staleEmpty
+                  : selectedDirection === "arrival"
+                    ? copy.arrivalEmpty
+                    : copy.departureEmpty}
             </InCardEmptyNote>
           </div>
         )}
-        {displayState === "stale" ? (
+        {displayState === "stale" || displayState === "stale-empty" ? (
           <p className="mt-3 text-xs leading-5 text-muted-foreground">{copy.stale}</p>
         ) : null}
-        {updatedLabel ? (
+        {updatedLabel && displayState !== "unavailable" ? (
           <p className="mt-3 text-xs leading-5 text-muted-foreground">{updatedLabel}</p>
         ) : null}
         <a
@@ -211,6 +213,7 @@ const montenegrinCopy = {
   departureEmpty: "Trenutno nema narednih odlazaka.",
   departures: "Odlasci",
   stale: "Prikazani podaci mogu biti zastarjeli.",
+  staleEmpty: "Nema narednih letova u posljednjem dostupnom redu letenja.",
   subtitle: "Dolasci i odlasci",
   tabsLabel: "Izaberite dolaske ili odlaske",
   unavailable: "Podaci trenutno nijesu dostupni.",
@@ -224,6 +227,7 @@ const englishCopy = {
   departureEmpty: "There are no upcoming departures right now.",
   departures: "Departures",
   stale: "Displayed data may be outdated.",
+  staleEmpty: "There are no upcoming flights in the last available schedule.",
   subtitle: "Arrivals and departures",
   tabsLabel: "Choose arrivals or departures",
   unavailable: "Data is temporarily unavailable.",

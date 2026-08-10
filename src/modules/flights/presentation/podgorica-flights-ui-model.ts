@@ -3,7 +3,7 @@ import type { FlightCacheState } from "../infrastructure/podgorica-flights";
 import type { Locale } from "../../../shared/config/locale.ts";
 import { formatRelativeTime } from "../../../shared/lib/date.ts";
 
-type AirportFlightsDisplayState = "empty" | "flights" | "stale" | "unavailable";
+type AirportFlightsDisplayState = "empty" | "flights" | "stale" | "stale-empty" | "unavailable";
 type FlightDirectionGroup = "arrival" | "departure";
 
 interface AirportFlightGroups {
@@ -23,8 +23,9 @@ function getAirportFlightsDisplayState({
   flightCount: number;
   state: FlightCacheState;
 }): AirportFlightsDisplayState {
+  if (state === "unavailable") return "unavailable";
   if (flightCount > 0) return state === "stale" ? "stale" : "flights";
-  return state === "unavailable" ? "unavailable" : "empty";
+  return state === "stale" ? "stale-empty" : "empty";
 }
 
 function getAirportFlightsUpdatedLabel({

@@ -61,7 +61,7 @@ function AirportFlightsPage({
         <EmptyState description={copy.empty} title={title} />
       ) : (
         <div className="space-y-8">
-          {displayState === "stale" ? (
+          {displayState === "stale" || displayState === "stale-empty" ? (
             <p
               className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950"
               role="status"
@@ -72,20 +72,26 @@ function AirportFlightsPage({
           {updatedLabel ? (
             <p className="text-xs leading-5 text-muted-foreground">{updatedLabel}</p>
           ) : null}
-          <FlightGroup
-            flights={groups.departure}
-            icon={PlaneTakeoff}
-            id="flight-departures"
-            locale={locale}
-            title={copy.departures}
-          />
-          <FlightGroup
-            flights={groups.arrival}
-            icon={PlaneLanding}
-            id="flight-arrivals"
-            locale={locale}
-            title={copy.arrivals}
-          />
+          {displayState === "stale-empty" ? (
+            <EmptyState description={copy.staleEmpty} title={title} />
+          ) : (
+            <>
+              <FlightGroup
+                flights={groups.departure}
+                icon={PlaneTakeoff}
+                id="flight-departures"
+                locale={locale}
+                title={copy.departures}
+              />
+              <FlightGroup
+                flights={groups.arrival}
+                icon={PlaneLanding}
+                id="flight-arrivals"
+                locale={locale}
+                title={copy.arrivals}
+              />
+            </>
+          )}
         </div>
       )}
       <a
@@ -192,6 +198,7 @@ const montenegrinCopy = {
   empty: "Trenutno nema dostupnih letova.",
   flightNumber: "Broj leta",
   stale: "Prikazani podaci mogu biti zastarjeli.",
+  staleEmpty: "Nema narednih letova u posljednjem dostupnom redu letenja.",
   status: "Status",
   source: "Kompletan red letenja na sajtu Aerodroma Crne Gore ↗",
   unavailable: "Podaci trenutno nijesu dostupni.",
@@ -207,6 +214,7 @@ const englishCopy = {
   empty: "There are no flights available right now.",
   flightNumber: "Flight number",
   stale: "Displayed data may be outdated.",
+  staleEmpty: "There are no upcoming flights in the last available schedule.",
   status: "Status",
   source: "Full flight schedule on the Airports of Montenegro website ↗",
   unavailable: "Data is temporarily unavailable.",

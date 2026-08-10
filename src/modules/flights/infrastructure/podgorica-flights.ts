@@ -26,6 +26,7 @@ import {
 } from "./airport-flights-config.ts";
 
 const defaultPodgoricaFlightsCachePath = env.PODGORICA_FLIGHTS_CACHE_PATH;
+const maximumPublicFlightsSnapshotAgeMinutes = 6 * 60;
 const maximumResponseLength = 2_000_000;
 const maximumDiagnosticBodyPreviewLength = 200;
 
@@ -711,11 +712,18 @@ async function getCachedPodgoricaFlights(
     return { flights: [], state: "unavailable" as const };
   }
 
-  const state: FlightCacheState = calculateCacheFreshness(
-    new Date(snapshot.fetchedAt),
+  const fetchedAt = new Date(snapshot.fetchedAt);
+  const freshness = calculateCacheFreshness(
+    fetchedAt,
     now,
     env.PODGORICA_FLIGHTS_CACHE_FRESHNESS_MINUTES,
   );
+  const state: FlightCacheState =
+    freshness === "stale" &&
+    now.getTime() - fetchedAt.getTime() > maximumPublicFlightsSnapshotAgeMinutes * 60_000
+      ? "unavailable"
+      : freshness;
+
   return {
     flights: snapshot.flights,
     lastSuccessfulRefreshAt: snapshot.lastSuccessfulRefreshAt,

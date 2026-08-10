@@ -277,6 +277,70 @@ test("uses the same atomically written cache for homepage and all-flights reads"
   assert.equal(cached.lastSuccessfulRefreshAt, "2026-07-22T08:00:00.000Z");
 });
 
+test("bounds public flight snapshot display equally for Podgorica and Tivat without deleting retained caches", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "airport-flights-public-freshness-"));
+  const podgoricaCachePath = join(directory, "podgorica-flights.json");
+  const tivatCachePath = join(directory, "tivat-flights.json");
+  const fetchedAt = "2026-07-22T08:00:00.000Z";
+  const snapshot = {
+    fetchedAt,
+    flights: [
+      {
+        direction: "departure" as const,
+        location: "Beograd",
+        scheduledAt: "2026-07-22T08:25:00.000Z",
+        scheduledDate: "2026-07-22",
+        scheduledTime: "10:25",
+      },
+    ],
+    lastSuccessfulRefreshAt: fetchedAt,
+    parserWarnings: [],
+    schemaVersion: 1 as const,
+    sourceUrl: "https://montenegroairports.com/aerodromixs/cache-flights.php?airport=pg",
+  };
+
+  await Promise.all(
+    [podgoricaCachePath, tivatCachePath].map((cachePath) =>
+      writeFile(cachePath, JSON.stringify(snapshot)),
+    ),
+  );
+
+  for (const cachePath of [podgoricaCachePath, tivatCachePath]) {
+    assert.equal(
+      (await getCachedPodgoricaFlights(cachePath, new Date("2026-07-22T09:30:00.000Z"))).state,
+      "fresh",
+    );
+    assert.equal(
+      (await getCachedPodgoricaFlights(cachePath, new Date("2026-07-22T09:30:00.001Z"))).state,
+      "stale",
+    );
+    assert.equal(
+      (await getCachedPodgoricaFlights(cachePath, new Date("2026-07-22T14:00:00.000Z"))).state,
+      "stale",
+    );
+    assert.equal(
+      (await getCachedPodgoricaFlights(cachePath, new Date("2026-07-22T14:00:00.001Z"))).state,
+      "unavailable",
+    );
+    await access(cachePath);
+    assert.equal(JSON.parse(await readFile(cachePath, "utf8")).fetchedAt, fetchedAt);
+  }
+
+  const refreshed = await refreshPodgoricaFlights({
+    cachePath: podgoricaCachePath,
+    httpClient: responseClient(await readFile(fixture, "utf8")),
+    now: () => new Date("2026-07-22T14:05:00.000Z"),
+  });
+  const restored = await getCachedPodgoricaFlights(
+    podgoricaCachePath,
+    new Date("2026-07-22T14:05:00.000Z"),
+  );
+
+  assert.equal(refreshed.success, true);
+  assert.equal(restored.state, "fresh");
+  assert.equal(restored.flights.length, 4);
+});
+
 test("keeps Podgorica and Tivat snapshots isolated through write, failure retention, and read", async () => {
   const directory = await mkdtemp(join(tmpdir(), "airport-flights-isolation-"));
   const podgoricaCachePath = join(directory, "podgorica-flights.json");

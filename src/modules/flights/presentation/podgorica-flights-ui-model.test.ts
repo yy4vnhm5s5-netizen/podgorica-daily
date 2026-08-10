@@ -47,13 +47,17 @@ test("keeps meaningful optional flight facts without changing required flight va
   assert.equal(tivatFlight.scheduledTime, "10:35");
 });
 
-test("distinguishes available, empty, stale, and unavailable flight card states", () => {
+test("distinguishes fresh, stale, stale-empty, and unavailable flight display states", () => {
   assert.equal(getAirportFlightsDisplayState({ flightCount: 3, state: "fresh" }), "flights");
   assert.equal(getAirportFlightsDisplayState({ flightCount: 3, state: "stale" }), "stale");
   assert.equal(getAirportFlightsDisplayState({ flightCount: 0, state: "fresh" }), "empty");
-  assert.equal(getAirportFlightsDisplayState({ flightCount: 0, state: "stale" }), "empty");
+  assert.equal(getAirportFlightsDisplayState({ flightCount: 0, state: "stale" }), "stale-empty");
   assert.equal(
     getAirportFlightsDisplayState({ flightCount: 0, state: "unavailable" }),
+    "unavailable",
+  );
+  assert.equal(
+    getAirportFlightsDisplayState({ flightCount: 3, state: "unavailable" }),
     "unavailable",
   );
 });
