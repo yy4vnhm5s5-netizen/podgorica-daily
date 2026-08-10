@@ -14,11 +14,6 @@ const rollout = [
     file: "src/modules/going-out/presentation/going-out-page.tsx",
     route: "/[city]/izlasci",
   },
-  {
-    exclude: "electricity",
-    file: "src/modules/city-alerts/presentation/power-outages-page.tsx",
-    route: "/[city]/struja",
-  },
   { exclude: "events", file: "src/app/[city]/dogadjaji/page.tsx", route: "/[city]/dogadjaji" },
   {
     exclude: "seaWaterQuality",

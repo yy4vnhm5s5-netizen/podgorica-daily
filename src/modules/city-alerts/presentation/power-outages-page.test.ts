@@ -48,7 +48,7 @@ test("stops repeating the H1 as the empty-state heading", async () => {
   assert.doesNotMatch(source, /<EmptyState[\s\S]{0,120}title=\{translations\.title\}/u);
 });
 
-test("leaves the populated, unavailable and summary behaviour intact", async () => {
+test("leaves CEDIS states intact and places discovery after their useful content", async () => {
   const source = await readSource();
 
   assert.match(
@@ -61,7 +61,12 @@ test("leaves the populated, unavailable and summary behaviour intact", async () 
     source,
     /<PowerOutageCard alert=\{outage\} city=\{city\} key=\{outage\.id\} locale=\{locale\} \/>/u,
   );
-  assert.match(source, /<ExploreCityLinks city=\{city\} exclude=\{\["electricity"\]\} \/>/u);
+  assert.match(source, /<CityFeatureDiscovery city=\{city\} currentFeature="electricity" \/>/u);
+  assert.doesNotMatch(source, /ExploreCityLinks/u);
+  assert.ok(
+    source.indexOf('<CityFeatureDiscovery city={city} currentFeature="electricity" />') >
+      source.indexOf('result.status === "unavailable"'),
+  );
 });
 
 test("adds no new links, routes or fabricated source facts", async () => {

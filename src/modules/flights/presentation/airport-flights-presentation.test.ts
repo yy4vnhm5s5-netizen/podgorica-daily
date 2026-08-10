@@ -44,7 +44,10 @@ test("full page and dashboard preserve stale-empty flight context", async () => 
 test("Flights keeps the discovery strip as its sole cross-navigation section", async () => {
   const source = await readPage();
 
-  assert.match(source, /import \{ FlightsCityDiscovery \} from "\.\/flights-city-discovery";/u);
-  assert.match(source, /<FlightsCityDiscovery city=\{city\} \/>/u);
+  assert.match(
+    source,
+    /import \{ CityFeatureDiscovery \} from "@\/shared\/components\/city-feature-discovery";/u,
+  );
+  assert.match(source, /<CityFeatureDiscovery city=\{city\} currentFeature="flights" \/>/u);
   assert.doesNotMatch(source, /ExploreCityLinks/u);
 });

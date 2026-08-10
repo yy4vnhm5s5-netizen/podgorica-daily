@@ -9,7 +9,7 @@ import {
   getAirportFlightsUpdatedLabel,
   getUpcomingAirportFlightGroups,
 } from "./podgorica-flights-ui-model";
-import { FlightsCityDiscovery } from "./flights-city-discovery";
+import { CityFeatureDiscovery } from "@/shared/components/city-feature-discovery";
 import { EmptyState } from "@/shared/components/empty-state";
 import { ErrorState } from "@/shared/components/error-state";
 import { NewTabNotice } from "@/shared/components/new-tab-notice";
@@ -107,7 +107,7 @@ function AirportFlightsPage({
         {copy.source}
         <NewTabNotice locale={locale} />
       </a>
-      <FlightsCityDiscovery city={city} />
+      <CityFeatureDiscovery city={city} currentFeature="flights" />
     </section>
   );
 }

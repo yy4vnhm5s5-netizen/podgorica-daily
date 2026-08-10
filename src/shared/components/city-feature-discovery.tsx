@@ -1,24 +1,34 @@
-import { ArrowUpRight, CalendarDays, Music2, Waves, Zap, type LucideIcon } from "lucide-react";
+import {
+  ArrowUpRight,
+  CalendarDays,
+  Music2,
+  Plane,
+  Waves,
+  Zap,
+  type LucideIcon,
+} from "lucide-react";
 import Link from "next/link";
 
 import {
-  getFlightsCityDiscovery,
-  getFlightsCityDiscoveryDesktopColumns,
-  type FlightsCityDiscoveryKey,
-} from "./flights-city-discovery-model";
+  getCityFeatureDiscovery,
+  getCityFeatureDiscoveryDesktopColumns,
+  type CityFeatureDiscoveryKey,
+} from "./city-feature-discovery-model";
 import { cn } from "@/shared/lib/utils";
 import type { City } from "@/shared/types/city";
 
-interface FlightsCityDiscoveryProps {
+interface CityFeatureDiscoveryProps {
   city: City;
+  currentFeature: CityFeatureDiscoveryKey;
 }
 
 const discoveryIcons = {
   electricity: Zap,
   events: CalendarDays,
+  flights: Plane,
   goingOut: Music2,
   seaWaterQuality: Waves,
-} satisfies Record<FlightsCityDiscoveryKey, LucideIcon>;
+} satisfies Record<CityFeatureDiscoveryKey, LucideIcon>;
 
 const discoveryStyles = {
   electricity: {
@@ -29,6 +39,10 @@ const discoveryStyles = {
     icon: "bg-indigo-600 text-white",
     tile: "border-indigo-200 bg-indigo-50 text-indigo-950 hover:border-indigo-300 hover:bg-indigo-100",
   },
+  flights: {
+    icon: "bg-sky-600 text-white",
+    tile: "border-sky-200 bg-sky-50 text-sky-950 hover:border-sky-300 hover:bg-sky-100",
+  },
   goingOut: {
     icon: "bg-violet-600 text-white",
     tile: "border-violet-200 bg-violet-50 text-violet-950 hover:border-violet-300 hover:bg-violet-100",
@@ -37,16 +51,16 @@ const discoveryStyles = {
     icon: "bg-cyan-600 text-white",
     tile: "border-cyan-200 bg-cyan-50 text-cyan-950 hover:border-cyan-300 hover:bg-cyan-100",
   },
-} satisfies Record<FlightsCityDiscoveryKey, { icon: string; tile: string }>;
+} satisfies Record<CityFeatureDiscoveryKey, { icon: string; tile: string }>;
 
-function FlightsCityDiscovery({ city }: FlightsCityDiscoveryProps) {
-  const discovery = getFlightsCityDiscovery(city);
-  if (discovery.links.length === 0) return null;
-  const desktopColumns = getFlightsCityDiscoveryDesktopColumns(discovery.links.length);
+function CityFeatureDiscovery({ city, currentFeature }: CityFeatureDiscoveryProps) {
+  const discovery = getCityFeatureDiscovery(city, currentFeature);
+  if (discovery.links.length < 2) return null;
+  const desktopColumns = getCityFeatureDiscoveryDesktopColumns(discovery.links.length);
 
   return (
     <nav
-      aria-labelledby="flights-city-discovery-heading"
+      aria-labelledby="city-feature-discovery-heading"
       className="overflow-hidden rounded-2xl border border-sky-200/80 bg-gradient-to-br from-sky-50 via-violet-50/70 to-cyan-50 p-4 shadow-sm shadow-sky-950/[0.04] sm:p-5"
     >
       <div className="flex items-baseline justify-between gap-3">
@@ -56,7 +70,7 @@ function FlightsCityDiscovery({ city }: FlightsCityDiscoveryProps) {
           </p>
           <h2
             className="mt-1 text-lg font-semibold tracking-tight"
-            id="flights-city-discovery-heading"
+            id="city-feature-discovery-heading"
           >
             {discovery.heading}
           </h2>
@@ -104,4 +118,4 @@ function FlightsCityDiscovery({ city }: FlightsCityDiscoveryProps) {
   );
 }
 
-export { FlightsCityDiscovery, type FlightsCityDiscoveryProps };
+export { CityFeatureDiscovery, type CityFeatureDiscoveryProps };

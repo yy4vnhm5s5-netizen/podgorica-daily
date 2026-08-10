@@ -3,43 +3,45 @@ import { getExploreCityLinks, type ExploreCityLinkKey } from "@/shared/config/ex
 import type { CityRouteAvailabilityOptions } from "@/shared/config/city-routes";
 import type { City } from "@/shared/types/city";
 
-type FlightsCityDiscoveryKey = Exclude<ExploreCityLinkKey, "city" | "flights">;
+type CityFeatureDiscoveryKey = Exclude<ExploreCityLinkKey, "city">;
 
-interface FlightsCityDiscoveryLink {
+interface CityFeatureDiscoveryLink {
   description: string;
   href: string;
-  key: FlightsCityDiscoveryKey;
+  key: CityFeatureDiscoveryKey;
   label: string;
   navigationLabel: string;
 }
 
-interface FlightsCityDiscovery {
+interface CityFeatureDiscovery {
   heading: string;
-  links: readonly FlightsCityDiscoveryLink[];
+  links: readonly CityFeatureDiscoveryLink[];
 }
 
 // This is presentation copy, not a second city-feature matrix. The shared ExploreCityLinks model
 // owns route selection, capability checks, public-feature availability and deterministic order.
 const discoveryCopy: Record<
-  FlightsCityDiscoveryKey,
-  Pick<FlightsCityDiscoveryLink, "description" | "label">
+  CityFeatureDiscoveryKey,
+  Pick<CityFeatureDiscoveryLink, "description" | "label">
 > = {
   electricity: { description: "Servisne informacije", label: "Struja" },
   events: { description: "Događaji i najave", label: "Događaji" },
+  flights: { description: "Dolasci i odlasci", label: "Letovi" },
   goingOut: { description: "Izlasci i nastupi", label: "Izlasci" },
   seaWaterQuality: { description: "Kvalitet mora", label: "Plaže" },
 };
 
-function getFlightsCityDiscovery(
+function getCityFeatureDiscovery(
   city: City,
+  currentFeature: CityFeatureDiscoveryKey,
   availability: CityRouteAvailabilityOptions = {},
-): FlightsCityDiscovery {
+): CityFeatureDiscovery {
   const links = getExploreCityLinks(city, {
     ...availability,
-    exclude: ["flights", "city"],
+    exclude: ["city", currentFeature],
     limit: 4,
-  }).flatMap((link): FlightsCityDiscoveryLink[] => {
-    if (link.key === "city" || link.key === "flights") return [];
+  }).flatMap((link): CityFeatureDiscoveryLink[] => {
+    if (link.key === "city" || link.key === currentFeature) return [];
 
     const copy = discoveryCopy[link.key];
     return [
@@ -58,7 +60,7 @@ function getFlightsCityDiscovery(
   };
 }
 
-function getFlightsCityDiscoveryDesktopColumns(linkCount: number) {
+function getCityFeatureDiscoveryDesktopColumns(linkCount: number) {
   if (linkCount <= 1) return "lg:grid-cols-1";
   if (linkCount === 2) return "lg:grid-cols-2";
   if (linkCount === 3) return "lg:grid-cols-3";
@@ -66,9 +68,9 @@ function getFlightsCityDiscoveryDesktopColumns(linkCount: number) {
 }
 
 export {
-  getFlightsCityDiscoveryDesktopColumns,
-  getFlightsCityDiscovery,
-  type FlightsCityDiscovery,
-  type FlightsCityDiscoveryKey,
-  type FlightsCityDiscoveryLink,
+  getCityFeatureDiscoveryDesktopColumns,
+  getCityFeatureDiscovery,
+  type CityFeatureDiscovery,
+  type CityFeatureDiscoveryKey,
+  type CityFeatureDiscoveryLink,
 };
