@@ -4,6 +4,7 @@ import type { Flight } from "../domain/flight";
 import type { AirportFlightsSource } from "../infrastructure/airport-flights-config";
 import type { FlightCacheState } from "../infrastructure/podgorica-flights";
 import {
+  getDisplayableFlightFact,
   getAirportFlightsDisplayState,
   getAirportFlightsUpdatedLabel,
   getUpcomingAirportFlightGroups,
@@ -138,10 +139,12 @@ function FlightGroup({
 
 function FlightCard({ flight, locale }: { flight: Flight; locale: Locale }) {
   const copy = locale === "me" ? montenegrinCopy : englishCopy;
+  const airline = getDisplayableFlightFact(flight.airline);
   const dateLabel = formatDateTime(new Date(flight.scheduledAt), {
     formatOptions: { dateStyle: "medium", timeStyle: undefined },
     locale: getLocaleTag(locale),
   }).label;
+  const status = getDisplayableFlightFact(flight.status);
 
   return (
     <Card className="border-primary/15 bg-slate-50/65 shadow-none">
@@ -158,11 +161,11 @@ function FlightCard({ flight, locale }: { flight: Flight; locale: Locale }) {
           </StatusBadge>
         </div>
         <dl className="grid gap-x-4 gap-y-2 text-sm sm:grid-cols-2">
-          {flight.airline ? <FlightValue label={copy.airline} value={flight.airline} /> : null}
+          {airline ? <FlightValue label={copy.airline} value={airline} /> : null}
           {flight.flightNumber ? (
             <FlightValue label={copy.flightNumber} value={flight.flightNumber} />
           ) : null}
-          {flight.status ? <FlightValue label={copy.status} value={flight.status} /> : null}
+          {status ? <FlightValue label={copy.status} value={status} /> : null}
         </dl>
       </CardContent>
     </Card>

@@ -11,6 +11,11 @@ interface AirportFlightGroups {
   departure: Flight[];
 }
 
+function getDisplayableFlightFact(value: string | null | undefined) {
+  const normalized = value?.trim();
+  return normalized && !/^[\-–—]+$/u.test(normalized) ? normalized : undefined;
+}
+
 function getAirportFlightsDisplayState({
   flightCount,
   state,
@@ -65,6 +70,7 @@ function getUpcomingAirportFlightGroups(
 }
 
 export {
+  getDisplayableFlightFact,
   getAirportFlightGroups,
   getAirportFlightsDisplayState,
   getAirportFlightsUpdatedLabel,

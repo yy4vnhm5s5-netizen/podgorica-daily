@@ -3,11 +3,49 @@ import test from "node:test";
 
 import type { Flight } from "../domain/flight.ts";
 import {
+  getDisplayableFlightFact,
   getAirportFlightGroups,
   getAirportFlightsDisplayState,
   getAirportFlightsUpdatedLabel,
   getUpcomingAirportFlightGroups,
 } from "./podgorica-flights-ui-model.ts";
+
+test("suppresses blank and placeholder optional flight facts", () => {
+  for (const value of [undefined, null, "", "  ", "-", " – ", "—"]) {
+    assert.equal(getDisplayableFlightFact(value), undefined);
+  }
+});
+
+test("keeps meaningful optional flight facts without changing required flight values", () => {
+  const podgoricaFlight: Flight = {
+    direction: "arrival",
+    flightNumber: "JU663",
+    location: "Beograd",
+    scheduledAt: "2026-08-10T08:35:00.000Z",
+    scheduledDate: "2026-08-10",
+    scheduledTime: "10:35",
+    status: "Arrived",
+  };
+  const tivatFlight: Flight = {
+    airline: " Air Serbia ",
+    direction: "arrival",
+    flightNumber: "JU 683",
+    location: "Beograd",
+    scheduledAt: "2026-08-10T08:35:00.000Z",
+    scheduledDate: "2026-08-10",
+    scheduledTime: "10:35",
+    status: " Poletio ",
+  };
+
+  assert.equal(getDisplayableFlightFact(podgoricaFlight.airline), undefined);
+  assert.equal(getDisplayableFlightFact(podgoricaFlight.status), "Arrived");
+  assert.equal(getDisplayableFlightFact(tivatFlight.airline), "Air Serbia");
+  assert.equal(getDisplayableFlightFact(tivatFlight.status), "Poletio");
+  assert.equal(podgoricaFlight.flightNumber, "JU663");
+  assert.equal(tivatFlight.flightNumber, "JU 683");
+  assert.equal(podgoricaFlight.location, "Beograd");
+  assert.equal(tivatFlight.scheduledTime, "10:35");
+});
 
 test("distinguishes available, empty, stale, and unavailable flight card states", () => {
   assert.equal(getAirportFlightsDisplayState({ flightCount: 3, state: "fresh" }), "flights");

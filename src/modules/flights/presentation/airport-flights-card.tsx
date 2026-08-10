@@ -7,6 +7,7 @@ import type { Flight } from "../domain/flight";
 import { getAirportFlightsSourceForCity } from "../infrastructure/airport-flights-config";
 import type { FlightCacheState } from "../infrastructure/podgorica-flights";
 import {
+  getDisplayableFlightFact,
   getAirportFlightsDisplayState,
   getAirportFlightsUpdatedLabel,
   getUpcomingAirportFlightGroups,
@@ -173,6 +174,7 @@ function AirportFlightsCard({
 
 function AirportFlightRow({ flight, locale }: { flight: Flight; locale: Locale }) {
   const copy = locale === "me" ? montenegrinCopy : englishCopy;
+  const airline = getDisplayableFlightFact(flight.airline);
   return (
     <li className="flex items-start justify-between gap-3 py-3 first:pt-0 last:pb-0">
       <div className="min-w-0 flex-1">
@@ -180,12 +182,9 @@ function AirportFlightRow({ flight, locale }: { flight: Flight; locale: Locale }
         <p className="mt-1 text-sm font-medium tabular-nums text-foreground/85">
           {flight.scheduledTime}
         </p>
-        {flight.airline ? (
-          <p
-            className="mt-0.5 truncate text-xs leading-5 text-muted-foreground"
-            title={flight.airline}
-          >
-            {flight.airline}
+        {airline ? (
+          <p className="mt-0.5 truncate text-xs leading-5 text-muted-foreground" title={airline}>
+            {airline}
           </p>
         ) : null}
       </div>
