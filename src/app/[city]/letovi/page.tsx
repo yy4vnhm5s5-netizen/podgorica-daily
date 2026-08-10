@@ -63,6 +63,7 @@ async function FlightsPage({ params }: FlightsPageProps) {
     <DashboardLayout city={context.city} translations={getTranslations(locale)}>
       <AirportFlightsPage
         airport={airport}
+        city={context.city}
         flights={result.flights}
         lastSuccessfulRefreshAt={result.lastSuccessfulRefreshAt}
         locale={locale}

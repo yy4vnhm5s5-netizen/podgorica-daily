@@ -9,17 +9,21 @@ import {
   getAirportFlightsUpdatedLabel,
   getUpcomingAirportFlightGroups,
 } from "./podgorica-flights-ui-model";
+import { FlightsCityDiscovery } from "./flights-city-discovery";
 import { EmptyState } from "@/shared/components/empty-state";
 import { ErrorState } from "@/shared/components/error-state";
+import { ExploreCityLinks } from "@/shared/components/explore-city-links";
 import { NewTabNotice } from "@/shared/components/new-tab-notice";
 import { SectionTitle } from "@/shared/components/section-title";
 import { StatusBadge } from "@/shared/components/status-badge";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { getLocaleTag, type Locale } from "@/shared/config/locale";
 import { formatDateTime } from "@/shared/lib/date";
+import type { City } from "@/shared/types/city";
 
 interface AirportFlightsPageProps {
   airport: AirportFlightsSource;
+  city: City;
   flights: readonly Flight[];
   lastSuccessfulRefreshAt?: string;
   locale: Locale;
@@ -28,6 +32,7 @@ interface AirportFlightsPageProps {
 
 function AirportFlightsPage({
   airport,
+  city,
   flights,
   lastSuccessfulRefreshAt,
   locale,
@@ -103,6 +108,8 @@ function AirportFlightsPage({
         {copy.source}
         <NewTabNotice locale={locale} />
       </a>
+      <FlightsCityDiscovery city={city} />
+      <ExploreCityLinks city={city} exclude={["flights"]} />
     </section>
   );
 }

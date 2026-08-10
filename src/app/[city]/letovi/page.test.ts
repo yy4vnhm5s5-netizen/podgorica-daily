@@ -48,6 +48,7 @@ test("the title and page H1 use the configured airport source", async () => {
   const source = await flightsCopy();
   assert.match(source, /const title = airport\.displayName/u);
   assert.match(source, /title=\{title\}/u);
+  assert.match(source, /<FlightsCityDiscovery city=\{city\} \/>/u);
   assert.equal(airportFlightsSources.tivat.displayName, "Aerodrom Tivat");
 });
 
