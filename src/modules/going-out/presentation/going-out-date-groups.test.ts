@@ -121,7 +121,12 @@ test("keeps external attribution for incomplete entries and routes eligible card
   assert.match(source, /isGoingOutEventDetailEligible\(event, city\)/u);
   assert.match(source, /getGoingOutDetailPath\(city, "montegigs", event\.sourceEventId\)/u);
   assert.match(source, /<Link/u);
-  assert.match(source, /<ExploreCityLinks city=\{city\} exclude=\{\["goingOut"\]\} \/>/u);
+  assert.match(source, /<CityFeatureDiscovery city=\{city\} currentFeature="goingOut" \/>/u);
+  assert.doesNotMatch(source, /ExploreCityLinks/u);
+  assert.ok(
+    source.indexOf('<CityFeatureDiscovery city={city} currentFeature="goingOut" />') >
+      source.indexOf('displayState === "events" || displayState === "stale"'),
+  );
   // No claim about counts, venues, nightlife or what is "on" in the city.
   assert.doesNotMatch(source, /najbolj|preporuč|klubov[ai]\b|nema izlazaka/iu);
 });

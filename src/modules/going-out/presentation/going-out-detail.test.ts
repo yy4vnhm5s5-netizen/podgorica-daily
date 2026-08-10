@@ -33,3 +33,14 @@ test("uses the shared breadcrumb trail for crawlable navigation and keeps source
   assert.match(source, /target="_blank"/u);
   assert.match(source, /<NewTabNotice locale=\{locale\} \/>/u);
 });
+
+test("keeps the neutral ExploreCityLinks block on individual detail pages", async () => {
+  const source = await readFile(new URL("./going-out-detail.tsx", import.meta.url), "utf8");
+
+  assert.match(
+    source,
+    /import \{ ExploreCityLinks \} from "@\/shared\/components\/explore-city-links";/u,
+  );
+  assert.match(source, /<ExploreCityLinks city=\{city\} exclude=\{\["goingOut"\]\} \/>/u);
+  assert.doesNotMatch(source, /CityFeatureDiscovery/u);
+});
