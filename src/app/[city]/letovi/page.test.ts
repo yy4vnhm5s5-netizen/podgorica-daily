@@ -21,23 +21,33 @@ const requireCity = (cityId: "podgorica" | "tivat") => {
   return city;
 };
 
-test("the document title names the airport the page is about", () => {
-  // Search demand reaching this page is "aerodrom podgorica" and its variants; a title describing
-  // the city instead ("Letovi iz Podgorice") never contained the word at all.
-  const title = getPageTitle(`${airportFlightsSources.podgorica.displayName} — dolasci i odlasci`);
+test("the document title names the airport and accurate timetable concept", () => {
+  const titles = [
+    getPageTitle(
+      `Red letenja za ${airportFlightsSources.podgorica.displayName} — dolasci i odlasci`,
+    ),
+    getPageTitle(`Red letenja za ${airportFlightsSources.tivat.displayName} — dolasci i odlasci`),
+  ];
 
-  assert.match(title, /Aerodrom Podgorica/u);
-  assert.match(title, /dolasci/iu);
-  assert.match(title, /odlasci/iu);
-  // A title, not a keyword list: one subject and one qualifier, no pipe-separated variants.
-  assert.equal(title.split("|").length, 2, title);
-  assert.ok(title.length <= 70, `title is ${title.length} characters`);
+  assert.deepEqual(titles, [
+    "Red letenja za Aerodrom Podgorica — dolasci i odlasci | Gradom.me",
+    "Red letenja za Aerodrom Tivat — dolasci i odlasci | Gradom.me",
+  ]);
+
+  for (const title of titles) {
+    assert.match(title, /Red letenja/u);
+    assert.match(title, /dolasci/iu);
+    assert.match(title, /odlasci/iu);
+    // A title, not a keyword list: one subject and one qualifier, no pipe-separated variants.
+    assert.equal(title.split("|").length, 2, title);
+    assert.ok(title.length <= 70, `title is ${title.length} characters`);
+  }
 });
 
 test("the title and page H1 use the configured airport source", async () => {
   const source = await flightsCopy();
-  assert.match(source, /airport\.displayName/u);
-  assert.match(source, /airport=\{airport\}/u);
+  assert.match(source, /const title = airport\.displayName/u);
+  assert.match(source, /title=\{title\}/u);
   assert.equal(airportFlightsSources.tivat.displayName, "Aerodrom Tivat");
 });
 
@@ -93,6 +103,7 @@ test("Tivat route metadata derives airport identity and canonical URL from share
 
   assert.match(route, /getAirportFlightsSourceForCity\(context\.city\.id\)/u);
   assert.match(route, /getFlightsPageTitle\(airport\.displayName\)/u);
+  assert.match(route, /Red letenja za \$\{airportName\} — dolasci i odlasci/u);
   assert.match(route, /Red letenja za \$\{airport\.displayName\}/u);
   assert.match(route, /canonical: getFlightsPath\(context\.city\)/u);
 });

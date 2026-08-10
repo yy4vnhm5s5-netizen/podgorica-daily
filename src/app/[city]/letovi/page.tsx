@@ -21,12 +21,12 @@ interface FlightsPageProps {
 }
 
 // The document title names the airport, because that is what the page is and what its own H1
-// says. The previous "Letovi iz Podgorice" described the city instead, so the page's title never
-// contained the word "aerodrom" at all while every search that reaches it is an airport lookup.
-// Both directions are named because arrivals are searched for as often as the airport itself.
-// The airport name comes from the configured source so the title and the H1 stay in step.
+// says. It also names the accurate "red letenja" concept already used in the visible intro and
+// description. Both directions are named because arrivals are searched for as often as the
+// airport itself. The airport name comes from the configured source so the title and the H1 stay
+// in step.
 function getFlightsPageTitle(airportName: string) {
-  return `${airportName} — dolasci i odlasci`;
+  return `Red letenja za ${airportName} — dolasci i odlasci`;
 }
 
 async function generateMetadata({ params }: FlightsPageProps): Promise<Metadata> {
