@@ -8,8 +8,8 @@ import {
   isEventPresentationCategory,
   type EventPresentationCategory,
 } from "./event-presentation-category.ts";
-import { getCityName } from "@/shared/config/cities";
 import type { Locale } from "@/shared/config/locale";
+import { addCityContextToMetadataTitle } from "@/shared/lib/metadata-text";
 import type { City, CityContext } from "@/shared/types/city";
 
 type EventDatePreset = "today" | "tomorrow" | "upcoming" | "weekend";
@@ -44,20 +44,7 @@ function getPublicCityEventById(events: readonly CityEvent[], eventId: string) {
 // boundaries so a substring ("Barok" for Bar) is not mistaken for a mention. Visible title/H1 are
 // deliberately untouched; this only affects metadata.
 function getEventDetailPageTitle(event: CityEvent, city: City) {
-  const cityForms = new Set([
-    getCityName(city),
-    getCityName(city, "locative"),
-    getCityName(city, "accusative"),
-  ]);
-  const mentionsCity = [...cityForms].some((form) =>
-    new RegExp(`(^|\\P{L})${escapeRegExpLiteral(form)}(\\P{L}|$)`, "iu").test(event.title),
-  );
-
-  return mentionsCity ? event.title : `${event.title} — ${getCityName(city)}`;
-}
-
-function escapeRegExpLiteral(value: string) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return addCityContextToMetadataTitle(event.title, city);
 }
 
 // One status line for the detail page. Provider-declared states win, because "otkazano" and

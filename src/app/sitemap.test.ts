@@ -3,7 +3,11 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import test from "node:test";
 
-import sitemap, { dynamic, getSeaWaterQualitySitemapEntries } from "./sitemap.ts";
+import sitemap, {
+  dynamic,
+  getGoingOutDetailSitemapEntries,
+  getSeaWaterQualitySitemapEntries,
+} from "./sitemap.ts";
 import { isCityPublicFeatureRouteAvailable } from "./city-routing.ts";
 import { podgoricaEvent } from "@/modules/events/__fixtures__/events";
 import { isEventSitemapEligible } from "@/modules/events/domain/event-lifecycle";
@@ -12,7 +16,12 @@ import { parseBudvaSeaWaterQualitySummary } from "@/modules/sea-water-quality/in
 import { mergeSeaWaterQualityHistoryBackfill } from "@/modules/sea-water-quality/infrastructure/sea-water-quality-history-cache";
 import type { SeaWaterQualitySupportedCityId } from "@/modules/sea-water-quality/infrastructure/sea-water-quality-cities";
 import { getActiveCities, getCity } from "@/shared/config/cities";
-import { getEventDetailPath, getEventsPath } from "@/shared/config/public-routes";
+import {
+  getEventDetailPath,
+  getEventsPath,
+  getGoingOutDetailPath,
+} from "@/shared/config/public-routes";
+import type { GoingOutEvent } from "@/modules/going-out/domain/going-out-event";
 import type { City } from "@/shared/types/city";
 
 test("publishes only canonical indexable public routes", async () => {
@@ -259,6 +268,60 @@ test("never emits the same URL twice", async () => {
   assert.deepEqual(urls.length, new Set(urls).size);
 });
 
+test("publishes only current, detail-eligible Going Out events from their city snapshot", async () => {
+  const kotor = getCity("kotor");
+  assert.ok(kotor);
+  const now = new Date("2026-08-10T10:00:00.000Z");
+  const eligible: GoingOutEvent = {
+    city: "kotor",
+    description: "Koncert na otvorenom uz lokalne izvođače.",
+    id: "kotor-concert",
+    sourceEventId: "7465",
+    sourceName: "MonteGigs",
+    sourceUrl: "https://staging.montegigs.me/me/events/kotor/7465-20260812-koncert-u-kotoru",
+    startDate: "2026-08-12",
+    title: "Koncert u Kotoru",
+  };
+  const entries = await getGoingOutDetailSitemapEntries(
+    [kotor],
+    async () => ({
+      events: [eligible, { ...eligible, description: undefined, id: "missing-description" }],
+      state: "fresh" as const,
+    }),
+    now,
+  );
+
+  assert.deepEqual(
+    entries.map(({ url }) => new URL(url).pathname),
+    [getGoingOutDetailPath(kotor, "montegigs", "7465")],
+  );
+});
+
+test("omits Going Out details when a city snapshot is unavailable", async () => {
+  const kotor = getCity("kotor");
+  assert.ok(kotor);
+  const entries = await getGoingOutDetailSitemapEntries([kotor], async () => ({
+    events: [],
+    state: "unavailable" as const,
+  }));
+
+  assert.deepEqual(entries, []);
+});
+
+test("does not read or publish Going Out details for an inactive city without the capability", async () => {
+  const niksic = getCity("niksic");
+  assert.ok(niksic);
+  let read = false;
+
+  const entries = await getGoingOutDetailSitemapEntries([niksic], async () => {
+    read = true;
+    return { events: [], state: "fresh" as const };
+  });
+
+  assert.equal(read, false);
+  assert.deepEqual(entries, []);
+});
+
 test("applies the event lifecycle policy per city without leaking events across cities", () => {
   // Composes exactly what sitemap() composes — the public-listing filter and the lifecycle rule —
   // against a deterministic reference instant, so the boundary is asserted on real event shapes.
@@ -397,9 +460,7 @@ test("stamps each beach detail URL with its own newest sampling date", async () 
         displayName: "Jaz 02",
         firstSeenRound: 1,
         lastSeenRound: 5,
-        measurements: [
-          { grade: "excellent" as const, samplingDate: "2026-07-23", sourceRound: 2 },
-        ],
+        measurements: [{ grade: "excellent" as const, samplingDate: "2026-07-23", sourceRound: 2 }],
         presentInLatestRound: true,
         sourceLocationId: 2,
       },

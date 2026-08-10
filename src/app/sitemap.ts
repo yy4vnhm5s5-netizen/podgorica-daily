@@ -6,12 +6,15 @@ import { isEventSitemapEligible } from "@/modules/events/domain/event-lifecycle"
 import type { SeaWaterQualityHistoryLocation } from "@/modules/sea-water-quality/domain/sea-water-quality";
 import { getCityEventsForPublicListing } from "@/modules/events/presentation/events-ui-model";
 import { getFuelPrices } from "@/modules/fuel/infrastructure/gov-me-fuel-prices";
+import { getGoingOutEvents } from "@/modules/going-out/application/get-going-out-events";
+import { isGoingOutEventDetailEligible } from "@/modules/going-out/application/going-out-public-detail";
 import { getSeaWaterQualityHistory } from "@/modules/sea-water-quality/application/get-sea-water-quality-history";
 import {
   getAboutPlatformPath,
   getContactPath,
   getEventDetailPath,
   getFuelPricesPath,
+  getGoingOutDetailPath,
   getPrivacyPolicyPath,
   getTermsOfUsePath,
   getSeaWaterQualityLocationPath,
@@ -113,8 +116,47 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   );
 
   const seaWaterQualityEntries = await getSeaWaterQualitySitemapEntries(cities);
+  const goingOutDetailEntries = await getGoingOutDetailSitemapEntries(cities, undefined, now);
 
-  return [...cityEntries, ...globalEntries, ...eventEntries.flat(), ...seaWaterQualityEntries];
+  return [
+    ...cityEntries,
+    ...globalEntries,
+    ...eventEntries.flat(),
+    ...goingOutDetailEntries,
+    ...seaWaterQualityEntries,
+  ];
+}
+
+async function getGoingOutDetailSitemapEntries(
+  cities = getActiveCities(),
+  readGoingOutEvents: typeof getGoingOutEvents = getGoingOutEvents,
+  now = new Date(),
+): Promise<MetadataRoute.Sitemap> {
+  const entries = await Promise.all(
+    cities
+      .filter((city) => isCityPublicFeatureRouteAvailable(city, "goingOut"))
+      .map(async (city) => {
+        try {
+          const context = createCityContext(city.id, "me");
+          const result = await readGoingOutEvents(context);
+          if (result.state === "unavailable") return [];
+
+          return result.events
+            .filter((event) => isGoingOutEventDetailEligible(event, city, now))
+            .map((event) =>
+              createEntry(
+                getGoingOutDetailPath(city, "montegigs", event.sourceEventId),
+                "daily",
+                0.6,
+              ),
+            );
+        } catch {
+          return [];
+        }
+      }),
+  );
+
+  return entries.flat();
 }
 
 function getLatestSamplingDate(location: SeaWaterQualityHistoryLocation) {
@@ -163,7 +205,7 @@ async function getSeaWaterQualitySitemapEntries(
   return entries.flat();
 }
 
-export { getSeaWaterQualitySitemapEntries };
+export { getGoingOutDetailSitemapEntries, getSeaWaterQualitySitemapEntries };
 
 async function getFuelSitemapEntry(
   readFuelPrices: typeof getFuelPrices = getFuelPrices,

@@ -110,7 +110,7 @@ test("the page groups by day and demotes the card title below the day heading", 
   assert.doesNotMatch(source, /<h2 className="text-base font-semibold leading-6">/u);
 });
 
-test("leaves the empty, stale, source-attribution and navigation behaviour untouched", async () => {
+test("keeps external attribution for incomplete entries and routes eligible cards internally", async () => {
   const source = await readFile(new URL("./going-out-page.tsx", import.meta.url), "utf8");
 
   assert.match(source, /displayState === "events" \|\| displayState === "stale" \? \(/u);
@@ -118,6 +118,9 @@ test("leaves the empty, stale, source-attribution and navigation behaviour untou
   assert.match(source, /\{copy\.stale\}/u);
   assert.match(source, /\{copy\.source\}/u);
   assert.match(source, /href=\{event\.sourceUrl\}/u);
+  assert.match(source, /isGoingOutEventDetailEligible\(event, city\)/u);
+  assert.match(source, /getGoingOutDetailPath\(city, "montegigs", event\.sourceEventId\)/u);
+  assert.match(source, /<Link/u);
   assert.match(source, /<ExploreCityLinks city=\{city\} exclude=\{\["goingOut"\]\} \/>/u);
   // No claim about counts, venues, nightlife or what is "on" in the city.
   assert.doesNotMatch(source, /najbolj|preporuč|klubov[ai]\b|nema izlazaka/iu);

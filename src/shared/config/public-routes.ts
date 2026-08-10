@@ -39,6 +39,14 @@ function getGoingOutPath(city: CityRouteTarget) {
   return `${getCityPath(city)}/izlasci`;
 }
 
+function getGoingOutDetailPath(
+  city: CityRouteTarget,
+  provider: "montegigs",
+  sourceEventId: string,
+) {
+  return `${getGoingOutPath(city)}/${encodeURIComponent(`${provider}-${sourceEventId}`)}`;
+}
+
 function getSeaWaterQualityPath(city: CityRouteTarget) {
   return `${getCityPath(city)}/plaze`;
 }
@@ -71,6 +79,7 @@ export {
   getEventsPath,
   getFlightsPath,
   getGoingOutPath,
+  getGoingOutDetailPath,
   getPrivacyPolicyPath,
   getSeaWaterQualityPath,
   getSeaWaterQualityLocationPath,

@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import type { GoingOutEvent } from "../domain/going-out-event";
+import { isGoingOutEventDetailEligible } from "../application/going-out-public-detail";
 import type { GoingOutCacheState } from "../infrastructure/montegigs-going-out";
 import {
   formatGoingOutSchedule,
@@ -13,7 +14,7 @@ import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { InCardEmptyNote } from "@/shared/components/in-card-empty-note";
 import { NewTabNotice } from "@/shared/components/new-tab-notice";
 import type { Locale } from "@/shared/config/locale";
-import { getGoingOutPath } from "@/shared/config/public-routes";
+import { getGoingOutDetailPath, getGoingOutPath } from "@/shared/config/public-routes";
 import type { City } from "@/shared/types/city";
 import { cn } from "@/shared/lib/utils";
 
@@ -57,6 +58,7 @@ function GoingOutSection({ city, events, locale, state }: GoingOutSectionProps) 
               {upcoming.map((event, index) => (
                 <GoingOutCard
                   className={getResponsiveCardVisibilityClass(index)}
+                  city={city}
                   event={event}
                   key={event.id}
                   locale={locale}
@@ -86,45 +88,61 @@ function GoingOutSection({ city, events, locale, state }: GoingOutSectionProps) 
 
 function GoingOutCard({
   className,
+  city,
   event,
   locale,
 }: {
   className?: string;
+  city: City;
   event: GoingOutEvent;
   locale: Locale;
 }) {
+  const detailEligible = isGoingOutEventDetailEligible(event, city);
+  const cardContent = (
+    <>
+      {event.imageUrl ? (
+        <Image
+          alt=""
+          className="aspect-[16/9] w-full shrink-0 object-cover sm:aspect-auto sm:w-40 sm:self-stretch lg:aspect-[4/3] lg:w-full lg:self-auto"
+          height={180}
+          src={event.imageUrl}
+          unoptimized
+          width={320}
+        />
+      ) : (
+        <div className="flex aspect-[16/9] w-full shrink-0 items-center justify-center bg-violet-100/65 text-violet-700 dark:bg-violet-900/35 dark:text-violet-300 sm:aspect-auto sm:w-40 sm:self-stretch lg:aspect-[4/3] lg:w-full lg:self-auto">
+          <CalendarDays aria-hidden="true" className="size-7" strokeWidth={1.5} />
+        </div>
+      )}
+      <div className="min-w-0 p-3.5 sm:flex sm:flex-1 sm:flex-col sm:justify-center lg:block">
+        <h3 className="line-clamp-2 text-sm font-semibold leading-5 group-hover:text-violet-800 dark:group-hover:text-violet-200 sm:line-clamp-none lg:line-clamp-3">
+          {event.title}
+        </h3>
+        <p className="mt-2 text-xs leading-5 text-muted-foreground">
+          {formatGoingOutSchedule(event, locale)}
+        </p>
+      </div>
+    </>
+  );
+  const cardClassName =
+    "group flex min-h-full flex-col overflow-hidden rounded-xl border border-violet-200/60 bg-background/80 transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-violet-300 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-600 dark:border-violet-800/55 dark:bg-background/70 dark:hover:border-violet-700 sm:flex-row lg:flex-col";
+
   return (
     <li className={cn("min-w-0", className)}>
-      <a
-        className="group flex min-h-full flex-col overflow-hidden rounded-xl border border-violet-200/60 bg-background/80 transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-violet-300 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-600 dark:border-violet-800/55 dark:bg-background/70 dark:hover:border-violet-700 sm:flex-row lg:flex-col"
-        href={event.sourceUrl}
-        rel="noreferrer"
-        target="_blank"
-      >
-        {event.imageUrl ? (
-          <Image
-            alt=""
-            className="aspect-[16/9] w-full shrink-0 object-cover sm:aspect-auto sm:w-40 sm:self-stretch lg:aspect-[4/3] lg:w-full lg:self-auto"
-            height={180}
-            src={event.imageUrl}
-            unoptimized
-            width={320}
-          />
-        ) : (
-          <div className="flex aspect-[16/9] w-full shrink-0 items-center justify-center bg-violet-100/65 text-violet-700 dark:bg-violet-900/35 dark:text-violet-300 sm:aspect-auto sm:w-40 sm:self-stretch lg:aspect-[4/3] lg:w-full lg:self-auto">
-            <CalendarDays aria-hidden="true" className="size-7" strokeWidth={1.5} />
-          </div>
-        )}
-        <div className="min-w-0 p-3.5 sm:flex sm:flex-1 sm:flex-col sm:justify-center lg:block">
-          <h3 className="line-clamp-2 text-sm font-semibold leading-5 group-hover:text-violet-800 dark:group-hover:text-violet-200 sm:line-clamp-none lg:line-clamp-3">
-            {event.title}
-          </h3>
-          <p className="mt-2 text-xs leading-5 text-muted-foreground">
-            {formatGoingOutSchedule(event, locale)}
-          </p>
+      {detailEligible ? (
+        <Link
+          aria-label={`Detalji: ${event.title}`}
+          className={cardClassName}
+          href={getGoingOutDetailPath(city, "montegigs", event.sourceEventId)}
+        >
+          {cardContent}
+        </Link>
+      ) : (
+        <a className={cardClassName} href={event.sourceUrl} rel="noreferrer" target="_blank">
+          {cardContent}
           <NewTabNotice locale={locale} />
-        </div>
-      </a>
+        </a>
+      )}
     </li>
   );
 }
@@ -135,10 +153,8 @@ function getResponsiveCardVisibilityClass(index: number) {
   return "hidden lg:block";
 }
 
-// Matches the canonical /izlasci copy: the empty state describes what Gradom has, not what the
-// city is doing, and the subtitle names the inventory rather than categories the listing model
-// does not store. The city is omitted from the empty sentence only because the whole dashboard is
-// already scoped to one city.
+// The empty state describes Gradom's own listings, not what the city is doing. The dashboard is
+// already city-scoped, so the city is intentionally omitted from the sentence.
 const montenegrinCopy = {
   all: "Pogledaj sve izlaske",
   empty: "Trenutno nemamo dostupne najave izlazaka.",

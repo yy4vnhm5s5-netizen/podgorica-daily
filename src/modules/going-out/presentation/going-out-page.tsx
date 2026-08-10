@@ -1,7 +1,9 @@
 import { ExternalLink, Music2 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
 import type { GoingOutEvent } from "../domain/going-out-event";
+import { isGoingOutEventDetailEligible } from "../application/going-out-public-detail";
 import type { GoingOutCacheState } from "../infrastructure/montegigs-going-out";
 import {
   formatGoingOutDateHeading,
@@ -18,6 +20,7 @@ import { SectionTitle } from "@/shared/components/section-title";
 import { getCityName } from "@/shared/config/cities";
 import type { Locale } from "@/shared/config/locale";
 import type { City } from "@/shared/types/city";
+import { getGoingOutDetailPath } from "@/shared/config/public-routes";
 
 interface GoingOutPageProps {
   city: City;
@@ -60,7 +63,7 @@ function GoingOutPage({ city, events, locale, state }: GoingOutPageProps) {
               </h2>
               <ul className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {group.events.map((event) => (
-                  <GoingOutPageCard event={event} key={event.id} locale={locale} />
+                  <GoingOutPageCard city={city} event={event} key={event.id} locale={locale} />
                 ))}
               </ul>
             </section>
@@ -85,9 +88,18 @@ function GoingOutPage({ city, events, locale, state }: GoingOutPageProps) {
   );
 }
 
-function GoingOutPageCard({ event, locale }: { event: GoingOutEvent; locale: Locale }) {
+function GoingOutPageCard({
+  city,
+  event,
+  locale,
+}: {
+  city: City;
+  event: GoingOutEvent;
+  locale: Locale;
+}) {
   const copy = locale === "me" ? montenegrinCopy : englishCopy;
   const time = formatGoingOutTime(event, locale);
+  const detailEligible = isGoingOutEventDetailEligible(event, city);
   return (
     <li className="min-w-0">
       <Card className="h-full overflow-hidden border-violet-200/65 bg-violet-50/45 shadow-sm shadow-violet-950/[0.025] dark:border-violet-800/55 dark:bg-violet-950/25">
@@ -116,27 +128,35 @@ function GoingOutPageCard({ event, locale }: { event: GoingOutEvent; locale: Loc
           ) : null}
         </CardHeader>
         <CardContent className="p-4 pt-0 sm:p-5 sm:pt-0">
-          <a
-            className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-violet-800 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-600 dark:text-violet-200"
-            href={event.sourceUrl}
-            rel="noreferrer"
-            target="_blank"
-          >
-            {copy.source}
-            <NewTabNotice locale={locale} />
-            <ExternalLink aria-hidden="true" className="size-3.5" />
-          </a>
+          {detailEligible ? (
+            <Link
+              className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-violet-800 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-600 dark:text-violet-200"
+              href={getGoingOutDetailPath(city, "montegigs", event.sourceEventId)}
+            >
+              {copy.details}
+            </Link>
+          ) : (
+            <a
+              className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-violet-800 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-600 dark:text-violet-200"
+              href={event.sourceUrl}
+              rel="noreferrer"
+              target="_blank"
+            >
+              {copy.source}
+              <NewTabNotice locale={locale} />
+              <ExternalLink aria-hidden="true" className="size-3.5" />
+            </a>
+          )}
         </CardContent>
       </Card>
     </li>
   );
 }
 
-// Only what a listing actually carries: a title, the day, and — when the source gave them — a
-// start time and a venue. There is no category, description, organiser, performer or price in the
-// model, so the copy names none of them, and it never claims to cover everything happening in the
-// city. The empty state describes Gradom's own listings, not the city's nightlife.
+// The listing stays deliberately concise even though the normal snapshot now also carries richer
+// source fields for eligible detail pages. It never claims to cover everything happening in a city.
 const montenegrinCopy = {
+  details: "Detalji",
   description:
     "Pregled predstojećih izlazaka i dešavanja u {city}, grupisan po danima, sa vremenom početka i mjestom kada su poznati.",
   empty: "Trenutno nemamo dostupne najave izlazaka u {city}.",
@@ -147,6 +167,7 @@ const montenegrinCopy = {
 } as const;
 
 const englishCopy = {
+  details: "Details",
   description:
     "Upcoming nights out and events in {city}, grouped by day, with start time and venue where known.",
   empty: "We have no listings for {city} right now.",
