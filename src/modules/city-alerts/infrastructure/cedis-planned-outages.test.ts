@@ -9,19 +9,68 @@ import {
   getPodgoricaSection,
   parseCedisArticle,
   parseCedisArticleResult,
+  parseServiceDates,
   parseTimeRange,
 } from "./cedis-planned-outages.ts";
 
 const fixture = (name: string) =>
   readFile(new URL(`./__fixtures__/${name}`, import.meta.url), "utf8");
 
-test("discovers only planned-work listing links", async () => {
+test("discovers only supported CEDIS service-notice listing links", async () => {
   const articles = discoverCedisArticles(
     await fixture("listing.html"),
     new Date("2026-03-29T12:00:00Z"),
   );
   assert.equal(articles.length, 1);
   assert.equal(articles[0].url, "https://cedis.me/planirani-radovi-za-30-mart/");
+  assert.equal(articles[0].serviceDate?.toISOString(), "2026-03-30T12:00:00.000Z");
+});
+
+test("discovers the CEDIS service-information title family using its service date", () => {
+  const articles = discoverCedisArticles(
+    '<a href="/servisne-informacije/servisne-informacije-za-11-avgust/">Servisne informacije za 11. avgust</a>',
+    new Date("2026-08-10T12:00:00Z"),
+  );
+
+  assert.equal(articles.length, 1);
+  assert.equal(
+    articles[0]?.url,
+    "https://cedis.me/servisne-informacije/servisne-informacije-za-11-avgust/",
+  );
+  assert.equal(articles[0]?.serviceDate?.toISOString(), "2026-08-11T12:00:00.000Z");
+});
+
+test("keeps every explicit service date from a multi-day CEDIS title", () => {
+  const title = "Planirani radovi na mreži za 10. i 11. avgust";
+  const serviceDates = parseServiceDates(title, new Date("2026-08-10T12:00:00Z"));
+
+  assert.deepEqual(
+    serviceDates.map((date) => date.toISOString()),
+    ["2026-08-10T12:00:00.000Z", "2026-08-11T12:00:00.000Z"],
+  );
+});
+
+test("keeps a multi-day article eligible on its second explicit service day", () => {
+  const listing =
+    '<a href="/servisne-informacije/planirani-radovi-na-mrezi-za-10-i-11-avgust/">Planirani radovi na mreži za 10. i 11. avgust</a>';
+  const articles = discoverCedisArticles(listing, new Date("2026-08-11T12:00:00Z"));
+
+  assert.equal(articles.length, 1);
+  assert.equal(articles[0]?.serviceDate?.toISOString(), "2026-08-11T12:00:00.000Z");
+  assert.deepEqual(
+    articles[0]?.serviceDates?.map((date) => date.toISOString()),
+    ["2026-08-10T12:00:00.000Z", "2026-08-11T12:00:00.000Z"],
+  );
+});
+
+test("rejects unrelated or malformed dated CEDIS listing titles", () => {
+  const listing = [
+    '<a href="/servisne-informacije/obavjestenje-za-11-avgust/">Obavještenje za 11. avgust</a>',
+    '<a href="/servisne-informacije/servisne-informacije-za-uskoro/">Servisne informacije za uskoro</a>',
+    '<a href="/servisne-informacije/servisne-informacije-za-32-avgust/">Servisne informacije za 32. avgust</a>',
+  ].join("");
+
+  assert.deepEqual(discoverCedisArticles(listing, new Date("2026-08-10T12:00:00Z")), []);
 });
 
 test("selects only the nearest current-or-next daily schedule and excludes yesterday's notice", () => {
@@ -81,6 +130,45 @@ test("parses a bare Podgorica heading from the current CEDIS article structure",
         alert.affectedArea.kind !== "source" || !alert.affectedArea.value.includes("Ponari"),
     ),
   );
+});
+
+test("uses the explicit service date, not the visible publication date, for every supported city section", async () => {
+  const article = {
+    serviceDate: new Date("2026-08-11T12:00:00.000Z"),
+    serviceDates: [new Date("2026-08-11T12:00:00.000Z")],
+    title: "Servisne informacije za 11. avgust",
+    url: "https://cedis.me/servisne-informacije/servisne-informacije-za-11-avgust/",
+  };
+  const html = await fixture("cedis-august-11-service-information.html");
+  const expectedAreas = {
+    bar: "Šušanj.",
+    budva: "Pržno.",
+    kotor: "Dobrota.",
+    podgorica: "Zabjelo.",
+    ulcinj: "Pinješ.",
+  } as const;
+
+  for (const [cityId, expectedArea] of Object.entries(expectedAreas) as [
+    keyof typeof expectedAreas,
+    string,
+  ][]) {
+    const alerts = parseCedisArticle(article, html, cityId, new Date("2026-08-10T12:00:00Z"));
+
+    assert.deepEqual(
+      alerts.map((alert) => alert.affectedArea.kind === "source" && alert.affectedArea.value),
+      [expectedArea],
+      cityId,
+    );
+    assert.deepEqual(
+      alerts.map((alert) => alert.startsAt?.toISOString().slice(0, 10)),
+      ["2026-08-11"],
+      cityId,
+    );
+    assert.ok(
+      alerts.every((alert) => alert.cityIds.length === 1 && alert.cityIds[0] === cityId),
+      cityId,
+    );
+  }
 });
 
 test("uses the supplied now value for deterministic outage status", async () => {
@@ -298,7 +386,7 @@ test("extracts Kotor outages without leaking neighboring municipality sections",
 
 test("treats Andrijevica as a municipality boundary around the Kotor section", async () => {
   const article = {
-    publishedAt: new Date("2026-08-02T12:00:00.000Z"),
+    serviceDate: new Date("2026-08-02T12:00:00.000Z"),
     title: "Planirani radovi za 3. avgust",
     url: "https://cedis.me/servisne-informacije/planirani-radovi-za-3-avgust/",
   };

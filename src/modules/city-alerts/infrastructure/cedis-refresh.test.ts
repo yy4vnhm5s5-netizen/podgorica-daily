@@ -121,6 +121,54 @@ test("refreshes listing, article, parser, and cache through injected HTTP", asyn
   assert.equal(memory.getSnapshot()?.alerts.length, result.snapshot?.alerts.length);
 });
 
+test("refreshes the service-information title family using the service date rather than publication date", async () => {
+  const serviceInformationUrl =
+    "https://cedis.me/servisne-informacije/servisne-informacije-za-11-avgust/";
+  const memory = createMemoryCache({
+    ...previousSnapshot(),
+    alerts: [{ id: "ducici-previous", cityIds: ["podgorica"] }] as never[],
+  });
+  const result = await refreshCedis({
+    cache: memory.cache,
+    httpClient: createFixtureClient({
+      [listingUrl]: `<a href="${serviceInformationUrl}">Servisne informacije za 11. avgust</a>`,
+      [serviceInformationUrl]: await fixture("cedis-august-11-service-information.html"),
+    }),
+    now: () => new Date("2026-08-10T12:00:00.000Z"),
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(result.classification, "trustworthy-non-empty");
+  assert.equal(result.retainedPreviousSnapshot, false);
+  assert.deepEqual(
+    result.snapshot?.alerts.map(
+      (alert) => alert.affectedArea.kind === "source" && alert.affectedArea.value,
+    ),
+    ["Zabjelo."],
+  );
+  assert.equal(result.snapshot?.alerts[0]?.startsAt?.toISOString(), "2026-08-11T06:00:00.000Z");
+  assert.ok(!result.snapshot?.alerts.some((alert) => alert.id === "ducici-previous"));
+  assert.equal(memory.getSnapshot()?.fetchedAt, "2026-08-10T12:00:00.000Z");
+});
+
+test("retains the previous snapshot when a service-information listing title has no usable service date", async () => {
+  const memory = createMemoryCache(previousSnapshot());
+  const result = await refreshCedis({
+    cache: memory.cache,
+    httpClient: createFixtureClient({
+      [listingUrl]:
+        '<a href="/servisne-informacije/servisne-informacije-za-uskoro/">Servisne informacije za uskoro</a>',
+    }),
+    now: fixedNow,
+  });
+
+  assert.equal(result.success, false);
+  assert.equal(result.classification, "structurally-suspicious");
+  assert.equal(result.errorCode, "listing-links-unrecognized");
+  assert.equal(result.retainedPreviousSnapshot, true);
+  assert.equal(memory.getSnapshot()?.alerts[0]?.id, "previous");
+});
+
 test("emits CEDIS-only diagnostics for the real Elementor article-content shape", async () => {
   const diagnostics: Record<string, unknown>[] = [];
   const elementorArticleUrl =

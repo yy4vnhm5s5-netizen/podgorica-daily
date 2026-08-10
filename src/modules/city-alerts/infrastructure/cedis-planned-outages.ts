@@ -74,9 +74,15 @@ const monthNumbers: Record<string, number> = {
 };
 
 interface CedisArticleLink {
-  publishedAt?: Date;
+  serviceDate?: Date;
+  serviceDates?: readonly Date[];
   title: string;
   url: string;
+}
+
+interface DatedCedisArticleLink extends CedisArticleLink {
+  serviceDate: Date;
+  serviceDates: Date[];
 }
 
 interface CedisArticleParseResult {
@@ -110,7 +116,7 @@ function discoverCedisArticles(html: string, now = new Date()): CedisArticleLink
   const links = [...html.matchAll(/<a[^>]+href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi)]
     .map((match) => ({ title: stripHtml(match[2]), url: toCedisUrl(match[1]) }))
     .filter((link): link is { title: string; url: string } => Boolean(link.url))
-    .filter(({ title }) => /planiran[ai] radov/i.test(title));
+    .filter(({ title }) => isSupportedCedisNoticeTitle(title));
 
   // CEDIS can keep yesterday's planned-work notice next to the current one in its
   // listing. Those notices describe separate daily schedules and must not be
@@ -121,24 +127,24 @@ function discoverCedisArticles(html: string, now = new Date()): CedisArticleLink
   // calendar-date match.
   const currentDay = getPodgoricaCalendarDay(now);
   const datedLinks = deduplicate(links)
-    .map((link) => ({ ...link, scheduledDay: parseArticleDate(link.title, now) }))
+    .flatMap((link) => {
+      const serviceDates = parseServiceDates(link.title, now);
+      return serviceDates.map((serviceDate) => ({ ...link, serviceDate, serviceDates }));
+    })
     .filter(
-      (link): link is CedisArticleLink & { scheduledDay: Date } =>
-        link.scheduledDay !== undefined && getCalendarDay(link.scheduledDay) >= currentDay,
+      (link): link is DatedCedisArticleLink => getCalendarDay(link.serviceDate) >= currentDay,
     );
 
   if (datedLinks.length === 0) return [];
 
   const selectedDay = datedLinks.reduce(
     (earliest, link) =>
-      getCalendarDay(link.scheduledDay) < getCalendarDay(earliest) ? link.scheduledDay : earliest,
-    datedLinks[0].scheduledDay,
+      getCalendarDay(link.serviceDate) < getCalendarDay(earliest) ? link.serviceDate : earliest,
+    datedLinks[0].serviceDate,
   );
   const selectedCalendarDay = getCalendarDay(selectedDay);
 
-  return datedLinks
-    .filter((link) => getCalendarDay(link.scheduledDay) === selectedCalendarDay)
-    .map(({ scheduledDay, ...link }) => ({ ...link, publishedAt: scheduledDay }));
+  return datedLinks.filter((link) => getCalendarDay(link.serviceDate) === selectedCalendarDay);
 }
 
 function parseCedisArticle(
@@ -170,8 +176,8 @@ function parseCedisArticleResult(
       zeroRecordsReason: "unsupported-city",
     };
   }
-  const publicationDate = article.publishedAt ?? parseArticleDate(article.title, effectiveNow);
-  if (!publicationDate) {
+  const serviceDate = article.serviceDate ?? parseServiceDates(article.title, effectiveNow)[0];
+  if (!serviceDate) {
     return {
       alerts: [],
       contentRecognized: false,
@@ -229,7 +235,7 @@ function parseCedisArticleResult(
   const alerts = hasExplicitEmptySection
     ? []
     : extraction.sections.flatMap(({ section, startIndex }) => {
-        const date = getDateBeforePosition(text, startIndex, publicationDate);
+        const date = getDateBeforePosition(text, startIndex, serviceDate);
         const lines = section
           .split(rowStartPattern)
           .filter((line) => line.trim() && !/^u terminu$/i.test(line.trim()));
@@ -291,7 +297,7 @@ function parseOutageLine(
       },
       expectedEndAt,
       id,
-      publishedAt: article.publishedAt ?? date,
+      publishedAt: article.serviceDate ?? date,
       rawSourceText,
       severity: "information",
       source: { kind: "source", value: "CEDIS" },
@@ -367,34 +373,41 @@ function getMunicipalitySectionsByHeadingVariants(
 }
 
 function getDateBeforePosition(text: string, position: number, fallback: Date) {
-  const dates = parseArticleDates("", text.slice(0, position), fallback);
+  const dates = parseArticleDates("", text.slice(0, position), fallback.getFullYear());
   return dates.at(-1) ?? fallback;
 }
 
-function parseArticleDates(title: string, text: string, fallback: Date) {
-  const dates = [
+function parseServiceDates(title: string, now: Date) {
+  return parseArticleDates(title, "", now.getFullYear());
+}
+
+function parseArticleDates(title: string, text: string, year: number) {
+  return [
     ...`${title} ${text}`.matchAll(
       /\b((?:\d{1,2}\.?\s*(?:(?:,|\bi\b|\bi\s+)?\s*)?)+)(januar\w*|februar\w*|mart\w*|april\w*|maj\w*|jun\w*|jul\w*|avgust\w*|septembar\w*|oktobar\w*|novembar\w*|decembar\w*)\b/gi,
     ),
   ]
     .flatMap((match) =>
       (match[1].match(/\d{1,2}/g) ?? []).map((day) =>
-        parseMontenegrinDate(`${day} ${match[2]}`, fallback.getFullYear()),
+        parseMontenegrinDate(`${day} ${match[2]}`, year),
       ),
     )
     .filter((date): date is Date => date !== null);
-  return dates.length > 0 ? dates : [fallback];
-}
-
-function parseArticleDate(title: string, now: Date) {
-  return parseArticleDates(title, "", now)[0];
 }
 
 function parseMontenegrinDate(value: string, year: number) {
   const match = /^(\d{1,2})\.?\s*([^\s]+)$/i.exec(value.trim());
   if (!match) return null;
   const month = monthNumbers[match[2].toLowerCase()];
-  return month === undefined ? null : new Date(Date.UTC(year, month, Number(match[1]), 12));
+  if (month === undefined) return null;
+
+  const day = Number(match[1]);
+  const date = new Date(Date.UTC(year, month, day, 12));
+  return date.getUTCMonth() === month && date.getUTCDate() === day ? date : null;
+}
+
+function isSupportedCedisNoticeTitle(value: string) {
+  return /\b(?:planiran[ai]\s+radov\w*|servisne\s+informacije)\b/i.test(value);
 }
 
 function parseTimeRange(value: string) {
@@ -589,6 +602,7 @@ export {
   getPodgoricaSection,
   parseCedisArticle,
   parseCedisArticleResult,
+  parseServiceDates,
   parseTimeRange,
   toCedisUrl,
   type CedisArticleLink,

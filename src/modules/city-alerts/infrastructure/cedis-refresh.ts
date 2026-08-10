@@ -169,7 +169,7 @@ async function refreshCedis({
       cityId,
       plannedWorkArticleCount: articles.length,
     });
-    if (articles.length === 0 && containsPlannedWorkReference(listing.html)) {
+    if (articles.length === 0 && containsSupportedCedisNoticeReference(listing.html)) {
       diagnostic({
         event: "cedis-refresh-listing-rejected",
         reason: "listing-links-unrecognized",
@@ -350,8 +350,8 @@ function retainPrevious(
   };
 }
 
-function containsPlannedWorkReference(html: string) {
-  return /planiran[ai]\s+radov/i.test(html);
+function containsSupportedCedisNoticeReference(html: string) {
+  return /\b(?:planiran[ai]\s+radov\w*|servisne\s+informacije)\b/i.test(html);
 }
 
 function deduplicateAlerts(alerts: CityAlert[]) {
