@@ -10,11 +10,6 @@ import { getCityPath } from "@/shared/config/public-routes";
 // feature excluded. Each entry is the file that owns that route's rendered body.
 const rollout = [
   {
-    exclude: "flights",
-    file: "src/modules/flights/presentation/airport-flights-page.tsx",
-    route: "/[city]/letovi",
-  },
-  {
     exclude: "goingOut",
     file: "src/modules/going-out/presentation/going-out-page.tsx",
     route: "/[city]/izlasci",

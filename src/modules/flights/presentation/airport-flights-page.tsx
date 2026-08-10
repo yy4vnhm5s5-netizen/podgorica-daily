@@ -12,7 +12,6 @@ import {
 import { FlightsCityDiscovery } from "./flights-city-discovery";
 import { EmptyState } from "@/shared/components/empty-state";
 import { ErrorState } from "@/shared/components/error-state";
-import { ExploreCityLinks } from "@/shared/components/explore-city-links";
 import { NewTabNotice } from "@/shared/components/new-tab-notice";
 import { SectionTitle } from "@/shared/components/section-title";
 import { StatusBadge } from "@/shared/components/status-badge";
@@ -109,7 +108,6 @@ function AirportFlightsPage({
         <NewTabNotice locale={locale} />
       </a>
       <FlightsCityDiscovery city={city} />
-      <ExploreCityLinks city={city} exclude={["flights"]} />
     </section>
   );
 }

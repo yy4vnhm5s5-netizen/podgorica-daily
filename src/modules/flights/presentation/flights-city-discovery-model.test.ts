@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { getCity } from "@/shared/config/cities";
-import { getFlightsCityDiscovery } from "./flights-city-discovery-model.ts";
+import {
+  getFlightsCityDiscovery,
+  getFlightsCityDiscoveryDesktopColumns,
+} from "./flights-city-discovery-model.ts";
 import type { City } from "@/shared/types/city";
 
 function requireCity(cityId: "bar" | "podgorica" | "tivat"): City {
@@ -84,4 +87,12 @@ test("degrades cleanly for a city with fewer public capabilities", () => {
     discovery.links.map(({ key }) => key),
     ["goingOut", "seaWaterQuality", "electricity"],
   );
+});
+
+test("derives desktop grid width from the number of destinations, never a city name", () => {
+  assert.equal(getFlightsCityDiscoveryDesktopColumns(1), "lg:grid-cols-1");
+  assert.equal(getFlightsCityDiscoveryDesktopColumns(2), "lg:grid-cols-2");
+  assert.equal(getFlightsCityDiscoveryDesktopColumns(3), "lg:grid-cols-3");
+  assert.equal(getFlightsCityDiscoveryDesktopColumns(4), "lg:grid-cols-4");
+  assert.equal(getFlightsCityDiscoveryDesktopColumns(5), "lg:grid-cols-4");
 });

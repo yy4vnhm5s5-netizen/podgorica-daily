@@ -17,11 +17,12 @@ test("renders crawlable, keyboard-focusable internal destination tiles", async (
   assert.doesNotMatch(source, /onClick|router\.push|<button/u);
 });
 
-test("uses a responsive tile grid without a carousel or client-side data access", async () => {
+test("uses a responsive count-driven tile grid without a carousel or client-side data access", async () => {
   const source = await componentSource();
 
-  assert.match(source, /grid grid-cols-2 gap-3 lg:grid-cols-4/u);
+  assert.match(source, /grid grid-cols-2 gap-3/u);
   assert.match(source, /getFlightsCityDiscovery\(city\)/u);
+  assert.match(source, /getFlightsCityDiscoveryDesktopColumns\(discovery\.links\.length\)/u);
   assert.doesNotMatch(source, /"use client"|useEffect|useState|fetch\(/u);
   assert.doesNotMatch(source, /carousel|overflow-x|scroll-snap|useMediaQuery/u);
 });

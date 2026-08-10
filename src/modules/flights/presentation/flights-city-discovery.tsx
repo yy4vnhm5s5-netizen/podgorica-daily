@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import {
   getFlightsCityDiscovery,
+  getFlightsCityDiscoveryDesktopColumns,
   type FlightsCityDiscoveryKey,
 } from "./flights-city-discovery-model";
 import { cn } from "@/shared/lib/utils";
@@ -41,6 +42,7 @@ const discoveryStyles = {
 function FlightsCityDiscovery({ city }: FlightsCityDiscoveryProps) {
   const discovery = getFlightsCityDiscovery(city);
   if (discovery.links.length === 0) return null;
+  const desktopColumns = getFlightsCityDiscoveryDesktopColumns(discovery.links.length);
 
   return (
     <nav
@@ -60,7 +62,7 @@ function FlightsCityDiscovery({ city }: FlightsCityDiscoveryProps) {
           </h2>
         </div>
       </div>
-      <ul className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <ul className={cn("mt-4 grid grid-cols-2 gap-3", desktopColumns)}>
         {discovery.links.map((link) => {
           const Icon = discoveryIcons[link.key];
           const style = discoveryStyles[link.key];

@@ -41,18 +41,10 @@ test("full page and dashboard preserve stale-empty flight context", async () => 
   assert.match(card, /updatedLabel && displayState !== "unavailable"/u);
 });
 
-test("Flights keeps the shared contextual block and adds the discovery strip after its core content", async () => {
+test("Flights keeps the discovery strip as its sole cross-navigation section", async () => {
   const source = await readPage();
 
   assert.match(source, /import \{ FlightsCityDiscovery \} from "\.\/flights-city-discovery";/u);
-  assert.match(
-    source,
-    /import \{ ExploreCityLinks \} from "@\/shared\/components\/explore-city-links";/u,
-  );
   assert.match(source, /<FlightsCityDiscovery city=\{city\} \/>/u);
-  assert.match(source, /<ExploreCityLinks city=\{city\} exclude=\{\["flights"\]\} \/>/u);
-  assert.ok(
-    source.indexOf("<FlightsCityDiscovery city={city} />") <
-      source.indexOf('<ExploreCityLinks city={city} exclude={["flights"]} />'),
-  );
+  assert.doesNotMatch(source, /ExploreCityLinks/u);
 });

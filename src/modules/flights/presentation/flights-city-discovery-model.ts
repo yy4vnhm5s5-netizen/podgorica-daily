@@ -58,7 +58,15 @@ function getFlightsCityDiscovery(
   };
 }
 
+function getFlightsCityDiscoveryDesktopColumns(linkCount: number) {
+  if (linkCount <= 1) return "lg:grid-cols-1";
+  if (linkCount === 2) return "lg:grid-cols-2";
+  if (linkCount === 3) return "lg:grid-cols-3";
+  return "lg:grid-cols-4";
+}
+
 export {
+  getFlightsCityDiscoveryDesktopColumns,
   getFlightsCityDiscovery,
   type FlightsCityDiscovery,
   type FlightsCityDiscoveryKey,
