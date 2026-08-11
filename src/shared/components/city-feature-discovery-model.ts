@@ -28,6 +28,7 @@ const discoveryCopy: Record<
   events: { description: "Događaji i najave", label: "Događaji" },
   flights: { description: "Dolasci i odlasci", label: "Letovi" },
   goingOut: { description: "Izlasci i nastupi", label: "Izlasci" },
+  parking: { description: "Slobodna mjesta", label: "Parking" },
   seaWaterQuality: { description: "Kvalitet mora", label: "Plaže" },
 };
 

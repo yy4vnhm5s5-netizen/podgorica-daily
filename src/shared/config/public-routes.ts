@@ -39,6 +39,10 @@ function getGoingOutPath(city: CityRouteTarget) {
   return `${getCityPath(city)}/izlasci`;
 }
 
+function getParkingPath(city: CityRouteTarget) {
+  return `${getCityPath(city)}/parking`;
+}
+
 function getGoingOutDetailPath(
   city: CityRouteTarget,
   provider: "montegigs",
@@ -81,6 +85,7 @@ export {
   getGoingOutPath,
   getGoingOutDetailPath,
   getPrivacyPolicyPath,
+  getParkingPath,
   getSeaWaterQualityPath,
   getSeaWaterQualityLocationPath,
   getTermsOfUsePath,

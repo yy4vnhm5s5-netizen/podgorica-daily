@@ -1,0 +1,20 @@
+[
+  {
+    "name": "Parking broj 1",
+    "parking_id": "broj1",
+    "slobodnih_mjesta": 260,
+    "time_updated": 1786442100
+  },
+  {
+    "name": null,
+    "parking_id": "broj2",
+    "slobodnih_mjesta": 53,
+    "time_updated": 1786441800
+  },
+  {
+    "name": "Parking broj 2a",
+    "parking_id": "broj2a",
+    "slobodnih_mjesta": 11,
+    "time_updated": 1786441500
+  }
+]

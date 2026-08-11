@@ -46,6 +46,12 @@ while true; do
     00|15|30|45) run_collector "airport-flights" "pnpm run collect:airport-flights" ;;
   esac
 
+  # Parking availability: every ten minutes. The CLI's feature/capability guard returns without
+  # fetching or writing while Parking is disabled, so this remains safe before rollout.
+  case "$minute" in
+    01|11|21|31|41|51) run_collector "parking-availability" "pnpm run collect:parking" ;;
+  esac
+
   # Each exact local-time case keeps collectors staggered and independently schedulable.
   case "$hour_minute" in
     # VIK: every 30 minutes. Service notices can change within the same day, so this is more

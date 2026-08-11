@@ -23,6 +23,7 @@ import {
   getEventsPath,
   getFlightsPath,
   getGoingOutPath,
+  getParkingPath,
   getSeaWaterQualityPath,
 } from "@/shared/config/public-routes";
 import { createPublicRouteMetadata } from "@/app/public-route-metadata";
@@ -119,6 +120,7 @@ function getCitySitemapPaths(city: City, options: CityRouteAvailabilityOptions =
     ...(isCityPublicFeatureRouteAvailable(city, "goingOut", options)
       ? [getGoingOutPath(city)]
       : []),
+    ...(isCityPublicFeatureRouteAvailable(city, "parking", options) ? [getParkingPath(city)] : []),
     ...(isCityPublicFeatureRouteAvailable(city, "seaWaterQuality", options)
       ? [getSeaWaterQualityPath(city)]
       : []),

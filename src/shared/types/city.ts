@@ -8,6 +8,7 @@ type CityCapability =
   | "events"
   | "flights"
   | "goingOut"
+  | "parking"
   | "railway"
   | "seaWaterQuality"
   | "water"

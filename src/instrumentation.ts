@@ -27,6 +27,7 @@ import {
   getMonteGigsCitySource,
 } from "@/modules/going-out/infrastructure/montegigs-going-out";
 import { initializeMonteGigsGoingOut } from "@/modules/going-out/infrastructure/montegigs-going-out-initialization";
+import { initializeParkingAvailability } from "@/modules/parking/infrastructure/parking-initialization";
 import { getSeaWaterQualityCachePath } from "@/modules/sea-water-quality/infrastructure/budva-sea-water-quality-cache";
 import { initializeBudvaSeaWaterQuality } from "@/modules/sea-water-quality/infrastructure/budva-sea-water-quality-initialization";
 import { getActiveSeaWaterQualityContexts } from "@/modules/sea-water-quality/infrastructure/collect-budva-sea-water-quality";
@@ -107,6 +108,10 @@ export function register() {
 
   if (env.ENABLE_WEATHER) {
     void initializeWeatherSnapshots();
+  }
+
+  if (env.ENABLE_PARKING) {
+    void initializeParkingAvailability();
   }
 
   if (env.ENABLE_EVENTS && env.EVENT_PROVIDER_MODE === "live") {

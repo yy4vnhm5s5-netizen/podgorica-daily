@@ -9,17 +9,13 @@ import {
   getEventsPath,
   getFlightsPath,
   getGoingOutPath,
+  getParkingPath,
   getSeaWaterQualityPath,
 } from "./public-routes.ts";
 import type { City, CityCapability } from "@/shared/types/city";
 
 type ExploreCityLinkKey =
-  | "city"
-  | "electricity"
-  | "events"
-  | "flights"
-  | "goingOut"
-  | "seaWaterQuality";
+  "city" | "electricity" | "events" | "flights" | "goingOut" | "parking" | "seaWaterQuality";
 
 interface ExploreCityLink {
   href: string;
@@ -81,6 +77,12 @@ const exploreCityLinkDefinitions: readonly ExploreCityLinkDefinition[] = [
     createHref: getFlightsPath,
     createLabel: (city) => `Letovi u ${getCityName(city, "locative")}`,
     key: "flights",
+  },
+  {
+    capability: "parking",
+    createHref: getParkingPath,
+    createLabel: (city) => `Parking u ${getCityName(city, "locative")}`,
+    key: "parking",
   },
   {
     createHref: getCityPath,

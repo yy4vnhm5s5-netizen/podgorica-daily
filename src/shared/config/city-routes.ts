@@ -12,6 +12,7 @@ interface CityRouteAvailabilityOptions {
 const publicFeatureByCityCapability: Partial<Record<CityCapability, Feature>> = {
   flights: "flights",
   goingOut: "goingOut",
+  parking: "parking",
   seaWaterQuality: "seaWaterQuality",
 };
 

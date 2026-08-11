@@ -3,6 +3,7 @@ import {
   CalendarDays,
   Music2,
   Plane,
+  SquareParking,
   Waves,
   Zap,
   type LucideIcon,
@@ -27,6 +28,7 @@ const discoveryIcons = {
   events: CalendarDays,
   flights: Plane,
   goingOut: Music2,
+  parking: SquareParking,
   seaWaterQuality: Waves,
 } satisfies Record<CityFeatureDiscoveryKey, LucideIcon>;
 
@@ -46,6 +48,10 @@ const discoveryStyles = {
   goingOut: {
     icon: "bg-violet-600 text-white",
     tile: "border-violet-200 bg-violet-50 text-violet-950 hover:border-violet-300 hover:bg-violet-100",
+  },
+  parking: {
+    icon: "bg-sky-700 text-white",
+    tile: "border-sky-200 bg-sky-50 text-sky-950 hover:border-sky-300 hover:bg-sky-100",
   },
   seaWaterQuality: {
     icon: "bg-cyan-600 text-white",

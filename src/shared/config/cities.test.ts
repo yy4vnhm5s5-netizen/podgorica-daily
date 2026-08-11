@@ -137,6 +137,7 @@ test("keeps capabilities explicit per city", () => {
     "events",
     "flights",
     "goingOut",
+    "parking",
     "railway",
     "water",
     "weather",

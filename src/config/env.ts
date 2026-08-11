@@ -85,7 +85,13 @@ const environmentSchema = z.object({
   WEATHER_CACHE_FRESHNESS_MINUTES: z.coerce.number().int().positive().default(15),
   WEATHER_CACHE_MAX_STALE_MINUTES: z.coerce.number().int().positive().default(30),
   WEATHER_REFRESH_SECRET: z.string().min(32).optional(),
+  PARKING_CACHE_PATH: z.string().min(1).optional(),
+  PARKING_CACHE_FRESHNESS_MINUTES: z.coerce.number().int().positive().default(15),
+  PARKING_CACHE_MAX_STALE_MINUTES: z.coerce.number().int().positive().default(60),
+  PARKING_AVAILABILITY_FRESHNESS_MINUTES: z.coerce.number().int().positive().default(15),
+  PARKING_REFRESH_SECRET: z.string().min(32).optional(),
   ENABLE_SEA_WATER_QUALITY: z.enum(["false", "true"]).default("true"),
+  ENABLE_PARKING: z.enum(["false", "true"]).default("false"),
   NEXT_PUBLIC_APP_ENV: z.string().min(1).default("development"),
   NEXT_PUBLIC_SITE_URL: z.string().url().optional(),
 });
@@ -173,7 +179,13 @@ const parsedEnvironment = environmentSchema.safeParse({
   WEATHER_CACHE_FRESHNESS_MINUTES: process.env.WEATHER_CACHE_FRESHNESS_MINUTES,
   WEATHER_CACHE_MAX_STALE_MINUTES: process.env.WEATHER_CACHE_MAX_STALE_MINUTES,
   WEATHER_REFRESH_SECRET: process.env.WEATHER_REFRESH_SECRET,
+  PARKING_CACHE_PATH: process.env.PARKING_CACHE_PATH,
+  PARKING_CACHE_FRESHNESS_MINUTES: process.env.PARKING_CACHE_FRESHNESS_MINUTES,
+  PARKING_CACHE_MAX_STALE_MINUTES: process.env.PARKING_CACHE_MAX_STALE_MINUTES,
+  PARKING_AVAILABILITY_FRESHNESS_MINUTES: process.env.PARKING_AVAILABILITY_FRESHNESS_MINUTES,
+  PARKING_REFRESH_SECRET: process.env.PARKING_REFRESH_SECRET,
   ENABLE_SEA_WATER_QUALITY: process.env.ENABLE_SEA_WATER_QUALITY,
+  ENABLE_PARKING: process.env.ENABLE_PARKING,
   NEXT_PUBLIC_APP_ENV: process.env.NEXT_PUBLIC_APP_ENV,
   NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
 });
@@ -242,6 +254,9 @@ const resolvedEnvironment = {
     `${cacheDirectory}/budva-sea-water-quality.json`,
   WEATHER_CACHE_PATH:
     parsedEnvironment.data.WEATHER_CACHE_PATH ?? `${cacheDirectory}/weather-podgorica.json`,
+  PARKING_CACHE_PATH:
+    parsedEnvironment.data.PARKING_CACHE_PATH ??
+    resolveRuntimeCachePath("parking-podgorica-availability.json", runtimeDataDirectory),
   RUNTIME_DATA_DIR: runtimeDataDirectory,
 };
 
@@ -261,6 +276,7 @@ export const env = {
   ENABLE_FLIGHTS: resolvedEnvironment.ENABLE_FLIGHTS === "true",
   ENABLE_GOING_OUT: resolvedEnvironment.ENABLE_GOING_OUT === "true",
   ENABLE_WEATHER: resolvedEnvironment.ENABLE_WEATHER === "true",
+  ENABLE_PARKING: resolvedEnvironment.ENABLE_PARKING === "true",
   ENABLE_SEA_WATER_QUALITY: resolvedEnvironment.ENABLE_SEA_WATER_QUALITY === "true",
   EVENT_QUALITY_WARN_MISSING_DESCRIPTION:
     resolvedEnvironment.EVENT_QUALITY_WARN_MISSING_DESCRIPTION === "true",

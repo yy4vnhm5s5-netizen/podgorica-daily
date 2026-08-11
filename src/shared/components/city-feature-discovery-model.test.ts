@@ -32,6 +32,7 @@ test("preserves the approved Flights destination sets through the shared model",
       { href: "/podgorica/dogadjaji", key: "events", label: "Događaji" },
       { href: "/podgorica/izlasci", key: "goingOut", label: "Izlasci" },
       { href: "/podgorica/struja", key: "electricity", label: "Struja" },
+      { href: "/podgorica/parking", key: "parking", label: "Parking" },
     ],
   );
   assert.deepEqual(
@@ -50,7 +51,7 @@ test("derives Electricity discovery from public same-city capabilities", () => {
     bar: ["goingOut", "seaWaterQuality"],
     budva: ["goingOut", "seaWaterQuality"],
     kotor: ["goingOut", "seaWaterQuality"],
-    podgorica: ["events", "goingOut", "flights"],
+    podgorica: ["events", "goingOut", "flights", "parking"],
     tivat: ["events", "goingOut", "seaWaterQuality", "flights"],
     ulcinj: ["goingOut", "seaWaterQuality"],
   } as const;
@@ -88,7 +89,7 @@ test("derives Going Out discovery from public same-city capabilities", () => {
     bar: ["seaWaterQuality", "electricity"],
     budva: ["seaWaterQuality", "electricity"],
     kotor: ["seaWaterQuality", "electricity"],
-    podgorica: ["events", "electricity", "flights"],
+    podgorica: ["events", "electricity", "flights", "parking"],
     tivat: ["events", "seaWaterQuality", "electricity", "flights"],
     ulcinj: ["seaWaterQuality", "electricity"],
   } as const;
@@ -156,7 +157,7 @@ test("derives Sea Water discovery from public same-city capabilities", () => {
 
 test("derives Events discovery from public same-city capabilities", () => {
   const expected = {
-    podgorica: ["goingOut", "electricity", "flights"],
+    podgorica: ["goingOut", "electricity", "flights", "parking"],
     tivat: ["goingOut", "seaWaterQuality", "electricity", "flights"],
   } as const;
 

@@ -1,6 +1,7 @@
 import type { CityAlertCollectorResult } from "@/modules/city-alerts/infrastructure/city-alerts-collector";
 import type { EventRefreshSummary } from "@/modules/events/infrastructure/events-refresh-runner";
 import type { AirportFlightsCollectorResult } from "@/modules/flights/infrastructure/collect-podgorica-flights";
+import type { ParkingCollectorResult } from "@/modules/parking/infrastructure/collect-parking-availability";
 import type { GoingOutCollectorResult } from "@/modules/going-out/infrastructure/collect-montegigs-going-out";
 import type { GoingOutDetailCoverage } from "@/modules/going-out/infrastructure/montegigs-going-out";
 import type { BudvaSeaWaterQualityCollectorResult } from "@/modules/sea-water-quality/infrastructure/collect-budva-sea-water-quality";
@@ -218,6 +219,17 @@ function toZpcgRefreshEndpointResult(result: ZpcgCollectorResult): ProviderRefre
   );
 }
 
+function toParkingRefreshEndpointResult(
+  result: ParkingCollectorResult,
+): ProviderRefreshEndpointResult {
+  return toSingleProviderRefreshEndpointResult(
+    "parking-servis-podgorica",
+    result,
+    (refresh) => refresh.acceptedLocations,
+    result.cityId,
+  );
+}
+
 function toSeaWaterQualityRefreshEndpointResult(
   result: BudvaSeaWaterQualityCollectorResult,
 ): ProviderRefreshEndpointResult {
@@ -358,6 +370,7 @@ export {
   toMultiCityFlightsRefreshEndpointResult,
   toMultiCitySeaWaterQualityRefreshEndpointResult,
   toMultiCityWeatherRefreshEndpointResult,
+  toParkingRefreshEndpointResult,
   toSeaWaterQualityRefreshEndpointResult,
   toZpcgRefreshEndpointResult,
   type EventRefreshEndpointResult,

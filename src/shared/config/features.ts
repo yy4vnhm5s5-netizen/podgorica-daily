@@ -13,6 +13,7 @@ const featureFlags = {
   fuelPrices: env.ENABLE_FUEL_PRICES,
   goingOut: env.ENABLE_GOING_OUT,
   maps: false,
+  parking: env.ENABLE_PARKING,
   search: false,
   seaWaterQuality: env.ENABLE_SEA_WATER_QUALITY,
   weather: env.ENABLE_WEATHER,

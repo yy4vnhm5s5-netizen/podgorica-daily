@@ -68,7 +68,16 @@ const cityRegistry: Record<string, City> = {
   },
   podgorica: {
     accusativeName: "Podgoricu",
-    capabilities: ["electricity", "events", "flights", "goingOut", "railway", "water", "weather"],
+    capabilities: [
+      "electricity",
+      "events",
+      "flights",
+      "goingOut",
+      "parking",
+      "railway",
+      "water",
+      "weather",
+    ],
     country: "Montenegro",
     description: "Vrijeme, događaji, izlasci, prevoz i važne servisne informacije za Podgoricu.",
     genitiveName: "Podgorice",
