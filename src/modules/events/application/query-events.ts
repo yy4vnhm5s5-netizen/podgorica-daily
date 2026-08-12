@@ -1,5 +1,6 @@
 import type { CityEvent, EventCategory, EventStatus } from "../domain/event.ts";
 import type { CityContext } from "@/shared/types/city";
+import { getDatePresetRange, isDateWithinRange, isWeekendDate } from "@/shared/lib/date-preset";
 
 type EventSort = "category" | "newestSourceUpdate" | "soonest" | "venue";
 
@@ -22,7 +23,9 @@ function queryEvents(
   sort: EventSort = "soonest",
 ) {
   const cityId = context.city.id;
-  const boundaries = getPeriodBoundaries(query.period, context.timezone, now);
+  const boundaries = query.period
+    ? getDatePresetRange(query.period, context.timezone, now)
+    : undefined;
   const requestedRange = query.dateRange
     ? { end: query.dateRange.end, start: query.dateRange.start }
     : boundaries;
@@ -39,46 +42,15 @@ function queryEvents(
       requestedRange ? intersectsDateRange(event, requestedRange, context.timezone) : true,
     )
     .filter((event) =>
-      query.period === "weekend" ? isWeekendEvent(event, context.timezone) : true,
+      query.period === "weekend"
+        ? isWeekendDate(
+            getEventLocalDate(event, context.timezone) ?? "",
+            event.startsAt,
+            context.timezone,
+          )
+        : true,
     )
     .sort(createEventComparator(sort));
-}
-
-function getPeriodBoundaries(period: EventQuery["period"], timezone: string, now: Date) {
-  if (!period) return undefined;
-  const local = getLocalDate(now, timezone);
-  const today = new Date(`${local}T00:00:00.000Z`);
-  const tomorrow = new Date(today);
-  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
-
-  if (period === "today") return { end: local, start: local };
-  if (period === "tomorrow") {
-    const date = toDateString(tomorrow);
-    return { end: date, start: date };
-  }
-
-  const dayOfWeek = today.getUTCDay() || 7;
-  const monday = new Date(today);
-  monday.setUTCDate(monday.getUTCDate() - dayOfWeek + 1);
-  if (period === "upcoming") return { start: local };
-
-  const sunday = new Date(monday);
-  sunday.setUTCDate(sunday.getUTCDate() + 6);
-  return { end: toDateString(sunday), start: toDateString(monday) };
-}
-
-function isWeekendEvent(event: CityEvent, timezone: string) {
-  const date = getEventLocalDate(event, timezone);
-  if (!date) return false;
-  const weekday = new Date(`${date}T00:00:00.000Z`).getUTCDay();
-  if (weekday === 6 || weekday === 0) return true;
-  if (weekday !== 5 || !event.startsAt) return false;
-  const hour = Number(
-    new Intl.DateTimeFormat("en-GB", { hour: "2-digit", hourCycle: "h23", timeZone: timezone })
-      .formatToParts(new Date(event.startsAt))
-      .find((part) => part.type === "hour")?.value,
-  );
-  return hour >= 18;
 }
 
 function intersectsDateRange(
@@ -87,7 +59,7 @@ function intersectsDateRange(
   timezone: string,
 ) {
   const date = getEventLocalDate(event, timezone);
-  return date !== undefined && date >= range.start && (!range.end || date <= range.end);
+  return date !== undefined && isDateWithinRange(date, range);
 }
 
 function getEventLocalDate(event: CityEvent, timezone: string) {
@@ -105,10 +77,6 @@ function getLocalDate(date: Date, timezone: string) {
   }).formatToParts(date);
   const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
   return `${values.year}-${values.month}-${values.day}`;
-}
-
-function toDateString(date: Date) {
-  return date.toISOString().slice(0, 10);
 }
 
 function createEventComparator(sort: EventSort) {

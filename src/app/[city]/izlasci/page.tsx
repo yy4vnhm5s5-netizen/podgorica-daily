@@ -8,6 +8,7 @@ import {
 import { createPublicRouteMetadata } from "@/app/public-route-metadata";
 import { getGoingOutEvents } from "@/modules/going-out/application/get-going-out-events";
 import { GoingOutPage } from "@/modules/going-out/presentation/going-out-page";
+import { parseGoingOutUiFilters } from "@/modules/going-out/presentation/going-out-ui-model";
 import { DashboardLayout } from "@/shared/components/layout/dashboard-layout";
 import { getCityName } from "@/shared/config/cities";
 import { getGoingOutPath } from "@/shared/config/public-routes";
@@ -18,6 +19,7 @@ export const revalidate = 0;
 
 interface GoingOutRouteProps {
   params: Promise<{ city: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
 
 async function generateMetadata({ params }: GoingOutRouteProps): Promise<Metadata> {
@@ -39,12 +41,13 @@ async function generateMetadata({ params }: GoingOutRouteProps): Promise<Metadat
   });
 }
 
-async function GoingOutRoute({ params }: GoingOutRouteProps) {
+async function GoingOutRoute({ params, searchParams }: GoingOutRouteProps) {
   const { city: slug } = await params;
   const locale = "me" as const;
   const context = resolveActiveCityFeatureRoute(slug, "goingOut");
   if (!context) notFound();
   if (!isCityPublicFeatureRouteAvailable(context.city, "goingOut")) notFound();
+  const filters = parseGoingOutUiFilters(await searchParams);
   const result = await getGoingOutEvents(context);
 
   return (
@@ -52,6 +55,7 @@ async function GoingOutRoute({ params }: GoingOutRouteProps) {
       <GoingOutPage
         city={context.city}
         events={result.events}
+        filters={filters}
         locale={locale}
         state={result.state}
       />

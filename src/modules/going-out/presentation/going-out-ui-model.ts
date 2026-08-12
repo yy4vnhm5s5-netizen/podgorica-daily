@@ -5,8 +5,15 @@ import type { GoingOutEvent } from "../domain/going-out-event.ts";
 import { getLocalIsoDate, selectUpcomingGoingOutEvents } from "../domain/going-out-event.ts";
 import type { GoingOutCacheState } from "../infrastructure/montegigs-going-out.ts";
 import type { City } from "@/shared/types/city";
+import { isDatePreset, matchesDatePreset, type DatePreset } from "@/shared/lib/date-preset";
 
 type GoingOutDisplayState = "empty" | "events" | "stale" | "unavailable";
+type GoingOutDatePreset = DatePreset;
+type GoingOutListingState = GoingOutDisplayState | "filteredEmpty";
+
+interface GoingOutUiFilters {
+  datePreset: GoingOutDatePreset;
+}
 
 function getGoingOutDisplayState({
   eventCount,
@@ -17,6 +24,24 @@ function getGoingOutDisplayState({
 }): GoingOutDisplayState {
   if (eventCount > 0) return state === "stale" ? "stale" : "events";
   return state === "unavailable" ? "unavailable" : "empty";
+}
+
+function getGoingOutListingState({
+  datePreset,
+  filteredEventCount,
+  snapshotEventCount,
+  upcomingEventCount,
+  state,
+}: {
+  datePreset: GoingOutDatePreset;
+  filteredEventCount: number;
+  snapshotEventCount: number;
+  state: GoingOutCacheState;
+  upcomingEventCount: number;
+}): GoingOutListingState {
+  const displayState = getGoingOutDisplayState({ eventCount: upcomingEventCount, state });
+  if (filteredEventCount > 0 || displayState === "unavailable") return displayState;
+  return datePreset !== "upcoming" && snapshotEventCount > 0 ? "filteredEmpty" : "empty";
 }
 
 function getHomepageGoingOutEvents(events: readonly GoingOutEvent[], now = new Date()) {
@@ -34,6 +59,29 @@ function getAvailableGoingOutEvents(events: readonly GoingOutEvent[], now = new 
 // here. Preview surfaces keep their own explicit small limits.
 function getGoingOutPageEvents(events: readonly GoingOutEvent[], now = new Date()) {
   return selectUpcomingGoingOutEvents(events, now);
+}
+
+function filterGoingOutPageEvents(
+  events: readonly GoingOutEvent[],
+  filters: GoingOutUiFilters,
+  now = new Date(),
+  timeZone = "Europe/Podgorica",
+) {
+  return getGoingOutPageEvents(events, now).filter((event) =>
+    matchesDatePreset({
+      date: event.startDate,
+      now,
+      preset: filters.datePreset,
+      startsAt: event.startsAt,
+      timeZone,
+    }),
+  );
+}
+
+function parseGoingOutUiFilters(searchParams: Record<string, string | string[] | undefined>) {
+  return {
+    datePreset: isDatePreset(searchParams.period) ? searchParams.period : "upcoming",
+  } satisfies GoingOutUiFilters;
 }
 
 interface GoingOutDateGroup {
@@ -116,12 +164,18 @@ export {
   formatGoingOutDateHeading,
   formatGoingOutSchedule,
   formatGoingOutTime,
+  filterGoingOutPageEvents,
   getGoingOutDetailAddress,
   getAvailableGoingOutEvents,
   getGoingOutDisplayState,
+  getGoingOutListingState,
   getGoingOutPageEvents,
   getHomepageGoingOutEvents,
   groupGoingOutEventsByDate,
+  parseGoingOutUiFilters,
   type GoingOutDateGroup,
+  type GoingOutDatePreset,
   type GoingOutDisplayState,
+  type GoingOutListingState,
+  type GoingOutUiFilters,
 };

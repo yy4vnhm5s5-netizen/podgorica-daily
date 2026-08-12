@@ -4,10 +4,13 @@ import test from "node:test";
 
 import type { GoingOutEvent } from "../domain/going-out-event.ts";
 import {
+  filterGoingOutPageEvents,
   formatGoingOutDateHeading,
   getGoingOutPageEvents,
   getHomepageGoingOutEvents,
+  getGoingOutListingState,
   groupGoingOutEventsByDate,
+  parseGoingOutUiFilters,
 } from "./going-out-ui-model.ts";
 
 const event = (startDate: string, title: string, venue?: string): GoingOutEvent => ({
@@ -99,11 +102,11 @@ test("today is decided in Podgorica time, matching the upcoming filter", () => {
   assert.doesNotMatch(formatGoingOutDateHeading("2026-08-04", "me", lateEvening), /^Danas/u);
 });
 
-test("the page groups by day and demotes the card title below the day heading", async () => {
+test("the page groups filtered listings by day and demotes the card title below the day heading", async () => {
   const source = await readFile(new URL("./going-out-page.tsx", import.meta.url), "utf8");
 
-  assert.match(source, /const dateGroups = groupGoingOutEventsByDate\(upcoming\);/u);
-  assert.match(source, /\{formatGoingOutDateHeading\(group\.date, locale\)\}/u);
+  assert.match(source, /const dateGroups = groupGoingOutEventsByDate\(filteredEvents\);/u);
+  assert.match(source, /\{formatGoingOutDateHeading\(group\.date, locale, now\)\}/u);
   // The day is the h2; each listing title is an h3 beneath it.
   assert.match(source, /<h2\n\s+className="text-sm font-semibold uppercase/u);
   assert.match(source, /<h3 className="text-base font-semibold leading-6">\{event\.title\}<\/h3>/u);
@@ -113,9 +116,20 @@ test("the page groups by day and demotes the card title below the day heading", 
 test("keeps external attribution for incomplete entries and routes eligible cards internally", async () => {
   const source = await readFile(new URL("./going-out-page.tsx", import.meta.url), "utf8");
 
-  assert.match(source, /displayState === "events" \|\| displayState === "stale" \? \(/u);
+  assert.match(source, /dateGroups\.length > 0 \? \(/u);
   assert.match(source, /<EmptyState/u);
+  assert.match(
+    source,
+    /<nav aria-label=\{copy\.filters\} className="-mx-1 overflow-x-auto px-1 pb-1">/u,
+  );
+  assert.match(
+    source,
+    /<Button asChild size="sm" variant=\{isCurrent \? "default" : "outline"\}>/u,
+  );
   assert.match(source, /\{copy\.stale\}/u);
+  assert.match(source, /Danas nema najavljenih izlazaka\./u);
+  assert.match(source, /Sjutra nema najavljenih izlazaka\./u);
+  assert.match(source, /Za ovaj vikend nema najavljenih izlazaka\./u);
   assert.match(source, /\{copy\.source\}/u);
   assert.match(source, /href=\{event\.sourceUrl\}/u);
   assert.match(source, /isGoingOutEventDetailEligible\(event, city\)/u);
@@ -125,7 +139,7 @@ test("keeps external attribution for incomplete entries and routes eligible card
   assert.doesNotMatch(source, /ExploreCityLinks/u);
   assert.ok(
     source.indexOf('<CityFeatureDiscovery city={city} currentFeature="goingOut" />') >
-      source.indexOf('displayState === "events" || displayState === "stale"'),
+      source.indexOf("dateGroups.length > 0"),
   );
   // No claim about counts, venues, nightlife or what is "on" in the city.
   assert.doesNotMatch(source, /najbolj|preporuč|klubov[ai]\b|nema izlazaka/iu);
@@ -212,6 +226,104 @@ test("only upcoming records are selected, and city isolation is untouched", () =
   assert.equal(
     selected.every(({ city }) => city === "budva"),
     true,
+  );
+});
+
+test("filters the existing upcoming snapshot by the shared URL date presets", () => {
+  const now = new Date("2026-08-06T10:00:00.000Z");
+  const events = [
+    event("2026-08-06", "Today"),
+    event("2026-08-07", "Friday date only"),
+    { ...event("2026-08-07", "Friday evening"), startsAt: "2026-08-07T16:00:00.000Z" },
+    event("2026-08-08", "Saturday"),
+    event("2026-08-09", "Sunday"),
+    event("2026-08-10", "Monday"),
+  ];
+
+  assert.deepEqual(
+    filterGoingOutPageEvents(events, { datePreset: "today" }, now).map(({ title }) => title),
+    ["Today"],
+  );
+  assert.deepEqual(
+    filterGoingOutPageEvents(events, { datePreset: "tomorrow" }, now).map(({ title }) => title),
+    ["Friday date only", "Friday evening"],
+  );
+  assert.deepEqual(
+    filterGoingOutPageEvents(events, { datePreset: "weekend" }, now).map(({ title }) => title),
+    ["Friday evening", "Saturday", "Sunday"],
+  );
+  assert.deepEqual(
+    filterGoingOutPageEvents(events, { datePreset: "upcoming" }, now).map(({ title }) => title),
+    events.map(({ title }) => title),
+  );
+});
+
+test("keeps filtered listings grouped and falls back to Predstojeći for an invalid URL preset", () => {
+  const now = new Date("2026-08-06T10:00:00.000Z");
+  const events = [
+    event("2026-08-08", "Saturday one"),
+    event("2026-08-08", "Saturday two"),
+    event("2026-08-09", "Sunday"),
+  ];
+  const filtered = filterGoingOutPageEvents(events, { datePreset: "weekend" }, now);
+
+  assert.deepEqual(
+    groupGoingOutEventsByDate(filtered).map(({ date, events: groupedEvents }) => [
+      date,
+      groupedEvents.map(({ title }) => title),
+    ]),
+    [
+      ["2026-08-08", ["Saturday one", "Saturday two"]],
+      ["2026-08-09", ["Sunday"]],
+    ],
+  );
+  assert.deepEqual(parseGoingOutUiFilters({}), { datePreset: "upcoming" });
+  assert.deepEqual(parseGoingOutUiFilters({ period: "not-a-preset" }), { datePreset: "upcoming" });
+  assert.deepEqual(parseGoingOutUiFilters({ period: ["today", "tomorrow"] }), {
+    datePreset: "upcoming",
+  });
+});
+
+test("keeps a stale warning distinct from a filter-specific empty result", () => {
+  assert.equal(
+    getGoingOutListingState({
+      datePreset: "weekend",
+      filteredEventCount: 0,
+      snapshotEventCount: 3,
+      state: "stale",
+      upcomingEventCount: 3,
+    }),
+    "filteredEmpty",
+  );
+  assert.equal(
+    getGoingOutListingState({
+      datePreset: "today",
+      filteredEventCount: 0,
+      snapshotEventCount: 0,
+      state: "unavailable",
+      upcomingEventCount: 0,
+    }),
+    "unavailable",
+  );
+  assert.equal(
+    getGoingOutListingState({
+      datePreset: "upcoming",
+      filteredEventCount: 0,
+      snapshotEventCount: 0,
+      state: "fresh",
+      upcomingEventCount: 0,
+    }),
+    "empty",
+  );
+  assert.equal(
+    getGoingOutListingState({
+      datePreset: "today",
+      filteredEventCount: 0,
+      snapshotEventCount: 2,
+      state: "fresh",
+      upcomingEventCount: 0,
+    }),
+    "filteredEmpty",
   );
 });
 

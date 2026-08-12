@@ -8,33 +8,48 @@ import type { GoingOutCacheState } from "../infrastructure/montegigs-going-out";
 import {
   formatGoingOutDateHeading,
   formatGoingOutTime,
+  filterGoingOutPageEvents,
   getGoingOutDisplayState,
   getGoingOutPageEvents,
+  getGoingOutListingState,
   groupGoingOutEventsByDate,
+  type GoingOutDatePreset,
+  type GoingOutUiFilters,
 } from "./going-out-ui-model";
 import { CityFeatureDiscovery } from "@/shared/components/city-feature-discovery";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
+import { Button } from "@/shared/components/ui/button";
 import { EmptyState } from "@/shared/components/empty-state";
 import { NewTabNotice } from "@/shared/components/new-tab-notice";
 import { SectionTitle } from "@/shared/components/section-title";
 import { getCityName } from "@/shared/config/cities";
 import type { Locale } from "@/shared/config/locale";
 import type { City } from "@/shared/types/city";
-import { getGoingOutDetailPath } from "@/shared/config/public-routes";
+import { getGoingOutDetailPath, getGoingOutPath } from "@/shared/config/public-routes";
 
 interface GoingOutPageProps {
   city: City;
   events: readonly GoingOutEvent[];
+  filters: GoingOutUiFilters;
   locale: Locale;
   state: GoingOutCacheState;
 }
 
-function GoingOutPage({ city, events, locale, state }: GoingOutPageProps) {
+function GoingOutPage({ city, events, filters, locale, state }: GoingOutPageProps) {
   const copy = locale === "me" ? montenegrinCopy : englishCopy;
   const cityName = getCityName(city, locale === "me" ? "locative" : "nominative");
-  const upcoming = getGoingOutPageEvents(events);
-  const displayState = getGoingOutDisplayState({ eventCount: upcoming.length, state });
-  const dateGroups = groupGoingOutEventsByDate(upcoming);
+  const now = new Date();
+  const upcoming = getGoingOutPageEvents(events, now);
+  const filteredEvents = filterGoingOutPageEvents(events, filters, now, city.timezone);
+  const snapshotDisplayState = getGoingOutDisplayState({ eventCount: upcoming.length, state });
+  const displayState = getGoingOutListingState({
+    datePreset: filters.datePreset,
+    filteredEventCount: filteredEvents.length,
+    snapshotEventCount: events.length,
+    state,
+    upcomingEventCount: upcoming.length,
+  });
+  const dateGroups = groupGoingOutEventsByDate(filteredEvents);
 
   return (
     <section aria-labelledby="going-out-page-heading" className="space-y-6" id="izlasci">
@@ -50,7 +65,8 @@ function GoingOutPage({ city, events, locale, state }: GoingOutPageProps) {
           {copy.description.replace("{city}", cityName)}
         </p>
       </div>
-      {displayState === "events" || displayState === "stale" ? (
+      <GoingOutQuickFilters city={city} filters={filters} locale={locale} />
+      {dateGroups.length > 0 ? (
         // Grouped by the day each listing falls on, mirroring the Događaji and Struja listings.
         <div className="space-y-8">
           {dateGroups.map((group) => (
@@ -59,7 +75,7 @@ function GoingOutPage({ city, events, locale, state }: GoingOutPageProps) {
                 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground"
                 id={`izlasci-${group.date}`}
               >
-                {formatGoingOutDateHeading(group.date, locale)}
+                {formatGoingOutDateHeading(group.date, locale, now)}
               </h2>
               <ul className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {group.events.map((event) => (
@@ -74,18 +90,65 @@ function GoingOutPage({ city, events, locale, state }: GoingOutPageProps) {
           description={
             displayState === "unavailable"
               ? copy.unavailable
-              : copy.empty.replace("{city}", cityName)
+              : displayState === "filteredEmpty"
+                ? copy.filterEmptyDescription[filters.datePreset]
+                : copy.empty.replace("{city}", cityName)
           }
-          title={copy.title.replace("{city}", cityName)}
+          title={
+            displayState === "filteredEmpty"
+              ? copy.filterEmptyTitle[filters.datePreset]
+              : copy.title.replace("{city}", cityName)
+          }
         />
       )}
-      {displayState === "stale" ? (
+      {snapshotDisplayState === "stale" ? (
         <p className="text-xs text-muted-foreground">{copy.stale}</p>
       ) : null}
 
       <CityFeatureDiscovery city={city} currentFeature="goingOut" />
     </section>
   );
+}
+
+function GoingOutQuickFilters({
+  city,
+  filters,
+  locale,
+}: {
+  city: City;
+  filters: GoingOutUiFilters;
+  locale: Locale;
+}) {
+  const copy = locale === "me" ? montenegrinCopy : englishCopy;
+  const presets = ["today", "tomorrow", "weekend", "upcoming"] as const;
+
+  return (
+    <nav aria-label={copy.filters} className="-mx-1 overflow-x-auto px-1 pb-1">
+      <ul className="flex min-w-max gap-2">
+        {presets.map((preset) => {
+          const isCurrent = filters.datePreset === preset;
+          return (
+            <li key={preset}>
+              <Button asChild size="sm" variant={isCurrent ? "default" : "outline"}>
+                <a
+                  aria-current={isCurrent ? "page" : undefined}
+                  href={createGoingOutHref(city, preset)}
+                >
+                  {copy.datePresets[preset]}
+                </a>
+              </Button>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
+  );
+}
+
+function createGoingOutHref(city: City, preset: GoingOutDatePreset) {
+  return preset === "upcoming"
+    ? getGoingOutPath(city)
+    : `${getGoingOutPath(city)}?period=${preset}`;
 }
 
 function GoingOutPageCard({
@@ -156,10 +219,29 @@ function GoingOutPageCard({
 // The listing stays deliberately concise even though the normal snapshot now also carries richer
 // source fields for eligible detail pages. It never claims to cover everything happening in a city.
 const montenegrinCopy = {
+  datePresets: {
+    today: "Danas",
+    tomorrow: "Sjutra",
+    upcoming: "Predstojeći",
+    weekend: "Ovaj vikend",
+  },
   details: "Detalji",
   description:
     "Pregled predstojećih izlazaka i dešavanja u {city}, grupisan po danima, sa vremenom početka i mjestom kada su poznati.",
   empty: "Trenutno nemamo dostupne najave izlazaka u {city}.",
+  filterEmptyDescription: {
+    today: "Pogledajte predstojeće najave za druge dane.",
+    tomorrow: "Pogledajte predstojeće najave za druge dane.",
+    upcoming: "",
+    weekend: "Pogledajte predstojeće najave za druge dane.",
+  },
+  filterEmptyTitle: {
+    today: "Danas nema najavljenih izlazaka.",
+    tomorrow: "Sjutra nema najavljenih izlazaka.",
+    upcoming: "",
+    weekend: "Za ovaj vikend nema najavljenih izlazaka.",
+  },
+  filters: "Filteri",
   source: "Pogledajte na MonteGigs-u",
   stale: "Prikazani su posljednji dostupni podaci.",
   title: "Izlasci u {city}",
@@ -167,10 +249,29 @@ const montenegrinCopy = {
 } as const;
 
 const englishCopy = {
+  datePresets: {
+    today: "Today",
+    tomorrow: "Tomorrow",
+    upcoming: "Upcoming",
+    weekend: "This weekend",
+  },
   details: "Details",
   description:
     "Upcoming nights out and events in {city}, grouped by day, with start time and venue where known.",
   empty: "We have no listings for {city} right now.",
+  filterEmptyDescription: {
+    today: "Browse upcoming listings for other days.",
+    tomorrow: "Browse upcoming listings for other days.",
+    upcoming: "",
+    weekend: "Browse upcoming listings for other days.",
+  },
+  filterEmptyTitle: {
+    today: "There are no listings for today.",
+    tomorrow: "There are no listings for tomorrow.",
+    upcoming: "",
+    weekend: "There are no listings for this weekend.",
+  },
+  filters: "Filters",
   source: "View on MonteGigs",
   stale: "The latest available data is shown.",
   title: "Nights out in {city}",

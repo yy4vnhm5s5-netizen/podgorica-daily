@@ -73,12 +73,15 @@ test("no copy claims to cover everything happening in the city", async () => {
   assert.doesNotMatch(source, /na\s+jednom\s+mjestu/iu);
 });
 
-test("the empty state describes Gradom's listings, not the city's nightlife", async () => {
+test("keeps provider and filter-specific empty states distinct from claims about city nightlife", async () => {
   const source = await pageSource();
 
   assert.match(source, /empty: "Trenutno nemamo dostupne najave izlazaka u \{city\}\."/u);
-  // "there are no nights out" would be a claim about reality that Gradom cannot make.
-  assert.doesNotMatch(source, /nema\s+(?:najavljenih\s+)?izlazaka/iu);
+  assert.match(source, /Danas nema najavljenih izlazaka\./u);
+  assert.match(source, /Sjutra nema najavljenih izlazaka\./u);
+  assert.match(source, /Za ovaj vikend nema najavljenih izlazaka\./u);
+  // The filter text is about the retained announcements, never the city's real-world nightlife.
+  assert.doesNotMatch(source, /nema izlazaka/iu);
   // Provider failure stays a separate, distinguishable state.
   assert.match(source, /displayState === "unavailable"/u);
 });
@@ -106,6 +109,35 @@ test("the canonical stays self-referencing and no structured data was added", as
   assert.match(route, /canonical: getGoingOutPath\(context\.city\)/u);
   assert.doesNotMatch(route, /ld\+json/u);
   assert.doesNotMatch(await pageSource(), /ld\+json|schema\.org/u);
+});
+
+test("uses the established server-rendered period query without changing canonical metadata", async () => {
+  const route = await routeSource();
+
+  assert.match(route, /searchParams: Promise<Record<string, string \| string\[\] \| undefined>>/u);
+  assert.match(route, /parseGoingOutUiFilters\(await searchParams\)/u);
+  assert.match(route, /filters=\{filters\}/u);
+  assert.match(route, /async function generateMetadata\(\{ params \}: GoingOutRouteProps\)/u);
+  assert.doesNotMatch(route, /fetch\(/u);
+});
+
+test("keeps date filters and their empty state on the listing, never a Going Out detail page", async () => {
+  const listing = await pageSource();
+  const detail = await readFile(new URL("./[eventKey]/page.tsx", import.meta.url), "utf8");
+
+  assert.match(
+    listing,
+    /<GoingOutQuickFilters city=\{city\} filters=\{filters\} locale=\{locale\} \/>/u,
+  );
+  assert.match(listing, /period=\$\{preset\}/u);
+  assert.match(listing, /aria-current=\{isCurrent \? "page" : undefined\}/u);
+  assert.match(listing, /copy\.filterEmptyTitle\[filters\.datePreset\]/u);
+  assert.match(listing, /snapshotDisplayState === "stale"/u);
+  assert.match(listing, /<CityFeatureDiscovery city=\{city\} currentFeature="goingOut" \/>/u);
+  assert.doesNotMatch(
+    detail,
+    /GoingOutQuickFilters|parseGoingOutUiFilters|filterGoingOutPageEvents/u,
+  );
 });
 
 test("does not render listing enrichment fields before a dedicated UI phase", async () => {
