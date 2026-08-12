@@ -66,8 +66,10 @@ test("keeps the public Parking route cache-only and shows stale or missing avail
   assert.match(route, /getParkingAvailability\(\)/u);
   assert.doesNotMatch(route, /fetch\(/u);
   assert.doesNotMatch(page, /fetch\(/u);
-  assert.match(page, /Dostupnost trenutno nije dostupna\./u);
+  assert.match(page, /Broj slobodnih mjesta trenutno nije dostupan\./u);
+  assert.match(page, /availability\.state === "fresh"/u);
   assert.match(page, /slobodnih mjesta/u);
   assert.match(page, /Parking servis Podgorica/u);
   assert.match(page, /currentFeature="parking"/u);
+  assert.doesNotMatch(page, /ExploreCityLinks/u);
 });

@@ -92,7 +92,7 @@ function ParkingPage({ city, locale, result }: ParkingPageProps) {
                               {location.capacity} parking mjesta
                             </p>
                             <p className="mt-2 text-sm font-medium text-foreground">
-                              Dostupnost trenutno nije dostupna.
+                              Broj slobodnih mjesta trenutno nije dostupan.
                             </p>
                           </>
                         )}
