@@ -86,15 +86,6 @@ function ParkingPage({ city, locale, result }: ParkingPageProps) {
                               {availability.updatedLabel}
                             </p>
                           </>
-                        ) : availability.state === "stale" ? (
-                          <>
-                            <p className="text-base font-medium leading-6 text-muted-foreground">
-                              {availability.lastReportedLabel}
-                            </p>
-                            <p className="mt-2 text-xs leading-5 text-muted-foreground">
-                              {availability.sourceLabel}
-                            </p>
-                          </>
                         ) : (
                           <>
                             <p className="text-sm text-muted-foreground">

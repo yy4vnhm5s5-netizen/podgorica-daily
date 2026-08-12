@@ -31,7 +31,7 @@ async function getParkingAvailability({
       return {
         ...catalogueLocation,
         availabilityState,
-        ...(availabilityState !== "unavailable" && availability
+        ...(availabilityState === "fresh" && availability
           ? {
               freeSpaces: availability.freeSpaces,
               sourceUpdatedAt: availability.sourceUpdatedAt,
