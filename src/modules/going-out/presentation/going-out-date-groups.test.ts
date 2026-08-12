@@ -15,10 +15,10 @@ import {
 
 const event = (startDate: string, title: string, venue?: string): GoingOutEvent => ({
   city: "budva",
-  id: `https://staging.montegigs.me/me/events/budva/1-x-${title}|${startDate}||${title}`,
+  id: `https://montegigs.me/me/events/budva/1-x-${title}|${startDate}||${title}`,
   sourceName: "MonteGigs",
   sourceEventId: "1",
-  sourceUrl: "https://staging.montegigs.me/me/events/budva/1-20260804-x",
+  sourceUrl: "https://montegigs.me/me/events/budva/1-20260804-x",
   startDate,
   title,
   ...(venue ? { venue } : {}),

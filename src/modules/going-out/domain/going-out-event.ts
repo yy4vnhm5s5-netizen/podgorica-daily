@@ -122,7 +122,7 @@ function sortAndDeduplicateGoingOutEvents(events: readonly GoingOutEvent[]) {
             left.title.localeCompare(right.title)
           );
         })
-        .map((event) => [event.id, event]),
+        .map((event) => [canonicalizeGoingOutEventId(event.id), event]),
     ).values(),
   ];
 }
@@ -134,11 +134,30 @@ function createGoingOutEventId({
   title,
 }: Pick<GoingOutEventCandidate, "sourceUrl" | "startDate" | "startTime" | "title">) {
   return [
-    sourceUrl,
+    canonicalizeMonteGigsSourceUrl(sourceUrl),
     startDate,
     startTime ?? "",
     normalizeText(title).toLocaleLowerCase("sr-Latn-ME"),
   ].join("|");
+}
+
+function canonicalizeGoingOutEventId(value: string) {
+  const [sourceUrl, ...identityParts] = value.split("|");
+  return identityParts.length === 0
+    ? value
+    : [canonicalizeMonteGigsSourceUrl(sourceUrl), ...identityParts].join("|");
+}
+
+function canonicalizeMonteGigsSourceUrl(value: string) {
+  try {
+    const url = new URL(value);
+    if (url.hostname === "staging.montegigs.me" || url.hostname === "montegigs.me") {
+      url.hostname = "montegigs.me";
+    }
+    return url.toString();
+  } catch {
+    return value;
+  }
 }
 
 function getLocalIsoDate(value: Date, timeZone = "Europe/Podgorica") {
@@ -229,7 +248,9 @@ function normalizeInformationUrl(value: string | undefined, sourceUrl: string) {
   if (!normalized || normalized === sourceUrl) return undefined;
 
   const url = new URL(normalized);
-  return url.hostname === "staging.montegigs.me" ? undefined : normalized;
+  return url.hostname === "staging.montegigs.me" || url.hostname === "montegigs.me"
+    ? undefined
+    : normalized;
 }
 
 function decodeHtmlEntities(value: string) {

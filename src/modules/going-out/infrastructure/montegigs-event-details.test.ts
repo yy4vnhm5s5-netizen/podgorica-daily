@@ -6,10 +6,9 @@ import test from "node:test";
 import { parseMonteGigsEventDetail } from "./montegigs-event-details.ts";
 
 const fixtures = join(import.meta.dirname, "__fixtures__");
-const kotorSourceUrl =
-  "https://staging.montegigs.me/me/events/kotor/7465-20260812-koncert-u-kotoru";
+const kotorSourceUrl = "https://montegigs.me/me/events/kotor/7465-20260812-koncert-u-kotoru";
 const barSourceUrl =
-  "https://staging.montegigs.me/me/events/bar/6453-20260807-ljeto-sa-zvijezdama-savo-perovic-sladja-allegro";
+  "https://montegigs.me/me/events/bar/6453-20260807-ljeto-sa-zvijezdama-savo-perovic-sladja-allegro";
 
 test("prefers matching MusicEvent JSON-LD and preserves its explicit fields", async () => {
   const html = await readFile(join(fixtures, "montegigs-kotor-detail-jsonld.html"), "utf8");
@@ -53,7 +52,7 @@ test("falls back from malformed JSON-LD to labelled HTML and rejects unsafe info
   assert.deepEqual(
     parseMonteGigsEventDetail(html, {
       sourceEventId: "7906",
-      sourceUrl: "https://staging.montegigs.me/me/events/budva/7906-20260809-budva-sunset-session",
+      sourceUrl: "https://montegigs.me/me/events/budva/7906-20260809-budva-sunset-session",
     }),
     {
       description: "Veče elektronske muzike na otvorenom uz gostujuće izvođače.",
@@ -78,7 +77,7 @@ test("uses one semantic visible address when structured address data is absent",
 test("does not accept a mismatched MusicEvent record or source URL as an information URL", () => {
   const html = `
     <script type="application/ld+json">
-      {"@type":"MusicEvent","url":"https://staging.montegigs.me/me/events/kotor/9999-20260812-other","description":"Pogrešan događaj","organizer":{"name":"Pogrešan organizator"}}
+      {"@type":"MusicEvent","url":"https://montegigs.me/me/events/kotor/9999-20260812-other","description":"Pogrešan događaj","organizer":{"name":"Pogrešan organizator"}}
     </script>
     <main><h2>Linkovi</h2><a href="${kotorSourceUrl}">Sajt događaja</a></main>
   `;

@@ -7,7 +7,7 @@ import {
   sortAndDeduplicateGoingOutEvents,
 } from "./going-out-event.ts";
 
-test("normalizes a Podgorica going-out event and preserves an unavailable time", () => {
+test("keeps a legacy cached Podgorica source URL readable and preserves an unavailable time", () => {
   const event = normalizeGoingOutEvent({
     city: "podgorica",
     sourceUrl: "https://staging.montegigs.me/me/events/podgorica/5520-20260825-summer-jam",
@@ -18,7 +18,7 @@ test("normalizes a Podgorica going-out event and preserves an unavailable time",
 
   assert.deepEqual(event, {
     city: "podgorica",
-    id: "https://staging.montegigs.me/me/events/podgorica/5520-20260825-summer-jam|2026-08-25||summer jam: željko samardžić",
+    id: "https://montegigs.me/me/events/podgorica/5520-20260825-summer-jam|2026-08-25||summer jam: željko samardžić",
     sourceName: "MonteGigs",
     sourceEventId: "5520",
     sourceUrl: "https://staging.montegigs.me/me/events/podgorica/5520-20260825-summer-jam",
@@ -28,10 +28,47 @@ test("normalizes a Podgorica going-out event and preserves an unavailable time",
   });
 });
 
+test("keeps the same logical MonteGigs identity across legacy and canonical hosts", () => {
+  const candidate = {
+    city: "podgorica" as const,
+    startDate: "2026-08-25",
+    title: "Summer Jam",
+  };
+  const legacy = normalizeGoingOutEvent({
+    ...candidate,
+    sourceUrl: "https://staging.montegigs.me/me/events/podgorica/5520-20260825-summer-jam",
+  });
+  const canonical = normalizeGoingOutEvent({
+    ...candidate,
+    sourceUrl: "https://montegigs.me/me/events/podgorica/5520-20260825-summer-jam",
+  });
+
+  assert.ok(legacy);
+  assert.ok(canonical);
+  assert.equal(legacy.id, canonical.id);
+  const persistedLegacy = {
+    ...legacy,
+    id: legacy.id.replace("https://montegigs.me", "https://staging.montegigs.me"),
+  };
+  assert.equal(sortAndDeduplicateGoingOutEvents([persistedLegacy, canonical]).length, 1);
+});
+
+test("does not retain a first-party MonteGigs link as an external information URL", () => {
+  const event = normalizeGoingOutEvent({
+    city: "podgorica",
+    informationUrl: "https://montegigs.me/me/events/podgorica/5520-20260825-summer-jam?source=page",
+    sourceUrl: "https://montegigs.me/me/events/podgorica/5520-20260825-summer-jam",
+    startDate: "2026-08-25",
+    title: "Summer Jam",
+  });
+
+  assert.equal(event?.informationUrl, undefined);
+});
+
 test("keeps the composite ID independent from source identity and optional enrichment", () => {
   const baseline = normalizeGoingOutEvent({
     city: "podgorica",
-    sourceUrl: "https://staging.montegigs.me/me/events/podgorica/5520-20260825-summer-jam",
+    sourceUrl: "https://montegigs.me/me/events/podgorica/5520-20260825-summer-jam",
     startDate: "2026-08-25",
     title: "Summer Jam",
   });
@@ -47,7 +84,7 @@ test("keeps the composite ID independent from source identity and optional enric
     performers: [" Željko Samardžić ", "željko samardžić", "", " Slađa Allegro "],
     priceLabel: "10",
     sourceEventId: "5520",
-    sourceUrl: "https://staging.montegigs.me/me/events/podgorica/5520-20260825-summer-jam",
+    sourceUrl: "https://montegigs.me/me/events/podgorica/5520-20260825-summer-jam",
     startDate: "2026-08-25",
     title: "  Summer   Jam ",
   });
@@ -69,7 +106,7 @@ test("keeps the composite ID independent from source identity and optional enric
     normalizeGoingOutEvent({
       city: "podgorica",
       sourceEventId: "5521",
-      sourceUrl: "https://staging.montegigs.me/me/events/podgorica/5520-20260825-summer-jam",
+      sourceUrl: "https://montegigs.me/me/events/podgorica/5520-20260825-summer-jam",
       startDate: "2026-08-25",
       title: "Summer Jam",
     }),
@@ -82,7 +119,7 @@ test("decodes ordinary HTML entities into stable plain-text enrichment", () => {
     city: "tivat",
     description:
       "  predstavu „Valja odit&#x27; na more” &amp; program&nbsp;sa &quot;gostima&quot; i &#39;muzičarima&#39;  ",
-    sourceUrl: "https://staging.montegigs.me/me/events/tivat/7010-20260812-valja-odit",
+    sourceUrl: "https://montegigs.me/me/events/tivat/7010-20260812-valja-odit",
     startDate: "2026-08-12",
     title: "Valja odit&#x27; na more",
   });
@@ -99,19 +136,19 @@ test("filters past days in Europe/Podgorica and keeps deterministic ordering", (
   const events = [
     normalizeGoingOutEvent({
       city: "podgorica",
-      sourceUrl: "https://staging.montegigs.me/me/events/podgorica/1-20260721-past",
+      sourceUrl: "https://montegigs.me/me/events/podgorica/1-20260721-past",
       startDate: "2026-07-21",
       title: "Past",
     }),
     normalizeGoingOutEvent({
       city: "podgorica",
-      sourceUrl: "https://staging.montegigs.me/me/events/podgorica/2-20260722-today",
+      sourceUrl: "https://montegigs.me/me/events/podgorica/2-20260722-today",
       startDate: "2026-07-22",
       title: "Today",
     }),
     normalizeGoingOutEvent({
       city: "podgorica",
-      sourceUrl: "https://staging.montegigs.me/me/events/podgorica/3-20260723-next",
+      sourceUrl: "https://montegigs.me/me/events/podgorica/3-20260723-next",
       startDate: "2026-07-23",
       title: "Next",
     }),

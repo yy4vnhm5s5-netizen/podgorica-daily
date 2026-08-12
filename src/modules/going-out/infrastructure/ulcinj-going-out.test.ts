@@ -13,7 +13,7 @@ test("adds Ulcinj to the MonteGigs allow-list without touching the others", () =
   assert.equal(isMonteGigsSupportedCityId("ulcinj"), true);
   assert.deepEqual(getMonteGigsCitySource("ulcinj"), {
     cityId: "ulcinj",
-    listingUrl: "https://staging.montegigs.me/me/events/ulcinj",
+    listingUrl: "https://montegigs.me/me/events/ulcinj",
   });
   assert.deepEqual(Object.keys(monteGigsCitySources).sort(), [
     "bar",

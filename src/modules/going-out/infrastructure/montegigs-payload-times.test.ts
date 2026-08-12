@@ -96,7 +96,7 @@ test("keeps venue, source URL and city untouched by the enrichment", async () =>
   assert.equal(event.venue, "Crkva Sv. Duha");
   assert.equal(event.city, "kotor");
   assert.equal(event.sourceEventId, "3638");
-  assert.match(event.sourceUrl, /^https:\/\/staging\.montegigs\.me\/me\/events\/kotor\/3638-/u);
+  assert.match(event.sourceUrl, /^https:\/\/montegigs\.me\/me\/events\/kotor\/3638-/u);
 });
 
 test("preserves explicit performers, type, genre and source cost labels from the hydration payload", async () => {
@@ -107,14 +107,13 @@ test("preserves explicit performers, type, genre and source cost labels from the
     city: "budva",
     eventType: "Concert",
     genre: "Pop-folk",
-    id: "https://staging.montegigs.me/me/events/budva/7497-20260809-jakov-jozinovic-live-in-budva|2026-08-09||jakov jozinović live in budva",
+    id: "https://montegigs.me/me/events/budva/7497-20260809-jakov-jozinovic-live-in-budva|2026-08-09||jakov jozinović live in budva",
     imageUrl: "https://montegigs.me/media/events/7925.jpg",
     performers: ["Jakov Jozinović"],
     priceLabel: "30-40",
     sourceEventId: "7497",
     sourceName: "MonteGigs",
-    sourceUrl:
-      "https://staging.montegigs.me/me/events/budva/7497-20260809-jakov-jozinovic-live-in-budva",
+    sourceUrl: "https://montegigs.me/me/events/budva/7497-20260809-jakov-jozinovic-live-in-budva",
     startDate: "2026-08-09",
     title: "Jakov Jozinović Live in Budva",
     venue: "Top Hill",

@@ -26,7 +26,7 @@ function event(overrides: Partial<GoingOutEvent> = {}): GoingOutEvent {
     priceLabel: "30-40",
     sourceEventId: "7465",
     sourceName: "MonteGigs",
-    sourceUrl: "https://staging.montegigs.me/me/events/kotor/7465-20260812-koncert-u-kotoru",
+    sourceUrl: "https://montegigs.me/me/events/kotor/7465-20260812-koncert-u-kotoru",
     startDate: "2026-08-12",
     startsAt: "2026-08-12T18:30:00.000Z",
     title: "Koncert u Kotoru",
@@ -55,7 +55,7 @@ test("emits conservative source-backed MusicEvent structured data", () => {
     name: "Koncert u Kotoru",
     organizer: { "@type": "Organization", name: "Kulturni centar Kotor" },
     performer: [{ "@type": "PerformingGroup", name: "Izvođač" }],
-    sameAs: "https://staging.montegigs.me/me/events/kotor/7465-20260812-koncert-u-kotoru",
+    sameAs: "https://montegigs.me/me/events/kotor/7465-20260812-koncert-u-kotoru",
     startDate: "2026-08-12T18:30:00.000Z",
     url: "https://gradom.me/kotor/izlasci/montegigs-7465",
   });

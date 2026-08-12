@@ -23,26 +23,26 @@ const detailRequestConcurrency = 3;
 const detailCacheFreshnessHours = 12;
 const detailCacheStaleFallbackHours = 72;
 const detailCacheRetentionDays = 14;
-const canonicalMonteGigsImageHost = "montegigs.me";
-const legacyMonteGigsImageHost = "staging.montegigs.me";
+const canonicalMonteGigsHost = "montegigs.me";
+const legacyMonteGigsHost = "staging.montegigs.me";
 const monteGigsEventImagePathPrefix = "/media/events/";
 
 const monteGigsCitySources = {
   bar: {
     cityId: "bar",
-    listingUrl: "https://staging.montegigs.me/me/events/bar",
+    listingUrl: "https://montegigs.me/me/events/bar",
   },
   budva: {
     cityId: "budva",
-    listingUrl: "https://staging.montegigs.me/me/events/budva",
+    listingUrl: "https://montegigs.me/me/events/budva",
   },
   kotor: {
     cityId: "kotor",
-    listingUrl: "https://staging.montegigs.me/me/events/kotor",
+    listingUrl: "https://montegigs.me/me/events/kotor",
   },
   podgorica: {
     cityId: "podgorica",
-    listingUrl: "https://staging.montegigs.me/me/events/podgorica",
+    listingUrl: "https://montegigs.me/me/events/podgorica",
   },
   // URL derived from the same unbroken convention as the two entries above (the city's own
   // registry id used verbatim as the /me/events/<cityId> path segment, no abbreviation or
@@ -50,13 +50,13 @@ const monteGigsCitySources = {
   // first real collector run before relying on it.
   tivat: {
     cityId: "tivat",
-    listingUrl: "https://staging.montegigs.me/me/events/tivat",
+    listingUrl: "https://montegigs.me/me/events/tivat",
   },
   // Verified read-only against the live listing before enabling: it returns HTTP 200 with real
   // upcoming Ulcinj events, and the embedded payload carries their start times.
   ulcinj: {
     cityId: "ulcinj",
-    listingUrl: "https://staging.montegigs.me/me/events/ulcinj",
+    listingUrl: "https://montegigs.me/me/events/ulcinj",
   },
 } as const;
 
@@ -696,7 +696,7 @@ async function readMonteGigsDetailCache(
 function isMonteGigsDetailCacheSourceUrl(value: string) {
   try {
     const url = new URL(value);
-    return url.protocol === "https:" && url.hostname === "staging.montegigs.me";
+    return url.protocol === "https:" && isMonteGigsHost(url.hostname);
   } catch {
     return false;
   }
@@ -943,12 +943,16 @@ function retainPrevious(
 
 function assertMonteGigsUrl(value: string) {
   const url = new URL(value);
-  if (url.protocol !== "https:" || url.hostname !== "staging.montegigs.me") {
+  if (url.protocol !== "https:" || !isMonteGigsHost(url.hostname)) {
     throw new MonteGigsFetchError(
       "montegigs-host-rejected",
       "Only the configured MonteGigs source is allowed.",
     );
   }
+}
+
+function isMonteGigsHost(hostname: string) {
+  return hostname === canonicalMonteGigsHost || hostname === legacyMonteGigsHost;
 }
 
 function assertMonteGigsListingUrl(value: string, cityId: MonteGigsSupportedCityId) {
@@ -1014,11 +1018,9 @@ function monteGigsImageUrl(value: string | undefined, sourceUrl: string) {
   if (!value) return undefined;
   try {
     const url = new URL(value, sourceUrl);
-    const isFirstPartyHost =
-      url.hostname === canonicalMonteGigsImageHost || url.hostname === legacyMonteGigsImageHost;
     if (
       url.protocol !== "https:" ||
-      !isFirstPartyHost ||
+      !isMonteGigsHost(url.hostname) ||
       !url.pathname.startsWith(monteGigsEventImagePathPrefix) ||
       url.port ||
       url.username ||
@@ -1027,9 +1029,9 @@ function monteGigsImageUrl(value: string | undefined, sourceUrl: string) {
       return undefined;
     }
 
-    // Listings are still collected through the approved legacy source, but its relative event
-    // image paths must not be persisted against the retired staging media host.
-    url.hostname = canonicalMonteGigsImageHost;
+    // Legacy persisted and source image URLs stay readable, but every accepted event asset is
+    // written on the canonical production host.
+    url.hostname = canonicalMonteGigsHost;
     return url.toString();
   } catch {
     return undefined;

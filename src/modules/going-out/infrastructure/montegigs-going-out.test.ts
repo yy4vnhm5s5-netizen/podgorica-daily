@@ -5,12 +5,15 @@ import test from "node:test";
 import { tmpdir } from "node:os";
 
 import {
+  assertMonteGigsDetailUrl,
+  assertMonteGigsListingUrl,
   assertMonteGigsUrl,
   createMonteGigsHttpClient,
   getCachedMonteGigsGoingOut,
   getGoingOutCachePath,
   getGoingOutDetailCachePath,
   getMonteGigsCitySource,
+  monteGigsCitySources,
   parseMonteGigsEvents,
   readMonteGigsDetailCache,
   readGoingOutCacheSnapshot,
@@ -75,7 +78,7 @@ test("parses only Bar events from the approved city listing without leaking neig
   );
   assert.equal(
     parsed.events[0]?.sourceUrl,
-    "https://staging.montegigs.me/me/events/bar/6453-20260807-ljeto-sa-zvijezdama-savo-perovic-sladja-allegro",
+    "https://montegigs.me/me/events/bar/6453-20260807-ljeto-sa-zvijezdama-savo-perovic-sladja-allegro",
   );
 });
 
@@ -202,14 +205,14 @@ test("keeps Kotor event metadata within its own card boundaries", async () => {
     [
       {
         imageUrl: "https://montegigs.me/media/events/kotor-concert.jpg",
-        sourceUrl: "https://staging.montegigs.me/me/events/kotor/7465-20260812-koncert-u-kotoru",
+        sourceUrl: "https://montegigs.me/me/events/kotor/7465-20260812-koncert-u-kotoru",
         startsAt: "2026-08-12T18:30:00.000Z",
         title: "Koncert u Kotoru",
         venue: "Pjaca od kina",
       },
       {
         imageUrl: "https://montegigs.me/media/events/kotor-evening.jpg",
-        sourceUrl: "https://staging.montegigs.me/me/events/kotor/7467-20260813-vecernji-program",
+        sourceUrl: "https://montegigs.me/me/events/kotor/7467-20260813-vecernji-program",
         startsAt: undefined,
         title: "Večernji program",
         venue: "Stari grad",
@@ -246,7 +249,7 @@ test("retains a valid cache when the listing no longer exposes event links", asy
   assert.equal(retained.snapshot?.events.length, 2);
 });
 
-test("accepts and round-trips a Tivat cache snapshot through the widened city schema", async () => {
+test("keeps a legacy Tivat cache snapshot publicly readable through the widened city schema", async () => {
   // Regression test for widening goingOutEventSchema/goingOutCacheSnapshotSchema's city enum:
   // before that change, a cached Tivat snapshot (or a Tivat event within any snapshot) would
   // fail Zod validation and silently read back as unavailable, even with a correctly configured
@@ -283,6 +286,10 @@ test("accepts and round-trips a Tivat cache snapshot through the widened city sc
   assert.equal(snapshot?.cityId, "tivat");
   assert.equal(snapshot?.events[0]?.city, "tivat");
   assert.equal(snapshot?.events[0]?.sourceEventId, "1");
+  assert.equal(
+    snapshot?.events[0]?.sourceUrl,
+    "https://staging.montegigs.me/me/events/tivat/1-20991231-party",
+  );
 
   const cached = await getCachedMonteGigsGoingOut({
     cachePath,
@@ -291,6 +298,65 @@ test("accepts and round-trips a Tivat cache snapshot through the widened city sc
   });
   assert.equal(cached.state, "fresh");
   assert.equal(cached.events.length, 1);
+  assert.equal(
+    cached.events[0]?.sourceUrl,
+    "https://staging.montegigs.me/me/events/tivat/1-20991231-party",
+  );
+});
+
+test("reuses a legacy detail cache entry for a canonical listing and rewrites its source URL", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "gradom-going-out-legacy-detail-cache-"));
+  const cachePath = join(directory, "budva.json");
+  const detailCachePath = join(directory, "budva-details.json");
+  const sourceEventId = "9600";
+  const entry = createDetailCacheEntry(sourceEventId, "2026-08-01T09:00:00.000Z");
+  await writeFile(
+    detailCachePath,
+    JSON.stringify({
+      cityId: "budva",
+      entries: [
+        {
+          ...entry,
+          sourceUrl: entry.sourceUrl.replace(
+            "https://montegigs.me",
+            "https://staging.montegigs.me",
+          ),
+        },
+      ],
+      schemaVersion: 1,
+      updatedAt: "2026-08-01T09:00:00.000Z",
+    }),
+    "utf8",
+  );
+  const requestedDetailUrls: string[] = [];
+
+  const refreshed = await refreshMonteGigsGoingOut({
+    cachePath,
+    context: budva,
+    detailCachePath,
+    httpClient: {
+      get: async (url) => {
+        if (url.endsWith("/me/events/budva")) {
+          return response(
+            createMonteGigsListing([{ id: sourceEventId, title: "Budva event" }]),
+            "budva",
+          );
+        }
+        requestedDetailUrls.push(url);
+        throw new Error("a fresh legacy cache entry should be reused");
+      },
+    },
+    now: new Date("2026-08-01T10:00:00.000Z"),
+  });
+
+  assert.equal(refreshed.success, true);
+  assert.equal(refreshed.snapshot?.events[0]?.description, `Opis ${sourceEventId}`);
+  assert.deepEqual(requestedDetailUrls, []);
+  assert.equal(
+    (await readMonteGigsDetailCache(detailCachePath, "budva")).entries.get(sourceEventId)
+      ?.sourceUrl,
+    `https://montegigs.me/me/events/budva/${sourceEventId}-20260802-event-${sourceEventId}`,
+  );
 });
 
 test("reads the atomically written cache without a live request", async () => {
@@ -377,9 +443,9 @@ test("enriches a listing snapshot from matching detail responses and fails open 
 
   assert.equal(refreshed.success, true);
   assert.deepEqual(requestedUrls, [
-    "https://staging.montegigs.me/me/events/kotor",
-    "https://staging.montegigs.me/me/events/kotor/7465-20260812-koncert-u-kotoru",
-    "https://staging.montegigs.me/me/events/kotor/7467-20260813-vecernji-program",
+    "https://montegigs.me/me/events/kotor",
+    "https://montegigs.me/me/events/kotor/7465-20260812-koncert-u-kotoru",
+    "https://montegigs.me/me/events/kotor/7467-20260813-vecernji-program",
   ]);
   assert.equal(
     requestedUrls.some((url) => url.includes("kotorart.me")),
@@ -392,13 +458,13 @@ test("enriches a listing snapshot from matching detail responses and fails open 
       address: "Trg od kina, Kotor",
       city: "kotor",
       description: "Koncert na otvorenom uz lokalne izvođače i goste večeri.",
-      id: "https://staging.montegigs.me/me/events/kotor/7465-20260812-koncert-u-kotoru|2026-08-12|20:30|koncert u kotoru",
+      id: "https://montegigs.me/me/events/kotor/7465-20260812-koncert-u-kotoru|2026-08-12|20:30|koncert u kotoru",
       imageUrl: "https://montegigs.me/media/events/kotor-concert.jpg",
       informationUrl: "https://kotorart.me/program/koncert-u-kotoru",
       organizer: "KotorArt",
       sourceName: "MonteGigs",
       sourceEventId: "7465",
-      sourceUrl: "https://staging.montegigs.me/me/events/kotor/7465-20260812-koncert-u-kotoru",
+      sourceUrl: "https://montegigs.me/me/events/kotor/7465-20260812-koncert-u-kotoru",
       startDate: "2026-08-12",
       startsAt: "2026-08-12T18:30:00.000Z",
       title: "Koncert u Kotoru",
@@ -689,7 +755,7 @@ test("does not reuse a detail cache entry from a different MonteGigs city path",
         {
           ...createDetailCacheEntry(sourceEventId, "2026-08-01T09:00:00.000Z"),
           description: "Wrong city detail",
-          sourceUrl: `https://staging.montegigs.me/me/events/kotor/${sourceEventId}-20260820-event-${sourceEventId}`,
+          sourceUrl: `https://montegigs.me/me/events/kotor/${sourceEventId}-20260820-event-${sourceEventId}`,
         },
       ],
       schemaVersion: 1,
@@ -847,7 +913,7 @@ test("rejects a detail response that redirects to a different source event", asy
           ? response(listing, "kotor")
           : detailResponse(
               detail,
-              "https://staging.montegigs.me/me/events/kotor/9999-20260812-other-event",
+              "https://montegigs.me/me/events/kotor/9999-20260812-other-event",
             ),
     },
     now: new Date("2026-08-01T10:00:00.000Z"),
@@ -861,32 +927,41 @@ test("rejects a detail response that redirects to a different source event", asy
   assert.equal(refreshed.detailCoverage?.detailFetchSucceeded, 0);
 });
 
-test("allows only the configured MonteGigs listing host", () => {
+test("accepts canonical production and legacy cached MonteGigs URLs, but rejects external hosts", () => {
+  assert.doesNotThrow(() => assertMonteGigsUrl("https://montegigs.me/me/events/podgorica"));
+  assert.doesNotThrow(() =>
+    assertMonteGigsListingUrl("https://montegigs.me/me/events/podgorica", "podgorica"),
+  );
   assert.doesNotThrow(() => assertMonteGigsUrl("https://staging.montegigs.me/me/events/podgorica"));
+  assert.doesNotThrow(() =>
+    assertMonteGigsDetailUrl(
+      "https://montegigs.me/me/events/podgorica/8021-20260812-kiteloop-week-hulahoop",
+      "https://montegigs.me/me/events/podgorica/8021-20260812-kiteloop-week-hulahoop",
+    ),
+  );
   assert.throws(() => assertMonteGigsUrl("https://example.test/me/events/podgorica"));
 });
 
 test("uses explicit city sources and independent city cache paths", () => {
-  assert.equal(
-    getMonteGigsCitySource("bar")?.listingUrl,
-    "https://staging.montegigs.me/me/events/bar",
+  assert.deepEqual(
+    Object.values(monteGigsCitySources).map(({ listingUrl }) => listingUrl),
+    [
+      "https://montegigs.me/me/events/bar",
+      "https://montegigs.me/me/events/budva",
+      "https://montegigs.me/me/events/kotor",
+      "https://montegigs.me/me/events/podgorica",
+      "https://montegigs.me/me/events/tivat",
+      "https://montegigs.me/me/events/ulcinj",
+    ],
   );
+  assert.equal(getMonteGigsCitySource("bar")?.listingUrl, "https://montegigs.me/me/events/bar");
   assert.equal(
     getMonteGigsCitySource("podgorica")?.listingUrl,
-    "https://staging.montegigs.me/me/events/podgorica",
+    "https://montegigs.me/me/events/podgorica",
   );
-  assert.equal(
-    getMonteGigsCitySource("budva")?.listingUrl,
-    "https://staging.montegigs.me/me/events/budva",
-  );
-  assert.equal(
-    getMonteGigsCitySource("tivat")?.listingUrl,
-    "https://staging.montegigs.me/me/events/tivat",
-  );
-  assert.equal(
-    getMonteGigsCitySource("kotor")?.listingUrl,
-    "https://staging.montegigs.me/me/events/kotor",
-  );
+  assert.equal(getMonteGigsCitySource("budva")?.listingUrl, "https://montegigs.me/me/events/budva");
+  assert.equal(getMonteGigsCitySource("tivat")?.listingUrl, "https://montegigs.me/me/events/tivat");
+  assert.equal(getMonteGigsCitySource("kotor")?.listingUrl, "https://montegigs.me/me/events/kotor");
   assert.notEqual(getGoingOutCachePath("bar"), getGoingOutCachePath("podgorica"));
   assert.notEqual(getGoingOutCachePath("bar"), getGoingOutCachePath("budva"));
   assert.notEqual(getGoingOutCachePath("podgorica"), getGoingOutCachePath("budva"));
@@ -962,19 +1037,19 @@ test("retries a transient MonteGigs response through the injected client", async
             ok: false,
             status: 503,
             text: async () => "",
-            url: "https://staging.montegigs.me/me/events/podgorica",
+            url: "https://montegigs.me/me/events/podgorica",
           }
         : {
             headers: { get: () => "text/html" },
             ok: true,
             status: 200,
             text: async () => "<html></html>",
-            url: "https://staging.montegigs.me/me/events/podgorica",
+            url: "https://montegigs.me/me/events/podgorica",
           };
     },
   });
 
-  const value = await client.get("https://staging.montegigs.me/me/events/podgorica");
+  const value = await client.get("https://montegigs.me/me/events/podgorica");
   assert.equal(calls, 2);
   assert.equal(value.status, 200);
 });
@@ -1003,7 +1078,7 @@ function createDetailCacheEntry(sourceEventId: string, fetchedAt: string) {
     fetchedAt,
     lastSeenAt: fetchedAt,
     sourceEventId,
-    sourceUrl: `https://staging.montegigs.me/me/events/budva/${sourceEventId}-20260820-event-${sourceEventId}`,
+    sourceUrl: `https://montegigs.me/me/events/budva/${sourceEventId}-20260820-event-${sourceEventId}`,
   };
 }
 
@@ -1014,8 +1089,8 @@ function response(
   return {
     body,
     contentType: "text/html",
-    finalUrl: `https://staging.montegigs.me/me/events/${city}`,
-    requestedUrl: `https://staging.montegigs.me/me/events/${city}`,
+    finalUrl: `https://montegigs.me/me/events/${city}`,
+    requestedUrl: `https://montegigs.me/me/events/${city}`,
     status: 200,
   };
 }

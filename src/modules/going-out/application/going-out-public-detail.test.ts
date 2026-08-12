@@ -20,7 +20,7 @@ function event(overrides: Partial<GoingOutEvent> = {}): GoingOutEvent {
     id: "fixture|2026-08-12|20:30|koncert-u-kotoru",
     sourceEventId: "7465",
     sourceName: "MonteGigs",
-    sourceUrl: "https://staging.montegigs.me/me/events/kotor/7465-20260812-koncert-u-kotoru",
+    sourceUrl: "https://montegigs.me/me/events/kotor/7465-20260812-koncert-u-kotoru",
     startDate: "2026-08-12",
     startsAt: "2026-08-12T18:30:00.000Z",
     title: "Koncert u Kotoru",

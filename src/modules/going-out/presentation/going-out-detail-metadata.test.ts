@@ -19,7 +19,7 @@ function event(overrides: Partial<GoingOutEvent> = {}): GoingOutEvent {
     id: "fixture",
     sourceEventId: "7465",
     sourceName: "MonteGigs",
-    sourceUrl: "https://staging.montegigs.me/me/events/kotor/7465-20260812-koncert-u-kotoru",
+    sourceUrl: "https://montegigs.me/me/events/kotor/7465-20260812-koncert-u-kotoru",
     startDate: "2026-08-12",
     title: "Koncert u Kotoru",
     venue: "Pjaca od kina",
