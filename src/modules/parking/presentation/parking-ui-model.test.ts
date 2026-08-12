@@ -10,7 +10,7 @@ const location = {
   type: "parking" as const,
 };
 
-test("renders a free-space count only for an individually fresh parking record", () => {
+test("renders a current free-space count only for an individually fresh parking record", () => {
   const fresh = getParkingAvailabilityLabel(
     {
       ...location,
@@ -25,6 +25,8 @@ test("renders a free-space count only for an individually fresh parking record",
     {
       ...location,
       availabilityState: "stale",
+      freeSpaces: 12,
+      sourceUpdatedAt: "2026-08-01T08:00:00.000Z",
     },
     "me",
     new Date("2026-08-11T10:00:00.000Z"),
@@ -35,5 +37,30 @@ test("renders a free-space count only for an individually fresh parking record",
     state: "fresh",
     updatedLabel: "Ažurirano prije 5 minuta",
   });
-  assert.deepEqual(stale, { state: "unavailable" });
+  assert.deepEqual(stale, {
+    lastReportedLabel: "Posljednje prijavljeno: 12 slobodnih mjesta",
+    sourceLabel: "Izvorni podatak: 1. avgust 2026.",
+    state: "stale",
+  });
+  assert.doesNotMatch(stale.lastReportedLabel, /Ažurirano|Trenutno|Sada|Live/u);
+});
+
+test("keeps missing or invalid availability out of the public presentation", () => {
+  const missing = getParkingAvailabilityLabel(
+    {
+      ...location,
+      availabilityState: "unavailable",
+    },
+    "me",
+  );
+  const staleWithoutSourceData = getParkingAvailabilityLabel(
+    {
+      ...location,
+      availabilityState: "stale",
+    },
+    "me",
+  );
+
+  assert.deepEqual(missing, { state: "unavailable" });
+  assert.deepEqual(staleWithoutSourceData, { state: "unavailable" });
 });

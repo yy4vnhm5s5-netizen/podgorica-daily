@@ -59,7 +59,7 @@ test("uses the exact Parking metadata title and self-canonical route", async () 
   assert.match(source, /Parking u Podgorici/u);
 });
 
-test("keeps the public Parking route cache-only and shows stale or missing availability conservatively", async () => {
+test("keeps the public Parking route cache-only and distinguishes current, last-reported and unavailable availability", async () => {
   const route = await routeSource();
   const page = await pageSource();
 
@@ -67,7 +67,10 @@ test("keeps the public Parking route cache-only and shows stale or missing avail
   assert.doesNotMatch(route, /fetch\(/u);
   assert.doesNotMatch(page, /fetch\(/u);
   assert.match(page, /Broj slobodnih mjesta trenutno nije dostupan\./u);
+  assert.match(page, /Posljednje prijavljeno/u);
+  assert.match(page, /Izvorni podatak/u);
   assert.match(page, /availability\.state === "fresh"/u);
+  assert.match(page, /availability\.state === "stale"/u);
   assert.match(page, /slobodnih mjesta/u);
   assert.match(page, /Parking servis Podgorica/u);
   assert.match(page, /currentFeature="parking"/u);

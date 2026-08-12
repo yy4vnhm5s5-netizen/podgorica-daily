@@ -24,14 +24,14 @@ async function getParkingAvailability({
       : {}),
     locations: parkingCatalogue.map((catalogueLocation) => {
       const availability = availabilityBySourceId.get(catalogueLocation.sourceId);
-      const availabilityState = getParkingLocationAvailabilityState(
-        availability?.sourceUpdatedAt,
-        now,
-      );
+      const availabilityState =
+        cached.state === "unavailable"
+          ? "unavailable"
+          : getParkingLocationAvailabilityState(availability?.sourceUpdatedAt, now);
       return {
         ...catalogueLocation,
         availabilityState,
-        ...(availabilityState === "fresh" && availability
+        ...(availabilityState !== "unavailable" && availability
           ? {
               freeSpaces: availability.freeSpaces,
               sourceUpdatedAt: availability.sourceUpdatedAt,
