@@ -18,10 +18,15 @@ import {
   writeJsonCache,
   type CacheFileSystem,
 } from "@/shared/lib/cache";
+import { defaultTimeZone } from "@/shared/lib/date";
 import { acquireRefreshLock } from "@/shared/lib/refresh-lock";
 
 const govMeOrigin = "https://www.gov.me";
-const govMeFuelListingUrl = `${govMeOrigin}/pretraga?tags=254`;
+// The general, publication-date-ordered official search finds current fuel notices even when the
+// ministry's historical tag page has not yet been updated. The tag page remains a secondary
+// source so an older official calculation can still be discovered when the search omits it.
+const govMeFuelListingUrl = `${govMeOrigin}/pretraga?at=1&sort=published_at&q=Nove%20cijene%20goriva&ou=`;
+const govMeFuelTaggedListingUrl = `${govMeOrigin}/pretraga?tags=254`;
 const fuelSourceName = "Ministarstvo energetike i rudarstva";
 const maximumResponseLength = 3_000_000;
 // A per-run crawl bound, not a history bound: one refresh reads at most this many listed articles.
@@ -107,6 +112,10 @@ function assertGovMeUrl(value: string) {
   }
 }
 
+function isFuelDiscoveryUrl(value: string) {
+  return value === govMeFuelListingUrl || value === govMeFuelTaggedListingUrl;
+}
+
 function createGovMeFuelHttpClient({
   fetchImplementation = fetch,
   timeoutMs = 15_000,
@@ -128,7 +137,7 @@ function createGovMeFuelHttpClient({
         assertGovMeUrl(response.url ?? requestedUrl);
         if (!response.ok) {
           throw new FuelPricesError(
-            requestedUrl === govMeFuelListingUrl ? "listing-unavailable" : "article-unavailable",
+            isFuelDiscoveryUrl(requestedUrl) ? "listing-unavailable" : "article-unavailable",
             "gov.me did not return a successful response.",
           );
         }
@@ -140,7 +149,7 @@ function createGovMeFuelHttpClient({
       } catch (error) {
         if (error instanceof FuelPricesError) throw error;
         throw new FuelPricesError(
-          requestedUrl === govMeFuelListingUrl ? "listing-unavailable" : "article-unavailable",
+          isFuelDiscoveryUrl(requestedUrl) ? "listing-unavailable" : "article-unavailable",
           "gov.me request failed.",
         );
       }
@@ -148,15 +157,72 @@ function createGovMeFuelHttpClient({
   };
 }
 
-// Only the fuel-price article family under the tag-254 listing. Other ministry articles share the
-// listing and must not be parsed for prices.
-const fuelArticleHrefPattern = /href="(\/clanak\/nove-cijene-goriva[^"#?]*)"/gi;
+// Only the known fuel-price article family is accepted. General GOV.ME search results include
+// other ministry articles that mention fuel, but those are never candidates for price parsing.
+const fuelArticleHrefPattern =
+  /href\s*=\s*["'](\/clanak\/nove-cijene-goriva(?:-od-\d{8}|-\d+))["']/gi;
 
-function discoverFuelArticleUrls(listingHtml: string) {
-  const paths = [...listingHtml.matchAll(fuelArticleHrefPattern)].map((match) => match[1]);
-  return [...new Set(paths)]
-    .map((path) => `${govMeOrigin}${path}`)
-    .slice(0, maximumArticlesPerRefresh);
+interface FuelArticleCandidate {
+  listingIndex: number;
+  listingPriority: number;
+  publishedAt?: string;
+  url: string;
+}
+
+function parseListingPublicationDate(value: string) {
+  const timeMatch = /<time\b[^>]*>([\s\S]*?)<\/time>/i.exec(value);
+  return timeMatch
+    ? parseMontenegrinDate(decodeEntities(timeMatch[1].replace(/<[^>]*>/g, " ")))
+    : undefined;
+}
+
+function discoverFuelArticleCandidates(listingHtml: string, listingPriority: number) {
+  const matches = [...listingHtml.matchAll(fuelArticleHrefPattern)];
+  return matches.map((match, listingIndex) => {
+    const nextMatchIndex = matches[listingIndex + 1]?.index ?? listingHtml.length;
+    const resultExcerpt = listingHtml.slice(match.index, nextMatchIndex);
+    const path = match[1];
+    const publishedAt = parseListingPublicationDate(resultExcerpt);
+
+    return {
+      listingIndex,
+      listingPriority,
+      ...(publishedAt ? { publishedAt } : {}),
+      url: `${govMeOrigin}${path}`,
+    };
+  });
+}
+
+function discoverFuelArticleUrls(listingHtml: string | readonly string[]) {
+  const listings = typeof listingHtml === "string" ? [listingHtml] : listingHtml;
+  const candidates = listings.flatMap((html, listingPriority) =>
+    discoverFuelArticleCandidates(html, listingPriority),
+  );
+  const uniqueCandidates = new Map<string, FuelArticleCandidate>();
+
+  for (const candidate of candidates) {
+    const existing = uniqueCandidates.get(candidate.url);
+    if (!existing) {
+      uniqueCandidates.set(candidate.url, candidate);
+      continue;
+    }
+    if (
+      candidate.publishedAt &&
+      (!existing.publishedAt || candidate.publishedAt > existing.publishedAt)
+    ) {
+      uniqueCandidates.set(candidate.url, candidate);
+    }
+  }
+
+  return [...uniqueCandidates.values()]
+    .sort(
+      (left, right) =>
+        (right.publishedAt ?? "").localeCompare(left.publishedAt ?? "") ||
+        left.listingPriority - right.listingPriority ||
+        left.listingIndex - right.listingIndex,
+    )
+    .slice(0, maximumArticlesPerRefresh)
+    .map(({ url }) => url);
 }
 
 const montenegrinMonths: Record<string, number> = {
@@ -274,7 +340,9 @@ const namedEntities: Record<string, string> = {
 // references are therefore decoded generically, decimal and hexadecimal alike.
 function decodeEntities(value: string) {
   return value
-    .replace(/&#x([0-9a-f]+);/gi, (match, hex: string) => codePointOrMatch(match, parseInt(hex, 16)))
+    .replace(/&#x([0-9a-f]+);/gi, (match, hex: string) =>
+      codePointOrMatch(match, parseInt(hex, 16)),
+    )
     .replace(/&#(\d+);/g, (match, decimal: string) => codePointOrMatch(match, Number(decimal)))
     .replace(/&([a-z]+);/gi, (match, name: string) => namedEntities[name] ?? match);
 }
@@ -333,18 +401,51 @@ function parseFuelArticle(html: string, sourceUrl: string): FuelPriceCalculation
   return isCompleteFuelPriceCalculation(calculation) ? calculation : undefined;
 }
 
-function calculateFuelFreshness(fetchedAt: Date | undefined, now = new Date()) {
-  return calculateCacheFreshness(fetchedAt, now, env.FUEL_CACHE_FRESHNESS_MINUTES);
+function getIsoDateInDefaultTimeZone(value: Date) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone: defaultTimeZone,
+    year: "numeric",
+  }).formatToParts(value);
+  const values = Object.fromEntries(
+    parts
+      .filter(({ type }) => type !== "literal")
+      .map(({ type, value: partValue }) => [type, partValue]),
+  );
+  return `${values.year}-${values.month}-${values.day}`;
+}
+
+function calculateFuelFreshness(
+  fetchedAt: Date | undefined,
+  calculations: readonly FuelPriceCalculation[],
+  now = new Date(),
+) {
+  const fetchFreshness = calculateCacheFreshness(fetchedAt, now, env.FUEL_CACHE_FRESHNESS_MINUTES);
+  if (fetchFreshness !== "fresh") return fetchFreshness;
+
+  const currentCalculation = sortFuelCalculations(calculations)[0];
+  if (
+    currentCalculation?.nextCalculationDate &&
+    currentCalculation.nextCalculationDate < getIsoDateInDefaultTimeZone(now)
+  ) {
+    return "stale";
+  }
+  return "fresh";
 }
 
 async function readFuelCache(
   cachePath = env.FUEL_CACHE_PATH,
-  fileSystem: CacheFileSystem = nodeFileSystem,
+  fileSystem: Pick<CacheFileSystem, "readFile"> = nodeFileSystem,
+  now = new Date(),
 ): Promise<FuelCacheSnapshot | null> {
   try {
     const value = JSON.parse(await fileSystem.readFile(cachePath, "utf8")) as unknown;
     if (!isFuelCacheSnapshot(value)) return null;
-    return { ...value, freshnessStatus: calculateFuelFreshness(new Date(value.fetchedAt)) };
+    return {
+      ...value,
+      freshnessStatus: calculateFuelFreshness(new Date(value.fetchedAt), value.calculations, now),
+    };
   } catch (error) {
     if (typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT")
       return null;
@@ -403,7 +504,18 @@ async function refreshFuelPrices({
   }
 
   try {
-    const articleUrls = discoverFuelArticleUrls(await httpClient.get(govMeFuelListingUrl));
+    const listingResponses = await Promise.allSettled([
+      httpClient.get(govMeFuelListingUrl),
+      httpClient.get(govMeFuelTaggedListingUrl),
+    ]);
+    const listingHtml = listingResponses.flatMap((response) =>
+      response.status === "fulfilled" ? [response.value] : [],
+    );
+    if (listingHtml.length === 0) {
+      throw new FuelPricesError("listing-unavailable", "Fuel article discovery is unavailable.");
+    }
+
+    const articleUrls = discoverFuelArticleUrls(listingHtml);
     if (articleUrls.length === 0) {
       return retainFuelSnapshot(previous, "parser-unrecognized", ["no-fuel-articles-discovered"]);
     }
@@ -439,11 +551,14 @@ async function refreshFuelPrices({
     }
 
     const calculations = mergeFuelCalculations(previous?.calculations ?? [], parsed);
-    const timestamp = now().toISOString();
+    const refreshedAt = now();
+    const timestamp = refreshedAt.toISOString();
+    const freshnessStatus = calculateFuelFreshness(refreshedAt, calculations, refreshedAt);
+    if (freshnessStatus === "stale") warnings.push("latest-calculation-validity-ended");
     const snapshot: FuelCacheSnapshot = {
       calculations,
       fetchedAt: timestamp,
-      freshnessStatus: "fresh",
+      freshnessStatus,
       lastSuccessfulRefreshAt: timestamp,
       parserWarnings: warnings,
       schemaVersion: 1,
@@ -580,10 +695,12 @@ async function getFuelPrices({
 export {
   assertGovMeUrl,
   createGovMeFuelHttpClient,
+  calculateFuelFreshness,
   discoverFuelArticleUrls,
   fuelSourceName,
   getFuelPrices,
   govMeFuelListingUrl,
+  govMeFuelTaggedListingUrl,
   parseFuelArticle,
   readFuelCache,
   refreshFuelPrices,

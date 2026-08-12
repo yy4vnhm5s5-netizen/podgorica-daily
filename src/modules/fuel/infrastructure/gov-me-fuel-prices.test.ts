@@ -9,10 +9,13 @@ import {
 } from "../domain/fuel-price.ts";
 import {
   assertGovMeUrl,
+  calculateFuelFreshness,
   discoverFuelArticleUrls,
   getFuelPrices,
   govMeFuelListingUrl,
+  govMeFuelTaggedListingUrl,
   parseFuelArticle,
+  readFuelCache,
   refreshFuelPrices,
   type FuelCacheSnapshot,
 } from "./gov-me-fuel-prices.ts";
@@ -21,6 +24,7 @@ const fixture = async (name: string) =>
   readFile(new URL(`./__fixtures__/${name}`, import.meta.url), "utf8");
 
 const august = "https://www.gov.me/clanak/nove-cijene-goriva-od-04082026";
+const august11 = "https://www.gov.me/clanak/nove-cijene-goriva-12";
 const june = "https://www.gov.me/clanak/nove-cijene-goriva-od-02062026";
 const may19 = "https://www.gov.me/clanak/nove-cijene-goriva-od-19052026";
 const may5 = "https://www.gov.me/clanak/nove-cijene-goriva-od-05052026-2";
@@ -51,6 +55,21 @@ test("keeps publication, effective and next-calculation dates separate", async (
   assert.equal(calculation.effectiveDate, "2026-08-04");
   assert.equal(calculation.nextCalculationDate, "2026-08-10");
   assert.notEqual(calculation.publishedAt, calculation.effectiveDate);
+});
+
+test("parses the 11 August official notice with its source-backed business dates", async () => {
+  const calculation = parseFuelArticle(await fixture("gov-me-fuel-2026-08-11.html"), august11);
+  assert.ok(calculation);
+
+  assert.equal(calculation.prices.length, 4);
+  assert.equal(priceOf(calculation, "eurosuper98"), 173);
+  assert.equal(priceOf(calculation, "eurosuper95"), 169);
+  assert.equal(priceOf(calculation, "eurodiesel"), 182);
+  assert.equal(priceOf(calculation, "heatingOil"), 170);
+  assert.equal(calculation.publishedAt, "2026-08-11");
+  assert.equal(calculation.effectiveDate, "2026-08-11");
+  assert.equal(calculation.nextCalculationDate, "2026-08-17");
+  assert.equal(calculation.sourceUrl, august11);
 });
 
 test("reads the older numeric date phrasing and omits an absent next calculation", async () => {
@@ -102,7 +121,7 @@ test("rejects an article that does not yield all four products", async () => {
   assert.equal(parseFuelArticle(await fixture("gov-me-fuel-unrelated.html"), august), undefined);
 });
 
-test("discovers only fuel articles from the shared ministry listing", async () => {
+test("discovers only accepted fuel articles from an official GOV.ME listing", async () => {
   const urls = discoverFuelArticleUrls(await fixture("gov-me-fuel-listing.html"));
 
   assert.deepEqual(urls, [august, june]);
@@ -112,10 +131,25 @@ test("discovers only fuel articles from the shared ministry listing", async () =
   );
 });
 
+test("general discovery keeps a newer official article ahead of a stale tagged listing", async () => {
+  const urls = discoverFuelArticleUrls([
+    await fixture("gov-me-fuel-search-listing.html"),
+    await fixture("gov-me-fuel-listing.html"),
+  ]);
+
+  assert.deepEqual(urls, [august11, august, june]);
+  assert.equal(urls.filter((url) => url === august).length, 1);
+});
+
 test("only requests the official host", () => {
   assert.throws(() => assertGovMeUrl("https://gov.me.evil.test/clanak/x"));
   assert.throws(() => assertGovMeUrl("http://www.gov.me/clanak/x"));
   assert.doesNotThrow(() => assertGovMeUrl(govMeFuelListingUrl));
+  assert.doesNotThrow(() => assertGovMeUrl(govMeFuelTaggedListingUrl));
+  assert.deepEqual(
+    discoverFuelArticleUrls('<a href="/clanak/nove-cijene-goriva-neprovjereno">Nevažeće</a>'),
+    [],
+  );
 });
 
 const stubCache = (initial: FuelCacheSnapshot | null = null) => {
@@ -131,7 +165,8 @@ const stubCache = (initial: FuelCacheSnapshot | null = null) => {
 
 const clientFor = (pages: Record<string, string>) => ({
   get: async (url: string) => {
-    const body = pages[url];
+    const body =
+      pages[url] ?? (url === govMeFuelTaggedListingUrl ? pages[govMeFuelListingUrl] : undefined);
     if (body === undefined) throw new Error(`unexpected fetch ${url}`);
     return body;
   },
@@ -159,6 +194,45 @@ test("a successful refresh stores newest-first, deduplicated history", async () 
     ["2026-08-04", "2026-06-02"],
   );
   assert.equal(stored.freshnessStatus, "fresh");
+});
+
+test("a newer general-search calculation becomes current while preserving fuel history", async () => {
+  const cache = stubCache(
+    snapshotOf([
+      {
+        effectiveDate: "2026-08-04",
+        nextCalculationDate: "2026-08-10",
+        prices: [
+          { priceCents: 175, productId: "eurosuper95" },
+          { priceCents: 179, productId: "eurosuper98" },
+          { priceCents: 185, productId: "eurodiesel" },
+          { priceCents: 180, productId: "heatingOil" },
+        ],
+        publishedAt: "2026-08-03",
+        sourceName: "Ministarstvo energetike i rudarstva",
+        sourceUrl: august,
+      },
+    ]),
+  );
+  const result = await refreshFuelPrices({
+    cache,
+    httpClient: clientFor({
+      [govMeFuelListingUrl]: await fixture("gov-me-fuel-search-listing.html"),
+      [govMeFuelTaggedListingUrl]: await fixture("gov-me-fuel-listing.html"),
+      [august11]: await fixture("gov-me-fuel-2026-08-11.html"),
+      [august]: await fixture("gov-me-fuel-2026-08-04.html"),
+      [june]: await fixture("gov-me-fuel-2026-06-02.html"),
+    }),
+    now: () => new Date("2026-08-12T10:00:00.000Z"),
+  });
+
+  assert.equal(result.success, true);
+  assert.deepEqual(
+    result.snapshot?.calculations.map(({ effectiveDate }) => effectiveDate),
+    ["2026-08-11", "2026-08-04", "2026-06-02"],
+  );
+  assert.equal(result.snapshot?.calculations[0]?.sourceUrl, august11);
+  assert.equal(result.snapshot?.freshnessStatus, "fresh");
 });
 
 test("re-running against an unchanged listing is idempotent", async () => {
@@ -406,6 +480,74 @@ const calculationOf = (effectiveDate: string, cents: number) => ({
   publishedAt: effectiveDate,
   sourceName: "Ministarstvo energetike i rudarstva",
   sourceUrl: august,
+});
+
+test("an expired source-backed next calculation makes an otherwise recent cache stale", () => {
+  const refreshedAt = new Date("2026-08-12T10:00:00.000Z");
+  const expiredCalculation = {
+    ...calculationOf("2026-08-04", 175),
+    nextCalculationDate: "2026-08-10",
+  };
+
+  assert.equal(calculateFuelFreshness(refreshedAt, [expiredCalculation], refreshedAt), "stale");
+});
+
+test("the announced calculation day itself is not prematurely treated as expired", () => {
+  const nowOnCalculationDay = new Date("2026-08-10T10:00:00.000Z");
+  const calculation = {
+    ...calculationOf("2026-08-04", 175),
+    nextCalculationDate: "2026-08-10",
+  };
+
+  assert.equal(
+    calculateFuelFreshness(nowOnCalculationDay, [calculation], nowOnCalculationDay),
+    "fresh",
+  );
+});
+
+test("a calculation without an announced next date retains fetch-age freshness", () => {
+  const refreshedAt = new Date("2026-08-12T10:00:00.000Z");
+
+  assert.equal(
+    calculateFuelFreshness(refreshedAt, [calculationOf("2026-08-04", 175)], refreshedAt),
+    "fresh",
+  );
+});
+
+test("the public cache read applies semantic freshness to stored source dates", async () => {
+  const snapshot = snapshotOf([
+    {
+      ...calculationOf("2026-08-04", 175),
+      nextCalculationDate: "2026-08-10",
+    },
+  ]);
+  snapshot.fetchedAt = "2026-08-12T10:00:00.000Z";
+
+  const read = await readFuelCache(
+    "/cache/fuel-prices.json",
+    { readFile: async () => JSON.stringify(snapshot) },
+    new Date("2026-08-12T10:00:00.000Z"),
+  );
+
+  assert.equal(read?.freshnessStatus, "stale");
+});
+
+test("a valid but business-expired calculation refreshes successfully with a warning", async () => {
+  const result = await refreshFuelPrices({
+    cache: stubCache(),
+    httpClient: clientFor({
+      [govMeFuelListingUrl]: await fixture("gov-me-fuel-listing.html"),
+      [govMeFuelTaggedListingUrl]: await fixture("gov-me-fuel-listing.html"),
+      [august]: await fixture("gov-me-fuel-2026-08-04.html"),
+      [june]: await fixture("gov-me-fuel-2026-06-02.html"),
+    }),
+    now: () => new Date("2026-08-12T10:00:00.000Z"),
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(result.retainedPreviousSnapshot, false);
+  assert.equal(result.snapshot?.freshnessStatus, "stale");
+  assert.equal(result.warnings.includes("latest-calculation-validity-ended"), true);
 });
 
 test("the read path returns the newest calculation first, whatever the cache order", async () => {

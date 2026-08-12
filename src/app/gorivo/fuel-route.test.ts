@@ -94,12 +94,12 @@ test("the refresh endpoint runs the collector only for an authorized caller", as
         exitCode: 0 as const,
         summary: {
           cachePath: "/app/.runtime/cache/fuel-prices.json",
-          cacheStatus: "fresh" as const,
+          cacheStatus: "stale" as const,
           calculationCount: 2,
           completedAt: "2026-08-05T04:17:00.000Z",
           retainedPreviousSnapshot: false,
           status: "success" as const,
-          warnings: [],
+          warnings: ["latest-calculation-validity-ended"],
         },
       };
     },
@@ -109,6 +109,13 @@ test("the refresh endpoint runs the collector only for an authorized caller", as
   const response = await handler(refreshRequest(secret));
   assert.equal(response.status, 200);
   assert.equal(runs, 1);
+  assert.deepEqual(await response.json(), {
+    acceptedCount: 2,
+    provider: "fuel-prices",
+    retainedPreviousSnapshot: false,
+    state: "success",
+    warnings: ["latest-calculation-validity-ended"],
+  });
 });
 
 test("the refresh endpoint rejects a missing or wrong secret without collecting", async () => {
@@ -145,6 +152,13 @@ test("the page never claims a freshness the snapshot does not have", async () =>
   assert.match(source, /result\.freshnessStatus === "unavailable"/u);
   // A retained snapshot keeps showing the last official prices instead of an error page.
   assert.match(source, /Prikazani su posljednji dostupni zvanični podaci\./u);
+});
+
+test("the page displays stored source business dates without deriving them", async () => {
+  const source = await pageSource();
+
+  assert.match(source, /formatDay\(current\.effectiveDate, locale\)/u);
+  assert.match(source, /formatDay\(current\.nextCalculationDate, locale\)/u);
 });
 
 test("the cache keeps full history while the page shows a bounded slice", async () => {
