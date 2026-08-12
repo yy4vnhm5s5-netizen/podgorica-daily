@@ -7,6 +7,8 @@ test("renders source-backed details without inventing optional facts", async () 
 
   assert.match(source, /as="h1"/u);
   assert.match(source, /title=\{event\.title\}/u);
+  assert.match(source, /src=\{event\.imageUrl\}/u);
+  assert.match(source, /\bunoptimized\b/u);
   assert.match(source, /label="Datum i vrijeme"/u);
   assert.match(source, /label="Mjesto" value=\{event\.venue\}/u);
   assert.match(source, /getGoingOutDetailAddress\(event\.address, city\)/u);

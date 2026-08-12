@@ -98,11 +98,36 @@ test("parses only Podgorica events from the official-style listing fixture", asy
     ],
   );
   assert.equal(parsed.events[1]?.startsAt, "2026-08-25T20:30:00.000Z");
-  assert.equal(parsed.events[0]?.imageUrl, "https://staging.montegigs.me/images/summer-jam.jpg");
+  assert.equal(parsed.events[0]?.imageUrl, "https://montegigs.me/media/events/summer-jam.jpg");
   assert.deepEqual(
     parsed.events.map((event) => event.city),
     ["podgorica", "podgorica"],
   );
+});
+
+test("canonicalizes only first-party MonteGigs event image assets from the listing", () => {
+  const parseImage = (imageSrc: string) =>
+    parseMonteGigsEvents(
+      `<main><article><a href="/me/events/podgorica/8021-20260812-kiteloop-week-hulahoop"><img src="${imageSrc}" /><h3>KiteLoop Week: HulaHoop</h3></a><p>12. avg • Kiteloop</p></article></main>`,
+      podgorica,
+      new Date("2026-08-01T10:00:00.000Z"),
+    ).events[0]?.imageUrl;
+
+  assert.equal(
+    parseImage("/media/events/8021.jpg?width=400&quality=85&fit=scale-down&format=auto"),
+    "https://montegigs.me/media/events/8021.jpg?width=400&quality=85&fit=scale-down&format=auto",
+  );
+  assert.equal(
+    parseImage("https://staging.montegigs.me/media/events/8021.jpg?width=400&quality=85"),
+    "https://montegigs.me/media/events/8021.jpg?width=400&quality=85",
+  );
+  assert.equal(
+    parseImage("https://montegigs.me/media/events/8021.jpg?width=400&quality=85"),
+    "https://montegigs.me/media/events/8021.jpg?width=400&quality=85",
+  );
+  assert.equal(parseImage("https://instagram.com/p/event-image"), undefined);
+  assert.equal(parseImage("https://facebook.com/event-image"), undefined);
+  assert.equal(parseImage("https://montegigs.me/images/8021.jpg"), undefined);
 });
 
 test("parses Budva events with the correct city assignment and preserves date-only records", async () => {
@@ -155,7 +180,7 @@ test("parses Kotor events through the shared city-aware MonteGigs parser", async
       { city: "kotor", startDate: "2026-08-13", title: "Evening in Kotor", venue: "Stari grad" },
     ],
   );
-  assert.equal(parsed.events[0]?.imageUrl, "https://staging.montegigs.me/images/kotor-sunset.jpg");
+  assert.equal(parsed.events[0]?.imageUrl, "https://montegigs.me/media/events/kotor-sunset.jpg");
 });
 
 test("keeps Kotor event metadata within its own card boundaries", async () => {
@@ -176,14 +201,14 @@ test("keeps Kotor event metadata within its own card boundaries", async () => {
     })),
     [
       {
-        imageUrl: "https://staging.montegigs.me/images/kotor-concert.jpg",
+        imageUrl: "https://montegigs.me/media/events/kotor-concert.jpg",
         sourceUrl: "https://staging.montegigs.me/me/events/kotor/7465-20260812-koncert-u-kotoru",
         startsAt: "2026-08-12T18:30:00.000Z",
         title: "Koncert u Kotoru",
         venue: "Pjaca od kina",
       },
       {
-        imageUrl: "https://staging.montegigs.me/images/kotor-evening.jpg",
+        imageUrl: "https://montegigs.me/media/events/kotor-evening.jpg",
         sourceUrl: "https://staging.montegigs.me/me/events/kotor/7467-20260813-vecernji-program",
         startsAt: undefined,
         title: "Večernji program",
@@ -311,9 +336,23 @@ test("round-trips enriched listing fields through the same city snapshot", async
     snapshot?.events.map((event) => [event.sourceEventId, event]),
   );
   assert.deepEqual(eventsBySourceEventId.get("7497")?.performers, ["Jakov Jozinović"]);
+  assert.equal(
+    eventsBySourceEventId.get("7497")?.imageUrl,
+    "https://montegigs.me/media/events/7925.jpg",
+  );
   assert.equal(eventsBySourceEventId.get("7497")?.priceLabel, "30-40");
   assert.equal(eventsBySourceEventId.get("7906")?.isFree, true);
   assert.equal(eventsBySourceEventId.get("7906")?.priceLabel, undefined);
+
+  const cached = await getCachedMonteGigsGoingOut({
+    cachePath,
+    context: budva,
+    now: new Date("2026-08-01T10:01:00.000Z"),
+  });
+  assert.equal(
+    cached.events.find((event) => event.sourceEventId === "7497")?.imageUrl,
+    "https://montegigs.me/media/events/7925.jpg",
+  );
 });
 
 test("enriches a listing snapshot from matching detail responses and fails open per event", async () => {
@@ -342,6 +381,10 @@ test("enriches a listing snapshot from matching detail responses and fails open 
     "https://staging.montegigs.me/me/events/kotor/7465-20260812-koncert-u-kotoru",
     "https://staging.montegigs.me/me/events/kotor/7467-20260813-vecernji-program",
   ]);
+  assert.equal(
+    requestedUrls.some((url) => url.includes("kotorart.me")),
+    false,
+  );
   assert.equal(refreshed.snapshot?.events.length, 2);
   assert.deepEqual(
     refreshed.snapshot?.events.find((event) => event.sourceEventId === "7465"),
@@ -350,7 +393,7 @@ test("enriches a listing snapshot from matching detail responses and fails open 
       city: "kotor",
       description: "Koncert na otvorenom uz lokalne izvođače i goste večeri.",
       id: "https://staging.montegigs.me/me/events/kotor/7465-20260812-koncert-u-kotoru|2026-08-12|20:30|koncert u kotoru",
-      imageUrl: "https://staging.montegigs.me/images/kotor-concert.jpg",
+      imageUrl: "https://montegigs.me/media/events/kotor-concert.jpg",
       informationUrl: "https://kotorart.me/program/koncert-u-kotoru",
       organizer: "KotorArt",
       sourceName: "MonteGigs",

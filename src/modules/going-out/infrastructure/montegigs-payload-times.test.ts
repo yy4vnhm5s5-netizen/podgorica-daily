@@ -108,7 +108,7 @@ test("preserves explicit performers, type, genre and source cost labels from the
     eventType: "Concert",
     genre: "Pop-folk",
     id: "https://staging.montegigs.me/me/events/budva/7497-20260809-jakov-jozinovic-live-in-budva|2026-08-09||jakov jozinović live in budva",
-    imageUrl: "https://staging.montegigs.me/media/events/7925.jpg",
+    imageUrl: "https://montegigs.me/media/events/7925.jpg",
     performers: ["Jakov Jozinović"],
     priceLabel: "30-40",
     sourceEventId: "7497",

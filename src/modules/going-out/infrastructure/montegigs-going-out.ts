@@ -23,6 +23,9 @@ const detailRequestConcurrency = 3;
 const detailCacheFreshnessHours = 12;
 const detailCacheStaleFallbackHours = 72;
 const detailCacheRetentionDays = 14;
+const canonicalMonteGigsImageHost = "montegigs.me";
+const legacyMonteGigsImageHost = "staging.montegigs.me";
+const monteGigsEventImagePathPrefix = "/media/events/";
 
 const monteGigsCitySources = {
   bar: {
@@ -1011,9 +1014,23 @@ function monteGigsImageUrl(value: string | undefined, sourceUrl: string) {
   if (!value) return undefined;
   try {
     const url = new URL(value, sourceUrl);
-    return url.protocol === "https:" && url.hostname === "staging.montegigs.me"
-      ? url.toString()
-      : undefined;
+    const isFirstPartyHost =
+      url.hostname === canonicalMonteGigsImageHost || url.hostname === legacyMonteGigsImageHost;
+    if (
+      url.protocol !== "https:" ||
+      !isFirstPartyHost ||
+      !url.pathname.startsWith(monteGigsEventImagePathPrefix) ||
+      url.port ||
+      url.username ||
+      url.password
+    ) {
+      return undefined;
+    }
+
+    // Listings are still collected through the approved legacy source, but its relative event
+    // image paths must not be persisted against the retired staging media host.
+    url.hostname = canonicalMonteGigsImageHost;
+    return url.toString();
   } catch {
     return undefined;
   }
