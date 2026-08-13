@@ -140,6 +140,7 @@ function getCityDashboardCapabilities(context: CityContext) {
     events: supportsCityCapability(context.city, "events"),
     flights: supportsCityCapability(context.city, "flights"),
     goingOut: supportsCityCapability(context.city, "goingOut"),
+    parking: supportsCityCapability(context.city, "parking"),
     railway: supportsCityCapability(context.city, "railway"),
     seaWaterQuality: supportsCityCapability(context.city, "seaWaterQuality"),
     weather: supportsCityCapability(context.city, "weather"),

@@ -175,10 +175,20 @@ test("a city without capabilities does not enable Podgorica dashboard data sourc
     events: false,
     flights: false,
     goingOut: false,
+    parking: false,
     railway: false,
     seaWaterQuality: false,
     weather: false,
   });
+});
+
+test("derives dashboard Parking availability solely from each city's declared capability", () => {
+  for (const city of getActiveCities()) {
+    assert.equal(
+      getCityDashboardCapabilities(createCityContext(city.id)).parking,
+      city.capabilities?.includes("parking") ?? false,
+    );
+  }
 });
 
 test("sitemap paths contain only active canonical city paths", () => {
@@ -261,6 +271,7 @@ test("Bar exposes only its approved weather, electricity, Going Out, and sea-wat
     events: false,
     flights: false,
     goingOut: true,
+    parking: false,
     railway: false,
     seaWaterQuality: true,
     weather: true,

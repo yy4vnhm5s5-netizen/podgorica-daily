@@ -114,6 +114,28 @@ test("uses only background-region tones for city services, sea water and Going O
   assert.match(source, /<DashboardSection>\s*<Suspense/u);
 });
 
+test("adds the capability-gated Parking card to the existing compact dashboard modules", async () => {
+  const source = await readFile(new URL("./city-dashboard.tsx", import.meta.url), "utf8");
+  const dashboardMarkup = source.slice(source.indexOf("return ("));
+  const compactModulesStart = dashboardMarkup.indexOf("{compactModuleCount > 0 ? (");
+  const compactModules = dashboardMarkup.slice(compactModulesStart);
+
+  assert.match(
+    source,
+    /import \{ ParkingAvailabilityCard \} from "@\/modules\/parking\/presentation\/parking-availability-card";/u,
+  );
+  assert.match(
+    source,
+    /const parkingCard = parking \? <ParkingAvailabilityCard city=\{city\} result=\{parking\} \/> : null;/u,
+  );
+  assert.match(
+    source,
+    /const compactModuleCount = \[[\s\S]*?parkingCard,[\s\S]*?\]\.filter\(Boolean\)\.length;/u,
+  );
+  assert.match(compactModules, /\{parkingCard\}/u);
+  assert.doesNotMatch(source, /city\.id === ["']podgorica/u);
+});
+
 // Regression test for the missing internal path /podgorica -> /podgorica/filmovi. The cinema card
 // previously linked only to cineplexx.me, so the sole internal route into /filmovi was the Daily
 // Summary tile, whose anchor text is a bare count.

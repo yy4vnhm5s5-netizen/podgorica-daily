@@ -54,11 +54,12 @@ interface PlatformCityCardData {
 const platformHomepageDescription =
   "Gradom.me okuplja provjerene lokalne informacije za gradove Crne Gore — vrijeme, događaje, prevoz i servisne obavijesti na jednom mjestu.";
 
-// Platform city cards do not render transport metrics. Avoid opening those two
-// city snapshots for every active city while preserving the full city dashboard
-// loader defaults for routes that do render them.
+// Platform city cards do not render flight, railway, or Parking metrics. Avoid opening those
+// snapshots for every active city while preserving the full city dashboard loader defaults for
+// routes that do render them.
 const platformCityCardDataLoadOptions = {
   includeFlights: false,
+  includeParking: false,
   includeRailway: false,
 };
 

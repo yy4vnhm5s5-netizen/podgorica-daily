@@ -22,22 +22,27 @@ async function getParkingAvailability({
     ...(cached.snapshot?.lastSuccessfulRefreshAt
       ? { lastSuccessfulRefreshAt: cached.snapshot.lastSuccessfulRefreshAt }
       : {}),
-    locations: parkingCatalogue.map((catalogueLocation) => {
+    locations: parkingCatalogue.flatMap((catalogueLocation) => {
       const availability = availabilityBySourceId.get(catalogueLocation.sourceId);
       const availabilityState =
         cached.state === "unavailable"
           ? "unavailable"
           : getParkingLocationAvailabilityState(availability?.sourceUpdatedAt, now);
-      return {
-        ...catalogueLocation,
-        availabilityState,
-        ...(availabilityState === "fresh" && availability
-          ? {
-              freeSpaces: availability.freeSpaces,
-              sourceUpdatedAt: availability.sourceUpdatedAt,
-            }
-          : {}),
-      };
+
+      // The source's per-location timestamp, not the snapshot timestamp, determines whether a
+      // count is useful to visitors. Keep stale/missing records in the persisted snapshot and
+      // catalogue for future validation and refreshes, but do not expose a capacity-only card
+      // through this public read model.
+      if (availabilityState !== "fresh" || !availability) return [];
+
+      return [
+        {
+          ...catalogueLocation,
+          availabilityState,
+          freeSpaces: availability.freeSpaces,
+          sourceUpdatedAt: availability.sourceUpdatedAt,
+        },
+      ];
     }),
     state: cached.state,
   };

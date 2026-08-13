@@ -15,6 +15,7 @@ import {
 import { AirportFlightsCard } from "@/modules/flights/presentation/airport-flights-card";
 import { GoingOutSection } from "@/modules/going-out/presentation/going-out-section";
 import { getAvailableGoingOutEvents } from "@/modules/going-out/presentation/going-out-ui-model";
+import { ParkingAvailabilityCard } from "@/modules/parking/presentation/parking-availability-card";
 import { SeaWaterQualityCard } from "@/modules/sea-water-quality/presentation/sea-water-quality-card";
 import { RailwayStationCard } from "@/modules/transport/presentation/railway-station-card";
 import {
@@ -46,7 +47,7 @@ async function CityDashboard({ context }: CityDashboardProps) {
   const { city, locale } = context;
   const translations = getTranslations(locale);
   const { advertising, emergencyNumbers } = translations.dashboard;
-  const { capabilities, events, flights, goingOut, railway, seaWaterQuality, weather } =
+  const { capabilities, events, flights, goingOut, parking, railway, seaWaterQuality, weather } =
     await loadCityDashboardData(context);
   const cinemaEvents = events.events.filter((event) => event.sourceId === "cineplexx-podgorica");
   const now = new Date();
@@ -78,10 +79,14 @@ async function CityDashboard({ context }: CityDashboardProps) {
       summary={seaWaterQuality.summary}
     />
   ) : null;
+  const parkingCard = parking ? <ParkingAvailabilityCard city={city} result={parking} /> : null;
   const showSeaWaterBeforeGoingOut = !city.isMain && seaWaterCard !== null;
-  const compactModuleCount = [city.isMain ? seaWaterCard : null, flights, railwayCard].filter(
-    Boolean,
-  ).length;
+  const compactModuleCount = [
+    city.isMain ? seaWaterCard : null,
+    flights,
+    railwayCard,
+    parkingCard,
+  ].filter(Boolean).length;
 
   return (
     <DashboardLayout city={city} translations={translations}>
@@ -169,6 +174,7 @@ async function CityDashboard({ context }: CityDashboardProps) {
               }
             >
               {city.isMain ? seaWaterCard : null}
+              {parkingCard}
               {flights ? (
                 <AirportFlightsCard
                   city={city}

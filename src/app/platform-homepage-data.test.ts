@@ -19,6 +19,7 @@ test("platform homepage uses the shared snapshot-backed dashboard loader rather 
 
   assert.match(source, /import \{ loadCityDashboardData \} from "@\/app\/city-dashboard-data";/u);
   assert.match(source, /await loadCityDashboardData\(/u);
+  assert.match(source, /includeParking: false/u);
   assert.doesNotMatch(source, /open-meteo|fetchOpenMeteoCurrentWeather|fetch\(/iu);
 });
 
@@ -177,6 +178,7 @@ test("uses the same available Going Out result as the city page and does not tur
       events: false,
       flights: false,
       goingOut: true,
+      parking: false,
       railway: false,
       seaWaterQuality: true,
       weather: true,
@@ -184,6 +186,7 @@ test("uses the same available Going Out result as the city page and does not tur
     events: getEmptyCityEventsReadModel(),
     flights: null,
     goingOut: { events: [event], state: "fresh" },
+    parking: null,
     railway: null,
     seaWaterQuality: null,
     weather: null,
@@ -195,6 +198,7 @@ test("uses the same available Going Out result as the city page and does not tur
       events: false,
       flights: false,
       goingOut: true,
+      parking: false,
       railway: false,
       seaWaterQuality: true,
       weather: true,
@@ -202,6 +206,7 @@ test("uses the same available Going Out result as the city page and does not tur
     events: getEmptyCityEventsReadModel(),
     flights: null,
     goingOut: { events: [], state: "stale" },
+    parking: null,
     railway: null,
     seaWaterQuality: null,
     weather: null,
@@ -278,6 +283,7 @@ test("derives Podgorica event and movie totals from the same displayable read mo
       events: true,
       flights: true,
       goingOut: true,
+      parking: true,
       railway: true,
       seaWaterQuality: false,
       weather: true,
@@ -289,6 +295,7 @@ test("derives Podgorica event and movie totals from the same displayable read mo
     },
     flights: null,
     goingOut: { events: [], state: "fresh" },
+    parking: null,
     railway: null,
     seaWaterQuality: null,
     weather: null,
@@ -338,6 +345,7 @@ test("counts many screenings of the same movies across several days as their uni
       events: true,
       flights: true,
       goingOut: true,
+      parking: true,
       railway: true,
       seaWaterQuality: false,
       weather: true,
@@ -349,6 +357,7 @@ test("counts many screenings of the same movies across several days as their uni
     },
     flights: null,
     goingOut: { events: [], state: "fresh" },
+    parking: null,
     railway: null,
     seaWaterQuality: null,
     weather: null,
@@ -367,6 +376,7 @@ test("shows Tivat's own beach count in the sea water quality highlight, not Budv
       events: true,
       flights: false,
       goingOut: true,
+      parking: false,
       railway: false,
       seaWaterQuality: true,
       weather: true,
@@ -374,6 +384,7 @@ test("shows Tivat's own beach count in the sea water quality highlight, not Budv
     events: getEmptyCityEventsReadModel(),
     flights: null,
     goingOut: { events: [], state: "fresh" },
+    parking: null,
     railway: null,
     seaWaterQuality: {
       state: "fresh",
@@ -449,6 +460,7 @@ test("never shows a movies highlight for Tivat, even if Cineplexx-shaped events 
       events: true,
       flights: false,
       goingOut: true,
+      parking: false,
       railway: false,
       seaWaterQuality: true,
       weather: true,
@@ -460,6 +472,7 @@ test("never shows a movies highlight for Tivat, even if Cineplexx-shaped events 
     },
     flights: null,
     goingOut: { events: [], state: "fresh" },
+    parking: null,
     railway: null,
     seaWaterQuality: null,
     weather: null,

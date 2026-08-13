@@ -5,7 +5,7 @@ import type {
   ParkingLocationType,
 } from "../domain/parking-availability.ts";
 import { parkingAvailabilityPageUrl } from "../infrastructure/parking-servis-podgorica.ts";
-import { getParkingAvailabilityLabel } from "./parking-ui-model.ts";
+import { getParkingAvailabilityLabel, getParkingSections } from "./parking-ui-model.ts";
 import { CityFeatureDiscovery } from "@/shared/components/city-feature-discovery";
 import { NewTabNotice } from "@/shared/components/new-tab-notice";
 import { SectionTitle } from "@/shared/components/section-title";
@@ -27,6 +27,7 @@ const parkingTypeCopy: Record<ParkingLocationType, string> = {
 
 function ParkingPage({ city, locale, result }: ParkingPageProps) {
   const title = `Parking u ${getCityName(city, "locative")}`;
+  const sections = getParkingSections(result.locations);
 
   return (
     <section aria-labelledby="parking-heading" className="space-y-6" id="parking">
@@ -44,10 +45,8 @@ function ParkingPage({ city, locale, result }: ParkingPageProps) {
         </p>
       </div>
 
-      {(["parking", "garage"] as const).map((type) => {
-        const locations = result.locations.filter((location) => location.type === type);
-        if (locations.length === 0) return null;
-        return (
+      {sections.length > 0 ? (
+        sections.map(({ locations, type }) => (
           <section aria-labelledby={`parking-${type}-heading`} key={type}>
             <h2
               className="text-sm font-medium uppercase leading-5 tracking-[0.16em] text-slate-800 sm:text-[0.9375rem]"
@@ -86,16 +85,7 @@ function ParkingPage({ city, locale, result }: ParkingPageProps) {
                               {availability.updatedLabel}
                             </p>
                           </>
-                        ) : (
-                          <>
-                            <p className="text-sm text-muted-foreground">
-                              {location.capacity} parking mjesta
-                            </p>
-                            <p className="mt-2 text-sm font-medium text-foreground">
-                              Broj slobodnih mjesta trenutno nije dostupan.
-                            </p>
-                          </>
-                        )}
+                        ) : null}
                       </CardContent>
                     </Card>
                   </li>
@@ -103,8 +93,15 @@ function ParkingPage({ city, locale, result }: ParkingPageProps) {
               })}
             </ul>
           </section>
-        );
-      })}
+        ))
+      ) : (
+        <p
+          className="rounded-lg border border-border bg-background px-4 py-3 text-sm text-muted-foreground"
+          role="status"
+        >
+          Trenutno nema dostupnih ažuriranih podataka o slobodnim parking mjestima.
+        </p>
+      )}
 
       <p className="text-xs leading-5 text-muted-foreground">
         Izvor:{" "}

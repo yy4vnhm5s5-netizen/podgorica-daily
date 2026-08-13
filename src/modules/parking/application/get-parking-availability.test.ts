@@ -4,7 +4,7 @@ import test from "node:test";
 import type { ParkingCacheResult } from "../infrastructure/parking-cache.ts";
 import { getParkingAvailability } from "./get-parking-availability.ts";
 
-test("shows only fresh Parking servis records while keeping stale and missing locations unavailable", async () => {
+test("publishes only individually fresh validated locations and preserves a fresh zero", async () => {
   const now = new Date("2026-08-11T10:00:00.000Z");
   const result = await getParkingAvailability({
     now,
@@ -16,6 +16,8 @@ test("shows only fresh Parking servis records while keeping stale and missing lo
         locations: [
           { freeSpaces: 12, sourceId: "broj1", sourceUpdatedAt: "2026-08-11T09:55:00.000Z" },
           { freeSpaces: 13, sourceId: "broj2", sourceUpdatedAt: "2026-08-11T08:00:00.000Z" },
+          { freeSpaces: 0, sourceId: "broj2a", sourceUpdatedAt: "2026-08-11T09:50:00.000Z" },
+          { freeSpaces: 36, sourceId: "garaza1", sourceUpdatedAt: "2026-08-11T09:51:00.000Z" },
         ],
         provider: "parking-servis-podgorica",
         schemaVersion: 1,
@@ -26,8 +28,8 @@ test("shows only fresh Parking servis records while keeping stale and missing lo
   });
 
   const fresh = result.locations.find((location) => location.sourceId === "broj1");
-  const stale = result.locations.find((location) => location.sourceId === "broj2");
-  const missing = result.locations.find((location) => location.sourceId === "broj3");
+  const zero = result.locations.find((location) => location.sourceId === "broj2a");
+  const garage = result.locations.find((location) => location.sourceId === "garaza1");
 
   assert.deepEqual(fresh, {
     availabilityState: "fresh",
@@ -38,14 +40,25 @@ test("shows only fresh Parking servis records while keeping stale and missing lo
     sourceUpdatedAt: "2026-08-11T09:55:00.000Z",
     type: "parking",
   });
-  assert.equal(stale?.availabilityState, "stale");
-  assert.equal(stale?.freeSpaces, undefined);
-  assert.equal(stale?.sourceUpdatedAt, undefined);
-  assert.equal(missing?.availabilityState, "unavailable");
-  assert.equal(missing?.capacity, 84);
+  assert.equal(zero?.availabilityState, "fresh");
+  assert.equal(zero?.freeSpaces, 0);
+  assert.equal(garage?.availabilityState, "fresh");
+  assert.equal(garage?.type, "garage");
+  assert.deepEqual(
+    result.locations.map((location) => location.sourceId),
+    ["broj1", "broj2a", "garaza1"],
+  );
+  assert.equal(
+    result.locations.some(({ sourceId }) => sourceId === "broj2"),
+    false,
+  );
+  assert.equal(
+    result.locations.some(({ sourceId }) => sourceId === "broj3"),
+    false,
+  );
 });
 
-test("shows a previously stale location after a later source update becomes fresh", async () => {
+test("a location disappears when stale and automatically returns after a fresh source update", async () => {
   const now = new Date("2026-08-11T10:00:00.000Z");
 
   const stale = await getParkingAvailability({
@@ -57,8 +70,14 @@ test("shows a previously stale location after a later source update becomes fres
     readCache: async () => createParkingCacheResult("2026-08-11T09:55:00.000Z"),
   });
 
-  assert.equal(stale.locations.find(({ sourceId }) => sourceId === "broj1")?.freeSpaces, undefined);
+  const staleAgain = await getParkingAvailability({
+    now,
+    readCache: async () => createParkingCacheResult("2026-08-11T08:00:00.000Z"),
+  });
+
+  assert.deepEqual(stale.locations, []);
   assert.equal(fresh.locations.find(({ sourceId }) => sourceId === "broj1")?.freeSpaces, 12);
+  assert.deepEqual(staleAgain.locations, []);
 });
 
 function createParkingCacheResult(sourceUpdatedAt: string): ParkingCacheResult {
@@ -76,7 +95,7 @@ function createParkingCacheResult(sourceUpdatedAt: string): ParkingCacheResult {
   };
 }
 
-test("suppresses all location counts when the whole Parking snapshot is unavailable", async () => {
+test("publishes no locations when the whole Parking snapshot is unavailable", async () => {
   const result = await getParkingAvailability({
     now: new Date("2026-08-11T10:00:00.000Z"),
     readCache: async () => ({
@@ -95,8 +114,5 @@ test("suppresses all location counts when the whole Parking snapshot is unavaila
     }),
   });
 
-  const location = result.locations.find(({ sourceId }) => sourceId === "broj1");
-  assert.equal(location?.availabilityState, "unavailable");
-  assert.equal(location?.freeSpaces, undefined);
-  assert.equal(location?.sourceUpdatedAt, undefined);
+  assert.deepEqual(result.locations, []);
 });
