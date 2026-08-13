@@ -69,10 +69,9 @@ test("prioritizes Going Out only for the main city while restoring sea water bef
     source,
     /const showSeaWaterBeforeGoingOut = !city\.isMain && seaWaterCard !== null;/u,
   );
-  assert.match(source, /\{city\.isMain \? seaWaterCard : null\}/u);
   assert.match(
     source,
-    /className=\{\s*compactModuleCount > 1 \? "grid items-start gap-6 lg:grid-cols-2" : undefined\s*\}/u,
+    /const compactHasIndependentColumns = compactLeftColumnHasCards && Boolean\(flightsCard\);/u,
   );
 
   const goingOutRow = dashboardMarkup.slice(
@@ -80,6 +79,33 @@ test("prioritizes Going Out only for the main city while restoring sea water bef
     dashboardMarkup.indexOf("{capabilities.events ? (", goingOutIndex),
   );
   assert.doesNotMatch(goingOutRow, /SeaWaterQualityCard/u);
+});
+
+test("stacks compact dashboard cards independently on desktop while preserving mobile order", async () => {
+  const source = await readFile(new URL("./city-dashboard.tsx", import.meta.url), "utf8");
+  const dashboardMarkup = source.slice(source.indexOf("{compactModuleCount > 0 ? ("));
+
+  assert.match(
+    dashboardMarkup,
+    /compactHasIndependentColumns\s*\?\s*"flex flex-col gap-6 lg:grid lg:grid-cols-2"\s*:\s*"flex flex-col gap-6"/u,
+  );
+  assert.match(
+    dashboardMarkup,
+    /<div className="contents lg:flex lg:flex-col lg:gap-6">\s*\{city\.isMain \? <div className="order-1">\{seaWaterCard\}[^]*?\{parkingCard \? <div className="order-2">\{parkingCard\}/u,
+  );
+  assert.match(
+    dashboardMarkup,
+    /\{railwayStationCard \? <div className="order-4">\{railwayStationCard\}/u,
+  );
+  assert.match(
+    dashboardMarkup,
+    /<div className="contents lg:flex lg:flex-col lg:gap-6">\s*\{flightsCard \? <div className="order-3">\{flightsCard\}/u,
+  );
+
+  const parkingIndex = dashboardMarkup.indexOf('className="order-2"');
+  const flightsIndex = dashboardMarkup.indexOf('className="order-3"');
+  const railwayIndex = dashboardMarkup.indexOf('className="order-4"');
+  assert.ok(parkingIndex >= 0 && railwayIndex > parkingIndex && flightsIndex > railwayIndex);
 });
 
 test("keeps the Daily Summary as an unwrapped dashboard hero", async () => {
@@ -132,7 +158,10 @@ test("adds the capability-gated Parking card to the existing compact dashboard m
     source,
     /const compactModuleCount = \[[\s\S]*?parkingCard,[\s\S]*?\]\.filter\(Boolean\)\.length;/u,
   );
-  assert.match(compactModules, /\{parkingCard\}/u);
+  assert.match(
+    compactModules,
+    /\{parkingCard \? <div className="order-2">\{parkingCard\}<\/div> : null\}/u,
+  );
   assert.doesNotMatch(source, /city\.id === ["']podgorica/u);
 });
 

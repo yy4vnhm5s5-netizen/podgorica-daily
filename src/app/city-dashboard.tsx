@@ -80,12 +80,33 @@ async function CityDashboard({ context }: CityDashboardProps) {
     />
   ) : null;
   const parkingCard = parking ? <ParkingAvailabilityCard city={city} result={parking} /> : null;
+  const flightsCard = flights ? (
+    <AirportFlightsCard
+      city={city}
+      flights={flights.flights}
+      lastSuccessfulRefreshAt={flights.lastSuccessfulRefreshAt}
+      locale={locale}
+      state={flights.state}
+    />
+  ) : null;
+  const railwayStationCard = railwayCard ? (
+    <RailwayStationCard
+      departures={railwayCard.departures}
+      locale={locale}
+      state={railwayCard.state}
+    />
+  ) : null;
   const showSeaWaterBeforeGoingOut = !city.isMain && seaWaterCard !== null;
+  const compactLeftColumnHasCards =
+    Boolean(city.isMain ? seaWaterCard : null) ||
+    Boolean(parkingCard) ||
+    Boolean(railwayStationCard);
+  const compactHasIndependentColumns = compactLeftColumnHasCards && Boolean(flightsCard);
   const compactModuleCount = [
     city.isMain ? seaWaterCard : null,
-    flights,
-    railwayCard,
     parkingCard,
+    flightsCard,
+    railwayStationCard,
   ].filter(Boolean).length;
 
   return (
@@ -170,27 +191,19 @@ async function CityDashboard({ context }: CityDashboardProps) {
           <DashboardSection>
             <div
               className={
-                compactModuleCount > 1 ? "grid items-start gap-6 lg:grid-cols-2" : undefined
+                compactHasIndependentColumns
+                  ? "flex flex-col gap-6 lg:grid lg:grid-cols-2"
+                  : "flex flex-col gap-6"
               }
             >
-              {city.isMain ? seaWaterCard : null}
-              {parkingCard}
-              {flights ? (
-                <AirportFlightsCard
-                  city={city}
-                  flights={flights.flights}
-                  lastSuccessfulRefreshAt={flights.lastSuccessfulRefreshAt}
-                  locale={locale}
-                  state={flights.state}
-                />
-              ) : null}
-              {railwayCard ? (
-                <RailwayStationCard
-                  departures={railwayCard.departures}
-                  locale={locale}
-                  state={railwayCard.state}
-                />
-              ) : null}
+              <div className="contents lg:flex lg:flex-col lg:gap-6">
+                {city.isMain ? <div className="order-1">{seaWaterCard}</div> : null}
+                {parkingCard ? <div className="order-2">{parkingCard}</div> : null}
+                {railwayStationCard ? <div className="order-4">{railwayStationCard}</div> : null}
+              </div>
+              <div className="contents lg:flex lg:flex-col lg:gap-6">
+                {flightsCard ? <div className="order-3">{flightsCard}</div> : null}
+              </div>
             </div>
           </DashboardSection>
         ) : null}
