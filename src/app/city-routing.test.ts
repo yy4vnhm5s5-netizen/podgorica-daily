@@ -241,6 +241,21 @@ test("does not publish feature-flagged routes when their public feature is disab
   ]);
 });
 
+test("advertises city landing verticals only when their public feature route is available", () => {
+  const budva = createCityContext("budva");
+  const disabled = { isFeatureEnabled: () => false };
+
+  assert.equal(supportsCityCapability(budva.city, "goingOut"), true);
+  assert.equal(supportsCityCapability(budva.city, "seaWaterQuality"), true);
+  assert.equal(getCityLandingTitle(budva, disabled), "Budva — lokalne informacije | Gradom.me");
+
+  const description = getCityLandingMetadata(budva, disabled).description ?? "";
+  assert.doesNotMatch(description, /izlascima/u);
+  assert.doesNotMatch(description, /plažama i kvalitetu mora/u);
+  assert.match(description, /vremenu/u);
+  assert.match(description, /servisnim obavještenjima/u);
+});
+
 test("exposes only Budva's capability-supported feature routes", () => {
   const budva = createCityContext("budva").city;
 

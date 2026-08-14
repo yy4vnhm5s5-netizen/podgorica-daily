@@ -40,13 +40,15 @@ interface CityDashboardSummaryAvailability {
 // The headline capabilities a city hub advertises, in reading order. Coastal cities carry their
 // sea-water/beach coverage here too: it is their most distinctive content (a per-location detail
 // page per monitoring point), and leaving it out made every coastal hub read as generic "lokalne
-// informacije". Driven entirely by the registry — a city that does not declare the capability
-// never gets the wording, so Podgorica stays beach-free without being named anywhere.
-function getCityLandingTitle(context: CityContext) {
+// informacije". The same public feature-availability rule used by routes and the sitemap keeps a
+// disabled vertical out of this wording even when its city still declares the capability.
+function getCityLandingTitle(context: CityContext, options: CityRouteAvailabilityOptions = {}) {
   const labels = [
-    ...(supportsCityCapability(context.city, "events") ? ["događaji"] : []),
-    ...(supportsCityCapability(context.city, "goingOut") ? ["izlasci"] : []),
-    ...(supportsCityCapability(context.city, "seaWaterQuality") ? ["plaže"] : []),
+    ...(isCityPublicFeatureRouteAvailable(context.city, "events", options) ? ["događaji"] : []),
+    ...(isCityPublicFeatureRouteAvailable(context.city, "goingOut", options) ? ["izlasci"] : []),
+    ...(isCityPublicFeatureRouteAvailable(context.city, "seaWaterQuality", options)
+      ? ["plaže"]
+      : []),
   ];
 
   return getPageTitle(
@@ -56,18 +58,20 @@ function getCityLandingTitle(context: CityContext) {
   );
 }
 
-function getCityLandingMetadata(context: CityContext) {
+function getCityLandingMetadata(context: CityContext, options: CityRouteAvailabilityOptions = {}) {
   const canonical = getCityPath(context.city);
   // Every entry is governed by "sa podacima o …", so each must be in the same locative/dative
   // form ("o vremenu", "o plažama i kvalitetu mora").
   const availableServices = [
-    ...(supportsCityCapability(context.city, "weather") ? ["vremenu"] : []),
-    ...(supportsCityCapability(context.city, "events") ? ["događajima"] : []),
-    ...(supportsCityCapability(context.city, "goingOut") ? ["izlascima"] : []),
-    ...(supportsCityCapability(context.city, "seaWaterQuality")
+    ...(isCityPublicFeatureRouteAvailable(context.city, "weather", options) ? ["vremenu"] : []),
+    ...(isCityPublicFeatureRouteAvailable(context.city, "events", options) ? ["događajima"] : []),
+    ...(isCityPublicFeatureRouteAvailable(context.city, "goingOut", options) ? ["izlascima"] : []),
+    ...(isCityPublicFeatureRouteAvailable(context.city, "seaWaterQuality", options)
       ? ["plažama i kvalitetu mora"]
       : []),
-    ...(supportsCityCapability(context.city, "electricity") ? ["servisnim obavještenjima"] : []),
+    ...(isCityPublicFeatureRouteAvailable(context.city, "electricity", options)
+      ? ["servisnim obavještenjima"]
+      : []),
   ];
   // "za grad" governs the accusative, and the apposition has to agree with it: production shipped
   // "za grad Podgorica" and "za grad Budva" because the nominative default was used here. The four
@@ -77,7 +81,11 @@ function getCityLandingMetadata(context: CityContext) {
     ? `Pouzdane lokalne informacije za grad ${cityName}, sa podacima o ${availableServices.join(", ")}.`
     : `Pouzdane lokalne informacije za grad ${cityName}.`;
 
-  return createPublicRouteMetadata({ canonical, description, title: getCityLandingTitle(context) });
+  return createPublicRouteMetadata({
+    canonical,
+    description,
+    title: getCityLandingTitle(context, options),
+  });
 }
 
 function getMainCityLandingContext() {

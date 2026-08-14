@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { cache } from "react";
 
-import { resolveActiveCityFeatureRoute } from "@/app/city-routing";
+import {
+  isCityPublicFeatureRouteAvailable,
+  resolveActiveCityFeatureRoute,
+} from "@/app/city-routing";
 import { createPublicRouteMetadata } from "@/app/public-route-metadata";
 import { getSeaWaterQualityLocationBySlug } from "@/modules/sea-water-quality/application/get-sea-water-quality-history";
 import { SeaWaterQualityLocationPage } from "@/modules/sea-water-quality/presentation/sea-water-quality-location-page";
@@ -29,12 +32,21 @@ const getCachedContext = cache((city: string) =>
 );
 const getCachedLocation = cache(getSeaWaterQualityLocationBySlug);
 
+async function getPublicLocation(city: string, slug: string) {
+  const context = getCachedContext(city);
+  if (!context || !isCityPublicFeatureRouteAvailable(context.city, "seaWaterQuality")) {
+    return undefined;
+  }
+
+  const { location, result } = await getCachedLocation(context, slug);
+  return location && result.history ? { context, location, result } : undefined;
+}
+
 async function generateMetadata({ params }: SeaWaterQualityLocationRouteProps): Promise<Metadata> {
   const { city: citySlug, slug } = await params;
-  const context = getCachedContext(citySlug);
-  if (!context) return {};
-  const { location } = await getCachedLocation(context, slug);
-  if (!location) return {};
+  const detail = await getPublicLocation(citySlug, slug);
+  if (!detail) return {};
+  const { context, location } = detail;
 
   const title = `${location.displayName}, ${context.city.name} — kvalitet mora`;
   // The location is already loaded here (same cache() call the page uses), so appending the
@@ -58,10 +70,9 @@ async function generateMetadata({ params }: SeaWaterQualityLocationRouteProps): 
 
 async function SeaWaterQualityLocationRoute({ params }: SeaWaterQualityLocationRouteProps) {
   const { city: citySlug, slug } = await params;
-  const context = getCachedContext(citySlug);
-  if (!context) notFound();
-  const { location, result } = await getCachedLocation(context, slug);
-  if (!location || !result.history) notFound();
+  const detail = await getPublicLocation(citySlug, slug);
+  if (!detail) notFound();
+  const { context, location, result } = detail;
 
   const structuredData = createSeaWaterQualityLocationBreadcrumbStructuredData({
     city: context.city,

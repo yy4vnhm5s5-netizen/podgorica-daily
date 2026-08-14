@@ -10,6 +10,7 @@ import {
   emitSnapshotDiagnostics,
   type FileSnapshotDiagnostic,
 } from "@/shared/lib/snapshot-diagnostics";
+import { getSourceHealth } from "./source-health.ts";
 
 type FileBackedSnapshotDiagnostics = Record<
   "cineplexx" | "flights" | "railway",
@@ -73,9 +74,12 @@ async function getFileBackedSnapshotDiagnostics(
 }
 
 async function collectAndEmitFileBackedSnapshotDiagnostics(now = new Date()) {
-  const snapshots = await getFileBackedSnapshotDiagnostics(now);
+  const [snapshots, sourceHealth] = await Promise.all([
+    getFileBackedSnapshotDiagnostics(now),
+    getSourceHealth(now),
+  ]);
   emitSnapshotDiagnostics(snapshots);
-  return snapshots;
+  return { snapshots, sourceHealth };
 }
 
 export {

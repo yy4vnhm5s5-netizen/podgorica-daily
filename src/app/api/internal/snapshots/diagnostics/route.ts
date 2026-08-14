@@ -5,8 +5,8 @@ import { collectAndEmitFileBackedSnapshotDiagnostics } from "../snapshot-diagnos
 
 export const POST = createRefreshPostHandler({
   refresh: async () => ({
-    snapshots: await collectAndEmitFileBackedSnapshotDiagnostics(),
     state: "success" as const,
+    ...(await collectAndEmitFileBackedSnapshotDiagnostics()),
   }),
   secret: env.SNAPSHOT_DIAGNOSTICS_SECRET,
 });
